@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel导入调试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .info {
+      color: blue;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      overflow-x: auto;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Excel导入调试工具</h1>
+
+  <!-- Token配置 -->
+  <div class="section">
+    <h2>1. 认证Token</h2>
+    <div>
+      <label for="token">Token:</label>
+      <input type="text" id="token" placeholder="从localStorage中获取" style="width: 600px;">
+      <button onclick="loadToken()">从LocalStorage加载</button>
+      <button onclick="checkToken()">验证Token</button>
+    </div>
+    <p id="tokenStatus" class="info">未验证</p>
+  </div>
+
+  <!-- Excel上传 -->
+  <div class="section">
+    <h2>2. Excel文件上传</h2>
+    <div>
+      <label for="excelFile">选择Excel文件:</label>
+      <input type="file" id="excelFile" accept=".xlsx,.xls">
+      <button onclick="uploadExcel()">上传</button>
+    </div>
+    <p id="uploadStatus" class="info">等待上传...</p>
+    <pre id="uploadResult"></pre>
+  </div>
+
+  <!-- 查询数据库 -->
+  <div class="section">
+    <h2>3. 查询数据库</h2>
+    <button onclick="queryOrders()">查询最近10条订单</button>
+    <button onclick="clearResult()">清空结果</button>
+    <p id="queryStatus" class="info">等待查询...</p>
+    <pre id="queryResult"></pre>
+    <div id="ordersTable"></div>
+  </div>
+
+  <!-- 控制台日志 -->
+  <div class="section">
+    <h2>4. 控制台日志</h2>
+    <button onclick="clearLogs()">清空日志</button>
+    <pre id="consoleLog"></pre>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api';
+    let currentToken = '';
+
+    // 重写console.log，显示在页面上
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    function addLog(message, type = 'info') {
+      const logDiv = document.getElementById('consoleLog');
+      const timestamp = new Date().toLocaleTimeString();
+      const colorClass = type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info');
+      logDiv.innerHTML += `<div class="${colorClass}">[${timestamp}] ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addLog(args.join(' '), 'info');
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addLog(args.join(' '), 'error');
+    };
+
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addLog(args.join(' '), 'warn');
+    };
+
+    function loadToken() {
+      const token = localStorage.getItem('token');
+      document.getElementById('token').value = token;
+      currentToken = token;
+      addLog('Token已从LocalStorage加载', 'success');
+      document.getElementById('tokenStatus').textContent = '已加载';
+      document.getElementById('tokenStatus').className = 'success';
+    }
+
+    async function checkToken() {
+      currentToken = document.getElementById('token').value;
+      if (!currentToken) {
+        addLog('请先输入Token', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/report-orders`, {
+          headers: {
+            'Authorization': `Bearer ${currentToken}`
+          }
+        });
+
+        if (response.ok) {
+          addLog('Token验证成功', 'success');
+          document.getElementById('tokenStatus').textContent = '有效';
+          document.getElementById('tokenStatus').className = 'success';
+        } else {
+          const data = await response.json();
+          addLog(`Token验证失败: ${data.message}`, 'error');
+          document.getElementById('tokenStatus').textContent = '无效';
+          document.getElementById('tokenStatus').className = 'error';
+        }
+      } catch (error) {
+        addLog(`Token验证请求失败: ${error.message}`, 'error');
+        document.getElementById('tokenStatus').textContent = '请求失败';
+        document.getElementById('tokenStatus').className = 'error';
+      }
+    }
+
+    async function uploadExcel() {
+      const fileInput = document.getElementById('excelFile');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        addLog('请选择Excel文件', 'error');
+        return;
+      }
+
+      if (!currentToken) {
+        addLog('请先设置Token', 'error');
+        return;
+      }
+
+      const statusEl = document.getElementById('uploadStatus');
+      const resultEl = document.getElementById('uploadResult');
+
+      statusEl.textContent = '上传中...';
+      statusEl.className = 'info';
+      resultEl.textContent = '';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      addLog(`开始上传文件: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+
+      try {
+        const response = await fetch(`${API_BASE}/report-orders/import`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentToken}`
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+        addLog(`上传响应状态: ${response.status}`, response.ok ? 'success' : 'error');
+        addLog(`响应数据: ${JSON.stringify(data)}`, 'info');
+
+        if (response.ok) {
+          statusEl.textContent = data.message || '上传成功';
+          statusEl.className = 'success';
+          resultEl.textContent = JSON.stringify(data, null, 2);
+          addLog('上传成功!', 'success');
+        } else {
+          statusEl.textContent = data.message || '上传失败';
+          statusEl.className = 'error';
+          resultEl.textContent = JSON.stringify(data, null, 2);
+          addLog(`上传失败: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        addLog(`上传请求失败: ${error.message}`, 'error');
+        statusEl.textContent = `请求失败: ${error.message}`;
+        statusEl.className = 'error';
+      }
+    }
+
+    async function queryOrders() {
+      const statusEl = document.getElementById('queryStatus');
+      const resultEl = document.getElementById('queryResult');
+      const tableEl = document.getElementById('ordersTable');
+
+      if (!currentToken) {
+        addLog('请先设置Token', 'error');
+        return;
+      }
+
+      statusEl.textContent = '查询中...';
+      statusEl.className = 'info';
+      resultEl.textContent = '';
+      tableEl.innerHTML = '';
+
+      try {
+        const response = await fetch(`${API_BASE}/report-orders/debug/orders`, {
+          headers: {
+            'Authorization': `Bearer ${currentToken}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          statusEl.textContent = `查询成功，共 ${data.count} 条`;
+          statusEl.className = 'success';
+          resultEl.textContent = JSON.stringify(data, null, 2);
+
+          // 显示表格
+          if (data.orders && data.orders.length > 0) {
+            let tableHtml = '<h3>订单列表</h3><table><thead><tr>';
+            tableHtml += '<th>序号</th><th>订单ID</th><th>子订单ID</th><th>商品名称</th><th>价格</th><th>数量</th><th>店铺</th><th>状态</th></tr></thead><tbody>';
+
+            data.orders.forEach((order, idx) => {
+              tableHtml += `<tr>`;
+              tableHtml += `<td>${idx + 1}</td>`;
+              tableHtml += `<td>${order.orderNo || '--'}</td>`;
+              tableHtml += `<td>${order.subOrderNo || '--'}</td>`;
+              tableHtml += `<td>${order.productName || '--'}</td>`;
+              tableHtml += `<td>${order.productPrice || 0}</td>`;
+              tableHtml += `<td>${order.orderQuantity || 0}</td>`;
+              tableHtml += `<td>${order.shopName || '--'} (${order.shopCode || '--'})</td>`;
+              tableHtml += `<td>${order.orderStatus || '--'}</td>`;
+              tableHtml += `</tr>`;
+            });
+
+            tableHtml += '</tbody></table>';
+            tableEl.innerHTML = tableHtml;
+          }
+
+          addLog(`查询成功，共 ${data.count} 条`, 'success');
+        } else {
+          statusEl.textContent = data.message || '查询失败';
+          statusEl.className = 'error';
+          resultEl.textContent = JSON.stringify(data, null, 2);
+          addLog(`查询失败: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        addLog(`查询请求失败: ${error.message}`, 'error');
+        statusEl.textContent = `请求失败: ${error.message}`;
+        statusEl.className = 'error';
+      }
+    }
+
+    function clearLogs() {
+      document.getElementById('consoleLog').innerHTML = '';
+    }
+
+    function clearResult() {
+      document.getElementById('queryResult').textContent = '';
+      document.getElementById('ordersTable').innerHTML = '';
+      document.getElementById('queryStatus').textContent = '等待查询...';
+      document.getElementById('queryStatus').className = 'info';
+    }
+
+    // 页面加载时自动尝试加载Token
+    window.onload = function() {
+      addLog('页面加载完成', 'info');
+      const token = localStorage.getItem('token');
+      if (token) {
+        document.getElementById('token').value = token;
+        currentToken = token;
+        addLog('Token已自动加载', 'success');
+      }
+    };
+  </script>
+</body>
+</html>

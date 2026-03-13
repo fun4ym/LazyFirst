@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务数据分析系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --white: #ffffff;
+            --border: #dfe6e9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .dashboard-header {
+            background: var(--secondary);
+            color: var(--white);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .dashboard-title {
+            font-size: 1.8rem;
+            font-weight: 500;
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem;
+            background: var(--light);
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gray);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            z-index: 2;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+        }
+
+        .step-label {
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+        }
+
+        .step.completed .step-label {
+            color: var(--success);
+        }
+
+        .step-connector {
+            width: 80px;
+            height: 2px;
+            background: var(--gray);
+            margin: 0 1rem;
+            position: relative;
+        }
+
+        .step-connector.completed {
+            background: var(--success);
+        }
+
+        .dashboard-content {
+            padding: 2rem;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--gray);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: #f8fafc;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #f0f7fd;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success);
+            background: #e8f8f0;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+
+        .upload-text {
+            color: var(--gray);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #e8f4fc;
+            border-radius: 6px;
+            color: var(--primary);
+            display: none;
+            font-size: 0.875rem;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #1a252f;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .salesperson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .salesperson-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .salesperson-item:hover {
+            background: #e0e6ea;
+        }
+
+        .salesperson-item.selected {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .salesperson-item input {
+            display: none;
+        }
+
+        .analytics-container {
+            margin-top: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 1.5rem;
+            background: var(--white);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .data-table-container {
+            margin-top: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">业务数据分析系统</h1>
+        </div>
+
+        <div class="workflow-steps">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">上传文件</div>
+            </div>
+            <div class="step-connector" id="connector1"></div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+            </div>
+            <div class="step-connector" id="connector2"></div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">查看分析</div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- 步骤1：文件上传 -->
+            <div class="card" id="uploadCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span style="margin-right: 0.5rem;">📁</span>上传Excel文件
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                        请上传包含"归属业务员"和"日期"列的Excel文件(.xlsx格式)
+                    </p>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-text">
+                            点击或拖拽文件到此处上传<br>
+                            <small>支持 .xlsx 格式（如：sample_1771577056725.xlsx）</small>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+                    </div>
+                    <div class="file-info" id="fileInfo"></div>
+                    <button class="btn" id="analyzeBtn" disabled>开始分析</button>
+                    <div class="loading" id="loading1">
+                        <div class="spinner"></div>
+                        <p>正在解析文件...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤2：业务员选择 -->
+            <div class="card hidden" id="selectCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span style="margin-right: 0.5rem;">👥</span>选择分析维度
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="action-bar">
+                        <div class="navigation-buttons">
+                            <button class="btn btn-outline" onclick="backToUpload()">
+                                ← 返回上传文件
+                            </button>
+                            <button class="btn btn-success" onclick="selectAll()">全选</button>
+                            <button class="btn btn-danger" onclick="deselectAll()">取消全选</button>
+                        </div>
+                        <button class="btn" id="showChartBtn">生成分析报告</button>
+                    </div>
+                    <div class="salesperson-grid" id="salespersonList"></div>
+                </div>
+            </div>
+
+            <!-- 步骤3：图表展示 -->
+            <div class="card hidden" id="chartCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span style="margin-right: 0.5rem;">📊</span>数据分析报告
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="navigation-buttons">
+                        <button class="btn btn-outline" onclick="backToUpload()">
+                            ← 返回上传文件
+                        </button>
+                        <button class="btn btn-outline" id="backBtn">
+                            ← 返回重新选择业务员
+                        </button>
+                    </div>
+
+                    <div class="analytics-container">
+                        <h3 style="margin-bottom: 1rem;">关键指标</h3>
+                        <div class="stats-grid" id="statsGrid"></div>
+
+                        <h3 style="margin-bottom: 1rem;">趋势分析</h3>
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+
+                        <h3 style="margin: 2rem 0 1rem;">详细数据</h3>
+                        <div class="data-table-container">
+                            <table class="data-table" id="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th>日期</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let rawData = [];
+        let groupedData = {};
+        let selectedSalespersons = new Set();
+        let chart = null;
+        const colors = [
+            '#3498db', '#2ecc71', '#e74c3c', '#f39c12',
+            '#9b59b6', '#1abc9c', '#d35400', '#34495e',
+            '#16a085', '#c0392b', '#8e44ad', '#27ae60'
+        ];
+
+        // DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const salespersonList = document.getElementById('salespersonList');
+        const showChartBtn = document.getElementById('showChartBtn');
+        const backBtn = document.getElementById('backBtn');
+        const lineChart = document.getElementById('lineChart');
+
+        // 文件上传处理
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                alert('请上传 .xlsx 或 .xls 格式的文件！');
+                return;
+            }
+
+            fileInfo.innerHTML = `📄 已选择文件: ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.add('show');
+            analyzeBtn.disabled = false;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // 分析按钮点击
+        analyzeBtn.addEventListener('click', () => {
+            if (!fileInput.files[0]) {
+                alert('请先选择文件！');
+                return;
+            }
+
+            document.getElementById('loading1').style.display = 'block';
+            analyzeBtn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    rawData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    if (rawData.length === 0) {
+                        throw new Error('文件为空或格式不正确');
+                    }
+
+                    // 处理数据
+                    processData();
+                    
+                    // 更新步骤指示器
+                    updateStepIndicator(2);
+                    
+                    // 显示业务员选择
+                    showSalespersonSelection();
+                    
+                    // 切换卡片显示
+                    document.getElementById('uploadCard').classList.add('hidden');
+                    document.getElementById('selectCard').classList.remove('hidden');
+                } catch (error) {
+                    alert('文件解析失败: ' + error.message);
+                } finally {
+                    document.getElementById('loading1').style.display = 'none';
+                    analyzeBtn.disabled = false;
+                }
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        });
+
+        // 数据处理
+        function processData() {
+            groupedData = {};
+
+            rawData.forEach(row => {
+                // 获取业务员和日期（根据实际Excel列名调整）
+                const salesman = row['归属业务员'] || row['业务员'] || row['销售员'] || '';
+                const date = row['日期'] || row['date'] || row['Date'] || '';
+
+                if (!salesman || !date) return;
+
+                if (!groupedData[salesman]) {
+                    groupedData[salesman] = {};
+                }
+
+                if (!groupedData[salesman][date]) {
+                    groupedData[salesman][date] = 0;
+                }
+
+                groupedData[salesman][date]++;
+            });
+        }
+
+        // 更新步骤指示器
+        function updateStepIndicator(step) {
+            // 重置所有步骤
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active', 'completed');
+            });
+            document.querySelectorAll('.step-connector').forEach(el => {
+                el.classList.remove('completed');
+            });
+
+            // 设置当前步骤和已完成步骤
+            for (let i = 1; i <= step; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else {
+                    stepEl.classList.add('active');
+                }
+
+                if (i > 1) {
+                    document.getElementById(`connector${i-1}`).classList.add('completed');
+                }
+            }
+        }
+
+        // 显示业务员选择列表
+        function showSalespersonSelection() {
+            const salespersons = Object.keys(groupedData);
+            salespersonList.innerHTML = '';
+
+            salespersons.forEach((name, index) => {
+                const item = document.createElement('label');
+                item.className = 'salesperson-item' + (index < 3 ? ' selected' : '');
+                item.innerHTML = `
+                    <input type="checkbox" value="${name}" ${index < 3 ? 'checked' : ''}>
+                    <span>${name}</span>
+                `;
+                const checkbox = item.querySelector('input');
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedSalespersons.add(name);
+                        item.classList.add('selected');
+                    } else {
+                        selectedSalespersons.delete(name);
+                        item.classList.remove('selected');
+                    }
+                });
+                salespersonList.appendChild(item);
+                
+                if (index < 3) {
+                    selectedSalespersons.add(name);
+                }
+            });
+        }
+
+        // 全选/取消全选
+        function selectAll() {
+            selectedSalespersons.clear();
+            document.querySelectorAll('.salesperson-item').forEach(item => {
+                const checkbox = item.querySelector('input');
+                checkbox.checked = true;
+                selectedSalespersons.add(checkbox.value);
+                item.classList.add('selected');
+            });
+        }
+
+        function deselectAll() {
+            selectedSalespersons.clear();
+            document.querySelectorAll('.salesperson-item').forEach(item => {
+                const checkbox = item.querySelector('input');
+                checkbox.checked = false;
+                item.classList.remove('selected');
+            });
+        }
+
+        // 返回上传界面
+        function backToUpload() {
+            // 隐藏当前卡片
+            document.getElementById('selectCard').classList.add('hidden');
+            document.getElementById('chartCard').classList.add('hidden');
+            
+            // 显示上传卡片
+            document.getElementById('uploadCard').classList.remove('hidden');
+            
+            // 重置文件输入
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            analyzeBtn.disabled = true;
+            
+            // 更新步骤指示器
+            updateStepIndicator(1);
+            
+            // 重置数据
+            rawData = [];
+            groupedData = {};
+            selectedSalespersons.clear();
+            
+            // 销毁图表
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+        }
+
+        // 生成图表
+        showChartBtn.addEventListener('click', () => {
+            if (selectedSalespersons.size === 0) {
+                alert('请至少选择一个业务员！');
+                return;
+            }
+
+            // 更新步骤指示器
+            updateStepIndicator(3);
+
+            // 切换卡片显示
+            document.getElementById('selectCard').classList.add('hidden');
+            document.getElementById('chartCard').classList.remove('hidden');
+
+            // 渲染图表和数据
+            renderChart();
+            renderStats();
+            renderTable();
+        });
+
+        // 返回按钮事件处理
+        backBtn.addEventListener('click', () => {
+            document.getElementById('chartCard').classList.add('hidden');
+            document.getElementById('selectCard').classList.remove('hidden');
+            updateStepIndicator(2);
+        });
+
+        // 渲染图表
+        function renderChart() {
+            // 销毁现有图表
+            if (chart) {
+                chart.destroy();
+            }
+
+            const labels = getSortedDates();
+            const datasets = [];
+
+            let colorIndex = 0;
+            Array.from(selectedSalespersons).forEach(salesman => {
+                const data = labels.map(date => groupedData[salesman][date] || 0);
+                
+                datasets.push({
+                    label: salesman,
+                    data: data,
+                    borderColor: colors[colorIndex % colors.length],
+                    backgroundColor: colors[colorIndex % colors.length] + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                });
+                colorIndex++;
+            });
+
+            const ctx = lineChart.getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '各业务员每日记录数量趋势',
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '日期',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '记录数量',
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // 获取排序后的日期
+        function getSortedDates() {
+            const allDates = new Set();
+            selectedSalespersons.forEach(salesman => {
+                Object.keys(groupedData[salesman]).forEach(date => {
+                    allDates.add(date);
+                });
+            });
+            return Array.from(allDates).sort((a, b) => {
+                return new Date(a) - new Date(b);
+            });
+        }
+
+        // 渲染统计信息
+        function renderStats() {
+            const statsGrid = document.getElementById('statsGrid');
+            const dates = getSortedDates();
+            const totalRecords = Array.from(selectedSalespersons).reduce((sum, salesman) => {
+                return sum + Object.values(groupedData[salesman]).reduce((a, b) => a + b, 0);
+            }, 0);
+            const totalSalespersons = selectedSalespersons.size;
+            const avgPerDay = (totalRecords / dates.length).toFixed(1);
+            const maxCount = Math.max(...Array.from(selectedSalespersons).flatMap(salesman => 
+                Object.values(groupedData[salesman])
+            ));
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalRecords}</div>
+                    <div class="stat-label">总记录数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${dates.length}</div>
+                    <div class="stat-label">统计天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalSalespersons}</div>
+                    <div class="stat-label">业务员数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgPerDay}</div>
+                    <div class="stat-label">日均记录数</div>
+                </div>
+            `;
+        }
+
+        // 渲染数据表格
+        function renderTable() {
+            const table = document.getElementById('dataTable');
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            const dates = getSortedDates();
+
+            // 设置表头
+            thead.innerHTML = '<th>日期</th>';
+            selectedSalespersons.forEach(salesman => {
+                thead.innerHTML += `<th>${salesman}</th>`;
+            });
+            thead.innerHTML += '<th>合计</th>';
+
+            // 设置表体
+            tbody.innerHTML = '';
+            dates.forEach(date => {
+                let row = `<td>${date}</td>`;
+                let total = 0;
+                selectedSalespersons.forEach(salesman => {
+                    const count = groupedData[salesman][date] || 0;
+                    row += `<td>${count}</td>`;
+                    total += count;
+                });
+                row += `<td><strong>${total}</strong></td>`;
+                tbody.innerHTML += `<tr>${row}</tr>`;
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # MongoDB数据库
+  mongodb:
+    image: mongo:7
+    container_name: tap-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: tap_system
+
+  # 后端API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tap-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://mongodb:27017/tap_system
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRE: 7d
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    volumes:
+      - ./server:/app/server
+
+  # 前端
+  frontend:
+    image: node:18-alpine
+    container_name: tap-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3000/api
+
+volumes:
+  mongodb_data:

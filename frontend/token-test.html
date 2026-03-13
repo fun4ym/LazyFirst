@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Token 测试</title>
+</head>
+<body>
+    <h1>Token 存储测试</h1>
+    <button onclick="saveToken()">保存 Token</button>
+    <button onclick="checkToken()">检查 Token</button>
+    <button onclick="clearToken()">清除 Token</button>
+    <div id="output"></div>
+
+    <script>
+        function saveToken() {
+            localStorage.setItem('token', 'test-token-123');
+            sessionStorage.setItem('token', 'test-session-token-456');
+            document.getElementById('output').innerHTML = `
+                <p>已保存:</p>
+                <p>localStorage: ${localStorage.getItem('token')}</p>
+                <p>sessionStorage: ${sessionStorage.getItem('token')}</p>
+            `;
+        }
+
+        function checkToken() {
+            document.getElementById('output').innerHTML = `
+                <p>当前状态:</p>
+                <p>localStorage: ${localStorage.getItem('token')}</p>
+                <p>sessionStorage: ${sessionStorage.getItem('token')}</p>
+            `;
+        }
+
+        function clearToken() {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.getElementById('output').innerHTML = '<p>已清除</p>';
+        }
+
+        // 监听页面加载前事件
+        window.addEventListener('beforeunload', () => {
+            console.log('beforeunload - localStorage:', localStorage.getItem('token'));
+            console.log('beforeunload - sessionStorage:', sessionStorage.getItem('token'));
+        });
+
+        window.addEventListener('pagehide', () => {
+            console.log('pagehide - localStorage:', localStorage.getItem('token'));
+            console.log('pagehide - sessionStorage:', sessionStorage.getItem('token'));
+        });
+    </script>
+</body>
+</html>

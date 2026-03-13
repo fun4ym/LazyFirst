@@ -1,0 +1,624 @@
+
+> tap-frontend@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 191 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: http://192.168.1.102:5174/
+19:12:08 [vite] Internal server error: Duplicate attribute.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/influencer-managements/Index.vue:204:61
+  202|      <el-dialog
+  203|        class="influencer-dialog"
+  204|        width="900px" v-model="showDetailDialog" title="达人详情" width="900px">
+     |                                                               ^
+  205|        <div v-if="currentInfluencer">
+  206|          <el-descriptions :column="2" border>
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onattribnameend (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2499:7)
+      at Tokenizer.handleAttrNameEnd (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:926:14)
+      at Tokenizer.stateInAttrName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:866:12)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1117:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+16:14:59 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:15:29 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:16:44 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:16:57 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:17:18 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:17:38 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:18:41 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:19:08 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:19:52 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:19:58 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+16:22:10 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:28:38 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:29:16 [vite] hmr update /src/views/influencer-managements/Index.vue
+16:30:59 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+16:32:05 [vite] hmr update /src/views/settings/BaseData.vue
+16:32:58 [vite] hmr update /src/views/settings/BaseData.vue
+17:12:01 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:12:36 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:42:51 [vite] hmr update /src/views/products/Index.vue, /src/views/products/Index.vue?vue&type=style&index=0&scoped=f2878a18&lang.css
+13:06:52 [vite] hmr update /src/views/products/ShopTab.vue
+13:07:21 [vite] hmr update /src/views/products/ShopTab.vue
+13:08:04 [vite] hmr update /src/views/products/ShopTab.vue
+13:08:30 [vite] hmr update /src/views/products/ShopTab.vue
+13:08:53 [vite] hmr update /src/views/products/ShopTab.vue
+13:09:15 [vite] hmr update /src/views/products/ShopTab.vue
+14:40:49 [vite] hmr update /src/views/products/ShopTab.vue
+15:15:35 [vite] hmr update /src/views/activities/Index.vue
+15:17:06 [vite] hmr update /src/views/activities/Index.vue
+15:17:23 [vite] hmr update /src/views/activities/Index.vue?vue&type=style&index=0&scoped=8b4dca65&lang.css
+15:18:39 [vite] hmr update /src/views/activities/Index.vue
+15:18:49 [vite] hmr update /src/views/activities/Index.vue?vue&type=style&index=0&scoped=8b4dca65&lang.css
+15:22:06 [vite] hmr update /src/views/activities/Index.vue
+15:24:41 [vite] hmr update /src/views/activities/Index.vue
+15:24:47 [vite] hmr update /src/views/activities/Index.vue
+15:24:57 [vite] hmr update /src/views/activities/Index.vue?vue&type=style&index=0&scoped=8b4dca65&lang.css
+15:32:22 [vite] hmr update /src/views/influencer-managements/Index.vue
+15:33:06 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+15:33:16 [vite] hmr update /src/views/products/ProductTab.vue
+15:33:22 [vite] hmr update /src/views/products/ProductTab.vue
+15:33:51 [vite] hmr update /src/views/products/ProductTab.vue?vue&type=style&index=0&scoped=f6cd3f89&lang.css
+15:34:18 [vite] hmr update /src/views/samples/Management.vue
+15:34:40 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+15:35:13 [vite] hmr update /src/views/report-orders/Index.vue
+15:35:25 [vite] hmr update /src/views/report-orders/Index.vue?vue&type=style&index=0&scoped=b648ed4a&lang.css
+15:37:46 [vite] hmr update /src/views/products/ProductTab.vue
+15:37:46 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:37:46 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:37:47 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:37:47 [vite] Pre-transform error: Invalid end tag.
+15:37:47 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:38:16 [vite] hmr update /src/views/products/ProductTab.vue
+15:38:16 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:38:16 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:38:16 [vite] Pre-transform error: Invalid end tag.
+15:56:56 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:56:56 [vite] Pre-transform error: Invalid end tag.
+15:56:58 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:56:58 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:57:27 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+15:57:46 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+16:03:34 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+16:03:43 [vite] Internal server error: Invalid end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/products/ProductTab.vue:107:13
+  105|                  </el-form-item>
+  106|                </el-col>
+  107|              </el-row>
+     |               ^
+  108|              <el-row :gutter="16">
+  109|                <el-col :span="12">
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2391:9)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+16:06:24 [vite] hmr update /src/views/products/ProductTab.vue
+16:09:33 [vite] hmr update /src/views/products/ProductTab.vue
+16:18:15 [vite] hmr update /src/views/products/ProductTab.vue
+16:18:23 [vite] hmr update /src/views/products/ProductTab.vue
+16:18:36 [vite] hmr update /src/views/products/ProductTab.vue
+16:18:54 [vite] hmr update /src/views/products/ProductTab.vue
+16:19:02 [vite] hmr update /src/views/products/ProductTab.vue
+16:19:17 [vite] hmr update /src/views/products/ProductTab.vue
+16:19:29 [vite] hmr update /src/views/products/ProductTab.vue
+16:21:33 [vite] hmr update /src/views/products/ProductTab.vue
+16:25:30 [vite] hmr update /src/views/products/ProductTab.vue
+16:27:32 [vite] hmr update /src/views/products/ProductTab.vue
+16:30:31 [vite] hmr update /src/views/products/ProductTab.vue
+16:30:37 [vite] hmr update /src/views/products/ProductTab.vue
+16:47:42 [vite] hmr update /src/views/products/ProductTab.vue
+17:01:04 [vite] hmr update /src/views/products/ProductTab.vue
+17:08:06 [vite] hmr update /src/views/products/ProductTab.vue
+17:13:34 [vite] hmr update /src/views/products/ProductTab.vue
+17:21:49 [vite] hmr update /src/views/products/ProductTab.vue
+17:21:57 [vite] hmr update /src/views/products/ProductTab.vue
+17:22:05 [vite] hmr update /src/views/products/ProductTab.vue
+17:22:23 [vite] hmr update /src/views/products/ProductTab.vue
+17:34:42 [vite] hmr update /src/views/products/ProductTab.vue
+17:35:04 [vite] hmr update /src/views/products/ProductTab.vue
+17:35:21 [vite] hmr update /src/views/products/ProductTab.vue
+17:35:47 [vite] hmr update /src/views/products/ProductTab.vue
+17:35:57 [vite] hmr update /src/views/products/ProductTab.vue
+17:36:05 [vite] hmr update /src/views/products/ProductTab.vue
+17:36:11 [vite] hmr update /src/views/products/ProductTab.vue
+17:36:25 [vite] hmr update /src/views/products/ProductTab.vue
+17:36:54 [vite] hmr update /src/views/products/ProductTab.vue
+17:37:12 [vite] hmr update /src/views/products/ProductTab.vue
+11:18:12 [vite] hmr update /src/views/products/ProductTab.vue
+11:18:50 [vite] hmr update /src/views/products/ProductTab.vue
+11:18:54 [vite] hmr update /src/views/products/ProductTab.vue
+11:18:59 [vite] hmr update /src/views/products/ProductTab.vue
+11:19:35 [vite] hmr update /src/views/products/ProductTab.vue
+11:19:42 [vite] hmr update /src/views/products/ProductTab.vue?vue&type=style&index=0&scoped=f6cd3f89&lang.css
+12:29:15 [vite] hmr update /src/views/products/ProductTab.vue
+14:37:02 [vite] page reload src/utils/auth.js
+14:37:04 [vite] http proxy error: /api/activities?companyId=69a7aad8da66cd5145a5f06f
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+14:37:04 [vite] http proxy error: /api/base-data?type=country&limit=100
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+14:37:04 [vite] http proxy error: /api/cooperation-products?companyId=69a7aad8da66cd5145a5f06f&status=&keyword=&page=1&limit=20
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+14:37:04 [vite] http proxy error: /api/shops?companyId=69a7aad8da66cd5145a5f06f
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+14:37:04 [vite] http proxy error: /api/shops?companyId=69a7aad8da66cd5145a5f06f&status=&keyword=&page=1&limit=20
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+14:37:04 [vite] http proxy error: /api/users?companyId=69a7aad8da66cd5145a5f06f
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+14:48:45 [vite] vite.config.js changed, restarting server...
+14:48:46 [vite] server restarted.
+15:21:21 [vite] hmr update /src/layouts/MainLayout.vue
+15:24:59 [vite] page reload src/router/index.js
+15:32:01 [vite] hmr update /src/views/products/ProductTab.vue
+15:32:08 [vite] hmr update /src/views/products/ProductTab.vue
+16:10:59 [vite] hmr update /src/views/products/ProductTab.vue
+16:11:08 [vite] hmr update /src/views/products/ProductTab.vue
+16:37:58 [vite] hmr update /src/views/products/ProductTab.vue
+09:57:55 [vite] hmr update /src/views/products/ProductTab.vue
+11:33:48 [vite] hmr update /src/views/Dashboard.vue, /src/views/products/ShopTab.vue, /src/views/products/ProductTab.vue, /src/views/influencer-managements/Index.vue, /src/views/samples/Management.vue, /src/views/report-orders/Index.vue, /src/views/activities/Index.vue
+11:39:20 [vite] hmr update /src/views/products/ProductTab.vue
+11:54:41 [vite] vite.config.js changed, restarting server...
+11:54:41 [vite] server restarted.
+12:37:25 [vite] hmr update /src/views/products/ProductTab.vue
+12:37:31 [vite] hmr update /src/views/products/ProductTab.vue
+12:37:38 [vite] hmr update /src/views/products/ProductTab.vue
+14:45:32 [vite] hmr update /src/views/products/ProductTab.vue
+14:51:55 [vite] hmr update /src/views/products/ProductTab.vue
+14:52:18 [vite] hmr update /src/views/products/ProductTab.vue
+14:52:37 [vite] hmr update /src/views/products/ProductTab.vue
+15:19:12 [vite] hmr update /src/views/products/ProductTab.vue
+15:19:27 [vite] hmr update /src/views/products/ProductTab.vue
+15:19:50 [vite] hmr update /src/views/products/ProductTab.vue
+16:03:15 [vite] hmr update /src/views/products/ProductTab.vue
+16:03:22 [vite] hmr update /src/views/products/ProductTab.vue
+16:07:18 [vite] hmr update /src/views/products/ProductTab.vue
+16:08:08 [vite] hmr update /src/views/products/ProductTab.vue
+16:09:30 [vite] hmr update /src/views/products/ProductTab.vue
+16:09:53 [vite] hmr update /src/views/products/ProductTab.vue
+16:10:00 [vite] hmr update /src/views/products/ProductTab.vue
+16:11:43 [vite] hmr update /src/views/products/ProductTab.vue
+16:12:05 [vite] hmr update /src/views/products/ProductTab.vue
+16:12:19 [vite] hmr update /src/views/products/ProductTab.vue
+16:12:26 [vite] hmr update /src/views/products/ProductTab.vue
+16:13:28 [vite] hmr update /src/views/products/ProductTab.vue
+16:15:12 [vite] hmr update /src/views/products/ProductTab.vue
+16:15:18 [vite] hmr update /src/views/products/ProductTab.vue
+16:15:26 [vite] hmr update /src/views/products/ProductTab.vue
+16:15:40 [vite] hmr update /src/views/products/ProductTab.vue
+16:20:53 [vite] hmr update /src/views/products/ProductTab.vue
+16:23:47 [vite] hmr update /src/views/products/ProductTab.vue
+16:24:00 [vite] hmr update /src/views/products/ProductTab.vue
+16:24:05 [vite] hmr update /src/views/products/ProductTab.vue
+16:35:49 [vite] hmr update /src/views/products/ProductTab.vue
+16:44:47 [vite] hmr update /src/views/products/ProductTab.vue
+16:45:12 [vite] hmr update /src/views/products/ProductTab.vue
+16:45:43 [vite] hmr update /src/views/products/ProductTab.vue
+16:46:17 [vite] hmr update /src/views/products/ProductTab.vue?vue&type=style&index=0&scoped=f6cd3f89&lang.css
+17:29:21 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:29:32 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:29:40 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:29:55 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+17:43:27 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:43:54 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:44:12 [vite] hmr update /src/views/influencer-managements/Index.vue
+17:44:26 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+18:06:21 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:14:38 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:15:09 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:16:15 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:37:19 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:40:53 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+18:43:53 [vite] hmr update /src/views/report-orders/Index.vue
+18:43:59 [vite] hmr update /src/views/report-orders/Index.vue
+18:44:14 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:44:26 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:44:38 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:44:50 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+18:47:30 [vite] hmr update /src/views/influencer-managements/Index.vue
+18:48:50 [vite] hmr update /src/views/report-orders/Index.vue
+18:49:08 [vite] hmr update /src/views/report-orders/Index.vue
+18:49:20 [vite] hmr update /src/views/report-orders/Index.vue?vue&type=style&index=0&scoped=b648ed4a&lang.css
+18:50:40 [vite] hmr update /src/views/samples/Management.vue
+18:50:47 [vite] hmr update /src/views/samples/Management.vue
+18:51:14 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+18:55:13 [vite] hmr update /src/views/samples/Management.vue
+18:55:33 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+19:05:03 [vite] hmr update /src/views/samples/Management.vue
+19:05:17 [vite] hmr update /src/views/samples/Management.vue
+19:05:34 [vite] hmr update /src/views/samples/Management.vue
+19:05:42 [vite] hmr update /src/views/samples/Management.vue
+19:05:53 [vite] hmr update /src/views/samples/Management.vue
+19:06:04 [vite] hmr update /src/views/samples/Management.vue
+19:06:20 [vite] hmr update /src/views/samples/Management.vue
+19:06:31 [vite] hmr update /src/views/samples/Management.vue
+19:07:13 [vite] hmr update /src/views/samples/Management.vue
+19:07:26 [vite] hmr update /src/views/samples/Management.vue
+19:13:22 [vite] hmr update /src/views/samples/Management.vue
+19:13:30 [vite] hmr update /src/views/samples/Management.vue
+19:13:56 [vite] hmr update /src/views/samples/Management.vue
+19:14:04 [vite] hmr update /src/views/samples/Management.vue
+19:14:19 [vite] hmr update /src/views/samples/Management.vue
+19:14:24 [vite] hmr update /src/views/samples/Management.vue
+19:14:30 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+19:14:43 [vite] hmr update /src/views/samples/Management.vue
+10:33:35 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:33:45 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:34:10 [vite] hmr update /src/views/influencer-managements/Index.vue?vue&type=style&index=0&scoped=f2778b5b&lang.css
+10:34:16 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:34:31 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:34:39 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:34:39 [vite] Internal server error: Element is missing end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/influencer-managements/Index.vue:12:7
+  10 |  
+  11 |        <!-- 页签 -->
+  12 |        <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+     |         ^
+  13 |          <el-tab-pane label="达人列表" name="list" />
+  14 |  
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+10:34:47 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:35:12 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:35:23 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:35:35 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:35:43 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:35:49 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:36:10 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:36:20 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:36:38 [vite] hmr update /src/views/influencer-managements/Index.vue
+10:37:27 [vite] hmr update /src/views/samples/Management.vue
+10:38:25 [vite] hmr update /src/views/samples/Management.vue
+10:38:34 [vite] hmr update /src/views/samples/Management.vue
+10:38:43 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+10:45:04 [vite] http proxy error: /api/base-data?type=influencerCategory
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+10:45:04 [vite] http proxy error: /api/influencer-managements?companyId=69a7aad8da66cd5145a5f06f&poolType=&status=&categoryTag=&keyword=&page=1&limit=20
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+11:03:33 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:03:33 [vite] Internal server error: Element is missing end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/influencer-managements/Index.vue:13:9
+  11 |        <!-- 页签 -->
+  12 |        <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+  13 |          <el-tab-pane label="达人列表" name="list">
+     |           ^
+  14 |  
+  15 |        <!-- 搜索筛选 -->
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+11:03:34 [vite] Internal server error: Element is missing end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/influencer-managements/Index.vue:13:9
+  11 |        <!-- 页签 -->
+  12 |        <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+  13 |          <el-tab-pane label="达人列表" name="list">
+     |           ^
+  14 |  
+  15 |        <!-- 搜索筛选 -->
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+11:04:13 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:04:32 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:04:45 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:05:16 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:24:22 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:24:29 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:44:04 [vite] hmr update /src/views/influencer-managements/Index.vue
+11:44:18 [vite] hmr update /src/views/influencer-managements/Index.vue
+14:19:55 [vite] hmr update /src/views/samples/Management.vue
+14:20:03 [vite] hmr update /src/views/samples/Management.vue
+14:20:10 [vite] hmr update /src/views/samples/Management.vue
+14:20:41 [vite] hmr update /src/views/samples/Management.vue
+14:20:48 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:20:58 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:21:04 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:21:11 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:21:17 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:22:12 [vite] hmr update /src/views/samples/Management.vue
+14:22:20 [vite] hmr update /src/views/samples/Management.vue
+14:22:27 [vite] hmr update /src/views/samples/Management.vue
+14:23:04 [vite] hmr update /src/views/samples/Management.vue
+14:23:11 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:44:14 [vite] hmr update /src/views/samples/Management.vue
+14:44:39 [vite] hmr update /src/views/samples/Management.vue
+14:44:58 [vite] hmr update /src/views/samples/Management.vue
+14:45:32 [vite] hmr update /src/views/samples/Management.vue
+14:45:55 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:46:17 [vite] hmr update /src/views/samples/Management.vue?vue&type=style&index=0&scoped=8531a016&lang.css
+14:50:32 [vite] hmr update /src/views/report-orders/Index.vue
+14:50:37 [vite] hmr update /src/views/report-orders/Index.vue
+14:50:44 [vite] hmr update /src/views/report-orders/Index.vue
+14:51:08 [vite] hmr update /src/views/report-orders/Index.vue
+14:51:17 [vite] hmr update /src/views/report-orders/Index.vue
+14:51:33 [vite] hmr update /src/views/report-orders/Index.vue
+14:51:33 [vite] Internal server error: Element is missing end tag.
+  Plugin: vite:vue
+  File: /Users/mor/CodeBuddy/LazyFirst/frontend/src/views/report-orders/Index.vue:330:7
+  328|        :class="currentDetail?.isBlacklistedInfluencer ? 'detail-dialog-blacklist' : ''"
+  329|      >
+  330|        <div v-if="currentDetail" :class="currentDetail.isBlacklistedInfluencer ? 'detail-content-blacklist' : ''">
+     |         ^
+  331|          <!-- 黑名单警告 -->
+  332|          <el-alert
+      at createCompilerError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1378:17)
+      at emitError (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:1157:16)
+      at Object.baseParse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-core/dist/compiler-core.cjs.js:3053:13)
+      at Object.parse (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-dom/dist/compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (/Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at handleHotUpdate (file:///Users/mor/CodeBuddy/LazyFirst/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2198:26)
+14:51:50 [vite] hmr update /src/views/report-orders/Index.vue
+14:55:00 [vite] hmr update /src/views/report-orders/Index.vue
