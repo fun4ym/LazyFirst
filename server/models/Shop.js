@@ -37,6 +37,21 @@ const shopSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive'],
     default: 'active'
+  },
+  // 识别码
+  identificationCode: {
+    type: String,
+    default: ''
+  },
+  // 识别码生成时间
+  identificationCodeGeneratedAt: {
+    type: Date,
+    default: null
+  },
+  // 店铺关联的商品ID列表（用于公开样品申请查询）
+  products: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true

@@ -3,35 +3,35 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>部门管理</h3>
-          <el-button type="primary" @click="showCreateDialog">
+          <h3>{{ $t('menu.departments') }}</h3>
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('departments:create')">
             <el-icon><Plus /></el-icon>
-            新建部门
+            {{ $t('department.addDepartment') }}
           </el-button>
         </div>
       </template>
 
       <!-- 表格 -->
       <el-table :data="departments" v-loading="loading" border row-key="_id" :tree-props="{ children: 'children' }">
-        <el-table-column prop="name" label="部门名称" width="250" />
-        <el-table-column prop="description" label="部门描述" />
-        <el-table-column prop="manager.realName" label="负责人" width="120" />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="name" :label="$t('department.departmentName')" width="250" />
+        <el-table-column prop="description" :label="$t('role.description')" />
+        <el-table-column prop="manager.realName" :label="$t('department.manager')" width="120" />
+        <el-table-column :label="$t('common.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-              {{ row.status === 'active' ? '启用' : '禁用' }}
+              {{ row.status === 'active' ? $t('status.active') : $t('status.inactive') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160">
+        <el-table-column prop="createdAt" :label="$t('common.createTime')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('departments:update')">编辑</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('departments:delete')">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -100,9 +100,15 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import AuthManager from '@/utils/auth'
+
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const loading = ref(false)
 const dialogVisible = ref(false)

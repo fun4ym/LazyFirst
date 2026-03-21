@@ -3,18 +3,18 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>基础数据管理</h3>
+          <h3>{{ $t('menu.baseData') }}</h3>
           <div>
-            <el-button type="primary" @click="showCreateDialog">
+            <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('base-data:create')">
               <el-icon><Plus /></el-icon>
-              新增
+              {{ $t('common.add') }}
             </el-button>
-            <el-button type="danger" @click="handleBatchDelete" :disabled="!hasSelected">
-              删除
+            <el-button type="danger" @click="handleBatchDelete" :disabled="!hasSelected" v-if="hasPermission('base-data:btn-batch-delete')">
+              {{ $t('common.delete') }}
             </el-button>
-            <el-button type="success" @click="exportData" :loading="exporting">
+            <el-button type="success" @click="exportData" :loading="exporting" v-if="hasPermission('base-data:btn-export')">
               <el-icon><Download /></el-icon>
-              导出
+              {{ $t('common.export') }}
             </el-button>
           </div>
         </div>
@@ -22,12 +22,12 @@
 
       <!-- 标签页 -->
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-        <el-tab-pane label="国家" name="country" />
-        <el-tab-pane label="产品类目" name="category" />
-        <el-tab-pane label="商品等级" name="grade" />
-        <el-tab-pane label="货币单位" name="priceUnit" />
-        <el-tab-pane label="超时配置" name="timeoutConfig" />
-        <el-tab-pane label="物流查询链接" name="trackingUrl" />
+        <el-tab-pane :label="$t('baseData.country')" name="country" />
+        <el-tab-pane :label="$t('baseData.category')" name="category" />
+        <el-tab-pane :label="$t('baseData.grade')" name="grade" />
+        <el-tab-pane :label="$t('baseData.priceUnit')" name="priceUnit" />
+        <el-tab-pane :label="$t('baseData.timeoutConfig')" name="timeoutConfig" />
+        <el-tab-pane :label="$t('baseData.trackingUrl')" name="trackingUrl" />
         <el-tab-pane label="达人归类标签" name="influencerCategory" />
       </el-tabs>
 
@@ -86,8 +86,8 @@
         </el-table-column>
         <el-table-column label="操作" fixed="right" width="150">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)">修改</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('base-data:update')">修改</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('base-data:delete')">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -165,9 +165,15 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Plus, Download } from '@element-plus/icons-vue'
+import AuthManager from '@/utils/auth'
+
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const loading = ref(false)
 const exporting = ref(false)

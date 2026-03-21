@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, filterByDataScope } = require('../middleware/auth');
 const BdDaily = require('../models/BdDaily');
 
 const router = express.Router();
@@ -10,15 +10,17 @@ const router = express.Router();
  * @desc    获取BD每日统计列表
  * @access  Private
  */
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, authorize('bd-daily:read'), filterByDataScope({ module: 'bd-daily', ownerField: 'userId', deptField: 'deptId' }), async (req, res) => {
   try {
     const { page = 1, limit = 1000, startDate, endDate, salesman, date } = req.query;
 
     console.log('=== BD Daily查询开始 ===');
     console.log('companyId:', req.companyId);
+    console.log('数据权限:', req.dataScope);
     console.log('查询参数:', { page, limit, startDate, endDate, salesman, date });
 
-    const query = { companyId: req.companyId };
+    // 使用数据权限过滤条件
+    const query = { ...req.dataScope.query };
 
     // 日期范围筛选 - 使用UTC时间
     if (startDate || endDate) {
@@ -90,7 +92,7 @@ router.get('/', authenticate, async (req, res) => {
  * @desc    获取BD每日统计详情
  * @access  Private
  */
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, authorize('bd-daily:read'), async (req, res) => {
   try {
     const bdDaily = await BdDaily.findOne({
       _id: req.params.id,
@@ -123,7 +125,7 @@ router.get('/:id', authenticate, async (req, res) => {
  * @desc    创建BD每日统计
  * @access  Private
  */
-router.post('/', authenticate, [
+router.post('/', authenticate, authorize('bd-daily:create'), [
   body('date').notEmpty().withMessage('日期不能为空'),
   body('salesman').notEmpty().withMessage('BD不能为空'),
 ], async (req, res) => {
@@ -143,6 +145,7 @@ router.post('/', authenticate, [
       sampleCount,
       sampleIds,
       revenue,
+      estimatedCommission,
       revenueIds,
       orderCount,
       commission,
@@ -172,6 +175,7 @@ router.post('/', authenticate, [
       sampleCount: sampleCount || 0,
       sampleIds: sampleIds || '',
       revenue: revenue || 0,
+      estimatedCommission: estimatedCommission || 0,
       revenueIds: revenueIds || '',
       orderCount: orderCount || 0,
       commission: commission || 0,
@@ -201,12 +205,13 @@ router.post('/', authenticate, [
  * @desc    更新BD每日统计
  * @access  Private
  */
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, authorize('bd-daily:update'), async (req, res) => {
   try {
     const {
       sampleCount,
       sampleIds,
       revenue,
+      estimatedCommission,
       revenueIds,
       orderCount,
       commission,
@@ -219,6 +224,7 @@ router.put('/:id', authenticate, async (req, res) => {
       sampleCount,
       sampleIds,
       revenue,
+      estimatedCommission,
       revenueIds,
       orderCount,
       commission,
@@ -261,7 +267,7 @@ router.put('/:id', authenticate, async (req, res) => {
  * @desc    删除BD每日统计
  * @access  Private
  */
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, authorize('bd-daily:delete'), async (req, res) => {
   try {
     const bdDaily = await BdDaily.findOneAndDelete({
       _id: req.params.id,
@@ -294,7 +300,7 @@ router.delete('/:id', authenticate, async (req, res) => {
  * @desc    生成BD每日统计数据（自动统计）
  * @access  Private
  */
-router.post('/generate', authenticate, [], async (req, res) => {
+router.post('/generate', authenticate, authorize('bd-daily:create'), [], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -408,13 +414,21 @@ async function generateSingleDate(targetDate, companyId, userId) {
       const salesman = order.bdName || '未分配';
       if (!orderStats[salesman]) {
         orderStats[salesman] = {
+          gmvTotal: 0,
           estimatedCommissionTotal: 0,
           orderGeneratedCount: 0,
           orderCount: 0,
           orderIds: []
         };
       }
-      orderStats[salesman].estimatedCommissionTotal += (order.estimatedCommissionAmount || 0);
+      // 成交金额 = gmv 或 productPrice * orderQuantity
+      const gmv = order.gmv || (order.productPrice || 0) * (order.orderQuantity || 0);
+      orderStats[salesman].gmvTotal += gmv;
+      // 预估佣金 = (estimatedAffiliatePartnerCommission + estimatedAffiliateServiceProviderShopAdPayment) * 0.2
+      // 与仪表盘算法保持一致
+      const partnerCommission = order.estimatedAffiliatePartnerCommission || 0;
+      const shopAdPayment = order.estimatedAffiliateServiceProviderShopAdPayment || 0;
+      orderStats[salesman].estimatedCommissionTotal += (partnerCommission + shopAdPayment) * 0.2;
       orderStats[salesman].orderIds.push(order._id.toString());
       orderStats[salesman].orderCount++;
     });
@@ -471,7 +485,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
     const results = [];
     for (const salesman of allSalesmen) {
       const sampleData = bdStats[salesman] || { sampleCount: 0, sampleIds: [] };
-      const orderData = orderStats[salesman] || { estimatedCommissionTotal: 0, orderGeneratedCount: 0, orderCount: 0, orderIds: [] };
+      const orderData = orderStats[salesman] || { gmvTotal: 0, estimatedCommissionTotal: 0, orderGeneratedCount: 0, orderCount: 0, orderIds: [] };
       const commissionData = commissionStats[salesman] || { commissionTotal: 0, revenueIds: [], orderCount: 0 };
 
       // 检查是否已存在
@@ -487,7 +501,8 @@ async function generateSingleDate(targetDate, companyId, userId) {
         salesman,
         sampleCount: sampleData.sampleCount,
         sampleIds: sampleData.sampleIds.join(','),
-        revenue: orderData.estimatedCommissionTotal,  // 本日收入改为本日订单（estimatedCommissionAmount总和）
+        revenue: orderData.gmvTotal || 0,  // 本日收入（GMV）
+        estimatedCommission: orderData.estimatedCommissionTotal || 0,  // 本日预估服务费
         revenueIds: orderData.orderIds.join(','),
         orderCount: orderData.orderCount,  // 订单数
         commission: commissionData.commissionTotal,  // 佣金（actualAffiliatePartnerCommission总和）
@@ -522,7 +537,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
  * @desc    获取BD统计汇总
  * @access  Private
  */
-router.get('/summary/range', authenticate, async (req, res) => {
+router.get('/summary/range', authenticate, authorize('bd-daily:read'), async (req, res) => {
   try {
     const { startDate, endDate, salesman } = req.query;
 
@@ -549,6 +564,7 @@ router.get('/summary/range', authenticate, async (req, res) => {
           totalDays: 0,
           totalSamples: 0,
           totalRevenue: 0,
+          totalEstimatedCommission: 0,
           totalOrders: 0,
           totalCommission: 0,
           totalOrderGenerated: 0,
@@ -558,6 +574,7 @@ router.get('/summary/range', authenticate, async (req, res) => {
       summary[item.salesman].totalDays++;
       summary[item.salesman].totalSamples += item.sampleCount;
       summary[item.salesman].totalRevenue += item.revenue;
+      summary[item.salesman].totalEstimatedCommission += item.estimatedCommission || 0;
       summary[item.salesman].totalOrders += item.orderCount;
       summary[item.salesman].totalCommission += item.commission;
       summary[item.salesman].totalOrderGenerated += item.orderGeneratedCount;
@@ -577,6 +594,97 @@ router.get('/summary/range', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '获取BD统计汇总失败'
+    });
+  }
+});
+
+/**
+ * @route   POST /api/bd-daily/recalculate-commission
+ * @desc    重新计算所有记录的预估服务费
+ * @access  Private
+ */
+router.post('/recalculate-commission', authenticate, authorize('bd-daily:update'), async (req, res) => {
+  try {
+    const ReportOrder = require('../models/ReportOrder');
+    const companyId = req.companyId;
+
+    console.log('=== 开始重新计算预估服务费 ===');
+
+    // 获取所有BdDaily记录
+    const allRecords = await BdDaily.find({ companyId });
+    console.log(`共找到 ${allRecords.length} 条BdDaily记录`);
+
+    let updatedCount = 0;
+    const errors = [];
+
+    for (const record of allRecords) {
+      try {
+        const recordDate = new Date(record.date);
+        recordDate.setHours(0, 0, 0, 0);
+        const nextDate = new Date(recordDate);
+        nextDate.setDate(nextDate.getDate() + 1);
+
+        // 查询该日期的订单
+        const orders = await ReportOrder.find({
+          companyId,
+          bdName: record.salesman,
+          createTime: { $gte: recordDate, $lt: nextDate }
+        });
+
+        // 重新计算预估服务费
+        let estimatedCommissionTotal = 0;
+        let gmvTotal = 0;
+        let orderCount = 0;
+        const orderIds = [];
+
+        orders.forEach(order => {
+          const gmv = order.gmv || (order.productPrice || 0) * (order.orderQuantity || 0);
+          gmvTotal += gmv;
+
+          const partnerCommission = order.estimatedAffiliatePartnerCommission || 0;
+          const shopAdPayment = order.estimatedAffiliateServiceProviderShopAdPayment || 0;
+          estimatedCommissionTotal += (partnerCommission + shopAdPayment) * 0.2;
+
+          orderIds.push(order._id.toString());
+          orderCount++;
+        });
+
+        // 更新记录
+        await BdDaily.findByIdAndUpdate(record._id, {
+          estimatedCommission: estimatedCommissionTotal,
+          revenue: gmvTotal,
+          orderCount: orderCount,
+          revenueIds: orderIds.join(','),
+          orderGeneratedCount: orderIds.length
+        });
+
+        updatedCount++;
+      } catch (err) {
+        errors.push({
+          salesman: record.salesman,
+          date: record.date,
+          error: err.message
+        });
+      }
+    }
+
+    console.log(`=== 重新计算完成，更新了 ${updatedCount} 条记录 ===`);
+
+    res.json({
+      success: true,
+      message: `重新计算完成，成功更新 ${updatedCount} 条记录`,
+      data: {
+        total: allRecords.length,
+        updated: updatedCount,
+        errors: errors
+      }
+    });
+
+  } catch (error) {
+    console.error('Recalculate commission error:', error);
+    res.status(500).json({
+      success: false,
+      message: '重新计算预估服务费失败'
     });
   }
 });

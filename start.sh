@@ -67,27 +67,38 @@ fi
 
 # 启动前端
 echo ""
-echo "🚀 启动前端服务 (端口: 5173)..."
+echo "🚀 启动前端服务..."
 cd frontend && nohup npm run dev > ../logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "✅ 前端已启动 (PID: $FRONTEND_PID)"
 echo "   日志文件: logs/frontend.log"
 echo ""
 
-# 等待前端启动
+# 等待前端启动并检测端口
 echo "⏳ 等待前端服务启动..."
-sleep 5
+sleep 3
+
+# 检测前端实际端口
+FRONTEND_PORT=$(grep -o "http://localhost:[0-9]*" logs/frontend.log | head -1 | grep -o "[0-9]*$")
+if [ -z "$FRONTEND_PORT" ]; then
+    FRONTEND_PORT=5173  # 默认端口
+fi
+echo "✅ 前端端口: $FRONTEND_PORT"
+
+# 保存端口到文件
+echo $FRONTEND_PORT > logs/frontend.port
 
 echo ""
 echo "======================================"
 echo "  🎉 系统启动完成！"
 echo "======================================"
 echo ""
-echo "📱 前端访问地址: http://localhost:5173"
+echo "📱 前端访问地址: http://localhost:$FRONTEND_PORT"
 echo "🔧 后端访问地址: http://localhost:3000"
 echo ""
 echo "📊 查看后端日志: tail -f logs/backend.log"
 echo "🎨 查看前端日志: tail -f logs/frontend.log"
+echo "🔌 查看前端端口: cat logs/frontend.port"
 echo ""
 echo "🛑 停止服务: ./stop.sh"
 echo "======================================"

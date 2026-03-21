@@ -17,7 +17,7 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="showCreateDialog">新建店铺</el-button>
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('shops:create')">新建店铺</el-button>
         </el-col>
       </el-row>
     </div>
@@ -32,6 +32,23 @@
       </el-table-column>
       <el-table-column prop="shopName" label="店铺名称" width="150" />
       <el-table-column prop="shopNumber" label="店铺号" width="120" />
+      <el-table-column label="申样链接" min-width="180">
+        <template #default="{ row }">
+          <div v-if="row.identificationCode" class="sample-link">
+            <el-tag type="success" size="small">已生成</el-tag>
+            <span class="generated-time">{{ formatDate(row.identificationCodeGeneratedAt) }}</span>
+            <el-button
+              link
+              type="primary"
+              size="small"
+              @click="copySampleLink(row)"
+            >
+              复制
+            </el-button>
+          </div>
+          <span v-else class="no-code">未生成</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="creditRating" label="信用等级" width="100">
         <template #default="{ row }">
           ★{{ row.creditRating || 0 }}
@@ -49,11 +66,11 @@
           ★{{ row.cooperationRating || 0 }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="250" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="viewShop(row)">详情</el-button>
-          <el-button link type="primary" @click="editShop(row)">编辑</el-button>
-          <el-button link type="danger" @click="deleteShop(row)">删除</el-button>
+          <el-button link type="primary" @click="viewShop(row)" v-if="hasPermission('shops:read')">详情</el-button>
+          <el-button link type="primary" @click="editShop(row)" v-if="hasPermission('shops:update')">编辑</el-button>
+          <el-button link type="danger" @click="deleteShop(row)" v-if="hasPermission('shops:delete')">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -118,6 +135,16 @@
         <el-descriptions :column="2" border>
           <el-descriptions-item label="店铺名称">{{ currentShop.shopName }}</el-descriptions-item>
           <el-descriptions-item label="店铺号">{{ currentShop.shopNumber }}</el-descriptions-item>
+          <el-descriptions-item label="识别码">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span v-if="currentShop.identificationCode" class="code-text">{{ currentShop.identificationCode }}</span>
+              <span v-else class="no-code">未生成</span>
+              <el-button link type="primary" size="small" @click="refreshIdentificationCode(currentShop)">刷新</el-button>
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item label="生成时间">
+            {{ currentShop.identificationCodeGeneratedAt ? formatDate(currentShop.identificationCodeGeneratedAt) : '-' }}
+          </el-descriptions-item>
           <el-descriptions-item label="联系地址">{{ currentShop.contactAddress || '-' }}</el-descriptions-item>
           <el-descriptions-item label="备注">{{ currentShop.remark || '-' }}</el-descriptions-item>
         </el-descriptions>
@@ -234,8 +261,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Check } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
+import AuthManager from '@/utils/auth'
 
 const userStore = useUserStore()
+
+// 权限检查 - 支持 products 和 shops 权限
+const hasPermission = (perm) => {
+  // shops 权限本来就是 shops:xxx，不需要特殊处理
+  return AuthManager.hasPermission(perm)
+}
 
 const loading = ref(false)
 const showDialog = ref(false)
@@ -290,6 +324,11 @@ const trackingForm = reactive({
 })
 
 const loadUsers = async () => {
+  // 检查是否有users:read权限，没有则不调用
+  if (!AuthManager.hasPermission('users:read')) {
+    console.log('无users:read权限，跳过加载用户')
+    return
+  }
   try {
     const res = await request.get('/users', {
       params: { companyId: userStore.companyId }
@@ -495,6 +534,41 @@ const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-CN')
 }
 
+const copySampleLink = async (row) => {
+  const link = `${window.location.origin}/samples/public?s=${row.identificationCode}`
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessage.success('链接已复制到剪贴板')
+  } catch (error) {
+    console.error('复制失败:', error)
+    ElMessage.error('复制失败')
+  }
+}
+
+const refreshIdentificationCode = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定要刷新"${row.shopName}"的识别码吗?`, '提示', {
+      type: 'warning'
+    })
+    const res = await request.put(`/shops/${row._id}/identification-code`)
+    ElMessage.success('识别码刷新成功')
+    // 更新当前行的数据
+    row.identificationCode = res.identificationCode
+    row.identificationCodeGeneratedAt = res.identificationCodeGeneratedAt
+    // 如果当前查看的是这个店铺，也更新详情
+    if (currentShop.value && currentShop.value._id === row._id) {
+      currentShop.value.identificationCode = res.identificationCode
+      currentShop.value.identificationCodeGeneratedAt = res.identificationCodeGeneratedAt
+    }
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('刷新识别码失败:', error)
+      ElMessage.error('刷新识别码失败')
+    }
+  }
+}
+
 onMounted(() => {
   loadUsers()
   loadData()
@@ -518,5 +592,28 @@ defineExpose({
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.code-text {
+  font-family: 'Monaco', 'Menlo', monospace;
+  color: #409eff;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.no-code {
+  color: #909399;
+  font-style: italic;
+}
+
+.sample-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generated-time {
+  color: #909399;
+  font-size: 12px;
 }
 </style>

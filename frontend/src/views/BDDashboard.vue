@@ -1,7 +1,27 @@
 <template>
   <div class="dashboard">
+    <!-- BD用户选择器 -->
+    <div class="bd-selector">
+      <span class="selector-label">选择BD：</span>
+      <el-select
+        v-model="selectedBDId"
+        placeholder="请选择BD用户"
+        @change="handleBDChange"
+        style="width: 250px"
+      >
+        <el-option label="全部（团队）" value="" />
+        <el-option label="未分配" value="unassigned" />
+        <el-option
+          v-for="bd in bdUsers"
+          :key="bd._id"
+          :label="bd.realName || bd.username"
+          :value="bd._id"
+        />
+      </el-select>
+    </div>
+
     <!-- BD数据概览 -->
-    <template v-if="isBD && bdStats">
+    <template v-if="bdStats">
       <!-- 统计日期提示 -->
       <div class="stats-date-info">
         <el-icon class="date-icon"><Calendar /></el-icon>
@@ -126,6 +146,7 @@
                 <el-radio-group v-model="sampleTrendRange" size="default">
                   <el-radio-button value="7days">{{ $t('dashboard.day7') }}</el-radio-button>
                   <el-radio-button value="14days">{{ $t('dashboard.day14') }}</el-radio-button>
+                  <el-radio-button value="30days">30天</el-radio-button>
                   <el-radio-button value="monthly">{{ $t('dashboard.naturalMonth') }}</el-radio-button>
                 </el-radio-group>
               </div>
@@ -150,6 +171,7 @@
                 <el-radio-group v-model="orderTrendRange" size="default">
                   <el-radio-button value="7days">{{ $t('dashboard.day7') }}</el-radio-button>
                   <el-radio-button value="14days">{{ $t('dashboard.day14') }}</el-radio-button>
+                  <el-radio-button value="30days">30天</el-radio-button>
                   <el-radio-button value="monthly">{{ $t('dashboard.naturalMonth') }}</el-radio-button>
                 </el-radio-group>
               </div>
@@ -191,10 +213,10 @@
       </el-row>
     </template>
 
-    <!-- 非BD用户提示 -->
+    <!-- 未选择BD提示 -->
     <template v-else>
       <el-card>
-        <el-empty :description="$t('dashboard.bdOnly')" />
+        <el-empty description="请选择BD用户查看数据" />
       </el-card>
     </template>
   </div>
@@ -208,36 +230,53 @@ const { t } = useI18n()
 import request from '@/utils/request'
 import { Box, ShoppingCart, Money, Calendar } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import AuthManager from '@/utils/auth'
+import { useUserStore } from '@/stores/user'
 
-const isBD = ref(false)
+const userStore = useUserStore()
+
+const selectedBDId = ref('')
+const bdUsers = ref([])
 const bdStats = ref(null)
 const sampleTrendRange = ref('7days')
 const orderTrendRange = ref('7days')
 
-// 调试日志
-const debugInfo = computed(() => {
-  return {
-    isBD: isBD.value,
-    bdStats: bdStats.value ? '有值' : '无值',
-    yesterdayStats: bdStats.value?.yesterdayStats || null
+// 加载BD用户列表
+const loadBDUsers = async () => {
+  if (!AuthManager.hasPermission('users:read')) {
+    console.log('无users:read权限，跳过加载BD用户')
+    return
   }
-})
+  try {
+    const res = await request.get('/users', {
+      params: {
+        companyId: userStore.companyId,
+        role: 'bd',
+        status: 'active'
+      }
+    })
+    bdUsers.value = res.users || []
+  } catch (error) {
+    console.error('加载BD用户列表失败:', error)
+  }
+}
 
-// 在控制台输出调试信息
-const logDebugInfo = () => {
-  console.log('[Dashboard Debug]', JSON.stringify(debugInfo.value, null, 2))
-  console.log('[Dashboard] isBD.value:', isBD.value)
-  console.log('[Dashboard] bdStats.value:', bdStats.value)
-  console.log('[Dashboard] template 条件:', isBD.value && bdStats.value)
+const handleBDChange = () => {
+  console.log('[BDDashboard] handleBDChange, selectedBDId:', selectedBDId.value)
+  if (selectedBDId.value === 'unassigned') {
+    loadBDStats(null, 'unassigned')
+  } else if (selectedBDId.value) {
+    loadBDStats(selectedBDId.value)
+  } else {
+    // 全部（团队）数据
+    loadBDStats(null, 'all')
+  }
 }
 
 const sampleTrendData = computed(() => {
   if (!bdStats.value?.trendStats) return []
   const key = sampleTrendRange.value
-  const dataKey = key === '7days' ? 'samples7Days' : key === '14days' ? 'samples14Days' : 'samplesMonthly'
+  const dataKey = key === '7days' ? 'samples7Days' : key === '14days' ? 'samples14Days' : key === '30days' ? 'samples30Days' : 'samplesMonthly'
   const trendData = bdStats.value.trendStats[dataKey]
-  console.log('[sampleTrendData] key:', key, 'dataKey:', dataKey, 'trendData:', trendData)
   return [
     { name: '个人', data: trendData?.user || [], type: 'line', itemStyle: { color: '#7b1fa2' } },
     { name: '团队', data: trendData?.team || [], type: 'bar', itemStyle: { color: '#e8e4ef' } }
@@ -247,17 +286,15 @@ const sampleTrendData = computed(() => {
 const sampleTrendDates = computed(() => {
   if (!bdStats.value?.trendStats) return []
   const key = sampleTrendRange.value
-  const dataKey = key === '7days' ? 'samples7Days' : key === '14days' ? 'samples14Days' : 'samplesMonthly'
-  console.log('[sampleTrendDates] dataKey:', dataKey, 'dates:', bdStats.value.trendStats[dataKey]?.dates)
+  const dataKey = key === '7days' ? 'samples7Days' : key === '14days' ? 'samples14Days' : key === '30days' ? 'samples30Days' : 'samplesMonthly'
   return bdStats.value.trendStats[dataKey]?.dates || []
 })
 
 const orderTrendData = computed(() => {
   if (!bdStats.value?.trendStats) return []
   const key = orderTrendRange.value
-  const dataKey = key === '7days' ? 'orders7Days' : key === '14days' ? 'orders14Days' : 'ordersMonthly'
+  const dataKey = key === '7days' ? 'orders7Days' : key === '14days' ? 'orders14Days' : key === '30days' ? 'orders30Days' : 'ordersMonthly'
   const trendData = bdStats.value.trendStats[dataKey]
-  console.log('[orderTrendData] key:', key, 'dataKey:', dataKey, 'trendData:', trendData)
   return [
     { name: '个人', data: trendData?.user || [], type: 'line', itemStyle: { color: '#0288d1' } },
     { name: '团队', data: trendData?.team || [], type: 'bar', itemStyle: { color: '#e3f2fd' } }
@@ -267,8 +304,7 @@ const orderTrendData = computed(() => {
 const orderTrendDates = computed(() => {
   if (!bdStats.value?.trendStats) return []
   const key = orderTrendRange.value
-  const dataKey = key === '7days' ? 'orders7Days' : key === '14days' ? 'orders14Days' : 'ordersMonthly'
-  console.log('[orderTrendDates] dataKey:', dataKey, 'dates:', bdStats.value.trendStats[dataKey]?.dates)
+  const dataKey = key === '7days' ? 'orders7Days' : key === '14days' ? 'orders14Days' : key === '30days' ? 'orders30Days' : 'ordersMonthly'
   return bdStats.value.trendStats[dataKey]?.dates || []
 })
 
@@ -309,38 +345,26 @@ const formatDate = (date) => {
   return `${month}/${day}`
 }
 
-const getYesterdayDate = () => {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${month}/${day}`
-}
-
-const getCurrentMonth = () => {
-  const d = new Date()
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  return `${year}/${month}`
-}
-
-const loadBDStats = async () => {
+const loadBDStats = async (userId, special) => {
   try {
-    console.log('[loadBDStats] Starting request...')
-    const res = await request.get('/dashboard/bd-stats')
-    console.log('[loadBDStats] Response:', res)
-    bdStats.value = res
-    isBD.value = true
-    console.log('[loadBDStats] bdStats set:', bdStats.value)
-    console.log('[loadBDStats] isBD.value:', isBD.value)
-    console.log('[loadBDStats] bdStats.value?.yesterdayStats:', bdStats.value?.yesterdayStats)
-    console.log('[loadBDStats] bdStats.value?.trendStats:', bdStats.value?.trendStats)
-    console.log('[loadBDStats] 完整trendStats:', JSON.stringify(bdStats.value?.trendStats, null, 2))
-    logDebugInfo()
+    const params = {}
+    if (special === 'unassigned') {
+      params.special = 'unassigned'
+    } else if (special === 'all') {
+      // 全部数据 - 调用当前登录用户（需要是BD角色）
+      // 不传userId，让后端使用当前登录用户
+    } else if (userId) {
+      params.userId = userId
+    }
+    console.log('[BDDashboard] loadBDStats params:', params)
+    const res = await request.get('/dashboard/bd-stats', { params })
+    console.log('[BDDashboard] loadBDStats response:', res)
+    bdStats.value = res.data || res
   } catch (error) {
     console.error('Load BD stats error:', error)
     if (error.response?.status === 403) {
-      isBD.value = false
+      // 如果当前用户不是BD，可能无法查看团队数据
+      ElMessage.warning('当前用户无权限查看此数据')
     } else {
       ElMessage.error('加载数据概览失败')
     }
@@ -366,38 +390,48 @@ const PieChart = defineComponent({
   },
   setup(props) {
     const chartRef = ref(null)
+    let chartInstance = null
+
+    const updateChart = () => {
+      if (!chartRef.value) return
+      import('echarts').then(echarts => {
+        if (!chartInstance) {
+          chartInstance = echarts.init(chartRef.value)
+        }
+        chartInstance.setOption({
+          series: [
+            {
+              type: 'pie',
+              radius: ['40%', '70%'],
+              avoidLabelOverlap: false,
+              label: {
+                show: true,
+                position: 'center',
+                formatter: '{b}\n{d}%',
+                fontSize: 16,
+                fontWeight: 'bold'
+              },
+              emphasis: {
+                label: {
+                  show: true
+                }
+              },
+              labelLine: {
+                show: false
+              },
+              data: props.data
+            }
+          ]
+        })
+      })
+    }
 
     onMounted(() => {
-      import('echarts').then(echarts => {
-        if (chartRef.value) {
-          const chart = echarts.init(chartRef.value)
-          chart.setOption({
-            series: [
-              {
-                type: 'pie',
-                radius: ['40%', '70%'],
-                avoidLabelOverlap: false,
-                label: {
-                  show: true,
-                  position: 'center',
-                  formatter: '{b}\n{d}%',
-                  fontSize: 16,
-                  fontWeight: 'bold'
-                },
-                emphasis: {
-                  label: {
-                    show: true
-                  }
-                },
-                labelLine: {
-                  show: false
-                },
-                data: props.data
-              }
-            ]
-          })
-        }
-      })
+      updateChart()
+    })
+
+    watch(() => props.data, () => {
+      updateChart()
     })
 
     return () => h('div', { ref: chartRef, style: { width: '200px', height: '200px' } })
@@ -444,8 +478,6 @@ const TrendChart = defineComponent({
         symbolSize: 6
       }))
 
-      console.log('[TrendChart] updateChart type:', props.type, 'data:', props.data, 'dates:', props.dates)
-
       chartInstance.setOption({
         tooltip: {
           trigger: 'axis',
@@ -477,8 +509,6 @@ const TrendChart = defineComponent({
         },
         series: series
       }, { notMerge: false })
-
-      console.log('[TrendChart] chart setOption completed')
     }
 
     onMounted(() => {
@@ -498,37 +528,32 @@ const TrendChart = defineComponent({
 })
 
 onMounted(() => {
-  const user = AuthManager.getUser()
-  console.log('[Dashboard] User info:', user)
-  if (user) {
-    const role = user.role
-    console.log('[Dashboard] Role:', role, 'Type:', typeof role, 'IsArray:', Array.isArray(role))
-    let hasBDRole = false
-    if (Array.isArray(role)) {
-      hasBDRole = role.some(r => {
-        const roleName = typeof r === 'string' ? r : (r?.name || '')
-        return roleName.toLowerCase() === 'bd'
-      })
-    } else if (typeof role === 'string') {
-      hasBDRole = role.toLowerCase() === 'bd'
-    } else if (typeof role === 'object' && role !== null) {
-      // role 是对象，包含 name 字段
-      hasBDRole = (role.name || '').toLowerCase() === 'bd'
-    }
-    console.log('[Dashboard] hasBDRole:', hasBDRole)
-    if (hasBDRole) {
-      isBD.value = true
-      loadBDStats()
-    } else {
-      isBD.value = false
-    }
-  }
+  loadBDUsers()
+  // 默认加载全部（团队）数据
+  loadBDStats(null, 'all')
 })
 </script>
 
 <style scoped>
 .dashboard {
   padding: 0;
+}
+
+.bd-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.selector-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
 }
 
 .stats-date-info {
@@ -633,14 +658,14 @@ onMounted(() => {
   align-items: center;
 }
 
-:deep(.el-card__header) {
+::deep(.el-card__header) {
   border-bottom: 1px solid #e8ecef;
   padding: 18px 22px;
   font-weight: 600;
   color: #2c3e50;
 }
 
-:deep(.el-card__body) {
+::deep(.el-card__body) {
   padding: 0;
 }
 
@@ -661,27 +686,27 @@ onMounted(() => {
   gap: 16px;
 }
 
-:deep(.el-radio-group) {
+::deep(.el-radio-group) {
   display: flex;
   gap: 4px;
 }
 
-:deep(.el-radio-button__inner) {
+::deep(.el-radio-button__inner) {
   border-radius: 6px;
   font-weight: 500;
   font-size: 13px;
 }
 
-:deep(.el-tag) {
+::deep(.el-tag) {
   font-weight: 600;
   font-size: 13px;
 }
 
-:deep(.el-table) {
+::deep(.el-table) {
   font-size: 13px;
 }
 
-:deep(.el-table th) {
+::deep(.el-table th) {
   font-weight: 600;
   color: #2c3e50;
 }

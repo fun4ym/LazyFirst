@@ -34,7 +34,7 @@ const sampleManagementSchema = new mongoose.Schema({
   },
   salesman: {
     type: String,
-    comment: '归属业务员'
+    comment: '归属业务员ID'
   },
   shippingInfo: {
     type: String,
@@ -47,7 +47,29 @@ const sampleManagementSchema = new mongoose.Schema({
   isSampleSent: {
     type: Boolean,
     default: false,
-    comment: '是否寄样'
+    comment: '是否寄样（兼容旧数据）'
+  },
+  // 寄样状态：pending-待审核, shipping-寄样中, sent-已寄样, refused-不合作
+  sampleStatus: {
+    type: String,
+    enum: ['pending', 'shipping', 'sent', 'refused'],
+    default: 'pending',
+    comment: '寄样状态'
+  },
+  // 不合作原因
+  refusalReason: {
+    type: String,
+    comment: '不合作原因'
+  },
+  // 寄样状态更新记录
+  sampleStatusUpdatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    comment: '寄样状态更新人'
+  },
+  sampleStatusUpdatedAt: {
+    type: Date,
+    comment: '寄样状态更新时间'
   },
   trackingNumber: {
     type: String,
@@ -90,6 +112,26 @@ const sampleManagementSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
     comment: '是否出单'
+  },
+  // 履约信息更新记录
+  fulfillmentUpdatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    comment: '履约信息更新人'
+  },
+  fulfillmentUpdatedAt: {
+    type: Date,
+    comment: '履约信息更新时间'
+  },
+  // 投流信息更新记录
+  adPromotionUpdatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    comment: '投流信息更新人'
+  },
+  adPromotionUpdatedAt: {
+    type: Date,
+    comment: '投流信息更新时间'
   },
   // 系统字段
   creatorId: {

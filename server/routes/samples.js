@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, filterByDataScope } = require('../middleware/auth');
 const SampleManagement = require('../models/SampleManagement');
 const Product = require('../models/Product');
 const Influencer = require('../models/Influencer');
@@ -27,8 +27,9 @@ const upload = multer({
  * @route   GET /api/samples
  * @desc    获取样品申请列表
  * @access  Private
+ * @notes   支持 samples:read (管理员) 和 samples-bd:read (BD) 两种权限
  */
-router.get('/', authenticate, authorize('samples:read'), async (req, res) => {
+router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesmanId', deptField: 'deptId' }), async (req, res) => {
   try {
     const {
       page = 1,
@@ -37,11 +38,23 @@ router.get('/', authenticate, authorize('samples:read'), async (req, res) => {
       productName,
       influencerAccount,
       salesman,
+      salesmanId,
       isSampleSent,
       isOrderGenerated
     } = req.query;
 
-    const query = { companyId: req.companyId };
+    // 使用数据权限过滤条件
+    const query = { ...req.dataScope.query };
+    
+    // BD用户按salesman名称过滤（因为样品数据用salesman而不是salesmanId）
+    if (req.dataScope.scope === 'self' && req.user.username) {
+      // 如果没有 salesmanId 字段的数据，则使用 salesman 字段匹配
+      query.$or = [
+        { salesmanId: req.user._id },
+        { salesman: req.user.username }
+      ];
+      delete query.salesmanId;
+    }
 
     // 日期筛选
     if (date) {
@@ -61,8 +74,12 @@ router.get('/', authenticate, authorize('samples:read'), async (req, res) => {
       query.influencerAccount = { $regex: influencerAccount, $options: 'i' };
     }
 
-    // 业务员筛选
-    if (salesman) {
+    // 业务员ID筛选（精确匹配）- 使用salesman名称精确匹配
+    if (salesmanId) {
+      // salesmanId实际上是salesman名称，直接精确匹配
+      query.salesman = salesmanId;
+    } else if (salesman) {
+      // 业务员名称筛选（用于管理模式的模糊搜索）
       query.salesman = { $regex: salesman, $options: 'i' };
     }
 
@@ -78,6 +95,9 @@ router.get('/', authenticate, authorize('samples:read'), async (req, res) => {
 
     const samples = await SampleManagement.find(query)
       .populate('creatorId', 'realName')
+      .populate('fulfillmentUpdatedBy', 'realName')
+      .populate('adPromotionUpdatedBy', 'realName')
+      .populate('sampleStatusUpdatedBy', 'realName')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ date: -1 });
@@ -137,8 +157,9 @@ router.get('/', authenticate, authorize('samples:read'), async (req, res) => {
  * @route   POST /api/samples
  * @desc    创建样品申请（手动录入）
  * @access  Private
+ * @notes   支持 samples:create (管理员) 和 samples-bd:create (BD) 两种权限
  */
-router.post('/', authenticate, authorize('samples:create'), [
+router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'), [
   body('date').notEmpty().withMessage('日期不能为空'),
   body('productName').notEmpty().withMessage('商品名称不能为空'),
   body('productId').notEmpty().withMessage('商品ID不能为空'),
@@ -248,12 +269,49 @@ router.post('/', authenticate, authorize('samples:create'), [
  * @route   PUT /api/samples/:id
  * @desc    更新样品申请
  * @access  Private
+ * @notes   支持 samples:update (管理员) 和 samples-bd:update (BD) 两种权限
  */
-router.put('/:id', authenticate, authorize('samples:update'), async (req, res) => {
+router.put('/:id', authenticate, authorize('samples:update', 'samples-bd:update'), async (req, res) => {
   try {
+    const { videoLink, videoStreamCode, sampleStatus, refusalReason, ...restBody } = req.body;
+    const updateData = { ...restBody };
+
+    // 如果更新了视频链接（履约信息），记录更新人和时间
+    if (videoLink !== undefined) {
+      updateData.videoLink = videoLink;
+      updateData.fulfillmentUpdatedBy = req.user._id;
+      updateData.fulfillmentUpdatedAt = new Date();
+    }
+
+    // 如果更新了投流码或投流状态（投流信息），记录更新人和时间
+    if (videoStreamCode !== undefined || req.body.isAdPromotion !== undefined) {
+      if (videoStreamCode !== undefined) {
+        updateData.videoStreamCode = videoStreamCode;
+      }
+      if (req.body.isAdPromotion !== undefined) {
+        updateData.isAdPromotion = req.body.isAdPromotion;
+      }
+      updateData.adPromotionUpdatedBy = req.user._id;
+      updateData.adPromotionUpdatedAt = new Date();
+    }
+
+    // 如果更新了寄样状态，记录更新人和时间
+    if (sampleStatus !== undefined) {
+      updateData.sampleStatus = sampleStatus;
+      updateData.sampleStatusUpdatedBy = req.user._id;
+      updateData.sampleStatusUpdatedAt = new Date();
+      // 同步更新 isSampleSent 兼容旧数据
+      updateData.isSampleSent = sampleStatus === 'sent';
+    }
+
+    // 如果更新了不合作原因
+    if (refusalReason !== undefined) {
+      updateData.refusalReason = refusalReason;
+    }
+
     const sample = await SampleManagement.findOneAndUpdate(
       { _id: req.params.id, companyId: req.companyId },
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -283,8 +341,9 @@ router.put('/:id', authenticate, authorize('samples:update'), async (req, res) =
  * @route   DELETE /api/samples/:id
  * @desc    删除样品申请
  * @access  Private
+ * @notes   支持 samples:delete (管理员) 和 samples-bd:delete (BD) 两种权限
  */
-router.delete('/:id', authenticate, authorize('samples:delete'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('samples:delete', 'samples-bd:delete'), async (req, res) => {
   try {
     const sample = await SampleManagement.findOneAndDelete({
       _id: req.params.id,
@@ -316,8 +375,9 @@ router.delete('/:id', authenticate, authorize('samples:delete'), async (req, res
  * @route   POST /api/samples/import
  * @desc    导入样品申请Excel
  * @access  Private
+ * @notes   支持 samples:create (管理员) 和 samples-bd:create (BD) 两种权限
  */
-router.post('/import', authenticate, authorize('samples:create'), upload.single('file'), async (req, res) => {
+router.post('/import', authenticate, authorize('samples:create', 'samples-bd:create'), upload.single('file'), async (req, res) => {
   try {
     console.log('[Sample Import] 导入请求接收');
 

@@ -3,28 +3,43 @@ const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const ReportOrder = require('../models/ReportOrder');
 const BaseData = require('../models/BaseData');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize, filterByDataScope } = require('../middleware/auth');
 
 // 获取达人列表
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, authorize('influencers:read'), filterByDataScope({ module: 'influencers', ownerField: 'assignedTo', deptField: 'deptId' }), async (req, res) => {
   try {
     const { companyId, poolType, status, categoryTag, keyword, page = 1, limit = 20 } = req.query;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
-    const query = { companyId };
+    // 公海达人：无论权限都能看到（不受数据权限限制）
+    // 私海达人：按数据权限过滤
+    let query = {};
 
-    // 公海权限：所有可见；私海：只能看到自己的或管理员全部
-    if (poolType) {
-      query.poolType = poolType;
-      if (poolType === 'private' && req.user.role !== 'admin') {
-        query.assignedTo = userId;
-      }
-    } else if (req.user.role !== 'admin') {
-      // 非管理员默认只能看到私海自己的 + 公海全部
-      query.$or = [
-        { poolType: 'public' },
-        { poolType: 'private', assignedTo: userId }
-      ];
+    // 只有当 companyId 有有效值时才添加到查询条件
+    if (companyId && companyId.trim()) {
+      query.companyId = companyId;
+    }
+
+    // 根据poolType分别处理
+    if (poolType === 'public') {
+      // 公海：不需要数据权限过滤
+      query.poolType = 'public';
+    } else if (poolType === 'private') {
+      // 私海：使用数据权限过滤
+      query = { ...req.dataScope.query, poolType: 'private' };
+    } else {
+      // 未指定poolType：公海全部 + 私海按数据权限
+      // 使用 $or 组合：公海(所有) OR 私海(按数据权限)
+      const dataScopeQuery = req.dataScope.query;
+      // 移除dataScopeQuery中的companyId，避免重复
+      delete dataScopeQuery.companyId;
+
+      query = {
+        $or: [
+          { poolType: 'public', companyId: req.companyId },
+          { poolType: 'private', companyId: req.companyId, ...dataScopeQuery }
+        ]
+      };
     }
 
     if (status) {
@@ -112,7 +127,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // 创建达人
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, authorize('influencers:create'), async (req, res) => {
   try {
     console.log('创建达人 - 收到数据:', JSON.stringify(req.body, null, 2));
 
@@ -166,7 +181,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // 更新达人
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, authorize('influencers:update'), async (req, res) => {
   try {
     const { tiktokName, tiktokId, formerNames, formerIds, originalTiktokId, status, categoryTags,
       realName, nickname, gender, addresses, phoneNumbers, socialAccounts } = req.body;
@@ -218,7 +233,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // 删除达人
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, authorize('influencers:delete'), async (req, res) => {
   try {
     const influencer = await Influencer.findByIdAndDelete(req.params.id);
 
@@ -382,7 +397,7 @@ router.post('/batch', authenticate, async (req, res) => {
 });
 
 // 标记黑名单
-router.post('/:id/blacklist', authenticate, async (req, res) => {
+router.post('/:id/blacklist', authenticate, authorize('influencers:btn-add-blacklist'), async (req, res) => {
   try {
     const { reason } = req.body;
     const influencer = await Influencer.findById(req.params.id);
@@ -395,6 +410,14 @@ router.post('/:id/blacklist', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: '该达人已在黑名单中' });
     }
 
+    // 获取上一次维护记录的粉丝数和GMV
+    const lastMaintenance = await InfluencerMaintenance.findOne({ influencerId: influencer._id })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const followers = lastMaintenance ? lastMaintenance.followers : 0;
+    const gmv = lastMaintenance ? lastMaintenance.gmv : 0;
+
     // 标记达人为黑名单
     influencer.isBlacklisted = true;
     influencer.blacklistedAt = new Date();
@@ -402,6 +425,21 @@ router.post('/:id/blacklist', authenticate, async (req, res) => {
     influencer.blacklistedByName = req.user.realName || req.user.username;
     influencer.blacklistReason = reason || '';
     await influencer.save();
+
+    // 添加维护记录（拉黑时同时写维护记录）
+    const maintenance = {
+      companyId: influencer.companyId,
+      influencerId: influencer._id,
+      followers: followers,
+      gmv: gmv,
+      poolType: influencer.poolType,
+      remark: reason || '拉黑',
+      maintainerId: req.user.id,
+      maintainerName: req.user.realName || req.user.username,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    await InfluencerMaintenance.create(maintenance);
 
     // 将该达人相关的ReportOrder也标记为黑名单
     await ReportOrder.updateMany(
@@ -417,7 +455,7 @@ router.post('/:id/blacklist', authenticate, async (req, res) => {
 });
 
 // 释放黑名单
-router.post('/:id/release-blacklist', authenticate, async (req, res) => {
+router.post('/:id/release-blacklist', authenticate, authorize('influencers:btn-remove-blacklist'), async (req, res) => {
   try {
     const influencer = await Influencer.findById(req.params.id);
 

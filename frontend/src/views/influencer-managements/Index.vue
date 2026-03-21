@@ -3,38 +3,40 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>建联达人</h3>
-          <el-button type="primary" @click="showCreateDialog = true">新建达人</el-button>
+          <h3>{{ $t('menu.influencerList') }}</h3>
+          <el-button type="primary" @click="showCreateDialog = true" v-if="hasPermission('influencers:create')">{{ $t('influencer.addInfluencer') }}</el-button>
         </div>
       </template>
 
       <!-- 页签 -->
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
         <!-- 达人列表 -->
-        <el-tab-pane label="达人列表" name="list">
+        <el-tab-pane :label="$t('influencer.influencerList')" name="list">
 
           <!-- 搜索筛选 -->
       <div class="filter-section">
         <el-row :gutter="16">
           <el-col :span="4">
-            <el-select v-model="filters.poolType" placeholder="归属海域" clearable @change="loadData">
-              <el-option label="公海" value="public" />
-              <el-option label="私海" value="private" />
+            <el-select v-model="filters.poolType" :placeholder="$t('common.select')" clearable @change="loadData">
+              <el-option :label="$t('common.all')" value="" />
+              <el-option :label="$t('influencer.publicSea')" value="public" />
+              <el-option :label="$t('influencer.privateSea')" value="private" />
             </el-select>
           </el-col>
           <el-col :span="4">
-            <el-select v-model="filters.status" placeholder="状态" clearable @change="loadData">
-              <el-option label="启用" value="enabled" />
-              <el-option label="禁用" value="disabled" />
+            <el-select v-model="filters.status" :placeholder="$t('common.status')" clearable @change="loadData">
+              <el-option :label="$t('common.all')" value="" />
+              <el-option :label="$t('common.enable')" value="enabled" />
+              <el-option :label="$t('common.disable')" value="disabled" />
             </el-select>
           </el-col>
           <el-col :span="4">
-            <el-select v-model="filters.categoryTag" placeholder="归类标签" clearable @change="loadData">
+            <el-select v-model="filters.categoryTag" :placeholder="$t('influencer.categoryTag')" clearable @change="loadData">
               <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
             </el-select>
           </el-col>
           <el-col :span="6">
-            <el-input v-model="filters.keyword" placeholder="搜索达人名称/ID/真实姓名" clearable @change="loadData">
+            <el-input v-model="filters.keyword" :placeholder="$t('common.search') + '...'" clearable @change="loadData">
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
@@ -42,8 +44,8 @@
           </el-col>
           <el-col :span="6">
             <div class="batch-actions">
-              <el-button type="warning" :disabled="selectedIds.length === 0" @click="batchClaim">批量领取</el-button>
-              <el-button type="danger" :disabled="selectedIds.length === 0" @click="batchRelease">批量释放</el-button>
+              <el-button type="warning" :disabled="selectedIds.length === 0" @click="batchClaim" v-if="hasPermission('influencers:update')">{{ $t('influencer.batchClaim') }}</el-button>
+              <el-button type="danger" :disabled="selectedIds.length === 0" @click="batchRelease" v-if="hasPermission('influencers:update')">{{ $t('influencer.batchRelease') }}</el-button>
             </div>
           </el-col>
         </el-row>
@@ -52,7 +54,7 @@
       <!-- 达人列表 -->
       <el-table :data="influencers" stripe @selection-change="handleSelectionChange" :row-class-name="getRowClassName">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="tiktokId" label="TikTok ID" min-width="160" fixed="left">
+        <el-table-column prop="tiktokId" :label="$t('influencer.tiktokId')" min-width="160" fixed="left">
           <template #default="{ row }">
             <div class="tiktok-id-wrapper">
               <span class="tiktok-id-cell clickable" @click="viewDetail(row)">{{ row.tiktokId }}</span>
@@ -70,55 +72,55 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="归属BD" width="80" fixed="left">
+        <el-table-column :label="$t('influencer.bd')" width="80" fixed="left">
           <template #default="{ row }">
-            <el-tag v-if="row.poolType === 'public'" type="info">公海</el-tag>
+            <el-tag v-if="row.poolType === 'public'" type="info">{{ $t('influencer.publicSea') }}</el-tag>
             <el-tag v-else type="success">{{ row.assignedTo?.realName || row.assignedTo?.username }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="tiktokName" label="TikTok名称" min-width="150" />
-        <el-table-column label="最新数据" width="150">
+        <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
+        <el-table-column :label="$t('influencer.latestGmv')" width="150">
           <template #default="{ row }">
-            <div>粉丝: {{ row.latestFollowers }}</div>
+            <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers }}</div>
             <div>GMV: {{ row.latestGmv }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="归类" width="120">
+        <el-table-column :label="$t('influencer.categoryTag')" width="120">
           <template #default="{ row }">
             <el-tag v-for="tag in row.categoryTags" :key="tag._id" size="small">{{ tag.name }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="最近维护" width="180">
+        <el-table-column :label="$t('influencer.latestMaintenance')" width="180">
           <template #default="{ row }">
             <div class="maintenance-info">
-              <div>时间: {{ formatDate(row.latestMaintenanceTime) }}</div>
-              <div>维护人: {{ row.latestMaintainerName || '-' }}</div>
-              <div v-if="row.latestRemark" class="remark-text">备注: {{ row.latestRemark }}</div>
-              <div v-else class="remark-empty">备注: -</div>
+              <div>{{ $t('common.time') }}: {{ formatDate(row.latestMaintenanceTime) }}</div>
+              <div>{{ $t('influencer.maintainer') }}: {{ row.latestMaintainerName || '-' }}</div>
+              <div v-if="row.latestRemark" class="remark-text">{{ $t('common.remark') }}: {{ row.latestRemark }}</div>
+              <div v-else class="remark-empty">{{ $t('common.remark') }}: -</div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="维护状态" width="100">
+        <el-table-column :label="$t('influencer.maintenanceStatus')" width="100">
           <template #default="{ row }">
             <el-tag :type="getMaintenanceStatusType(row.maintenanceStatus)" size="small">
               {{ getMaintenanceStatusText(row.maintenanceStatus) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="黑名单" width="80">
+        <el-table-column :label="$t('influencer.blacklist')" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.isBlacklisted" type="danger" size="small">黑名单</el-tag>
+            <el-tag v-if="row.isBlacklisted" type="danger" size="small">{{ $t('influencer.blacklisted') }}</el-tag>
             <span v-else class="text-gray">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column :label="$t('common.operation')" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="!row.isBlacklisted" link type="primary" @click="editInfluencer(row)">编辑</el-button>
-            <el-button v-if="row.isBlacklisted" link type="info" disabled>已冻结</el-button>
-            <el-button link type="success" @click="goToOrders(row)">查订单</el-button>
-            <el-button v-if="row.poolType === 'public' && !row.isBlacklisted" link type="warning" @click="claimInfluencer(row)">领取</el-button>
-            <el-button v-if="row.poolType === 'private' && !row.isBlacklisted" link type="danger" @click="releaseInfluencer(row)">释放</el-button>
-            <el-button v-if="!row.isBlacklisted" link type="danger" @click="addToBlacklist(row)">拉黑</el-button>
+            <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="primary" @click="editInfluencer(row)">{{ $t('influencer.edit') }}</el-button>
+            <el-button v-if="row.isBlacklisted" link type="info" disabled>{{ $t('influencer.frozen') }}</el-button>
+            <el-button v-if="hasPermission('orders:read')" link type="success" @click="goToOrders(row)">{{ $t('influencer.viewOrders') }}</el-button>
+            <el-button v-if="row.poolType === 'public' && !row.isBlacklisted && hasPermission('influencers:update')" link type="warning" @click="claimInfluencer(row)">{{ $t('influencer.claim') }}</el-button>
+            <el-button v-if="row.poolType === 'private' && !row.isBlacklisted && hasPermission('influencers:update')" link type="danger" @click="releaseInfluencer(row)">{{ $t('influencer.release') }}</el-button>
+            <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="danger" @click="addToBlacklist(row)">{{ $t('influencer.blacklist') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -138,12 +140,12 @@
         </el-tab-pane>
 
         <!-- 小黑屋页签 -->
-        <el-tab-pane label="小黑屋" name="blacklist">
+        <el-tab-pane :label="$t('menu.blacklist')" name="blacklist">
           <!-- 搜索筛选 -->
           <div class="filter-section">
             <el-row :gutter="16">
               <el-col :span="6">
-                <el-input v-model="blacklistFilters.keyword" placeholder="搜索达人名称/ID/真实姓名" clearable @change="loadBlacklist">
+                <el-input v-model="blacklistFilters.keyword" :placeholder="$t('influencer.searchInfluencerPlaceholder')" clearable @change="loadBlacklist">
                   <template #prefix>
                     <el-icon><Search /></el-icon>
                   </template>
@@ -154,33 +156,33 @@
 
           <!-- 黑名单列表 -->
           <el-table :data="blacklistInfluencers" stripe v-loading="blacklistLoading" :row-class-name="getRowClassName">
-            <el-table-column prop="tiktokId" label="TikTok ID" min-width="160" fixed="left">
+            <el-table-column prop="tiktokId" :label="$t('influencer.tiktokId')" min-width="160" fixed="left">
               <template #default="{ row }">
                 <span class="tiktok-id-cell clickable" @click="viewDetail(row)">{{ row.tiktokId }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="tiktokName" label="TikTok名称" min-width="150" />
-            <el-table-column label="归属BD" width="100">
+            <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
+            <el-table-column :label="$t('influencer.bd')" width="100">
               <template #default="{ row }">
-                <el-tag v-if="row.poolType === 'public'" type="info">公海</el-tag>
+                <el-tag v-if="row.poolType === 'public'" type="info">{{ $t('influencer.publicSea') }}</el-tag>
                 <el-tag v-else type="success">{{ row.assignedTo?.realName || row.assignedTo?.username || '-' }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="最新数据" width="150">
+            <el-table-column :label="$t('influencer.latestGmv')" width="150">
               <template #default="{ row }">
-                <div>粉丝: {{ row.latestFollowers }}</div>
+                <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers }}</div>
                 <div>GMV: {{ row.latestGmv }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="拉黑信息" width="200">
+            <el-table-column :label="$t('influencer.blacklistInfo')" width="200">
               <template #default="{ row }">
                 <div>{{ row.blacklistedByName || '-' }} {{ formatDate(row.blacklistedAt) }}</div>
                 <div v-if="row.blacklistReason" class="remark-text">{{ row.blacklistReason }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" fixed="right">
+            <el-table-column :label="$t('common.operation')" width="80" fixed="right">
               <template #default="{ row }">
-                <el-button link type="success" @click="releaseFromBlacklist(row)">释放</el-button>
+                <el-button link type="success" @click="releaseFromBlacklist(row)" v-if="hasPermission('influencers:update')">{{ $t('influencer.release') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -204,7 +206,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="showCreateDialog"
-      :title="editingInfluencer ? '编辑达人' : '新建达人'"
+      :title="editingInfluencer ? $t('influencer.editInfluencer') : $t('influencer.addInfluencer')"
       width="900px"
       :close-on-click-modal="false"
     >
@@ -213,121 +215,120 @@
           <!-- TikTok信息 -->
           <div class="form-section">
             <div class="section-header">
-              <span class="section-title">TikTok 信息</span>
-              <span class="section-desc">达人平台基本信息</span>
+              <span class="section-title">{{ $t('influencer.tiktokInfo') }}</span>
+              <span class="section-desc">{{ $t('influencer.influencerPlatformInfo') }}</span>
             </div>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="TikTok名称" prop="tiktokName" required>
-                  <el-input v-model="form.tiktokName" placeholder="请输入TikTok账号名称" />
+                <el-form-item :label="$t('influencer.tiktokName')" prop="tiktokName" required>
+                  <el-input v-model="form.tiktokName" :placeholder="$t('common.input') + $t('influencer.tiktokName')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="TikTok ID" prop="tiktokId" required class="tiktok-green-label">
-                  <el-input v-model="form.tiktokId" placeholder="请输入TikTok唯一ID" class="tiktok-green-input" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="曾用名称">
-                  <el-input v-model="form.formerNames" placeholder="多个用逗号分隔" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="曾用ID">
-                  <el-input v-model="form.formerIds" placeholder="多个用逗号分隔" />
+                <el-form-item :label="$t('influencer.tiktokId')" prop="tiktokId" required class="tiktok-green-label">
+                  <el-input v-model="form.tiktokId" :placeholder="$t('common.input') + $t('influencer.tiktokId')" class="tiktok-green-input" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="TikTok原始ID" class="tiktok-green-label">
-                  <el-input v-model="form.originalTiktokId" placeholder="可选，平台原始ID" class="tiktok-green-input" />
+                <el-form-item :label="$t('influencer.formerNames')">
+                  <el-input v-model="form.formerNames" :placeholder="$t('influencer.formerNamesTip')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="状态" prop="status" required>
+                <el-form-item :label="$t('influencer.formerIds')">
+                  <el-input v-model="form.formerIds" :placeholder="$t('influencer.formerIdsTip')" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item :label="$t('influencer.originalTiktokId')" class="tiktok-green-label">
+                  <el-input v-model="form.originalTiktokId" :placeholder="$t('influencer.originalTiktokIdTip')" class="tiktok-green-input" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item :label="$t('common.status')" prop="status" required>
                   <el-radio-group v-model="form.status">
-                    <el-radio value="enabled">启用</el-radio>
-                    <el-radio value="disabled">禁用</el-radio>
+                    <el-radio value="enabled">{{ $t('common.enable') }}</el-radio>
+                    <el-radio value="disabled">{{ $t('common.disable') }}</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-col>
             </el-row>
-            <el-form-item label="归类标签">
-              <el-select v-model="form.categoryTags" multiple placeholder="请选择归类标签（可多选）" style="width: 100%">
+            <el-form-item :label="$t('influencer.categoryTag')">
+              <el-select v-model="form.categoryTags" multiple :placeholder="$t('common.select')" style="width: 100%">
                 <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
               </el-select>
-              <div class="form-tip">* 归类标签在【系统管理 - 基础数据】中维护</div>
+              <div class="form-tip">* {{ $t('influencer.categoryTagTip') }}</div>
             </el-form-item>
           </div>
 
           <!-- 真实信息 -->
           <div class="form-section">
             <div class="section-header">
-              <span class="section-title">真实信息</span>
-              <span class="section-desc">达人个人联系方式</span>
+              <span class="section-title">{{ $t('user.realName') }}</span>
             </div>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="真实姓名">
-                  <el-input v-model="form.realName" placeholder="可选，达人真实姓名" />
+                <el-form-item :label="$t('influencer.realName')">
+                  <el-input v-model="form.realName" :placeholder="$t('influencer.realNameTip')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="常用昵称">
-                  <el-input v-model="form.nickname" placeholder="可选，常用称呼" />
+                <el-form-item :label="$t('influencer.nickname')">
+                  <el-input v-model="form.nickname" :placeholder="$t('influencer.nicknameTip')" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="性别">
+                <el-form-item :label="$t('influencer.gender')">
                   <el-radio-group v-model="form.gender">
-                    <el-radio value="male">男</el-radio>
-                    <el-radio value="female">女</el-radio>
-                    <el-radio value="other">其他</el-radio>
+                    <el-radio value="male">{{ $t('influencer.male') }}</el-radio>
+                    <el-radio value="female">{{ $t('influencer.female') }}</el-radio>
+                    <el-radio value="other">{{ $t('influencer.other') }}</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-col>
             </el-row>
-            <el-form-item label="联系电话">
+            <el-form-item :label="$t('influencer.phone')">
               <div class="dynamic-inputs">
                 <div v-for="(phone, index) in form.phoneNumbers" :key="'phone-' + index" class="input-item">
-                  <el-input v-model="form.phoneNumbers[index]" placeholder="请输入联系电话" />
+                  <el-input v-model="form.phoneNumbers[index]" :placeholder="$t('influencer.phoneTip')" />
                   <el-button v-if="form.phoneNumbers.length > 1" type="danger" link @click="removePhone(index)">
                     <el-icon><Delete /></el-icon>
                   </el-button>
                 </div>
                 <el-button type="primary" link @click="addPhone" class="add-btn">
-                  <el-icon><Plus /></el-icon> 添加联系电话
+                  <el-icon><Plus /></el-icon> {{ $t('influencer.addPhone') }}
                 </el-button>
               </div>
             </el-form-item>
-            <el-form-item label="地址">
+            <el-form-item :label="$t('influencer.address')">
               <div class="dynamic-inputs">
                 <div v-for="(address, index) in form.addresses" :key="'address-' + index" class="input-item">
-                  <el-input v-model="form.addresses[index]" placeholder="请输入地址" />
+                  <el-input v-model="form.addresses[index]" :placeholder="$t('influencer.addressTip')" />
                   <el-button v-if="form.addresses.length > 1" type="danger" link @click="removeAddress(index)">
                     <el-icon><Delete /></el-icon>
                   </el-button>
                 </div>
                 <el-button type="primary" link @click="addAddress" class="add-btn">
-                  <el-icon><Plus /></el-icon> 添加地址
+                  <el-icon><Plus /></el-icon> {{ $t('influencer.addAddress') }}
                 </el-button>
               </div>
             </el-form-item>
-            <el-form-item label="社交账号">
+            <el-form-item :label="$t('influencer.socialAccount')">
               <div class="dynamic-inputs">
                 <div v-for="(social, index) in form.socialAccounts" :key="'social-' + index" class="input-item">
-                  <el-input v-model="form.socialAccounts[index]" placeholder="LINE/Email/其他社交账号" />
+                  <el-input v-model="form.socialAccounts[index]" :placeholder="$t('influencer.socialAccountTip')" />
                   <el-button v-if="form.socialAccounts.length > 1" type="danger" link @click="removeSocial(index)">
                     <el-icon><Delete /></el-icon>
                   </el-button>
                 </div>
                 <el-button type="primary" link @click="addSocial" class="add-btn">
-                  <el-icon><Plus /></el-icon> 添加社交账号
+                  <el-icon><Plus /></el-icon> {{ $t('influencer.addSocial') }}
                 </el-button>
               </div>
             </el-form-item>
@@ -335,72 +336,72 @@
         </el-form>
       </div>
       <template #footer>
-        <el-button @click="showCreateDialog = false" size="large">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" size="large">保存</el-button>
+        <el-button @click="showCreateDialog = false" size="large">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" size="large">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 详情对话框 -->
     <el-dialog
       v-model="showDetailDialog"
-      :title="currentInfluencer?.isBlacklisted ? '达人详情（黑名单）' : '达人详情'"
+      :title="currentInfluencer?.isBlacklisted ? $t('influencer.influencerDetailBlacklist') : $t('influencer.influencerDetail')"
       width="900px"
       :class="currentInfluencer?.isBlacklisted ? 'detail-dialog-blacklist' : ''">
       <div v-if="currentInfluencer" :class="currentInfluencer.isBlacklisted ? 'detail-content-blacklist' : ''">
         <!-- 黑名单警告 -->
         <el-alert
           v-if="currentInfluencer.isBlacklisted"
-          title="该达人已被列入黑名单"
+          :title="$t('influencer.influencerBlacklistedWarning')"
           type="error"
-          :description="`拉黑时间：${formatDate(currentInfluencer.blacklistedAt)} | 拉黑人：${currentInfluencer.blacklistedByName || '-'} | 原因：${currentInfluencer.blacklistReason || '-'}`"
+          :description="`${$t('influencer.blacklistTime')}：${formatDate(currentInfluencer.blacklistedAt)} | ${$t('influencer.blacklistedBy')}：${currentInfluencer.blacklistedByName || '-'} | ${$t('influencer.reason')}：${currentInfluencer.blacklistReason || '-'}`"
           :closable="false"
           show-icon
           style="margin-bottom: 20px"
         />
 
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="TikTok名称">{{ currentInfluencer.tiktokName }}</el-descriptions-item>
-          <el-descriptions-item label="TikTok ID">
+          <el-descriptions-item :label="$t('influencer.tiktokName')">{{ currentInfluencer.tiktokName }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.tiktokId')">
             <span class="tiktok-id-text">{{ currentInfluencer.tiktokId }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="曾用名称">{{ currentInfluencer.formerNames }}</el-descriptions-item>
-          <el-descriptions-item label="曾用ID">{{ currentInfluencer.formerIds }}</el-descriptions-item>
-          <el-descriptions-item label="真实姓名">{{ currentInfluencer.realName }}</el-descriptions-item>
-          <el-descriptions-item label="常用昵称">{{ currentInfluencer.nickname }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ getGenderText(currentInfluencer.gender) }}</el-descriptions-item>
-          <el-descriptions-item label="状态">{{ currentInfluencer.status === 'enabled' ? '启用' : '禁用' }}</el-descriptions-item>
-          <el-descriptions-item label="最新粉丝数">{{ currentInfluencer.latestFollowers }}</el-descriptions-item>
-          <el-descriptions-item label="最新GMV">{{ currentInfluencer.latestGmv }}</el-descriptions-item>
-          <el-descriptions-item label="最近维护时间">{{ formatDate(currentInfluencer.latestMaintenanceTime) }}</el-descriptions-item>
-          <el-descriptions-item label="维护人">{{ currentInfluencer.latestMaintainerName }}</el-descriptions-item>
-          <el-descriptions-item label="黑名单状态">
-            <el-tag v-if="currentInfluencer.isBlacklisted" type="danger">黑名单</el-tag>
-            <span v-else>正常</span>
+          <el-descriptions-item :label="$t('influencer.formerNames')">{{ currentInfluencer.formerNames }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.formerIds')">{{ currentInfluencer.formerIds }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.realName')">{{ currentInfluencer.realName }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.nickname')">{{ currentInfluencer.nickname }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.gender')">{{ getGenderText(currentInfluencer.gender) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('common.status')">{{ currentInfluencer.status === 'enabled' ? $t('common.enabled') : $t('common.disabled') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.latestFollowersNum')">{{ currentInfluencer.latestFollowers }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.latestGmvAmount')">{{ currentInfluencer.latestGmv }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.latestMaintenanceTime')">{{ formatDate(currentInfluencer.latestMaintenanceTime) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.maintainer')">{{ currentInfluencer.latestMaintainerName }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.blacklist')">
+            <el-tag v-if="currentInfluencer.isBlacklisted" type="danger">{{ $t('influencer.blacklisted') }}</el-tag>
+            <span v-else>{{ $t('influencer.normal') }}</span>
           </el-descriptions-item>
-          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" label="拉黑时间">{{ formatDate(currentInfluencer.blacklistedAt) }}</el-descriptions-item>
-          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" label="拉黑人">{{ currentInfluencer.blacklistedByName }}</el-descriptions-item>
-          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" label="拉黑原因" :span="2">{{ currentInfluencer.blacklistReason || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="最新备注" :span="2">{{ currentInfluencer.latestRemark }}</el-descriptions-item>
+          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" :label="$t('influencer.blacklistTime')">{{ formatDate(currentInfluencer.blacklistedAt) }}</el-descriptions-item>
+          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" :label="$t('influencer.blacklistedBy')">{{ currentInfluencer.blacklistedByName }}</el-descriptions-item>
+          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" :label="$t('influencer.blacklistReason')" :span="2">{{ currentInfluencer.blacklistReason || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.latestRemark')" :span="2">{{ currentInfluencer.latestRemark }}</el-descriptions-item>
         </el-descriptions>
 
-        <el-divider>维护记录</el-divider>
+        <el-divider>{{ $t('influencer.maintenanceRecord') }}</el-divider>
         <el-table :data="maintenances" stripe>
-          <el-table-column prop="createdAt" label="维护时间" width="180">
+          <el-table-column prop="createdAt" :label="$t('common.time')" width="180">
             <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
           </el-table-column>
-          <el-table-column prop="followers" label="粉丝数" width="100" />
+          <el-table-column prop="followers" :label="$t('influencer.followers')" width="100" />
           <el-table-column prop="gmv" label="GMV" width="100" />
-          <el-table-column prop="maintainerName" label="维护人" width="120" />
-          <el-table-column prop="remark" label="备注" />
+          <el-table-column prop="maintainerName" :label="$t('influencer.maintainer')" width="120" />
+          <el-table-column prop="remark" :label="$t('common.remark')" />
         </el-table>
 
         <!-- 维护记录区域：黑名单达人不显示 -->
         <template v-if="!currentInfluencer.isBlacklisted">
-          <el-divider>添加维护记录</el-divider>
+          <el-divider>{{ $t('influencer.addMaintenanceRecord') }}</el-divider>
           <el-form :model="maintenanceForm" label-width="80px">
             <el-row :gutter="20">
               <el-col :span="8">
-                <el-form-item label="粉丝数">
+                <el-form-item :label="$t('influencer.followers')">
                   <el-input-number v-model="maintenanceForm.followers" :min="0" />
                 </el-form-item>
               </el-col>
@@ -410,12 +411,12 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="备注">
+                <el-form-item :label="$t('common.remark')">
                   <el-input v-model="maintenanceForm.remark" />
                 </el-form-item>
               </el-col>
             </el-row>
-            <el-button type="primary" @click="addMaintenance">提交维护记录</el-button>
+            <el-button type="primary" @click="addMaintenance">{{ $t('influencer.submitRecord') }}</el-button>
           </el-form>
         </template>
       </div>
@@ -426,14 +427,21 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Delete } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
+import AuthManager from '@/utils/auth'
+
+const { t } = useI18n()
 
 const router = useRouter()
 
 const userStore = useUserStore()
+
+// 权限检查函数
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const activeTab = ref('list')
 const influencers = ref([])
@@ -484,9 +492,9 @@ const form = reactive({
 })
 
 const rules = {
-  tiktokName: [{ required: true, message: '请输入TikTok名称', trigger: 'blur' }],
-  tiktokId: [{ required: true, message: '请输入TikTok ID', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+  tiktokName: [{ required: true, message: t('common.input') + t('influencer.tiktokName'), trigger: 'blur' }],
+  tiktokId: [{ required: true, message: t('common.input') + t('influencer.tiktokId'), trigger: 'blur' }],
+  status: [{ required: true, message: t('common.select') + t('common.status'), trigger: 'change' }]
 }
 
 const maintenanceForm = reactive({
@@ -532,7 +540,7 @@ const loadCategoryTags = async () => {
     })
     categoryTags.value = res.data || []
   } catch (error) {
-    console.error('加载归类标签失败:', error)
+    console.error(t('influencer.loadFailed') + ':', error)
   }
 }
 
@@ -552,8 +560,8 @@ const loadData = async () => {
     // 加载达人订单统计
     loadInfluencerOrderStats()
   } catch (error) {
-    console.error('加载达人列表失败:', error)
-    ElMessage.error('加载达人列表失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(t('influencer.loadFailed'))
   }
 }
 
@@ -579,8 +587,8 @@ const loadBlacklist = async () => {
     blacklistPagination.total = res.total || 0
     blacklistPagination.page = res.page || 1
   } catch (error) {
-    console.error('加载黑名单列表失败:', error)
-    ElMessage.error('加载黑名单列表失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(t('influencer.loadFailed'))
   } finally {
     blacklistLoading.value = false
   }
@@ -634,19 +642,19 @@ const formatDate = (date) => {
 }
 
 const getGenderText = (gender) => {
-  const map = { male: '男', female: '女', other: '其他' }
-  return map[gender] || '其他'
+  const map = { male: t('influencer.male'), female: t('influencer.female'), other: t('influencer.other') }
+  return map[gender] || t('influencer.other')
 }
 
 const getMaintenanceStatusText = (status) => {
   const map = {
-    public: '公共',
-    normal: '正常',
-    maintenance_needed: '待维护',
-    at_risk: '将流失',
-    about_to_release: '即将释放',
-    released: '已释放',
-    pending: '待维护'
+    public: t('influencer.maintenancePublic'),
+    normal: t('influencer.maintenanceNormal'),
+    maintenance_needed: t('influencer.maintenanceNeeded'),
+    at_risk: t('influencer.atRisk'),
+    about_to_release: t('influencer.aboutToRelease'),
+    released: t('influencer.released'),
+    pending: t('influencer.maintenanceNeeded')
   }
   return map[status] || status
 }
@@ -673,23 +681,23 @@ const getRowClassName = ({ row }) => {
 const addToBlacklist = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要将达人 "${row.tiktokId}" 列入黑名单吗？\n\n列入黑名单后：\n1. 该达人信息将不可修改\n2. 相关订单也将被标记为黑名单\n3. 该达人将出现在"小黑屋"页签中`,
-      '确认拉黑',
+      t('influencer.blacklistConfirmTip', { name: row.tiktokId }),
+      t('influencer.blacklistConfirm'),
       { type: 'warning' }
     )
 
-    const { value: reason } = await ElMessageBox.prompt('请输入拉黑原因（可选）', '拉黑原因', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
+    const { value: reason } = await ElMessageBox.prompt(t('influencer.blacklistReasonTip'), t('influencer.blacklistReasonTitle'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel')
     })
 
     await request.post(`/influencer-managements/${row._id}/blacklist`, { reason: reason || '' })
-    ElMessage.success('已将该达人列入黑名单')
+    ElMessage.success(t('influencer.blacklistSuccess'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('标记黑名单失败:', error)
-      ElMessage.error('标记黑名单失败')
+      console.error(t('influencer.loadFailed') + ':', error)
+      ElMessage.error(t('influencer.loadFailed'))
     }
   }
 }
@@ -698,13 +706,13 @@ const addToBlacklist = async (row) => {
 const releaseFromBlacklist = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要释放达人 "${row.tiktokId}" 吗？\n\n释放后：\n1. 该达人将恢复正常状态\n2. 相关订单的黑名单标记将被移除`,
-      '确认释放',
+      t('influencer.releaseConfirmTip', { name: row.tiktokId }),
+      t('influencer.releaseConfirm'),
       { type: 'warning' }
     )
 
     await request.post(`/influencer-managements/${row._id}/release-blacklist`)
-    ElMessage.success('已释放黑名单')
+    ElMessage.success(t('influencer.releaseBlacklistSuccess'))
     // 如果当前在小黑屋页面，刷新列表
     if (activeTab.value === 'blacklist') {
       loadBlacklist()
@@ -713,8 +721,8 @@ const releaseFromBlacklist = async (row) => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('释放黑名单失败:', error)
-      ElMessage.error('释放黑名单失败')
+      console.error(t('influencer.loadFailed') + ':', error)
+      ElMessage.error(t('influencer.loadFailed'))
     }
   }
 }
@@ -750,13 +758,13 @@ const createInfluencer = async () => {
     console.log('创建达人 - 前端提交数据:', JSON.stringify(submitData, null, 2))
 
     await request.post('/influencer-managements', submitData)
-    ElMessage.success('创建成功')
+    ElMessage.success(t('influencer.createSuccess'))
     showCreateDialog.value = false
     resetForm()
     loadData()
   } catch (error) {
-    console.error('创建达人失败:', error)
-    ElMessage.error(error.message || '创建达人失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(error.message || t('influencer.loadFailed'))
   }
 }
 
@@ -769,21 +777,21 @@ const updateInfluencer = async () => {
       socialAccounts: form.socialAccounts.filter(s => s.trim())
     }
     await request.put(`/influencer-managements/${editingInfluencer.value._id}`, data)
-    ElMessage.success('更新成功')
+    ElMessage.success(t('influencer.updateSuccess'))
     showCreateDialog.value = false
     editingInfluencer.value = null
     resetForm()
     loadData()
   } catch (error) {
-    console.error('更新达人失败:', error)
-    ElMessage.error(error.message || '更新达人失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(error.message || t('influencer.loadFailed'))
   }
 }
 
 const editInfluencer = (row) => {
   // 检查是否为黑名单达人
   if (row.isBlacklisted) {
-    ElMessage.warning('该达人已被列入黑名单，无法修改信息')
+    ElMessage.warning(t('influencer.cannotEditBlacklist'))
     return
   }
   editingInfluencer.value = row
@@ -812,49 +820,49 @@ const viewDetail = async (row) => {
     maintenances.value = res.maintenances || []
     showDetailDialog.value = true
   } catch (error) {
-    console.error('获取达人详情失败:', error)
-    ElMessage.error('获取达人详情失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(t('influencer.loadFailed'))
   }
 }
 
 const addMaintenance = async () => {
   try {
     await request.post(`/influencer-managements/${currentInfluencer.value._id}/maintenance`, maintenanceForm)
-    ElMessage.success('添加维护记录成功')
+    ElMessage.success(t('influencer.addRecordSuccess'))
     maintenanceForm.followers = 0
     maintenanceForm.gmv = 0
     maintenanceForm.remark = ''
     viewDetail(currentInfluencer.value)
     loadData()
   } catch (error) {
-    console.error('添加维护记录失败:', error)
-    ElMessage.error('添加维护记录失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(t('influencer.loadFailed'))
   }
 }
 
 const claimInfluencer = async (row) => {
   try {
     await request.post(`/influencer-managements/${row._id}/claim`)
-    ElMessage.success('领取成功')
+    ElMessage.success(t('influencer.claimSuccess'))
     loadData()
   } catch (error) {
-    console.error('领取达人失败:', error)
-    ElMessage.error(error.message || '领取达人失败')
+    console.error(t('influencer.loadFailed') + ':', error)
+    ElMessage.error(error.message || t('influencer.loadFailed'))
   }
 }
 
 const releaseInfluencer = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要释放该达人到公海吗?', '提示', {
+    await ElMessageBox.confirm(t('influencer.releaseToPublicConfirm'), t('common.info'), {
       type: 'warning'
     })
     await request.post(`/influencer-managements/${row._id}/release`)
-    ElMessage.success('释放成功')
+    ElMessage.success(t('influencer.releaseSuccess'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('释放达人失败:', error)
-      ElMessage.error('释放达人失败')
+      console.error(t('influencer.loadFailed') + ':', error)
+      ElMessage.error(t('influencer.loadFailed'))
     }
   }
 }

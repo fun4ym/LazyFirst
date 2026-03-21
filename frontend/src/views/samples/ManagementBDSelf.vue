@@ -3,25 +3,12 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>样品申请</h3>
+          <h3>我的样品申请</h3>
           <div class="header-actions">
-            <el-button type="success" @click="showCreateDialog" v-if="hasPermission('samples:create')">
+            <el-button type="success" @click="showCreateDialog" v-if="hasPermission('samples-bd:create')">
               <el-icon><Plus /></el-icon>
               新增
             </el-button>
-            <!-- 仅在管理模式下显示导入功能 -->
-            <el-upload
-              :auto-upload="false"
-              :on-change="handleImportFile"
-              :show-file-list="false"
-              accept=".xlsx,.xls"
-              style="display: inline-block"
-            >
-              <el-button type="primary">
-                <el-icon><Upload /></el-icon>
-                导入Excel
-              </el-button>
-            </el-upload>
           </div>
         </div>
       </template>
@@ -43,15 +30,6 @@
             placeholder="商品名称"
             clearable
             style="width: 150px"
-          />
-        </el-form-item>
-
-        <el-form-item label="归属BD">
-          <el-input
-            v-model="searchForm.salesman"
-            placeholder="业务员"
-            clearable
-            style="width: 120px"
           />
         </el-form-item>
 
@@ -160,14 +138,11 @@
         >
           <template #default="{ row }">
             <div class="sample-status">
-              <div class="status-row">
-                <el-tag :type="getSampleStatusType(row.sampleStatus)" size="small">
-                  {{ getSampleStatusText(row.sampleStatus) }}
-                </el-tag>
-                <el-icon class="edit-icon" @click.stop="openSampleStatusDialog(row)"><Edit /></el-icon>
-              </div>
+              <el-tag :type="getSampleStatusType(row.sampleStatus)" size="small">
+                {{ getSampleStatusText(row.sampleStatus) }}
+              </el-tag>
               <div v-if="row.sampleStatus === 'refused' && row.refusalReason" class="refusal-reason">
-                原因：{{ row.refusalReason }}
+                原因: {{ row.refusalReason }}
               </div>
               <div v-if="row.trackingNumber" class="tracking-no">
                 {{ row.trackingNumber }}
@@ -283,16 +258,6 @@
         </el-table-column>
 
         <el-table-column
-          label="归属BD"
-          width="100"
-          prop="salesman"
-        >
-          <template #default="{ row }">
-            <div class="column-text">{{ row.salesman || '--' }}</div>
-          </template>
-        </el-table-column>
-
-        <el-table-column
           label="收货信息"
           width="200"
         >
@@ -322,8 +287,7 @@
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('samples:read')">详情</el-button>
-            <el-button link type="danger" @click="deleteSample(row)" v-if="hasPermission('samples:delete')">删除</el-button>
+            <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -346,10 +310,9 @@
       v-model="detailDialogVisible"
       :title="currentSample?.isBlacklistedInfluencer ? '样品申请详情（黑名单达人）' : '样品申请详情'"
       width="900px"
-      :class="currentSample?.isBlacklistedInfluencer ? 'detail-dialog-blacklist' : ''"
       class="business-detail-dialog"
     >
-      <div v-if="currentSample" :class="currentSample.isBlacklistedInfluencer ? 'detail-content-blacklist' : 'detail-content'">
+      <div v-if="currentSample" class="detail-content">
         <!-- 黑名单警告 -->
         <el-alert
           v-if="currentSample.isBlacklistedInfluencer"
@@ -383,12 +346,6 @@
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">归属BD</div>
-                <div class="info-value">{{ currentSample.salesman || '-' }}</div>
-              </div>
-            </el-col>
-            <el-col :span="12">
-              <div class="info-item">
                 <div class="info-label">商品名称</div>
                 <div class="info-value product-name">{{ currentSample.productName || '-' }}</div>
               </div>
@@ -406,19 +363,19 @@
                 <span v-else class="info-value">-</span>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <div class="info-item">
                 <div class="info-label">粉丝数</div>
                 <div class="info-value highlight-value">{{ formatNumber(currentSample.followerCount) }}</div>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <div class="info-item">
                 <div class="info-label">GMV</div>
                 <div class="info-value">{{ currentSample.gmv || '-' }}</div>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="12">
               <div class="info-item">
                 <div class="info-label">收货信息</div>
                 <div class="info-value shipping-value">{{ currentSample.shippingInfo || '-' }}</div>
@@ -440,10 +397,16 @@
               <div class="info-item">
                 <div class="info-label">寄样状态</div>
                 <div class="info-value">
-                  <el-tag :type="currentSample.isSampleSent ? 'success' : 'info'" size="large">
-                    {{ currentSample.isSampleSent ? '已寄样' : '未寄样' }}
+                  <el-tag :type="getSampleStatusType(currentSample.sampleStatus)" size="large">
+                    {{ getSampleStatusText(currentSample.sampleStatus) }}
                   </el-tag>
                 </div>
+              </div>
+            </el-col>
+            <el-col v-if="currentSample.sampleStatus === 'refused' && currentSample.refusalReason" :span="12">
+              <div class="info-item">
+                <div class="info-label">不合作原因</div>
+                <div class="info-value refusal-reason-detail">{{ currentSample.refusalReason }}</div>
               </div>
             </el-col>
             <el-col :span="6">
@@ -468,6 +431,15 @@
               <div class="info-item">
                 <div class="info-label">收样日期</div>
                 <div class="info-value">{{ currentSample.receivedDate ? formatDate(currentSample.receivedDate) : '-' }}</div>
+              </div>
+            </el-col>
+            <el-col v-if="currentSample.sampleStatusUpdatedAt" :span="12">
+              <div class="info-item">
+                <div class="info-label">状态更新</div>
+                <div class="info-value update-info-detail">
+                  {{ currentSample.sampleStatusUpdatedBy?.realName || currentSample.sampleStatusUpdatedBy?.username || '-' }}
+                  <span>{{ formatDateTime(currentSample.sampleStatusUpdatedAt) }}</span>
+                </div>
               </div>
             </el-col>
           </el-row>
@@ -656,18 +628,6 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="归属BD" prop="salesman">
-              <el-select v-model="createForm.salesman" placeholder="选择归属BD" filterable style="width: 100%" :loading="bdLoading">
-                <el-option
-                  v-for="user in users"
-                  :key="user._id"
-                  :label="user.realName || user.username"
-                  :value="user._id"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
         </el-row>
 
         <el-form-item label="商品信息" required>
@@ -768,31 +728,6 @@
       </template>
     </el-dialog>
 
-    <!-- 寄样状态编辑对话框 -->
-    <el-dialog
-      v-model="sampleStatusDialogVisible"
-      title="维护寄样状态"
-      width="400px"
-    >
-      <el-form :model="sampleStatusForm" label-width="80px">
-        <el-form-item label="寄样状态">
-          <el-select v-model="sampleStatusForm.sampleStatus" placeholder="请选择状态" style="width: 100%">
-            <el-option label="待审核" value="pending" />
-            <el-option label="寄样中" value="shipping" />
-            <el-option label="已寄样" value="sent" />
-            <el-option label="不合作" value="refused" />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" label="不合作原因">
-          <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" placeholder="请输入不合作原因" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="sampleStatusDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSampleStatusSave" :loading="sampleStatusLoading">保存</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 投流信息编辑对话框 -->
     <el-dialog
       v-model="adPromotionDialogVisible"
@@ -800,11 +735,8 @@
       width="400px"
     >
       <el-form :model="adPromotionForm" label-width="80px">
-        <el-form-item label="投流">
-          <el-switch v-model="adPromotionForm.isAdPromotion" />
-        </el-form-item>
         <el-form-item label="投流码">
-          <el-input v-model="adPromotionForm.videoStreamCode" placeholder="请输入投流码" :disabled="!adPromotionForm.isAdPromotion" />
+          <el-input v-model="adPromotionForm.videoStreamCode" placeholder="请输入投流码" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -836,10 +768,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import request from '@/utils/request'
 
 const router = useRouter()
-import { Upload, Plus, Loading, InfoFilled, Box, TrendCharts, User, Edit } from '@element-plus/icons-vue'
+import request from '@/utils/request'
+import { Plus, Loading, InfoFilled, Box, TrendCharts, User, Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 
@@ -849,15 +781,13 @@ const userStore = useUserStore()
 const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const loading = ref(false)
-const importing = ref(false)
 const creating = ref(false)
 const createDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const adPromotionDialogVisible = ref(false)
 const adPromotionForm = reactive({
   _id: '',
-  videoStreamCode: '',
-  isAdPromotion: false
+  videoStreamCode: ''
 })
 const adPromotionLoading = ref(false)
 
@@ -869,31 +799,19 @@ const fulfillmentForm = reactive({
 })
 const fulfillmentLoading = ref(false)
 
-// 寄样状态编辑
-const sampleStatusDialogVisible = ref(false)
-const sampleStatusForm = reactive({
-  _id: '',
-  sampleStatus: 'pending',
-  refusalReason: ''
-})
-const sampleStatusLoading = ref(false)
-
 const samples = ref([])
 const currentSample = ref(null)
 const influencerDetail = ref(null)
 const popoverInfluencer = ref(null)
 const popoverLoading = ref(false)
 const createFormRef = ref(null)
-const users = ref([])
 const cooperationProducts = ref([])
-const bdLoading = ref(false)
 const productLoading = ref(false)
 
 const searchForm = reactive({
   date: '',
   productName: '',
   influencerAccount: '',
-  salesman: '',
   isSampleSent: null,
   isOrderGenerated: null
 })
@@ -924,14 +842,39 @@ const createForm = reactive({
 const createRules = {
   date: [{ required: true, message: '请选择日期', trigger: 'change' }],
   productId: [{ required: true, message: '请选择商品', trigger: 'change' }],
-  influencerAccount: [{ required: true, message: '请输入TikTok ID', trigger: 'blur' }],
-  salesman: [{ required: true, message: '请选择归属BD', trigger: 'change' }]
+  influencerAccount: [{ required: true, message: '请输入TikTok ID', trigger: 'blur' }]
 }
 
 const formatDate = (date) => {
   if (!date) return '-'
   const d = new Date(date)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const formatDateTime = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+const getTodayDate = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const formatNumber = (num) => {
+  if (!num) return '0'
+  return num.toLocaleString()
+}
+
+const truncateText = (text, maxLength) => {
+  if (!text) return '--'
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+const getSampleRowClassName = ({ row }) => {
+  return row.isBlacklistedInfluencer ? 'blacklist-row' : ''
 }
 
 // 获取寄样状态类型
@@ -956,41 +899,15 @@ const getSampleStatusText = (status) => {
   return textMap[status] || '待审核'
 }
 
-const formatDateTime = (date) => {
-  if (!date) return '-'
-  const d = new Date(date)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
-// 获取当天日期
-const getTodayDate = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-const formatNumber = (num) => {
-  if (!num) return '0'
-  return num.toLocaleString()
-}
-
-const truncateText = (text, maxLength) => {
-  if (!text) return '--'
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
-}
-
-// 获取样品申请行样式
-const getSampleRowClassName = ({ row }) => {
-  return row.isBlacklistedInfluencer ? 'blacklist-row' : ''
-}
-
 const loadSamples = async () => {
   loading.value = true
   try {
     const params = {
       page: pagination.page,
       limit: pagination.limit,
-      ...searchForm
+      ...searchForm,
+      // 固定过滤当前用户（传username，不是realName，因为数据库存的是username）
+      salesmanId: userStore.user?.username || userStore.username
     }
     const res = await request.get('/samples', { params })
     samples.value = res.samples
@@ -1008,7 +925,6 @@ const resetSearch = () => {
     date: '',
     productName: '',
     influencerAccount: '',
-    salesman: '',
     isSampleSent: null,
     isOrderGenerated: null
   })
@@ -1016,24 +932,7 @@ const resetSearch = () => {
   loadSamples()
 }
 
-// 加载用户列表（用于归属BD下拉）
-const loadUsers = async () => {
-  if (!AuthManager.hasPermission('users:read')) {
-    console.log('无users:read权限，跳过加载用户')
-    return
-  }
-  bdLoading.value = true
-  try {
-    const res = await request.get('/users', { params: { companyId: userStore.companyId, limit: 100 } })
-    users.value = res.users || []
-  } catch (error) {
-    console.error('加载用户失败:', error)
-  } finally {
-    bdLoading.value = false
-  }
-}
-
-// 加载产品列表（用于商品下拉）
+// 加载产品列表
 const loadCooperationProducts = async () => {
   try {
     const res = await request.get('/products', { params: { companyId: userStore.companyId, status: 'active', limit: 100 } })
@@ -1043,7 +942,6 @@ const loadCooperationProducts = async () => {
   }
 }
 
-// 搜索商品
 const searchProducts = async (query) => {
   if (!query) {
     loadCooperationProducts()
@@ -1067,17 +965,15 @@ const searchProducts = async (query) => {
   }
 }
 
-// 选择商品
 const handleProductSelect = (productId) => {
   const product = cooperationProducts.value.find(p => p._id === productId)
   if (product) {
     createForm.productName = product.productName
-    createForm.productId = product._id  // 使用MongoDB _id作为关联
+    createForm.productId = product._id
   }
 }
 
 const showCreateDialog = () => {
-  // 默认归属BD为当前登录用户
   const currentUser = userStore.user
   Object.assign(createForm, {
     date: getTodayDate(),
@@ -1086,7 +982,7 @@ const showCreateDialog = () => {
     influencerAccount: '',
     followerCount: 0,
     gmv: 0,
-    salesman: currentUser?._id || currentUser?.id || '',
+    salesman: currentUser?.realName || '',
     shippingInfo: '',
     sampleImage: '',
     isSampleSent: false,
@@ -1096,8 +992,6 @@ const showCreateDialog = () => {
     isOrderGenerated: false
   })
   createDialogVisible.value = true
-  // 加载用户和产品列表
-  loadUsers()
   loadCooperationProducts()
 }
 
@@ -1123,32 +1017,6 @@ const handleCreate = async () => {
     creating.value = true
     try {
       await request.post('/samples', createForm)
-
-      // 检查TikTok ID是否在达人表中存在
-      try {
-        const influencerRes = await request.get('/influencer-managements', {
-          params: {
-            companyId: userStore.companyId,
-            keyword: createForm.influencerAccount,
-            limit: 1
-          }
-        })
-        const influencers = influencerRes.influencers || []
-        const matchedInfluencer = influencers.find(i => i.tiktokId === createForm.influencerAccount)
-
-        if (matchedInfluencer) {
-          // 添加维护记录
-          await request.post(`/influencer-managements/${matchedInfluencer._id}/maintenance`, {
-            followers: createForm.followerCount,
-            gmv: createForm.gmv,
-            remark: '样品申请'
-          })
-          console.log('已添加达人维护记录')
-        }
-      } catch (infError) {
-        console.error('检查达人或添加维护记录失败:', infError)
-      }
-
       ElMessage.success('创建成功')
       createDialogVisible.value = false
       loadSamples()
@@ -1164,8 +1032,7 @@ const handleCreate = async () => {
 const viewSampleDetail = async (sample) => {
   currentSample.value = sample
   detailDialogVisible.value = true
-  
-  // 尝试获取达人信息
+
   if (sample.influencerAccount) {
     try {
       const res = await request.get('/influencer-managements', {
@@ -1191,11 +1058,10 @@ const viewSampleDetail = async (sample) => {
   }
 }
 
-// 加载悬停弹层中的达人信息
 const loadInfluencerPopover = async (row) => {
   popoverInfluencer.value = null
   if (!row.influencerAccount) return
-  
+
   popoverLoading.value = true
   try {
     const res = await request.get('/influencer-managements', {
@@ -1205,7 +1071,6 @@ const loadInfluencerPopover = async (row) => {
         limit: 10
       }
     })
-    console.log('达人搜索结果:', res)
     const influencers = res.influencers || res.data || []
     const matched = influencers.find(i => i.tiktokId === row.influencerAccount)
     popoverInfluencer.value = matched || null
@@ -1225,8 +1090,7 @@ const viewDetail = (sample) => {
 const openAdPromotionDialog = (sample) => {
   Object.assign(adPromotionForm, {
     _id: sample._id,
-    videoStreamCode: sample.videoStreamCode || '',
-    isAdPromotion: sample.isAdPromotion || false
+    videoStreamCode: sample.videoStreamCode || ''
   })
   adPromotionDialogVisible.value = true
 }
@@ -1236,8 +1100,7 @@ const handleAdPromotionSave = async () => {
   adPromotionLoading.value = true
   try {
     await request.put(`/samples/${adPromotionForm._id}`, {
-      videoStreamCode: adPromotionForm.videoStreamCode,
-      isAdPromotion: adPromotionForm.isAdPromotion
+      videoStreamCode: adPromotionForm.videoStreamCode
     })
     ElMessage.success('保存成功')
     adPromotionDialogVisible.value = false
@@ -1257,35 +1120,6 @@ const openFulfillmentDialog = (sample) => {
     videoLink: sample.videoLink || ''
   })
   fulfillmentDialogVisible.value = true
-}
-
-// 打开寄样状态编辑弹窗
-const openSampleStatusDialog = (sample) => {
-  Object.assign(sampleStatusForm, {
-    _id: sample._id,
-    sampleStatus: sample.sampleStatus || 'pending',
-    refusalReason: sample.refusalReason || ''
-  })
-  sampleStatusDialogVisible.value = true
-}
-
-// 保存寄样状态
-const handleSampleStatusSave = async () => {
-  sampleStatusLoading.value = true
-  try {
-    await request.put(`/samples/${sampleStatusForm._id}`, {
-      sampleStatus: sampleStatusForm.sampleStatus,
-      refusalReason: sampleStatusForm.sampleStatus === 'refused' ? sampleStatusForm.refusalReason : ''
-    })
-    ElMessage.success('保存成功')
-    sampleStatusDialogVisible.value = false
-    loadSamples()
-  } catch (error) {
-    console.error('Save sample status error:', error)
-    ElMessage.error('保存失败')
-  } finally {
-    sampleStatusLoading.value = false
-  }
 }
 
 // 保存履约信息
@@ -1310,7 +1144,6 @@ const handleFulfillmentSave = async () => {
 const goToOrders = async (sample) => {
   if (!sample.isOrderGenerated) return
   
-  // 跳转到订单页面并传递查询参数
   router.push({
     path: '/report-orders',
     query: {
@@ -1318,59 +1151,6 @@ const goToOrders = async (sample) => {
       productId: sample.productId
     }
   })
-}
-
-const deleteSample = async (sample) => {
-  await ElMessageBox.confirm('确定要删除这条记录吗？', '提示', {
-    type: 'warning'
-  })
-
-  try {
-    await request.delete(`/samples/${sample._id}`)
-    ElMessage.success('删除成功')
-    loadSamples()
-  } catch (error) {
-    console.error('Delete sample error:', error)
-    ElMessage.error('删除失败')
-  }
-}
-
-const handleImportFile = async (file) => {
-  importing.value = true
-  try {
-    const formData = new FormData()
-    formData.append('file', file.raw)
-
-    const res = await request.post('/samples/import', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-
-    ElMessage.success(res.message || '导入成功')
-
-    if (res.data) {
-      const summary = `新增: ${res.data.added} 条\n更新: ${res.data.updated} 条`
-
-      if (res.data.errors && res.data.errors.length > 0) {
-        const errorDetails = res.data.errors.map(e => `第${e.row}行: ${e.error}`).join('\n')
-        ElMessageBox.alert(
-          `${summary}\n失败: ${res.data.failed} 条\n\n失败详情:\n${errorDetails}`,
-          '导入结果',
-          { type: 'warning' }
-        )
-      } else {
-        ElMessage.success(summary)
-      }
-    }
-
-    loadSamples()
-  } catch (error) {
-    console.error('Import error:', error)
-    ElMessage.error('导入失败，请稍后重试')
-  } finally {
-    importing.value = false
-  }
 }
 
 onMounted(() => {
@@ -1409,7 +1189,6 @@ onMounted(() => {
   border: 1px solid #e9ecef;
 }
 
-/* 表格样式优化 - 与建联达人相同 */
 .sample-table {
   border-radius: 8px;
   overflow: hidden;
@@ -1527,16 +1306,15 @@ onMounted(() => {
   gap: 4px;
 }
 
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .refusal-reason {
   font-size: 10px;
   color: #f56c6c;
-  word-break: break-all;
+  margin-top: 2px;
+}
+
+.refusal-reason-detail {
+  color: #f56c6c;
+  font-weight: 500;
 }
 
 .tracking-no {
@@ -1637,93 +1415,6 @@ onMounted(() => {
 }
 
 /* 对话框样式 */
-.el-dialog :deep(.el-dialog__header) {
-  background: linear-gradient(135deg, #9c4dcc 0%, #ba68c8 100%);
-  padding: 16px 20px;
-}
-
-.el-dialog :deep(.el-dialog__title) {
-  color: white;
-  font-weight: 600;
-}
-
-.el-form-item :deep(.el-form-item__label) {
-  color: #595959;
-  font-weight: 500;
-}
-
-/* TikTok绿色样式 */
-.tiktok-green-label :deep(.el-form-item__label) {
-  color: #6DAD19;
-}
-
-.tiktok-green-input :deep(.el-input__wrapper) {
-  border-color: #6DAD19;
-  box-shadow: 0 0 0 1px #6DAD19 inset;
-}
-
-.tiktok-green-input :deep(.el-input__wrapper:hover) {
-  border-color: #6DAD19;
-  box-shadow: 0 0 0 1px #6DAD19 inset;
-}
-
-.tiktok-green-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #6DAD19;
-  box-shadow: 0 0 0 1px #6DAD19 inset;
-}
-
-/* 修复 input-number 宽度溢出 */
-.el-input-number {
-  width: 100%;
-}
-
-.el-input-number :deep(.el-input__wrapper) {
-  width: 100%;
-  min-width: unset;
-}
-
-/* 黑名单行样式 */
-.blacklist-row {
-  background-color: #f5f5f5 !important;
-  border: 2px solid #333 !important;
-}
-
-.blacklist-row td {
-  background-color: #f5f5f5 !important;
-  color: #666;
-}
-
-/* 达人详情区域 */
-.influencer-detail {
-  margin-top: 10px;
-}
-
-/* 悬停弹层加载状态 */
-.popover-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 20px;
-  color: #909399;
-}
-
-.popover-loading .is-loading {
-  animation: rotating 1s linear infinite;
-}
-
-@keyframes rotating {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.popover-empty {
-  padding: 20px;
-  text-align: center;
-  color: #909399;
-}
-
-/* 详情对话框样式 */
 .business-detail-dialog :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 20px 24px;
@@ -1747,7 +1438,6 @@ onMounted(() => {
   gap: 20px;
 }
 
-/* 卡片样式 */
 .info-card {
   border: 1px solid #e8ebf0;
   border-radius: 12px;
@@ -1778,7 +1468,6 @@ onMounted(() => {
   color: #4a5568;
 }
 
-/* 信息项样式 */
 .info-item {
   margin-bottom: 8px;
 }
@@ -1826,7 +1515,6 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* 底部时间信息 */
 .bottom-info {
   text-align: right;
   padding-top: 12px;
@@ -1835,20 +1523,46 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* 详情对话框黑名单样式 */
-.detail-dialog-blacklist {
+.blacklist-row {
   background-color: #f5f5f5 !important;
   border: 2px solid #333 !important;
 }
 
-.detail-dialog-blacklist :deep(.el-dialog__body) {
-  background-color: #f5f5f5;
+.blacklist-row td {
+  background-color: #f5f5f5 !important;
+  color: #666;
 }
 
-.detail-content-blacklist {
-  background-color: #f5f5f5;
+.popover-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 20px;
-  border-radius: 8px;
-  border: 2px solid #333;
+  color: #909399;
+}
+
+.popover-loading .is-loading {
+  animation: rotating 1s linear infinite;
+}
+
+@keyframes rotating {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.popover-empty {
+  padding: 20px;
+  text-align: center;
+  color: #909399;
+}
+
+.el-input-number {
+  width: 100%;
+}
+
+.el-input-number :deep(.el-input__wrapper) {
+  width: 100%;
+  min-width: unset;
 }
 </style>

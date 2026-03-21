@@ -7,82 +7,106 @@
 
       <el-menu
         :default-active="activeMenu"
-        :default-openeds="['business', 'data-collection', 'reports', 'settings']"
+        :default-openeds="['bd-workspace', 'supply-chain', 'data-collection', 'reports', 'settings']"
         router
         class="sidebar-menu"
       >
+        <!-- 仪表盘 - 所有人可见 -->
         <el-menu-item index="/dashboard">
           <el-icon><DataBoard /></el-icon>
-          <span>数据概览</span>
+          <span>{{ $t('menu.dashboard') }}</span>
         </el-menu-item>
 
-        <el-sub-menu index="business">
+        <!-- BD工作台 -->
+        <el-sub-menu v-if="menuPermissions.bdWorkspace()" index="bd-workspace">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span>{{ $t('menu.bdWorkspace') }}</span>
+          </template>
+          <el-menu-item v-if="menuPermissions.influencerList()" index="/influencer-managements">
+            <span>{{ $t('menu.influencerList') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.samplesBd()" index="/samples-bd">
+            <span>{{ $t('menu.samples') }}</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 供应链 -->
+        <el-sub-menu v-if="menuPermissions.supplyChain()" index="supply-chain">
           <template #title>
             <el-icon><Box /></el-icon>
-            <span>业务数据</span>
+            <span>{{ $t('menu.supplyChain') }}</span>
           </template>
-          <el-menu-item index="/influencer-managements">
-            <span>建联达人</span>
+          <el-menu-item v-if="menuPermissions.products()" index="/products">
+            <span>{{ $t('menu.products') }}</span>
           </el-menu-item>
-          <el-menu-item index="/products">
-            <span>合作产品</span>
+          <el-menu-item v-if="menuPermissions.activities()" index="/activities">
+            <span>{{ $t('menu.activities') }}</span>
           </el-menu-item>
-          <el-menu-item index="/activities">
-            <span>TikTok活动</span>
+          <el-menu-item v-if="menuPermissions.shops()" index="/shops">
+            <span>店铺管理</span>
           </el-menu-item>
-          <el-menu-item index="/supply-chain">
-            <span>供应链</span>
-          </el-menu-item>
+          <!-- 合作产品已合并到产品管理中 -->
         </el-sub-menu>
 
-        <el-sub-menu index="data-collection">
+        <!-- 数据采集 -->
+        <el-sub-menu v-if="menuPermissions.dataCollection()" index="data-collection">
           <template #title>
             <el-icon><DocumentCopy /></el-icon>
-            <span>数据采集</span>
+            <span>{{ $t('menu.dataCollection') }}</span>
           </template>
-          <el-menu-item index="/samples">
-            <span>样品申请</span>
+          <el-menu-item v-if="menuPermissions.samples()" index="/samples">
+            <span>{{ $t('menu.samples') }}</span>
           </el-menu-item>
-          <el-menu-item index="/orders">
-            <span>TikTok订单</span>
+          <el-menu-item v-if="menuPermissions.orders()" index="/orders">
+            <span>{{ $t('menu.orders') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="reports">
+        <!-- 报表管理 -->
+        <el-sub-menu v-if="menuPermissions.reports()" index="reports">
           <template #title>
             <el-icon><Document /></el-icon>
-            <span>报表管理</span>
+            <span>{{ $t('menu.reports') }}</span>
           </template>
-          <el-menu-item index="/bd-daily">
-            <span>BD每日统计</span>
+          <el-menu-item v-if="menuPermissions.bdDashboard()" index="/bd-dashboard">
+            <span>BD仪表盘</span>
           </el-menu-item>
-          <el-menu-item index="/performance">
-            <span>业绩报表</span>
+          <el-menu-item v-if="menuPermissions.bdDaily()" index="/bd-daily">
+            <span>{{ $t('menu.bdDaily') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.performance()" index="/performance">
+            <span>{{ $t('menu.performance') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="settings">
+        <!-- 系统设置 -->
+        <el-sub-menu v-if="menuPermissions.settings()" index="settings">
           <template #title>
             <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
+            <span>{{ $t('menu.settings') }}</span>
           </template>
-          <el-menu-item index="/settings/users">
-            <span>用户管理</span>
+          <el-menu-item v-if="menuPermissions.users()" index="/settings/users">
+            <span>{{ $t('menu.users') }}</span>
           </el-menu-item>
-          <el-menu-item index="/settings/roles">
-            <span>角色管理</span>
+          <!-- 角色管理仅超级管理员可见 -->
+          <el-menu-item v-if="isSuperAdmin()" index="/settings/roles">
+            <span>{{ $t('menu.roles') }}</span>
           </el-menu-item>
-          <el-menu-item index="/settings/departments">
-            <span>部门管理</span>
+          <el-menu-item v-if="menuPermissions.departments()" index="/settings/departments">
+            <span>{{ $t('menu.departments') }}</span>
           </el-menu-item>
-          <el-menu-item index="/settings/commission-rules">
-            <span>抽点设置</span>
+          <el-menu-item v-if="menuPermissions.commissionRules()" index="/settings/commission-rules">
+            <span>{{ $t('menu.commissionRules') }}</span>
           </el-menu-item>
-          <el-menu-item index="/settings/base-data">
-            <span>基础数据</span>
+          <el-menu-item v-if="menuPermissions.baseData()" index="/settings/base-data">
+            <span>{{ $t('menu.baseData') }}</span>
           </el-menu-item>
-          <el-menu-item index="/settings/system-models">
-            <span>系统模型</span>
+          <el-menu-item v-if="menuPermissions.systemModels()" index="/settings/system-models">
+            <span>{{ $t('menu.systemModels') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.initImport()" index="/settings/init-import">
+            <span>初始化导入</span>
           </el-menu-item>
         </el-sub-menu>
       </el-menu>
@@ -95,6 +119,7 @@
         </div>
 
         <div class="header-right">
+          <LangSwitch style="margin-right: 16px" />
           <el-dropdown @command="handleCommand">
             <div class="user-info">
               <el-icon><UserFilled /></el-icon>
@@ -105,11 +130,11 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="changePassword">
                   <el-icon><Lock /></el-icon>
-                  修改密码
+                  {{ $t('auth.changePassword') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="logout">
                   <el-icon><SwitchButton /></el-icon>
-                  退出登录
+                  {{ $t('auth.logoutSuccess') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -122,21 +147,21 @@
       </el-main>
 
       <!-- 修改密码对话框 -->
-      <el-dialog v-model="showPasswordDialog" title="修改密码" width="400px">
+      <el-dialog v-model="showPasswordDialog" :title="$t('auth.changePassword')" width="400px">
         <el-form :model="passwordForm" label-width="80px">
-          <el-form-item label="旧密码">
+          <el-form-item :label="$t('auth.oldPassword')">
             <el-input v-model="passwordForm.oldPassword" type="password" show-password />
           </el-form-item>
-          <el-form-item label="新密码">
+          <el-form-item :label="$t('auth.newPassword')">
             <el-input v-model="passwordForm.newPassword" type="password" show-password />
           </el-form-item>
-          <el-form-item label="确认密码">
+          <el-form-item :label="$t('auth.confirmPassword')">
             <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="showPasswordDialog = false">取消</el-button>
-          <el-button type="primary" @click="handlePasswordChange">确定</el-button>
+          <el-button @click="showPasswordDialog = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handlePasswordChange">{{ $t('common.confirm') }}</el-button>
         </template>
       </el-dialog>
     </el-container>
@@ -161,6 +186,7 @@ import {
   Setting,
   Lock
 } from '@element-plus/icons-vue'
+import LangSwitch from '@/components/LangSwitch.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -168,6 +194,59 @@ const router = useRouter()
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta?.title || 'TAP系统')
 const realName = computed(() => AuthManager.getUser()?.realName || '')
+
+// 菜单权限判断
+const hasPermission = (permission) => AuthManager.hasPermission(permission)
+const hasAnyPermission = (permissions) => AuthManager.hasAnyPermission(permissions)
+
+// 判断是否是超级管理员
+const isSuperAdmin = () => {
+  const permissions = AuthManager.getPermissions()
+  return permissions.includes('*')
+}
+
+// 菜单项权限配置 - 直接对应角色权限
+const menuPermissions = {
+  // 仪表盘 - 所有人可见
+  dashboard: () => true,
+
+  // BD工作台 - 需要达人或样品申请(BD)权限
+  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samples-bd:read', 'samples-bd:create']),
+  influencerList: () => hasPermission('influencers:read'),
+  samplesBd: () => hasAnyPermission(['samples-bd:read', 'samples-bd:create']),
+
+  // 供应链 - 需要产品或活动或店铺权限
+  supplyChain: () => hasAnyPermission(['products:read', 'products:create', 'activities:read', 'activities:create', 'shops:read', 'shops:create']),
+  products: () => hasPermission('products:read'),
+  activities: () => hasPermission('activities:read'),
+  shops: () => hasPermission('shops:read'),
+  // 合作产品已合并到产品管理，使用 products 权限
+
+  // 数据采集 - 需要样品管理或订单或店铺权限（样品管理和样品申请是分开的）
+  dataCollection: () => hasAnyPermission(['samples:read', 'orders:read', 'shops:read']),
+  samples: () => hasPermission('samples:read'),
+  orders: () => hasPermission('orders:read'),
+
+  // 报表管理 - 需要BD日报或业绩或产品统计权限
+  reports: () => hasAnyPermission(['bd-daily:read', 'performance:read', 'productStats:read']),
+  bdDashboard: () => hasAnyPermission(['bd-dashboard:read', 'performance:read']),
+  bdDaily: () => hasPermission('bd-daily:read'),
+  performance: () => hasPermission('performance:read'),
+
+  // 系统设置 - 需要对应模块的读取权限
+  settings: () => hasAnyPermission(['users:read', 'roles:read', 'departments:read', 'baseData:read', 'systemModels:read', 'initImport:read']) || isSuperAdmin(),
+  users: () => hasPermission('users:read'),
+  roles: () => hasPermission('roles:read'),
+  departments: () => hasPermission('departments:read'),
+  commissionRules: () => hasPermission('commissions:read'),
+  baseData: () => hasPermission('baseData:read'),
+  systemModels: () => hasPermission('systemModels:read'),
+  initImport: () => {
+    // 初始化导入仅超级管理员可见
+    const user = AuthManager.getUser()
+    return user?.role?.name === '超级管理员'
+  }
+}
 
 const showPasswordDialog = ref(false)
 const passwordForm = ref({

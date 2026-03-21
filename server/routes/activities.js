@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { authenticate, authorize } = require('../middleware/auth');
 const Activity = require('../models/Activity');
 const ActivityHistory = require('../models/ActivityHistory');
+const { Product } = require('../models');
 
 const router = express.Router();
 
@@ -293,6 +294,104 @@ router.get('/:id/history', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '获取活动历史失败'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/activities/:id/products
+ * @desc    获取活动关联的商品列表和数量
+ * @access  Private
+ */
+router.get('/:id/products', authenticate, authorize('activities:read'), async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const activityId = req.params.id;
+
+    // 检查活动是否存在
+    const activity = await Activity.findOne({
+      _id: activityId,
+      companyId: req.companyId
+    });
+
+    if (!activity) {
+      return res.status(404).json({
+        success: false,
+        message: '活动不存在'
+      });
+    }
+
+    // 查询参与该活动的商品
+    const query = {
+      companyId: req.companyId,
+      'activityCommissions.activityId': activityId
+    };
+
+    const products = await Product.find(query)
+      .populate('shopId', 'name')
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Product.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        products,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get activity products error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取活动商品列表失败'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/activities/product-counts
+ * @desc    批量获取各活动的商品数量
+ * @access  Private
+ */
+router.get('/product-counts', authenticate, authorize('activities:read'), async (req, res) => {
+  try {
+    const { ids } = req.query;
+    const activityIds = ids ? ids.split(',') : [];
+
+    if (activityIds.length === 0) {
+      return res.json({
+        success: true,
+        data: {}
+      });
+    }
+
+    // 统计每个活动关联的商品数量
+    const counts = {};
+    for (const activityId of activityIds) {
+      const count = await Product.countDocuments({
+        companyId: req.companyId,
+        'activityCommissions.activityId': activityId
+      });
+      counts[activityId] = count;
+    }
+
+    res.json({
+      success: true,
+      data: counts
+    });
+  } catch (error) {
+    console.error('Get activity product counts error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取活动商品数量失败'
     });
   }
 });

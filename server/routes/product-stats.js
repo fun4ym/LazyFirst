@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const ReportOrder = require('../models/ReportOrder');
-const CooperationProduct = require('../models/CooperationProduct');
+const Product = require('../models/Product');
 const User = require('../models/User');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middleware/auth');
 
 // 测试端点 - 不用认证
 router.get('/test-order-stats/:productId', async (req, res) => {
@@ -23,14 +23,14 @@ router.get('/test-order-stats/:productId', async (req, res) => {
     }
 
     // 获取 TikTok productId
-    const coopProduct = await CooperationProduct.findById(productId);
-    console.log('CooperationProduct:', coopProduct?._id, coopProduct?.productId);
+    const coopProduct = await Product.findById(productId);
+    console.log('Product:', coopProduct?._id, coopProduct?.tiktokProductId);
 
     if (!coopProduct) {
       return res.json({ success: false, message: '产品不存在' });
     }
 
-    const tiktokProductId = String(coopProduct.productId);
+    const tiktokProductId = String(coopProduct.tiktokProductId);
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
 
     const query = { productId: tiktokProductId, summaryDate: { $gte: sevenDaysAgo } };
@@ -49,7 +49,7 @@ router.get('/test-order-stats/:productId', async (req, res) => {
 });
 
 // 获取产品的订单统计
-router.get('/order-stats/:productId', authenticate, async (req, res) => {
+router.get('/order-stats/:productId', authenticate, authorize('products:read'), async (req, res) => {
   try {
     const { productId } = req.params;
     let { companyId } = req.query;
@@ -67,13 +67,13 @@ router.get('/order-stats/:productId', authenticate, async (req, res) => {
 
     console.log('查询订单统计 - productId:', productId, 'companyId:', companyIdQuery);
 
-    // 通过 CooperationProduct._id 获取 TikTok 商品ID
-    const cooperationProduct = await CooperationProduct.findById(productId).select('productId');
+    // 通过 Product._id 获取 TikTok 商品ID
+    const cooperationProduct = await Product.findById(productId).select('tiktokProductId');
     if (!cooperationProduct) {
       return res.status(404).json({ success: false, message: '产品不存在' });
     }
 
-    const tiktokProductId = String(cooperationProduct.productId);
+    const tiktokProductId = String(cooperationProduct.tiktokProductId);
     console.log('TikTok商品ID:', tiktokProductId);
 
     const now = new Date();
@@ -181,7 +181,7 @@ router.get('/order-stats/:productId', authenticate, async (req, res) => {
 });
 
 // 获取产品销售报表数据
-router.get('/sales-report/:productId', authenticate, async (req, res) => {
+router.get('/sales-report/:productId', authenticate, authorize('products:read'), async (req, res) => {
   try {
     const { productId } = req.params;
     let { companyId, period = '7days' } = req.query;
@@ -195,13 +195,13 @@ router.get('/sales-report/:productId', authenticate, async (req, res) => {
 
     console.log('查询销售报表 - productId:', productId, 'period:', period);
 
-    // 通过 CooperationProduct._id 获取 TikTok 商品ID
-    const cooperationProduct = await CooperationProduct.findById(productId).select('productId');
+    // 通过 Product._id 获取 TikTok 商品ID
+    const cooperationProduct = await Product.findById(productId).select('tiktokProductId');
     if (!cooperationProduct) {
       return res.status(404).json({ success: false, message: '产品不存在' });
     }
 
-    const tiktokProductId = String(cooperationProduct.productId);
+    const tiktokProductId = String(cooperationProduct.tiktokProductId);
     console.log('TikTok商品ID:', tiktokProductId);
 
     const now = new Date();
@@ -367,7 +367,7 @@ router.get('/sales-report/:productId', authenticate, async (req, res) => {
 });
 
 // 获取达人的订单统计
-router.get('/influencer-order-stats', authenticate, async (req, res) => {
+router.get('/influencer-order-stats', authenticate, authorize('influencers:read'), async (req, res) => {
   try {
     let { influencerIds, companyId } = req.query;
 

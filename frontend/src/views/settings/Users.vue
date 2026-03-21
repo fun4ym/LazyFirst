@@ -3,46 +3,65 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>用户管理</h3>
-          <el-button type="primary" @click="showCreateDialog">
+          <h3>{{ $t('menu.users') }}</h3>
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('users:create')">
             <el-icon><Plus /></el-icon>
-            新建用户
+            {{ $t('user.addUser') }}
           </el-button>
         </div>
       </template>
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="搜索">
+        <el-form-item :label="$t('common.search')">
           <el-input
             v-model="searchForm.search"
-            placeholder="搜索用户名/姓名/手机号"
+            :placeholder="$t('user.searchPlaceholder')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
 
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="全部" clearable>
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+        <el-form-item :label="$t('common.status')">
+          <el-select v-model="searchForm.status" :placeholder="$t('common.all')" clearable>
+            <el-option :label="$t('status.active')" value="active" />
+            <el-option :label="$t('status.inactive')" value="inactive" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="角色">
+          <el-select v-model="searchForm.roleId" placeholder="全部角色" clearable>
+            <el-option
+              v-for="role in roles"
+              :key="role._id"
+              :label="role.name"
+              :value="role._id"
+            />
           </el-select>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="loadUsers">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadUsers">{{ $t('common.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
       <!-- 表格 -->
       <el-table :data="users" v-loading="loading" border>
-        <el-table-column prop="username" label="用户名" width="120" />
+        <el-table-column prop="username" :label="$t('user.username')" width="120" />
         <el-table-column prop="realName" label="真实姓名" width="120" />
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="email" label="邮箱" width="180" />
-        <el-table-column prop="role.name" label="角色" width="120" />
-        <el-table-column prop="dept.name" label="部门" width="120" />
+        <el-table-column label="角色" width="120">
+          <template #default="{ row }">
+            {{ row.roleId?.name || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="部门" width="120">
+          <template #default="{ row }">
+            {{ row.deptId?.name || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
@@ -57,9 +76,20 @@
         </el-table-column>
         <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)">编辑</el-button>
-            <el-button link type="warning" @click="showPasswordResetDialog(row)">重置密码</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <!-- 超级管理员用户：只有超级管理员可编辑/删除 -->
+            <template v-if="isSuperAdminUser(row)">
+              <el-tag type="danger" size="small">超级管理员</el-tag>
+              <template v-if="isCurrentUserSuperAdmin()">
+                <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">编辑</el-button>
+                <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">删除</el-button>
+              </template>
+            </template>
+            <!-- 普通用户：可编辑/删除 -->
+            <template v-else>
+              <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">编辑</el-button>
+              <el-button link type="warning" @click="showPasswordResetDialog(row)" v-if="hasPermission('users:btn-reset-pwd')">重置密码</el-button>
+              <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">删除</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -109,9 +139,9 @@
         </el-form-item>
 
         <el-form-item label="角色" prop="roleId">
-          <el-select v-model="form.roleId" placeholder="选择角色" style="width: 100%">
+          <el-select v-model="form.roleId" placeholder="选择角色" style="width: 100%" :disabled="isEdit && users.value && isSuperAdminUser(users.value.find(u => u._id === form._id))">
             <el-option
-              v-for="role in roles"
+              v-for="role in availableRoles"
               :key="role._id"
               :label="role.name"
               :value="role._id"
@@ -175,10 +205,40 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import AuthManager from '@/utils/auth'
+
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
+
+// 判断用户是否是超级管理员
+const isSuperAdminUser = (user) => {
+  if (!user) return false
+  const role = user.role || user.roleId
+  if (!role) return false
+  // 检查role对象或role名称
+  if (typeof role === 'object') {
+    return role.name === '超级管理员' || role.permissions?.includes('*')
+  }
+  return role === '超级管理员' || role === 'admin'
+}
+
+// 判断当前登录用户是否是超级管理员
+const isCurrentUserSuperAdmin = () => {
+  const currentUser = AuthManager.getUser()
+  if (!currentUser) return false
+  return isSuperAdminUser(currentUser)
+}
+
+// 可选择的角色列表（排除超级管理员角色）
+const availableRoles = computed(() => {
+  return roles.value.filter(role => role.name !== '超级管理员')
+})
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -198,7 +258,8 @@ const passwordResetForm = ref({
 
 const searchForm = reactive({
   search: '',
-  status: ''
+  status: '',
+  roleId: ''
 })
 
 const pagination = reactive({

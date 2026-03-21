@@ -21,6 +21,11 @@ const influencerMaintenanceSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  poolType: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public'
+  },
   remark: {
     type: String,
     trim: true

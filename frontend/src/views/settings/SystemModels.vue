@@ -4,17 +4,19 @@
       <template #header>
         <div class="page-header">
           <h3>系统模型</h3>
-          <span class="header-tip">查看所有数据表结构</span>
+          <span class="header-tip">查看所有数据表结构及主外键关系</span>
         </div>
       </template>
 
-      <el-tabs v-model="activeTable" tab-position="left" class="model-tabs">
-        <el-tab-pane
-          v-for="table in tableList"
-          :key="table.name"
-          :label="table.name"
-          :name="table.name"
-        >
+      <el-tabs v-model="activeTab" class="model-tabs">
+        <el-tab-pane label="数据表结构" name="tables">
+          <el-tabs v-model="activeTable" tab-position="left" class="inner-tabs">
+            <el-tab-pane
+              v-for="table in tableList"
+              :key="table.name"
+              :label="table.name"
+              :name="table.name"
+            >
           <div class="table-info">
             <h4>{{ table.name }} - {{ table.description }}</h4>
           </div>
@@ -47,6 +49,59 @@
             </el-table-column>
             <el-table-column prop="description" label="说明" min-width="200" />
           </el-table>
+            </el-tab-pane>
+          </el-tabs>
+        </el-tab-pane>
+
+        <!-- 主外键关系页签 -->
+        <el-tab-pane label="主外键关系" name="relations">
+          <div class="relations-section">
+            <el-alert
+              title="数据模型主外键关系说明"
+              type="info"
+              :closable="false"
+              show-icon
+              style="margin-bottom: 20px"
+            >
+              <template #default>
+                以下展示各数据表之间的主键(PK)与外键(FK)关联关系。箭头方向表示引用关系：A → B 表示A表的某个字段引用B表的主键。
+              </template>
+            </el-alert>
+
+            <el-table :data="relations" stripe border size="small">
+              <el-table-column prop="sourceTable" label="源表" width="180">
+                <template #default="{ row }">
+                  <el-tag type="primary" size="small">{{ row.sourceTable }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="sourceField" label="源字段" width="180">
+                <template #default="{ row }">
+                  <span class="field-name">{{ row.sourceField }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="关系" width="80" align="center">
+                <template #default="{ row }">
+                  <span class="relation-arrow">→</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="targetTable" label="目标表" width="180">
+                <template #default="{ row }">
+                  <el-tag type="success" size="small">{{ row.targetTable }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="targetField" label="目标字段" width="120">
+                <template #default="{ row }">
+                  <span class="field-name">{{ row.targetField }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="type" label="类型" width="80">
+                <template #default="{ row }">
+                  <el-tag :type="row.type === 'FK' ? 'warning' : 'danger'" size="small">{{ row.type }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="description" label="说明" min-width="200" />
+            </el-table>
+          </div>
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -54,11 +109,74 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
+
+const activeTab = ref('tables')
 const activeTable = ref('User')
 
-const tableList = ref([
+// 原始外键关系数据（未排序）
+const relationsData = ref([
+  { sourceTable: 'User', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'User', sourceField: 'deptId', targetTable: 'Department', targetField: '_id', type: 'FK', description: '所属部门' },
+  { sourceTable: 'User', sourceField: 'roleId', targetTable: 'Role', targetField: '_id', type: 'FK', description: '角色ID' },
+  { sourceTable: 'Department', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Department', sourceField: 'parentId', targetTable: 'Department', targetField: '_id', type: 'FK', description: '上级部门' },
+  { sourceTable: 'Department', sourceField: 'managerId', targetTable: 'User', targetField: '_id', type: 'FK', description: '部门负责人' },
+  { sourceTable: 'Role', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Influencer', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Influencer', sourceField: 'assignedTo', targetTable: 'User', targetField: '_id', type: 'FK', description: '归属BD' },
+  { sourceTable: 'Influencer', sourceField: 'creatorId', targetTable: 'User', targetField: '_id', type: 'FK', description: '创建人' },
+  { sourceTable: 'Shop', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Shop', sourceField: 'categoryId', targetTable: 'BaseData', targetField: '_id', type: 'FK', description: '店铺类目' },
+  { sourceTable: 'Product', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Product', sourceField: 'supplierId', targetTable: 'Supplier', targetField: '_id', type: 'FK', description: '供应商' },
+  { sourceTable: 'Product', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '所属店铺' },
+  { sourceTable: 'Product', sourceField: 'categoryId', targetTable: 'BaseData', targetField: '_id', type: 'FK', description: '商品类目' },
+  { sourceTable: 'Product', sourceField: 'gradeId', targetTable: 'BaseData', targetField: '_id', type: 'FK', description: '商品等级' },
+  { sourceTable: 'Product', sourceField: 'activityCommissions.activityId', targetTable: 'Activity', targetField: '_id', type: 'FK', description: '参与活动' },
+  { sourceTable: 'Activity', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Activity', sourceField: 'creatorId', targetTable: 'User', targetField: '_id', type: 'FK', description: '创建人' },
+  { sourceTable: 'Order', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Order', sourceField: 'influencerId', targetTable: 'Influencer', targetField: '_id', type: 'FK', description: '达人' },
+  { sourceTable: 'Order', sourceField: 'productId', targetTable: 'Product', targetField: '_id', type: 'FK', description: '商品' },
+  { sourceTable: 'Order', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '店铺' },
+  { sourceTable: 'Order', sourceField: 'creatorId', targetTable: 'User', targetField: '_id', type: 'FK', description: '创建人' },
+  { sourceTable: 'ReportOrder', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'ReportOrder', sourceField: 'influencerId', targetTable: 'Influencer', targetField: '_id', type: 'FK', description: '达人' },
+  { sourceTable: 'ReportOrder', sourceField: 'productId', targetTable: 'Product', targetField: '_id', type: 'FK', description: '商品' },
+  { sourceTable: 'ReportOrder', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '店铺' },
+  { sourceTable: 'SampleManagement', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'SampleManagement', sourceField: 'influencerId', targetTable: 'Influencer', targetField: '_id', type: 'FK', description: '达人' },
+  { sourceTable: 'SampleManagement', sourceField: 'productId', targetTable: 'Product', targetField: '_id', type: 'FK', description: '商品' },
+  { sourceTable: 'SampleManagement', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '店铺' },
+  { sourceTable: 'SampleManagement', sourceField: 'applicantId', targetTable: 'User', targetField: '_id', type: 'FK', description: '申请人' },
+  { sourceTable: 'BdDaily', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'BdDaily', sourceField: 'userId', targetTable: 'User', targetField: '_id', type: 'FK', description: 'BD用户' },
+  { sourceTable: 'Performance', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Performance', sourceField: 'userId', targetTable: 'User', targetField: '_id', type: 'FK', description: '用户' },
+  { sourceTable: 'Performance', sourceField: 'influencerId', targetTable: 'Influencer', targetField: '_id', type: 'FK', description: '达人' },
+  { sourceTable: 'Commission', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Commission', sourceField: 'orderId', targetTable: 'Order', targetField: '_id', type: 'FK', description: '订单' },
+  { sourceTable: 'Commission', sourceField: 'userId', targetTable: 'User', targetField: '_id', type: 'FK', description: '用户' },
+  { sourceTable: 'ShopContact', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'ShopContact', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '店铺' },
+  { sourceTable: 'ShopRating', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'ShopRating', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '店铺' },
+  { sourceTable: 'ShopTracking', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'ShopTracking', sourceField: 'shopId', targetTable: 'Shop', targetField: '_id', type: 'FK', description: '店铺' },
+  { sourceTable: 'ActivityHistory', sourceField: 'activityId', targetTable: 'Activity', targetField: '_id', type: 'FK', description: '活动' },
+  { sourceTable: 'ActivityHistory', sourceField: 'changedBy', targetTable: 'User', targetField: '_id', type: 'FK', description: '修改人' },
+  { sourceTable: 'InfluencerMaintenance', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'InfluencerMaintenance', sourceField: 'influencerId', targetTable: 'Influencer', targetField: '_id', type: 'FK', description: '达人' },
+  { sourceTable: 'InfluencerMaintenance', sourceField: 'operatorId', targetTable: 'User', targetField: '_id', type: 'FK', description: '操作人' },
+  { sourceTable: 'CooperationProduct', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+])
+
+// 原始数据表结构（未排序）
+const tableData = ref([
   {
     name: 'User',
     description: '用户表 - 系统用户信息',
@@ -192,6 +310,8 @@ const tableList = ref([
       { field: 'avatar', type: 'String', description: '店铺头像' },
       { field: 'shopName', type: 'String', required: true, description: '店铺名称' },
       { field: 'shopNumber', type: 'String', required: true, description: '店铺编号(唯一)' },
+      { field: 'identificationCode', type: 'String', description: '识别码(SHA256哈希值前16位)' },
+      { field: 'identificationCodeGeneratedAt', type: 'Date', description: '识别码生成时间' },
       { field: 'contactAddress', type: 'String', description: '联系地址' },
       { field: 'remark', type: 'String', description: '备注' },
       { field: 'status', type: 'String', default: 'active', description: '状态: active/inactive' },
@@ -274,12 +394,61 @@ const tableList = ref([
       { field: 'influencerUsername', type: 'String', description: '达人用户名' },
       { field: 'productId', type: 'String', description: '商品ID' },
       { field: 'productName', type: 'String', description: '商品名称' },
+      { field: 'sku', type: 'String', description: 'SKU' },
+      { field: 'productPrice', type: 'Number', description: '商品单价' },
+      { field: 'orderQuantity', type: 'Number', default: 0, description: '订单数量' },
+      { field: 'shopName', type: 'String', description: '店铺名称' },
+      { field: 'shopCode', type: 'String', description: '店铺代码' },
+      { field: 'orderStatus', type: 'String', description: '订单状态' },
+      { field: 'contentType', type: 'String', description: '内容类型' },
+      { field: 'contentId', type: 'String', description: '内容ID' },
       { field: 'summaryDate', type: 'String', required: true, description: '汇总日期(YYYY-MM-DD)' },
       { field: 'bdName', type: 'String', description: '归属BD' },
       { field: 'orderCount', type: 'Number', default: 0, description: '订单数' },
       { field: 'gmv', type: 'Number', default: 0, description: 'GMV' },
       { field: 'country', type: 'String', description: '国家' },
-      { field: 'createTime', type: 'Date', description: '创建时间' },
+      // 佣金率字段
+      { field: 'affiliatePartnerCommissionRate', type: 'Number', description: '联盟伙伴佣金率' },
+      { field: 'creatorCommissionRate', type: 'Number', description: '创作者佣金率' },
+      { field: 'serviceProviderRewardCommissionRate', type: 'Number', description: '服务商奖励佣金率' },
+      { field: 'influencerRewardCommissionRate', type: 'Number', description: '达人奖励佣金率' },
+      { field: 'affiliateServiceProviderShopAdCommissionRate', type: 'Number', description: '联盟服务商广告佣金率' },
+      { field: 'influencerShopAdCommissionRate', type: 'Number', description: '达人广告佣金率' },
+      // 预计佣金
+      { field: 'estimatedCommissionAmount', type: 'Number', description: '预计佣金总额' },
+      { field: 'estimatedAffiliatePartnerCommission', type: 'Number', description: '预计联盟合作伙伴佣金' },
+      { field: 'estimatedServiceProviderRewardCommission', type: 'Number', description: '预计服务商奖励佣金' },
+      { field: 'estimatedInfluencerRewardCommission', type: 'Number', description: '预计达人奖励佣金' },
+      { field: 'estimatedCreatorCommission', type: 'Number', description: '预计创作者佣金' },
+      { field: 'estimatedInfluencerShopAdPayment', type: 'Number', description: '预计达人广告付款' },
+      { field: 'estimatedAffiliateServiceProviderShopAdPayment', type: 'Number', description: '预计联盟服务商广告付款' },
+      // 实际佣金
+      { field: 'actualCommissionAmount', type: 'Number', description: '实际佣金总额' },
+      { field: 'actualAffiliatePartnerCommission', type: 'Number', description: '实际联盟合作伙伴佣金' },
+      { field: 'actualCreatorCommission', type: 'Number', description: '实际创作者佣金' },
+      { field: 'actualServiceProviderRewardCommission', type: 'Number', description: '实际服务商奖励佣金' },
+      { field: 'actualInfluencerRewardCommission', type: 'Number', description: '实际达人奖励佣金' },
+      { field: 'actualAffiliateServiceProviderShopAdPayment', type: 'Number', description: '实际联盟服务商广告付款' },
+      { field: 'actualInfluencerShopAdPayment', type: 'Number', description: '实际达人广告付款' },
+      // 退货退款
+      { field: 'returnedProductCount', type: 'Number', description: '退货数量' },
+      { field: 'refundedProductCount', type: 'Number', description: '退款数量' },
+      // 时间字段
+      { field: 'createTime', type: 'Date', description: '订单创建时间' },
+      { field: 'orderDeliveryTime', type: 'Date', description: '订单发货时间' },
+      { field: 'commissionSettlementTime', type: 'Date', description: '佣金结算时间' },
+      // 打款信息
+      { field: 'paymentNo', type: 'String', description: '打款号' },
+      { field: 'paymentMethod', type: 'String', description: '打款方式' },
+      { field: 'paymentAccount', type: 'String', description: '打款账号' },
+      // 其他
+      { field: 'iva', type: 'String', description: 'IVA' },
+      { field: 'isr', type: 'String', description: 'ISR' },
+      { field: 'platform', type: 'String', default: 'tiktok', description: '平台' },
+      { field: 'attributionType', type: 'String', description: '归因类型' },
+      { field: 'merchandiser', type: 'String', description: '跟单员' },
+      { field: 'groupInfo', type: 'String', description: '分组信息' },
+      { field: 'isBlacklistedInfluencer', type: 'Boolean', default: false, description: '黑名单达人标记' },
       { field: 'createdAt', type: 'Date', description: '创建时间' },
       { field: 'updatedAt', type: 'Date', description: '更新时间' }
     ]
@@ -323,11 +492,12 @@ const tableList = ref([
       { field: 'date', type: 'Date', required: true, description: '统计日期' },
       { field: 'salesman', type: 'String', required: true, description: 'BD姓名' },
       { field: 'sampleCount', type: 'Number', default: 0, description: '本日申样数' },
-      { field: 'sampleIds', type: 'String', description: '申样记录ID' },
-      { field: 'revenue', type: 'Number', default: 0, description: '本日收入(GMV)' },
-      { field: 'revenueIds', type: 'String', description: '收入记录ID' },
+      { field: 'sampleIds', type: 'String', description: '申样记录ID，逗号分隔' },
+      { field: 'revenue', type: 'Number', default: 0, description: '本日成交金额(GMV)' },
+      { field: 'estimatedCommission', type: 'Number', default: 0, description: '本日预估服务费' },
+      { field: 'revenueIds', type: 'String', description: '收入记录ID，逗号分隔' },
       { field: 'orderCount', type: 'Number', default: 0, description: '本日订单数' },
-      { field: 'commission', type: 'Number', default: 0, description: '本日佣金' },
+      { field: 'commission', type: 'Number', default: 0, description: '本日结算佣金' },
       { field: 'orderGeneratedCount', type: 'Number', default: 0, description: '本日出单数' },
       { field: 'creatorId', type: 'ObjectId', ref: 'User', description: '创建人' },
       { field: 'updaterId', type: 'ObjectId', ref: 'User', description: '更新人' },
@@ -490,6 +660,16 @@ const tableList = ref([
     ]
   }
 ])
+
+// 主外键关系 - 按源表字母排序
+const relations = computed(() => {
+  return [...relationsData.value].sort((a, b) => a.sourceTable.localeCompare(b.sourceTable))
+})
+
+// 数据表结构 - 按表名字母排序
+const tableList = computed(() => {
+  return [...tableData.value].sort((a, b) => a.name.localeCompare(b.name))
+})
 </script>
 
 <style scoped>
@@ -543,5 +723,38 @@ const tableList = ref([
   font-family: 'Monaco', 'Menlo', monospace;
   color: #909399;
   font-size: 12px;
+}
+
+.relations-section {
+  padding: 10px;
+}
+
+.relation-arrow {
+  font-size: 18px;
+  font-weight: bold;
+  color: #409eff;
+}
+
+.inner-tabs {
+  height: 600px;
+}
+
+.inner-tabs :deep(.el-tabs__content) {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.inner-tabs :deep(.el-tab-pane) {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.inner-tabs .table-info {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  margin-bottom: 12px;
 }
 </style>

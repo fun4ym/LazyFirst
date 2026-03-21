@@ -8,6 +8,10 @@ const Product = require('./Product');
 const Order = require('./Order');
 const Commission = require('./Commission');
 const SampleManagement = require('./SampleManagement');
+const Shop = require('./Shop');
+const ShopContact = require('./ShopContact');
+const ShopRating = require('./ShopRating');
+const ShopTracking = require('./ShopTracking');
 
 module.exports = {
   User,
@@ -19,5 +23,9 @@ module.exports = {
   Product,
   Order,
   Commission,
-  SampleManagement
+  SampleManagement,
+  Shop,
+  ShopContact,
+  ShopRating,
+  ShopTracking
 };

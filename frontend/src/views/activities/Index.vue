@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <h3>TikTok活动管理</h3>
-          <el-button type="primary" @click="showCreateDialog">
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('activities:create')">
             <el-icon><Plus /></el-icon>
             新建活动
           </el-button>
@@ -72,6 +72,51 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="参与商品" width="120" align="center">
+          <template #default="{ row }">
+            <el-popover
+              placement="right"
+              :width="600"
+              trigger="hover"
+              @show="loadActivityProducts(row)"
+            >
+              <template #reference>
+                <el-button link type="primary" @click="goToProductPage(row)">
+                  {{ productCounts[row._id] || 0 }}
+                </el-button>
+              </template>
+              <div v-if="loadingProducts[row._id]" class="loading-tip">加载中...</div>
+              <div v-else-if="activityProducts[row._id]?.length > 0">
+                <el-table :data="getPaginatedProducts(row)" size="small" max-height="300">
+                  <el-table-column label="商品ID" width="180">
+                    <template #default="{ row: product }">
+                      <el-button link type="primary" @click="viewProductDetail(product)">
+                        {{ product.tiktokProductId || product.productId || product._id }}
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="name" label="商品名称" min-width="150" show-overflow-tooltip />
+                  <el-table-column label="店铺" width="120">
+                    <template #default="{ row: product }">
+                      {{ product.shopId?.name || '-' }}
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <div class="pagination-container">
+                  <el-pagination
+                    small
+                    :current-page="productPagination[row._id]?.page || 1"
+                    :page-size="10"
+                    :total="getTotalProducts(row)"
+                    layout="prev, pager, next, total"
+                    @current-change="(page) => handleProductPageChange(row, page)"
+                  />
+                </div>
+              </div>
+              <div v-else class="empty-tip">暂无参与商品</div>
+            </el-popover>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
@@ -80,9 +125,9 @@
         <el-table-column prop="creatorName" label="创建人" width="120" />
         <el-table-column label="操作" fixed="right" width="200">
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
-            <el-button link type="primary" @click="showEditDialog(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('activities:read')">详情</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('activities:update')">编辑</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('activities:delete')">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -284,9 +329,17 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Plus, Refresh } from '@element-plus/icons-vue'
+import AuthManager from '@/utils/auth'
+
+// 权限检查
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -298,6 +351,12 @@ const formRef = ref(null)
 const activities = ref([])
 const currentActivity = ref(null)
 const histories = ref([])
+
+// 活动商品相关
+const productCounts = ref({})
+const activityProducts = ref({})
+const loadingProducts = ref({})
+const productPagination = ref({})
 
 const searchForm = reactive({
   name: '',
@@ -429,6 +488,8 @@ const loadActivities = async () => {
     const res = await request.get('/activities', { params })
     activities.value = res.data?.activities || res.activities || []
     pagination.total = res.data?.pagination?.total || res.pagination?.total || 0
+    // 加载完活动后，获取商品数量
+    await loadProductCounts()
   } catch (error) {
     console.error('Load activities error:', error)
   } finally {
@@ -536,6 +597,88 @@ const handleDelete = async (row) => {
     }
   }
 }
+
+// 加载活动商品数量
+const loadProductCounts = async () => {
+  try {
+    const ids = activities.value.map(a => a._id).join(',')
+    if (!ids) return
+    const res = await request.get('/activities/product-counts', { params: { ids } })
+    productCounts.value = res.data || res || {}
+  } catch (error) {
+    console.error('加载活动商品数量失败:', error)
+  }
+}
+
+// 加载单个活动的商品列表
+const loadActivityProducts = async (activity) => {
+  if (activityProducts.value[activity._id]) return // 已经加载过
+
+  loadingProducts.value = { ...loadingProducts.value, [activity._id]: true }
+  try {
+    const res = await request.get(`/activities/${activity._id}/products`, {
+      params: { page: 1, limit: 100 } // 先加载足够多的商品用于展示
+    })
+    activityProducts.value = {
+      ...activityProducts.value,
+      [activity._id]: res.data?.products || res.products || []
+    }
+    productPagination.value = {
+      ...productPagination.value,
+      [activity._id]: { page: 1, total: res.data?.pagination?.total || res.total || 0 }
+    }
+  } catch (error) {
+    console.error('加载活动商品失败:', error)
+  } finally {
+    loadingProducts.value = { ...loadingProducts.value, [activity._id]: false }
+  }
+}
+
+// 获取商品总数
+const getTotalProducts = (activity) => {
+  return productPagination.value[activity._id]?.total || 0
+}
+
+// 获取分页后的商品列表
+const getPaginatedProducts = (activity) => {
+  const products = activityProducts.value[activity._id] || []
+  const page = productPagination.value[activity._id]?.page || 1
+  const pageSize = 10
+  const start = (page - 1) * pageSize
+  return products.slice(start, start + pageSize)
+}
+
+// 处理商品分页变化
+const handleProductPageChange = (activity, page) => {
+  productPagination.value = {
+    ...productPagination.value,
+    [activity._id]: { ...productPagination.value[activity._id], page }
+  }
+}
+
+// 跳转到商品管理页面（带活动筛选）
+const goToProductPage = (activity) => {
+  // 通过路由跳转并传递活动筛选参数
+  const route = router.resolve({
+    path: '/products',
+    query: { activityId: activity._id }
+  })
+  window.open(route.href, '_blank')
+}
+
+// 查看商品详情
+const viewProductDetail = async (product) => {
+  try {
+    const res = await request.get(`/products/${product._id}`)
+    currentProduct.value = res.data?.product || res.product
+    detailDialogVisible.value = true
+  } catch (error) {
+    console.error('获取商品详情失败:', error)
+    ElMessage.error('获取商品详情失败')
+  }
+}
+
+const router = useRouter()
 
 const resetSearch = () => {
   Object.assign(searchForm, { name: '', type: '', status: '' })

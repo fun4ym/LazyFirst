@@ -12,7 +12,7 @@ const router = express.Router();
  */
 router.get('/', authenticate, authorize('users:read'), async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, status } = req.query;
+    const { page = 1, limit = 10, search, status, roleId } = req.query;
 
     const query = { companyId: req.companyId };
 
@@ -26,6 +26,10 @@ router.get('/', authenticate, authorize('users:read'), async (req, res) => {
 
     if (status) {
       query.status = status;
+    }
+
+    if (roleId) {
+      query.roleId = roleId;
     }
 
     const users = await User.find(query)

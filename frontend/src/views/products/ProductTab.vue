@@ -17,27 +17,61 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="showCreateDialog">新建合作产品</el-button>
+          <el-select v-model="filters.activityId" placeholder="参与活动" clearable @change="loadData">
+            <el-option v-for="act in activities" :key="act._id" :label="act.name" :value="act._id" />
+          </el-select>
+        </el-col>
+        <el-col :span="4">
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('products:create')">新建产品</el-button>
         </el-col>
       </el-row>
     </div>
 
+    <!-- 统计信息 -->
+    <div class="stats-info">
+      <span>共 {{ pagination.total }} 条</span>
+    </div>
+
     <!-- 产品列表 -->
-    <el-table :data="products" stripe v-loading="loading">
-      <el-table-column prop="productId" label="TikTok商品ID" width="260" class-name="tiktok-green-label">
+    <el-table :data="products" stripe v-loading="loading" :scroll-x="true">
+      <el-table-column label="TikTok商品" width="320" fixed class-name="tiktok-green-label">
         <template #default="{ row }">
-          <el-button link type="primary" @click="viewProduct(row)">
-            {{ row.productId }}
-          </el-button>
+          <div class="tiktok-product-cell">
+            <div class="tiktok-id-row">
+              <el-button link type="primary" @click="viewProduct(row)" class="tiktok-id-btn">
+                {{ row.tiktokProductId || row.productId || '-' }}
+              </el-button>
+            </div>
+            <div class="product-name-row">{{ row.name || row.productName || '-' }}</div>
+          </div>
         </template>
       </el-table-column>
-      <el-table-column prop="productName" label="商品名称" min-width="150" />
-      <el-table-column prop="shopId.shopName" label="店铺名称" width="150">
+      <el-table-column label="店铺" width="150">
         <template #default="{ row }">
-          {{ row.shopId?.shopName || '-' }}
+          <el-popover
+            placement="right"
+            :width="300"
+            trigger="hover"
+            v-if="row.shopId?.shopName || row.shopId?.name"
+          >
+            <template #reference>
+              <span class="shop-link" @click="goToShop(row.shopId)">
+                {{ row.shopId?.shopName || row.shopId?.name || '-' }}
+              </span>
+            </template>
+            <div class="shop-info-popover">
+              <div class="shop-info-item"><strong>店铺名称：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
+              <div class="shop-info-item"><strong>店铺号：</strong>{{ row.shopId?.shopNumber || '-' }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.name"><strong>联系人：</strong>{{ row.shopId.contactId.name }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.phone"><strong>电话：</strong>{{ row.shopId.contactId.phone }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.email"><strong>邮箱：</strong>{{ row.shopId.contactId.email }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.address"><strong>地址：</strong>{{ row.shopId.contactId.address }}</div>
+            </div>
+          </el-popover>
+          <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="productCategory" label="商品类目" width="120" />
+      <el-table-column prop="productCategory" label="商品类目" :width="128" show-overflow-tooltip />
       <el-table-column prop="productGrade" label="商品等级" width="100">
         <template #default="{ row }">
           <el-tag :type="getGradeType(row.productGrade)">
@@ -136,10 +170,10 @@
       </el-table-column>
       <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="viewProduct(row)">详情</el-button>
-          <el-button link type="primary" @click="showReport(row)">报表</el-button>
-          <el-button link type="primary" @click="editProduct(row)">编辑</el-button>
-          <el-button link type="danger" @click="deleteProduct(row)">删除</el-button>
+          <el-button link type="primary" @click="viewProduct(row)" v-if="hasPermission('products:read')">详情</el-button>
+          <el-button link type="primary" @click="showReport(row)" v-if="hasPermission('products:read')">报表</el-button>
+          <el-button link type="primary" @click="editProduct(row)" v-if="hasPermission('products:update')">编辑</el-button>
+          <el-button link type="danger" @click="deleteProduct(row)" v-if="hasPermission('products:delete')">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -305,27 +339,41 @@
                   </el-form-item>
                 </el-col>
               </el-row>
+              <!-- 推广时佣金配置 -->
+              <el-divider content-position="left">推广时</el-divider>
               <el-row :gutter="16">
-                <el-col :span="12">
-                  <el-form-item label="达人佣金率(%)">
-                    <el-input-number v-model="ac.influencerCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                <el-col :span="8">
+                  <el-form-item label="给达人(%)">
+                    <el-input-number v-model="ac.promotionInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
-                  <el-form-item label="TAP佣金率(%)">
-                    <el-input-number v-model="ac.tapCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                <el-col :span="8">
+                  <el-form-item label="原本(%)">
+                    <el-input-number v-model="ac.promotionOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="公司自留(%)">
+                    <el-input-number v-model="ac.promotionCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
+              <!-- 投广告时佣金配置 -->
+              <el-divider content-position="left">投广告时</el-divider>
               <el-row :gutter="16">
-                <el-col :span="12">
-                  <el-form-item label="BD佣金率(%)">
-                    <el-input-number v-model="ac.bdCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                <el-col :span="8">
+                  <el-form-item label="给达人(%)">
+                    <el-input-number v-model="ac.adInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
-                  <el-form-item label="商务佣金率(%)">
-                    <el-input-number v-model="ac.businessCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                <el-col :span="8">
+                  <el-form-item label="原本(%)">
+                    <el-input-number v-model="ac.adOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="公司自留(%)">
+                    <el-input-number v-model="ac.adCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -343,15 +391,13 @@
     <el-dialog v-model="showDetailDialog" title="合作产品详情" width="900px" :close-on-click-modal="false">
       <div v-if="currentProduct">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="TikTok商品ID">{{ currentProduct.productId }}</el-descriptions-item>
-          <el-descriptions-item label="商品名称">{{ currentProduct.productName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="TikTok商品ID">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="商品名称">{{ currentProduct.name || currentProduct.productName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="SKU">{{ currentProduct.sku || '-' }}</el-descriptions-item>
           <el-descriptions-item label="店铺名称">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="商品类目">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="商品等级">{{ getGradeText(currentProduct.productGrade) }}</el-descriptions-item>
+          <el-descriptions-item label="价格">{{ currentProduct.price ? '$' + currentProduct.price : '-' }}</el-descriptions-item>
           <el-descriptions-item label="TAP专属链">{{ currentProduct.tapExclusiveLink || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="寄样方式">{{ currentProduct.sampleMethod }}</el-descriptions-item>
-          <el-descriptions-item label="合作国家">{{ currentProduct.cooperationCountry || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="寄样目标">{{ currentProduct.sampleTarget || '-' }}</el-descriptions-item>
           <el-descriptions-item label="达人要求">{{ currentProduct.influencerRequirement || '-' }}</el-descriptions-item>
           <el-descriptions-item label="广场佣金率">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
           <el-descriptions-item label="状态">
@@ -373,25 +419,26 @@
           <div v-for="(ac, index) in currentProduct.activityCommissions" :key="index" style="margin-bottom: 16px;">
             <el-card>
               <template #header>
-                <span>活动配置 {{ index + 1 }}</span>
+                <span>活动配置 {{ index + 1 }} - {{ activities.find(a => a._id === ac.activityId)?.name || '-' }}</span>
               </template>
-              <el-descriptions :column="2" border>
-                <el-descriptions-item label="活动名称">
-                  {{ activities.find(a => a._id === ac.activityId)?.name || '-' }}
-                </el-descriptions-item>
-                <el-descriptions-item label="达人佣金率">
-                  {{ (ac.influencerCommissionRate * 100).toFixed(2) }}%
-                </el-descriptions-item>
-                <el-descriptions-item label="TAP佣金率">
-                  {{ (ac.tapCommissionRate * 100).toFixed(2) }}%
-                </el-descriptions-item>
-                <el-descriptions-item label="BD佣金率">
-                  {{ (ac.bdCommissionRate * 100).toFixed(2) }}%
-                </el-descriptions-item>
-                <el-descriptions-item label="商务佣金率">
-                  {{ (ac.businessCommissionRate * 100).toFixed(2) }}%
-                </el-descriptions-item>
-              </el-descriptions>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-divider content-position="center">推广时</el-divider>
+                  <el-descriptions :column="1" border size="small">
+                    <el-descriptions-item label="给达人">{{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="原本">{{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="公司自留">{{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+                  </el-descriptions>
+                </el-col>
+                <el-col :span="12">
+                  <el-divider content-position="center">投广告时</el-divider>
+                  <el-descriptions :column="1" border size="small">
+                    <el-descriptions-item label="给达人">{{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="原本">{{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="公司自留">{{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+                  </el-descriptions>
+                </el-col>
+              </el-row>
             </el-card>
           </div>
         </div>
@@ -474,13 +521,36 @@
 
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
+import AuthManager from '@/utils/auth'
 import * as echarts from 'echarts'
 
 const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
+
+// 跳转到店铺列表并搜索该店铺
+const goToShop = (shop) => {
+  if (!shop) return
+  router.push({
+    path: '/shops',
+    query: { keyword: shop.shopName || shop.name }
+  })
+}
+
+// 权限检查 - 使用 products 权限
+const hasPermission = (perm) => {
+  // 兼容旧权限：cooperationProducts -> products
+  if (perm.startsWith('cooperationProducts:')) {
+    const newPerm = perm.replace('cooperationProducts:', 'products:')
+    return AuthManager.hasPermission(perm) || AuthManager.hasPermission(newPerm)
+  }
+  return AuthManager.hasPermission(perm)
+}
 
 const loading = ref(false)
 const showDialog = ref(false)
@@ -518,7 +588,8 @@ let pieChart = null
 
 const filters = reactive({
   status: '',
-  keyword: ''
+  keyword: '',
+  activityId: ''
 })
 
 const pagination = reactive({
@@ -603,10 +674,14 @@ const loadBaseData = async () => {
 const addActivityCommission = () => {
   form.activityCommissions.push({
     activityId: '',
-    influencerCommissionRate: 0,
-    tapCommissionRate: 0,
-    bdCommissionRate: 0,
-    businessCommissionRate: 0
+    // 推广时
+    promotionInfluencerRate: 0,
+    promotionOriginalRate: 0,
+    promotionCompanyRate: 0,
+    // 投广告时
+    adInfluencerRate: 0,
+    adOriginalRate: 0,
+    adCompanyRate: 0
   })
 }
 
@@ -620,11 +695,25 @@ const convertCommissionRates = (data) => {
   if (data.activityCommissions && Array.isArray(data.activityCommissions)) {
     data.activityCommissions = data.activityCommissions.map(ac => ({
       ...ac,
-      influencerCommissionRate: ac.influencerCommissionRate / 100,
-      tapCommissionRate: ac.tapCommissionRate / 100,
-      bdCommissionRate: ac.bdCommissionRate / 100,
-      businessCommissionRate: ac.businessCommissionRate / 100
+      // 推广时
+      promotionInfluencerRate: ac.promotionInfluencerRate / 100,
+      promotionOriginalRate: ac.promotionOriginalRate / 100,
+      promotionCompanyRate: ac.promotionCompanyRate / 100,
+      // 投广告时
+      adInfluencerRate: ac.adInfluencerRate / 100,
+      adOriginalRate: ac.adOriginalRate / 100,
+      adCompanyRate: ac.adCompanyRate / 100
     }))
+  }
+  // 字段映射：兼容 CooperationProduct 和 Product 字段
+  data.tiktokProductId = data.productId
+  data.name = data.productName || data.name
+  // 确保 Product 必需字段有值
+  if (!data.sku && data.productId) {
+    data.sku = data.productId
+  }
+  if (!data.price) {
+    data.price = 0
   }
   return data
 }
@@ -634,10 +723,14 @@ const convertCommissionRatesToPercent = (data) => {
   if (data.activityCommissions && Array.isArray(data.activityCommissions)) {
     data.activityCommissions = data.activityCommissions.map(ac => ({
       ...ac,
-      influencerCommissionRate: (ac.influencerCommissionRate || 0) * 100,
-      tapCommissionRate: (ac.tapCommissionRate || 0) * 100,
-      bdCommissionRate: (ac.bdCommissionRate || 0) * 100,
-      businessCommissionRate: (ac.businessCommissionRate || 0) * 100
+      // 推广时
+      promotionInfluencerRate: (ac.promotionInfluencerRate || 0) * 100,
+      promotionOriginalRate: (ac.promotionOriginalRate || 0) * 100,
+      promotionCompanyRate: (ac.promotionCompanyRate || 0) * 100,
+      // 投广告时
+      adInfluencerRate: (ac.adInfluencerRate || 0) * 100,
+      adOriginalRate: (ac.adOriginalRate || 0) * 100,
+      adCompanyRate: (ac.adCompanyRate || 0) * 100
     }))
   }
   return data
@@ -674,10 +767,12 @@ const loadData = async () => {
       page: pagination.page,
       limit: pagination.limit
     }
-    const res = await request.get('/cooperation-products', { params })
-    products.value = res.products || []
-    pagination.total = res.total || 0
-    
+    console.log('[商品管理] 请求参数:', params)
+    const res = await request.get('/products', { params })
+    console.log('[商品管理] 返回数据:', res)
+    products.value = res.products || res.data?.products || []
+    pagination.total = res.pagination?.total || res.data?.pagination?.total || 0
+
     // 加载完产品后，自动加载所有产品的订单统计
     if (products.value.length > 0) {
       for (const product of products.value) {
@@ -686,8 +781,8 @@ const loadData = async () => {
       }
     }
   } catch (error) {
-    console.error('加载合作产品失败:', error)
-    ElMessage.error('加载合作产品失败')
+    console.error('加载产品失败:', error)
+    ElMessage.error('加载产品失败')
   } finally {
     loading.value = false
   }
@@ -701,8 +796,8 @@ const showCreateDialog = () => {
 
 const viewProduct = async (row) => {
   try {
-    const res = await request.get(`/cooperation-products/${row._id}`)
-    currentProduct.value = res.product
+    const res = await request.get(`/products/${row._id}`)
+    currentProduct.value = res.data?.product || res.product
     showDetailDialog.value = true
   } catch (error) {
     console.error('获取产品详情失败:', error)
@@ -713,9 +808,10 @@ const viewProduct = async (row) => {
 const editProduct = (row) => {
   editingProduct.value = row
   const formData = {
-    productId: row.productId,
-    productName: row.productName,
-    shopId: row.shopId || '',
+    // 兼容 Product 和 CooperationProduct 字段
+    productId: row.tiktokProductId || row.productId || '',
+    productName: row.name || row.productName || '',
+    shopId: row.storeId?._id || row.shopId?._id || row.storeId || row.shopId || '',
     productCategory: row.productCategory,
     productGrade: row.productGrade,
     tapExclusiveLink: row.tapExclusiveLink,
@@ -728,6 +824,10 @@ const editProduct = (row) => {
     referenceVideo: row.referenceVideo,
     sellingPoints: row.sellingPoints,
     squareCommissionRate: row.squareCommissionRate ? row.squareCommissionRate * 100 : 0,
+    // 兼容 Product 的 sku/name 字段（用于内部标识）
+    sku: row.sku || row.tiktokProductId || '',
+    name: row.name || row.productName || '',
+    price: row.price || 0,
     activityCommissions: row.activityCommissions && row.activityCommissions.length > 0
       ? JSON.parse(JSON.stringify(row.activityCommissions))
       : []
@@ -742,10 +842,10 @@ const editProduct = (row) => {
 
 const deleteProduct = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除"${row.productName}"吗?`, '提示', {
+    await ElMessageBox.confirm(`确定要删除"${row.name || row.productName}"吗?`, '提示', {
       type: 'warning'
     })
-    await request.delete(`/cooperation-products/${row._id}`)
+    await request.delete(`/products/${row._id}`)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
@@ -784,10 +884,10 @@ const handleSubmit = async () => {
       ...form
     })
     if (editingProduct.value) {
-      await request.put(`/cooperation-products/${editingProduct.value._id}`, data)
+      await request.put(`/products/${editingProduct.value._id}`, data)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/cooperation-products', data)
+      await request.post('/products', data)
       ElMessage.success('创建成功')
     }
     showDialog.value = false
@@ -801,6 +901,7 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
   Object.assign(form, {
+    // 合作产品字段
     productId: '',
     productName: '',
     shopId: '',
@@ -816,6 +917,10 @@ const resetForm = () => {
     referenceVideo: '',
     sellingPoints: '',
     squareCommissionRate: 0,
+    // Product 必需字段
+    sku: '',
+    name: '',
+    price: 0,
     activityCommissions: []
   })
   addActivityCommission()
@@ -1114,6 +1219,10 @@ const renderCharts = () => {
 }
 
 onMounted(() => {
+  // 从URL查询参数读取活动筛选条件
+  if (route.query.activityId) {
+    filters.activityId = route.query.activityId
+  }
   loadActivities()
   loadShops()
   loadBaseData()
@@ -1132,6 +1241,41 @@ defineExpose({
 
 .filter-section {
   margin-bottom: 20px;
+}
+
+.stats-info {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.tiktok-product-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tiktok-id-row {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tiktok-id-btn {
+  font-size: 12px;
+  padding: 0;
+}
+
+.product-name-row {
+  font-size: 12px;
+  color: #606266;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
 }
 
 .pagination-wrapper {
@@ -1239,6 +1383,24 @@ defineExpose({
 
 .clickable-stat:hover {
   text-decoration: underline;
+}
+
+.shop-link {
+  color: #409eff;
+  cursor: pointer;
+}
+
+.shop-link:hover {
+  text-decoration: underline;
+}
+
+.shop-info-popover {
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.shop-info-item {
+  margin-bottom: 4px;
 }
 
 .loading-tip {

@@ -101,7 +101,7 @@ router.post('/login', [
     // 查找用户
     const user = await User.findOne({ username })
       .populate('companyId', 'name status')
-      .populate('roleId', 'name permissions');
+      .populate('roleId', 'name permissions moduleDataScopes');
 
     if (!user) {
       return res.status(401).json({

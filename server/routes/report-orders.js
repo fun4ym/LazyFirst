@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, filterByDataScope } = require('../middleware/auth');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -20,7 +20,7 @@ const upload = multer({
  * @desc    获取订单报表列表
  * @access  Private
  */
-router.get('/', authenticate, authorize('orders:read'), async (req, res) => {
+router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ module: 'orders', ownerField: 'bdName', ownerValue: (req) => req.user?.username }), async (req, res) => {
   try {
     const {
       page = 1,
@@ -32,13 +32,15 @@ router.get('/', authenticate, authorize('orders:read'), async (req, res) => {
       orderNo,
       shopName,
       influencerUsername,
+      productId,
       orderStatus,
       sortBy,
       sortOrder,
       onlyPaid
     } = req.query;
 
-    const query = { companyId: req.companyId };
+    // 合并数据权限过滤条件
+    const query = { ...req.dataScope.query };
 
     // 订单号搜索
     if (orderNo) {
@@ -53,6 +55,11 @@ router.get('/', authenticate, authorize('orders:read'), async (req, res) => {
     // 达人搜索
     if (influencerUsername) {
       query.influencerUsername = { $regex: influencerUsername, $options: 'i' };
+    }
+
+    // 商品ID搜索（精确匹配）
+    if (productId) {
+      query.productId = productId;
     }
 
     // 交易状态搜索
@@ -297,7 +304,7 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
             continue;
           }
 
-          // 如果记录已存在，只更新有值的打款相关字段
+          // 如果记录已存在，更新打款相关字段和实际佣金字段
           const updateData = { $set: {} };
           if (hasPaymentNo) {
             updateData.$set.paymentNo = importedPaymentNo;
@@ -305,6 +312,29 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
           if (hasCommissionSettlementTime) {
             updateData.$set.commissionSettlementTime = importedCommissionSettlementTime;
           }
+          // 更新实际佣金字段（如果有值）
+          if (row['实际计佣金额'] !== undefined && row['实际计佣金额'] !== '') {
+            updateData.$set.actualCommissionAmount = parseFloat(row['实际计佣金额']) || 0;
+          }
+          if (row['联盟合作伙伴获得的实际佣金'] !== undefined && row['联盟合作伙伴获得的实际佣金'] !== '') {
+            updateData.$set.actualAffiliatePartnerCommission = parseFloat(row['联盟合作伙伴获得的实际佣金']) || 0;
+          }
+          if (row['创作者获得的实际佣金'] !== undefined && row['创作者获得的实际佣金'] !== '') {
+            updateData.$set.actualCreatorCommission = parseFloat(row['创作者获得的实际佣金']) || 0;
+          }
+          if (row['实际服务商奖励佣金费'] !== undefined && row['实际服务商奖励佣金费'] !== '') {
+            updateData.$set.actualServiceProviderRewardCommission = parseFloat(row['实际服务商奖励佣金费']) || 0;
+          }
+          if (row['实际达人奖励佣金费'] !== undefined && row['实际达人奖励佣金费'] !== '') {
+            updateData.$set.actualInfluencerRewardCommission = parseFloat(row['实际达人奖励佣金费']) || 0;
+          }
+          if (row['实际联盟服务商店铺广告佣金付款'] !== undefined && row['实际联盟服务商店铺广告佣金付款'] !== '') {
+            updateData.$set.actualAffiliateServiceProviderShopAdPayment = parseFloat(row['实际联盟服务商店铺广告佣金付款']) || 0;
+          }
+          if (row['实际达人店铺广告佣金付款'] !== undefined && row['实际达人店铺广告佣金付款'] !== '') {
+            updateData.$set.actualInfluencerShopAdPayment = parseFloat(row['实际达人店铺广告佣金付款']) || 0;
+          }
+
           // 如果有更新字段，执行更新
           if (Object.keys(updateData.$set).length > 0) {
             await ReportOrder.updateOne(

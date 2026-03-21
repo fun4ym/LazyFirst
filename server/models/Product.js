@@ -1,5 +1,40 @@
 const mongoose = require('mongoose');
 
+// 活动佣金配置子文档
+const activityCommissionSchema = new mongoose.Schema({
+  activityId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Activity',
+    required: true
+  },
+  // 推广时佣金配置
+  promotionInfluencerRate: {
+    type: Number,
+    default: 0
+  },
+  promotionOriginalRate: {
+    type: Number,
+    default: 0
+  },
+  promotionCompanyRate: {
+    type: Number,
+    default: 0
+  },
+  // 投广告时佣金配置
+  adInfluencerRate: {
+    type: Number,
+    default: 0
+  },
+  adOriginalRate: {
+    type: Number,
+    default: 0
+  },
+  adCompanyRate: {
+    type: Number,
+    default: 0
+  }
+}, { _id: true });
+
 const productSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -10,9 +45,9 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Supplier'
   },
-  storeId: {
+  shopId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Store'
+    ref: 'Shop'
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,6 +66,12 @@ const productSchema = new mongoose.Schema({
     required: true
   },
   tiktokSku: String,
+  // TikTok shop信息（从合作产品迁移）
+  tiktokProductId: String,
+  productCategory: {
+    type: String,
+    default: ''
+  },
   price: {
     type: Number,
     required: true
@@ -42,6 +83,11 @@ const productSchema = new mongoose.Schema({
   commissionRate: {
     type: Number,
     default: 0.15
+  },
+  // 广场佣金率（从合作产品迁移）
+  squareCommissionRate: {
+    type: Number,
+    default: 0
   },
   cooperationMode: {
     commissionEnabled: {
@@ -63,6 +109,48 @@ const productSchema = new mongoose.Schema({
       default: true
     }
   },
+  // 样品信息（从合作产品迁移）
+  productGrade: {
+    type: String,
+    enum: ['ordinary', 'hot', 'main', 'new'],
+    default: 'ordinary'
+  },
+  tapExclusiveLink: {
+    type: String,
+    default: ''
+  },
+  sampleMethod: {
+    type: String,
+    default: ''
+  },
+  cooperationCountry: {
+    type: String,
+    default: ''
+  },
+  sampleTarget: {
+    type: String,
+    default: ''
+  },
+  influencerRequirement: {
+    type: String,
+    default: ''
+  },
+  // 商品信息（从合作产品迁移）
+  productImages: [String],
+  productIntro: {
+    type: String,
+    default: ''
+  },
+  referenceVideo: {
+    type: String,
+    default: ''
+  },
+  sellingPoints: {
+    type: String,
+    default: ''
+  },
+  // 活动佣金配置（从合作产品迁移）
+  activityCommissions: [activityCommissionSchema],
   images: [String],
   description: String,
   status: {
@@ -72,6 +160,18 @@ const productSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// 验证同一产品不能参与同一活动多次
+productSchema.pre('save', function(next) {
+  if (this.activityCommissions && this.activityCommissions.length > 0) {
+    const activityIds = this.activityCommissions.map(ac => ac.activityId.toString());
+    const uniqueIds = [...new Set(activityIds)];
+    if (activityIds.length !== uniqueIds.length) {
+      return next(new Error('同一产品不能重复参与同一活动'));
+    }
+  }
+  next();
 });
 
 // 索引

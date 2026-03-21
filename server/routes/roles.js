@@ -105,13 +105,15 @@ router.post('/', authenticate, authorize('roles:create'), [
       });
     }
 
-    const { name, description, permissions, status } = req.body;
+    const { name, description, permissions, dataScope, moduleDataScopes, status } = req.body;
 
     const role = await Role.create({
       companyId: req.companyId,
       name,
       description,
       permissions: permissions || [],
+      dataScope: dataScope || 'self',
+      moduleDataScopes: moduleDataScopes || {},
       status: status || 'active'
     });
 
@@ -149,11 +151,11 @@ router.put('/:id', authenticate, authorize('roles:update'), [
       });
     }
 
-    const { name, description, permissions, status } = req.body;
+    const { name, description, permissions, dataScope, moduleDataScopes, status } = req.body;
 
     const role = await Role.findOneAndUpdate(
       { _id: req.params.id, companyId: req.companyId },
-      { name, description, permissions, status },
+      { name, description, permissions, dataScope, moduleDataScopes, status },
       { new: true }
     );
 

@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>分润管理</h3>
+          <h3>{{ $t('commission.commissionManagement') }}</h3>
         </div>
       </template>
 
@@ -11,25 +11,25 @@
       <el-row :gutter="20" style="margin-bottom: 20px">
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">总分润</div>
+            <div class="stat-label">{{ $t('commission.totalCommission') }}</div>
             <div class="stat-value">฿{{ formatMoney(statistics.totalCommission || 0) }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">待结算</div>
+            <div class="stat-label">{{ $t('commission.pendingCommission') }}</div>
             <div class="stat-value pending">฿{{ formatMoney(statistics.pendingCommission || 0) }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">已支付</div>
+            <div class="stat-label">{{ $t('commission.paidCommission') }}</div>
             <div class="stat-value paid">฿{{ formatMoney(statistics.paidCommission || 0) }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-label">已结算</div>
+            <div class="stat-label">{{ $t('commission.settledCommission') }}</div>
             <div class="stat-value settled">฿{{ formatMoney(statistics.settledCommission || 0) }}</div>
           </div>
         </el-col>
@@ -37,16 +37,16 @@
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="全部" clearable>
-            <el-option label="待结算" value="pending" />
-            <el-option label="已支付" value="paid" />
-            <el-option label="已结算" value="settled" />
+        <el-form-item :label="$t('common.status')">
+          <el-select v-model="searchForm.status" :placeholder="$t('common.all')" clearable>
+            <el-option :label="$t('commission.pendingCommission')" value="pending" />
+            <el-option :label="$t('commission.paidCommission')" value="paid" />
+            <el-option :label="$t('commission.settledCommission')" value="settled" />
           </el-select>
         </el-form-item>
 
         <el-form-item label="BD">
-          <el-select v-model="searchForm.bdId" placeholder="全部BD" clearable filterable>
+          <el-select v-model="searchForm.bdId" :placeholder="$t('commission.allBD')" clearable filterable>
             <el-option
               v-for="user in users"
               :key="user._id"
@@ -57,27 +57,27 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="loadCommissions">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadCommissions">{{ $t('common.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
       <!-- 表格 -->
       <el-table :data="commissions" v-loading="loading" stripe>
-        <el-table-column prop="bdId.realName" label="BD姓名" width="100" />
-        <el-table-column prop="influencerId.tiktokInfo.displayName" label="达人名称" width="150" />
-        <el-table-column prop="orderId.orderNo" label="订单号" width="180" />
-        <el-table-column prop="orderAmount" label="订单金额" width="120">
+        <el-table-column prop="bdId.realName" :label="$t('commission.bdName')" width="100" />
+        <el-table-column prop="influencerId.tiktokInfo.displayName" :label="$t('commission.influencerName')" width="150" />
+        <el-table-column prop="orderId.orderNo" :label="$t('commission.orderNo')" width="180" />
+        <el-table-column prop="orderAmount" :label="$t('commission.orderAmount')" width="120">
           <template #default="{ row }">
             ¥{{ formatMoney(row.orderAmount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="commissionRate" label="分润比例" width="100">
+        <el-table-column prop="commissionRate" :label="$t('commission.commissionRate')" width="100">
           <template #default="{ row }">
             {{ (row.commissionRate * 100).toFixed(0) }}%
           </template>
         </el-table-column>
-        <el-table-column prop="commissionAmount" label="分润金额" width="120">
+        <el-table-column prop="commissionAmount" :label="$t('commission.commissionAmount')" width="120">
           <template #default="{ row }">
             ฿{{ formatMoney(row.commissionAmount) }}
           </template>
@@ -113,6 +113,9 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import request from '@/utils/request'
 
 const loading = ref(false)
@@ -186,6 +189,10 @@ const loadCommissions = async () => {
 }
 
 const loadUsers = async () => {
+  if (!AuthManager.hasPermission('users:read')) {
+    console.log('无users:read权限，跳过加载用户')
+    return
+  }
   try {
     const res = await request.get('/users', { params: { limit: 1000 } })
     users.value = res.users

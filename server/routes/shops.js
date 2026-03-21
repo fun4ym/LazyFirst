@@ -3,14 +3,19 @@ const Shop = require('../models/Shop');
 const ShopContact = require('../models/ShopContact');
 const ShopTracking = require('../models/ShopTracking');
 const ShopRating = require('../models/ShopRating');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middleware/auth');
 
 // 获取店铺列表
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, authorize('shops:read'), async (req, res) => {
   try {
     const { companyId, status, keyword, page = 1, limit = 20 } = req.query;
 
-    const query = { companyId };
+    const query = {};
+
+    // 只有当 companyId 有有效值时才添加到查询条件
+    if (companyId && companyId.trim()) {
+      query.companyId = companyId;
+    }
 
     if (status) {
       query.status = status;
@@ -95,7 +100,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // 创建店铺
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, authorize('shops:create'), async (req, res) => {
   try {
     const { companyId, shopName, shopNumber, avatar, contactAddress, remark } = req.body;
 
@@ -132,7 +137,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // 更新店铺
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, authorize('shops:update'), async (req, res) => {
   try {
     const { shopName, shopNumber, avatar, contactAddress, remark, status } = req.body;
 
@@ -171,7 +176,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // 删除店铺
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, authorize('shops:delete'), async (req, res) => {
   try {
     const shop = await Shop.findByIdAndDelete(req.params.id);
 
@@ -317,6 +322,41 @@ router.put('/:id/rating', authenticate, async (req, res) => {
   } catch (error) {
     console.error('更新评分失败:', error);
     res.status(500).json({ success: false, message: '更新评分失败' });
+  }
+});
+
+// 生成/刷新识别码
+// 识别码 = SHA256(店铺名称 + 系统时间).substring(0, 16)
+router.put('/:id/identification-code', authenticate, async (req, res) => {
+  try {
+    const crypto = require('crypto');
+    const shopId = req.params.id;
+
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ success: false, message: '店铺不存在' });
+    }
+
+    // 生成识别码
+    const timestamp = new Date().toISOString();
+    const hashInput = shop.shopName + timestamp;
+    const hash = crypto.createHash('sha256').update(hashInput).digest('hex');
+    const identificationCode = hash.substring(0, 16);
+
+    // 更新店铺
+    shop.identificationCode = identificationCode;
+    shop.identificationCodeGeneratedAt = new Date();
+    await shop.save();
+
+    res.json({
+      success: true,
+      message: '识别码生成成功',
+      identificationCode: shop.identificationCode,
+      identificationCodeGeneratedAt: shop.identificationCodeGeneratedAt
+    });
+  } catch (error) {
+    console.error('生成识别码失败:', error);
+    res.status(500).json({ success: false, message: '生成识别码失败' });
   }
 });
 

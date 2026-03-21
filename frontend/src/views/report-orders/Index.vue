@@ -3,15 +3,15 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>订单管理</h3>
+          <h3>{{ $t('order.orderManagement') }}</h3>
           <div class="header-actions">
-            <el-button type="success" @click="handleMatchBD" :loading="matchingBD">
+            <el-button type="success" @click="handleMatchBD" :loading="matchingBD" v-if="hasPermission('orders:btn-match-bd')">
               <el-icon><Connection /></el-icon>
-              BD匹配
+              {{ $t('order.bdMatch') }}
             </el-button>
-            <el-button type="primary" @click="showImportDialog">
+            <el-button type="primary" @click="showImportDialog" v-if="hasPermission('orders:btn-import')">
               <el-icon><Upload /></el-icon>
-              导入Excel
+              {{ $t('order.importExcel') }}
             </el-button>
           </div>
         </div>
@@ -19,71 +19,79 @@
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="订单号">
+        <el-form-item :label="$t('order.orderNo')">
           <el-input
             v-model="searchForm.orderNo"
-            placeholder="订单号"
+            :placeholder="$t('order.orderNo')"
             clearable
             style="width: 180px"
           />
         </el-form-item>
-        <el-form-item label="TikTok ID">
+        <el-form-item :label="$t('influencer.tiktokId')">
           <el-input
             v-model="searchForm.influencerUsername"
-            placeholder="TikTok ID"
+            :placeholder="$t('influencer.tiktokId')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
-        <el-form-item label="店铺">
+        <el-form-item :label="$t('order.shop')">
           <el-input
             v-model="searchForm.shopName"
-            placeholder="店铺"
+            :placeholder="$t('order.shop')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
-        <el-form-item label="交易状态">
+        <el-form-item label="商品ID">
+          <el-input
+            v-model="searchForm.productId"
+            placeholder="商品ID"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+        <el-form-item :label="$t('order.orderStatus')">
           <el-select
             v-model="searchForm.orderStatus"
-            placeholder="交易状态"
+            :placeholder="$t('order.orderStatus')"
             clearable
             style="width: 120px"
           >
-            <el-option label="全部" value="" />
-            <el-option label="已完成" value="已完成" />
-            <el-option label="进行中" value="进行中" />
-            <el-option label="已取消" value="已取消" />
+            <el-option :label="$t('common.all')" value="" />
+            <el-option :label="$t('order.completed')" value="已完成" />
+            <el-option :label="$t('order.inProgress')" value="进行中" />
+            <el-option :label="$t('status.cancelled')" value="已取消" />
           </el-select>
         </el-form-item>
-        <el-form-item label="创建时间">
+        <el-form-item :label="$t('order.createTime')">
           <el-date-picker
             v-model="createTimeRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始"
-            end-placeholder="结束"
+            range-separator="-"
+            :start-placeholder="$t('common.startDate')"
+            :end-placeholder="$t('common.endDate')"
             value-format="YYYY-MM-DD"
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="打款时间">
+        <el-form-item :label="$t('order.paymentTime')">
           <el-date-picker
             v-model="paymentTimeRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始"
-            end-placeholder="结束"
+            range-separator="-"
+            :start-placeholder="$t('common.startDate')"
+            :end-placeholder="$t('common.endDate')"
             value-format="YYYY-MM-DD"
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="已打款">
-          <el-checkbox v-model="searchForm.onlyPaid">只显示已打款</el-checkbox>
+        <el-form-item>
+          <el-checkbox v-model="searchForm.onlyPaid">{{ $t('order.showPaidOnly') }}</el-checkbox>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadOrders">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadOrders">{{ $t('common.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
@@ -382,12 +390,18 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import request from '@/utils/request'
 import { Upload, UploadFilled, CircleCheck, Clock, Connection, Loading } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import AuthManager from '@/utils/auth'
+
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -413,6 +427,7 @@ const searchForm = reactive({
   orderNo: '',
   shopName: '',
   influencerUsername: '',
+  productId: '',
   orderStatus: '',
   startDate: '',
   endDate: '',
@@ -630,6 +645,7 @@ const resetSearch = () => {
     orderNo: '',
     shopName: '',
     influencerUsername: '',
+    productId: '',
     orderStatus: '',
     startDate: '',
     endDate: '',
@@ -650,11 +666,19 @@ onMounted(() => {
   if (route.query.influencer) {
     searchForm.influencerUsername = route.query.influencer
   }
+  // 兼容 influencerAccount 参数
+  if (route.query.influencerAccount) {
+    searchForm.influencerUsername = route.query.influencerAccount
+  }
   if (route.query.orderNo) {
     searchForm.orderNo = route.query.orderNo
   }
   if (route.query.shopName) {
     searchForm.shopName = route.query.shopName
+  }
+  // 兼容 productId 参数
+  if (route.query.productId) {
+    searchForm.productId = route.query.productId
   }
 
   loadCurrencySymbol()

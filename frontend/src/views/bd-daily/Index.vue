@@ -3,15 +3,15 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>BD每日统计</h3>
+          <h3>{{ $t('bdDaily.title') }}</h3>
           <div class="header-actions">
-            <el-button type="success" @click="showGenerateDialog">
+            <el-button type="success" @click="showGenerateDialog" v-if="hasPermission('bd-daily:create')">
               <el-icon><MagicStick /></el-icon>
-              生成统计
+              {{ $t('bdDaily.generateStats') }}
             </el-button>
-            <el-button type="primary" @click="showCreateDialog">
+            <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('bd-daily:create')">
               <el-icon><Plus /></el-icon>
-              新增记录
+              {{ $t('bdDaily.addRecord') }}
             </el-button>
           </div>
         </div>
@@ -19,13 +19,13 @@
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="日期范围">
+        <el-form-item :label="$t('bdDaily.dateRange')">
           <el-date-picker
             v-model="dateRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            range-separator="-"
+            :start-placeholder="$t('bdDaily.startDate')"
+            :end-placeholder="$t('bdDaily.endDate')"
             value-format="YYYY-MM-DD"
             style="width: 240px"
           />
@@ -34,15 +34,15 @@
         <el-form-item label="BD">
           <el-input
             v-model="searchForm.salesman"
-            placeholder="BD姓名"
+            :placeholder="$t('bdDaily.bdName')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="loadData">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadData">{{ $t('common.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
@@ -56,7 +56,7 @@
         class="bd-daily-table"
       >
         <el-table-column
-          label="日期"
+          :label="$t('common.date')"
           width="120"
           prop="date"
           sortable
@@ -78,29 +78,29 @@
         </el-table-column>
 
         <el-table-column
-          label="申样统计"
+          :label="$t('bdDaily.sampleStats')"
           width="200"
         >
           <template #default="{ row }">
             <div class="stat-info">
-              <div class="stat-value">{{ row.sampleCount || 0 }} 条</div>
+              <div class="stat-value">{{ row.sampleCount || 0 }} {{ $t('bdDaily.items') }}</div>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="订单统计"
+          :label="$t('bdDaily.orderStats')"
           width="200"
         >
           <template #default="{ row }">
             <div class="stat-info">
-              <div class="stat-value">{{ row.orderCount || 0 }} 单</div>
+              <div class="stat-value">{{ row.orderCount || 0 }} {{ $t('bdDaily.orders') }}</div>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="收入统计"
+          :label="$t('order.amount')"
           width="150"
           sortable
           prop="revenue"
@@ -111,7 +111,18 @@
         </el-table-column>
 
         <el-table-column
-          label="佣金"
+          label="预估服务费"
+          width="150"
+          sortable
+          prop="estimatedCommission"
+        >
+          <template #default="{ row }">
+            <div class="stat-value">฿{{ formatMoney(row.estimatedCommission || 0) }}</div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :label="$t('bdDaily.commission')"
           width="150"
           sortable
           prop="commission"
@@ -155,8 +166,8 @@
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="editRecord(row)">编辑</el-button>
-            <el-button link type="danger" @click="deleteRecord(row)">删除</el-button>
+            <el-button link type="primary" @click="editRecord(row)" v-if="hasPermission('bd-daily:update')">编辑</el-button>
+            <el-button link type="danger" @click="deleteRecord(row)" v-if="hasPermission('bd-daily:delete')">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -241,7 +252,10 @@
               <el-table-column label="收入" prop="revenue" width="100">
                 <template #default="{ row }">฿{{ formatMoney(row.revenue || 0) }}</template>
               </el-table-column>
-              <el-table-column label="佣金" prop="commission" width="100">
+              <el-table-column label="预估服务费" prop="estimatedCommission" width="100">
+                <template #default="{ row }">฿{{ formatMoney(row.estimatedCommission || 0) }}</template>
+              </el-table-column>
+              <el-table-column label="结算佣金" prop="commission" width="100">
                 <template #default="{ row }">฿{{ formatMoney(row.commission || 0) }}</template>
               </el-table-column>
             </el-table>
@@ -297,13 +311,18 @@
         </el-row>
 
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="收入">
+          <el-col :span="8">
+            <el-form-item label="成交金额">
               <el-input-number v-model="form.revenue" :min="0" :precision="2" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="佣金">
+          <el-col :span="8">
+            <el-form-item label="预估服务费">
+              <el-input-number v-model="form.estimatedCommission" :min="0" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="结算佣金">
               <el-input-number v-model="form.commission" :min="0" :precision="2" style="width: 100%" />
             </el-form-item>
           </el-col>
@@ -347,9 +366,16 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Plus, MagicStick } from '@element-plus/icons-vue'
+import AuthManager from '@/utils/auth'
+
+// 权限检查
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const loading = ref(false)
 const generating = ref(false)
@@ -379,6 +405,7 @@ const form = reactive({
   sampleCount: 0,
   orderCount: 0,
   revenue: 0,
+  estimatedCommission: 0,
   commission: 0,
   sampleSentCount: 0,
   orderGeneratedCount: 0,

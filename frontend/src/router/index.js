@@ -8,6 +8,13 @@ const routes = [
     component: () => import('@/views/Login.vue'),
     meta: { requiresAuth: false }
   },
+  // 公开样品申请页面（通过识别码访问）
+  {
+    path: '/samples/public',
+    name: 'PublicSamples',
+    component: () => import('@/views/samples/PublicCollection.vue'),
+    meta: { requiresAuth: false }
+  },
   {
     path: '/',
     component: () => import('@/layouts/MainLayout.vue'),
@@ -36,6 +43,13 @@ const routes = [
         meta: { title: '合作产品' }
       },
       {
+        path: 'shops',
+        name: 'Shops',
+        component: () => import('@/views/products/Index.vue'),
+        meta: { title: '店铺管理', activeTab: 'shops' }
+      },
+      // 合作产品已合并到产品管理中
+      {
         path: 'activities',
         name: 'Activities',
         component: () => import('@/views/activities/Index.vue'),
@@ -45,6 +59,12 @@ const routes = [
         path: 'samples',
         name: 'Samples',
         component: () => import('@/views/samples/Management.vue'),
+        meta: { title: '样品申请' }
+      },
+      {
+        path: 'samples-bd',
+        name: 'SamplesBD',
+        component: () => import('@/views/samples/ManagementBDSelf.vue'),
         meta: { title: '样品申请' }
       },
       {
@@ -70,6 +90,12 @@ const routes = [
         name: 'Performance',
         component: () => import('@/views/performance/Index.vue'),
         meta: { title: '业绩报表' }
+      },
+      {
+        path: 'bd-dashboard',
+        name: 'BDDashboard',
+        component: () => import('@/views/BDDashboard.vue'),
+        meta: { title: 'BD仪表盘' }
       },
       {
         path: 'bd-daily',
@@ -117,6 +143,18 @@ const routes = [
         name: 'SystemModels',
         component: () => import('@/views/settings/SystemModels.vue'),
         meta: { title: '系统模型' }
+      },
+      {
+        path: 'settings/initialization',
+        name: 'Initialization',
+        component: () => import('@/views/settings/Initialization.vue'),
+        meta: { title: '初始化', requiresAuth: true }
+      },
+      {
+        path: 'settings/init-import',
+        name: 'InitImport',
+        component: () => import('@/views/settings/InitImport.vue'),
+        meta: { title: '初始化导入', requiresAuth: true }
       }
     ]
   }

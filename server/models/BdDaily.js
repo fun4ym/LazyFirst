@@ -35,6 +35,12 @@ const bdDailySchema = new mongoose.Schema({
     default: 0,
     comment: '本日收入（GMV）'
   },
+  // 预估服务费
+  estimatedCommission: {
+    type: Number,
+    default: 0,
+    comment: '本日预估服务费'
+  },
   revenueIds: {
     type: String,
     comment: '收入记录ID（订单ID），逗号分隔'

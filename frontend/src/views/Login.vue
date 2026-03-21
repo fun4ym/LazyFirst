@@ -2,8 +2,8 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <h1>TAP系统</h1>
-        <p>TikTok达人管理平台</p>
+        <h1>{{ $t('login.title') }}</h1>
+        <p>TikTok Influencer Management</p>
       </div>
 
       <el-form
@@ -16,7 +16,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="form.username"
-            placeholder="用户名"
+            :placeholder="$t('login.username')"
             size="large"
             :prefix-icon="User"
           />
@@ -26,7 +26,7 @@
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="密码"
+            :placeholder="$t('login.password')"
             size="large"
             :prefix-icon="Lock"
             show-password
@@ -41,7 +41,7 @@
             :loading="loading"
             @click="handleLogin"
           >
-            {{ loading ? '登录中...' : '登录' }}
+            {{ loading ? $t('common.loading') : $t('login.login') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -56,10 +56,12 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
+const { t } = useI18n()
 const router = useRouter()
 
 const formRef = ref(null)
@@ -72,11 +74,11 @@ const form = reactive({
 
 const rules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: t('login.username'), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' }
+    { required: true, message: t('login.password'), trigger: 'blur' },
+    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
   ]
 }
 
@@ -89,10 +91,10 @@ const handleLogin = async () => {
     loading.value = true
     try {
       await AuthManager.login(form.username, form.password)
-      ElMessage.success('登录成功')
+      ElMessage.success(t('auth.loginSuccess'))
       router.push('/dashboard')
     } catch (error) {
-      ElMessage.error(error.message || '登录失败')
+      ElMessage.error(error.message || t('common.error'))
     } finally {
       loading.value = false
     }

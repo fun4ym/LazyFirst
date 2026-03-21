@@ -3,10 +3,10 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>抽点设置</h3>
-          <el-button type="primary" @click="showAddCategory">
+          <h3>{{ $t('menu.commissionRules') }}</h3>
+          <el-button type="primary" @click="showAddCategory" v-if="hasPermission('commission-rules:btn-add-category')">
             <el-icon><Plus /></el-icon>
-            添加类别
+            {{ $t('commission.addCategory') }}
           </el-button>
         </div>
       </template>
@@ -15,9 +15,9 @@
       <div v-for="dept in departmentRules" :key="dept.deptId" class="dept-section">
         <div class="dept-header">
           <h4>{{ dept.deptName }}</h4>
-          <el-button link type="primary" @click="addRule(dept.deptId)">
+          <el-button link type="primary" @click="addRule(dept.deptId)" v-if="hasPermission('commission-rules:btn-add-rule')">
             <el-icon><Plus /></el-icon>
-            添加规则
+            {{ $t('commission.addRule') }}
           </el-button>
         </div>
 
@@ -51,7 +51,7 @@
           </el-table-column>
           <el-table-column label="操作" width="100">
             <template #default="{ row }">
-              <el-button link type="danger" @click="deleteRule(dept.deptId, row._id)">
+              <el-button link type="danger" @click="deleteRule(dept.deptId, row._id)" v-if="hasPermission('commission-rules:btn-delete-rule')">
                 删除
               </el-button>
             </template>
@@ -61,7 +61,7 @@
 
       <!-- 保存按钮 -->
       <div class="save-actions" style="margin-top: 20px">
-        <el-button type="primary" @click="saveAll" :loading="saving">
+        <el-button type="primary" @click="saveAll" :loading="saving" v-if="hasPermission('commission-rules:btn-save')">
           <el-icon><Check /></el-icon>
           保存配置
         </el-button>
@@ -149,9 +149,15 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Plus, Check } from '@element-plus/icons-vue'
+import AuthManager from '@/utils/auth'
+
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 const saving = ref(false)
 const addCategoryDialogVisible = ref(false)

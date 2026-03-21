@@ -37,6 +37,37 @@ const AuthManager = {
     }
   },
 
+  // 获取用户权限列表
+  getPermissions() {
+    const user = this.getUser()
+    if (!user) return []
+    // 用户权限可能在 role.permissions 中
+    const role = user.role
+    console.log('[AuthManager] getPermissions role:', role)
+    if (!role) return []
+    // 如果是超级管理员（role.name === '超级管理员' 或权限包含 *）
+    if (role.name === '超级管理员' || role.permissions?.includes('*')) {
+      console.log('[AuthManager] 检测到超级管理员，返回*权限')
+      return ['*']
+    }
+    return role.permissions || []
+  },
+
+  // 检查用户是否有指定权限
+  hasPermission(permission) {
+    const permissions = this.getPermissions()
+    // 超级管理员拥有所有权限
+    if (permissions.includes('*')) return true
+    return permissions.includes(permission)
+  },
+
+  // 检查用户是否有指定权限（支持多个权限，只要有一个即可）
+  hasAnyPermission(permissions) {
+    const userPermissions = this.getPermissions()
+    if (userPermissions.includes('*')) return true
+    return permissions.some(p => userPermissions.includes(p))
+  },
+
   // 检查是否已登录
   isLoggedIn() {
     const token = this.getToken()
