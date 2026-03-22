@@ -1,8 +1,8 @@
 <template>
   <div class="login-container">
+    <img src="https://cdn.jsdelivr.net/gh/fun4ym/LazyFirst@main/frontend/public/logo.png" alt="LazyFirst" class="page-logo" />
     <div class="login-box">
       <div class="login-header">
-        <img src="https://cdn.jsdelivr.net/gh/fun4ym/LazyFirst@main/frontend/public/logo.png" alt="LazyFirst" class="login-logo" />
         <h1>{{ $t('login.title') }}</h1>
         <p>TikTok Shop Affiliate Partner</p>
       </div>
@@ -111,6 +111,16 @@ const handleLogin = async () => {
   justify-content: center;
   background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 50%, #9c4dcc 100%);
   padding: 20px;
+  position: relative;
+}
+
+.page-logo {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  width: 150px;
+  height: auto;
+  z-index: 10;
 }
 
 .login-box {
