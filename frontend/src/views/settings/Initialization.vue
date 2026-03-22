@@ -168,7 +168,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
 const { t } = useI18n()
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL === '' ? '' : (import.meta.env.VITE_API_BASE_URL || '')
 
 const activeTab = ref('shop')
 
