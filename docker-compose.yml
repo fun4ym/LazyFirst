@@ -31,8 +31,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_EXPIRE: 7d
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-    volumes:
-      - ./server:/app/server
+    # 注意：生产环境不使用 volume 挂载代码，确保使用镜像内的代码
 
   # 前端
   frontend:
