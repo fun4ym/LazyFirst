@@ -172,38 +172,6 @@ router.put('/:id', authenticate, authorize('baseData:update'), async (req, res) 
 });
 
 /**
- * @route   DELETE /api/base-data/:id
- * @desc    删除基础数据
- * @access  Private
- */
-router.delete('/:id', authenticate, authorize('baseData:delete'), async (req, res) => {
-  try {
-    const baseData = await BaseData.findOneAndDelete({
-      _id: req.params.id,
-      companyId: req.companyId
-    });
-
-    if (!baseData) {
-      return res.status(404).json({
-        success: false,
-        message: '数据不存在'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: '删除成功'
-    });
-  } catch (error) {
-    console.error('Delete base data error:', error);
-    res.status(500).json({
-      success: false,
-      message: '删除失败'
-    });
-  }
-});
-
-/**
  * @route   DELETE /api/base-data/batch
  * @desc    批量删除基础数据
  * @access  Private
@@ -237,6 +205,38 @@ router.delete('/batch', authenticate, authorize('baseData:delete'), [
     res.status(500).json({
       success: false,
       message: '批量删除失败'
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/base-data/:id
+ * @desc    删除基础数据
+ * @access  Private
+ */
+router.delete('/:id', authenticate, authorize('baseData:delete'), async (req, res) => {
+  try {
+    const baseData = await BaseData.findOneAndDelete({
+      _id: req.params.id,
+      companyId: req.companyId
+    });
+
+    if (!baseData) {
+      return res.status(404).json({
+        success: false,
+        message: '数据不存在'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '删除成功'
+    });
+  } catch (error) {
+    console.error('Delete base data error:', error);
+    res.status(500).json({
+      success: false,
+      message: '删除失败'
     });
   }
 });
