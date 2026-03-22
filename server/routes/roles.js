@@ -105,10 +105,14 @@ router.post('/', authenticate, authorize('roles:create'), [
       });
     }
 
-    const { name, description, permissions, dataScope, moduleDataScopes, status } = req.body;
+    const { name, description, permissions, dataScope, moduleDataScopes, status, code } = req.body;
+
+    // 自动生成code：name转大写+下划线，或使用前端传来的code
+    const roleCode = code || (name ? name.toUpperCase().replace(/[^A-Z0-9]/g, '_') + '_' + Date.now().toString(-36) : 'ROLE_' + Date.now().toString(36));
 
     const role = await Role.create({
       companyId: req.companyId,
+      code: roleCode,
       name,
       description,
       permissions: permissions || [],
