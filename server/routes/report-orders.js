@@ -523,4 +523,335 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
   }
 });
 
+/**
+ * @route   POST /api/report-orders/bills/generate
+ * @desc    生成账单
+ * @access  Private
+ */
+router.post('/bills/generate', authenticate, authorize('orders:update'), async (req, res) => {
+  try {
+    const { orderIds } = req.body;
+    const ReportOrder = require('../models/ReportOrder');
+    const Bill = require('../models/Bill');
+
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '请选择要生成账单的订单'
+      });
+    }
+
+    // 查询选中的订单
+    const orders = await ReportOrder.find({
+      _id: { $in: orderIds },
+      companyId: req.companyId
+    });
+
+    if (orders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '未找到选中的订单'
+      });
+    }
+
+    // 验证逻辑
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const validationErrors = [];
+
+    for (const order of orders) {
+      // 检查结算标记
+      if (order.settlementStatus === '已结清') {
+        validationErrors.push(`订单 ${order.orderNo} 已结清，无法生成账单`);
+      }
+      // 检查打款单号
+      if (!order.paymentNo || order.paymentNo.trim() === '') {
+        validationErrors.push(`订单 ${order.orderNo} 打款单号为空，无法生成账单`);
+      }
+      // 检查打款日期
+      if (!order.commissionSettlementTime || new Date(order.commissionSettlementTime) > today) {
+        validationErrors.push(`订单 ${order.orderNo} 打款日期不在今天或之前，无法生成账单`);
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: validationErrors.join('；')
+      });
+    }
+
+    // 计算有效日期区间（订单的打款日期范围）
+    const settlementDates = orders
+      .filter(o => o.commissionSettlementTime)
+      .map(o => new Date(o.commissionSettlementTime));
+
+    const validStartDate = new Date(Math.min(...settlementDates));
+    const validEndDate = new Date(Math.max(...settlementDates));
+
+    // 按BD统计佣金
+    const bdStats = {};
+    let totalCommission = 0;
+
+    for (const order of orders) {
+      const bdName = order.bdName || '未分配';
+      const commission = (order.actualAffiliatePartnerCommission || 0) +
+        (order.actualAffiliateServiceProviderShopAdPayment || 0);
+
+      if (!bdStats[bdName]) {
+        bdStats[bdName] = { bdName, commission: 0, orderCount: 0, orderIds: [] };
+      }
+      bdStats[bdName].commission += commission;
+      bdStats[bdName].orderCount += 1;
+      bdStats[bdName].orderIds.push(order._id);
+      totalCommission += commission;
+    }
+
+    // 生成账单号
+    const billNo = await Bill.generateBillNo(req.companyId);
+
+    // 创建账单
+    const bill = new Bill({
+      companyId: req.companyId,
+      billNo,
+      validStartDate,
+      validEndDate,
+      totalCommission,
+      orderCount: orders.length,
+      bdList: Object.values(bdStats).map(bd => ({
+        bdName: bd.bdName,
+        commission: bd.commission,
+        orderCount: bd.orderCount
+      })),
+      creatorId: req.user._id
+    });
+
+    await bill.save();
+
+    // 更新订单的settlementBillNo
+    await ReportOrder.updateMany(
+      { _id: { $in: orderIds } },
+      { $set: { settlementBillNo: billNo } }
+    );
+
+    res.json({
+      success: true,
+      message: '账单生成成功',
+      data: bill
+    });
+
+  } catch (error) {
+    console.error('Generate bill error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: '生成账单失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/report-orders/bills
+ * @desc    获取账单列表
+ * @access  Private
+ */
+router.get('/bills', authenticate, authorize('orders:read'), async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const Bill = require('../models/Bill');
+
+    const bills = await Bill.find({ companyId: req.companyId })
+      .populate('creatorId', 'realName')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
+
+    const total = await Bill.countDocuments({ companyId: req.companyId });
+
+    res.json({
+      success: true,
+      data: {
+        bills,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get bills error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取账单列表失败'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/report-orders/bills/:id
+ * @desc    获取账单详情
+ * @access  Private
+ */
+router.get('/bills/:id', authenticate, authorize('orders:read'), async (req, res) => {
+  try {
+    const Bill = require('../models/Bill');
+    const ReportOrder = require('../models/ReportOrder');
+
+    const bill = await Bill.findOne({
+      _id: req.params.id,
+      companyId: req.companyId
+    }).populate('creatorId', 'realName');
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    // 查询该账单包含的所有订单
+    const orders = await ReportOrder.find({
+      settlementBillNo: bill.billNo,
+      companyId: req.companyId
+    });
+
+    // 按BD分组统计
+    const bdDetails = {};
+    for (const order of orders) {
+      const bdName = order.bdName || '未分配';
+      const commission = (order.actualAffiliatePartnerCommission || 0) +
+        (order.actualAffiliateServiceProviderShopAdPayment || 0);
+
+      if (!bdDetails[bdName]) {
+        bdDetails[bdName] = {
+          bdName,
+          commission: 0,
+          orderCount: 0,
+          orders: []
+        };
+      }
+      bdDetails[bdName].commission += commission;
+      bdDetails[bdName].orderCount += 1;
+      bdDetails[bdName].orders.push({
+        orderNo: order.orderNo,
+        productName: order.productName,
+        commission: commission,
+        settlementStatus: order.settlementStatus,
+        paymentNo: order.paymentNo,
+        commissionSettlementTime: order.commissionSettlementTime
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        ...bill.toObject(),
+        orderDetails: Object.values(bdDetails)
+      }
+    });
+
+  } catch (error) {
+    console.error('Get bill detail error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取账单详情失败'
+    });
+  }
+});
+
+/**
+ * @route   POST /api/report-orders/bills/:id/settle
+ * @desc    结算账单
+ * @access  Private
+ */
+router.post('/bills/:id/settle', authenticate, authorize('orders:update'), async (req, res) => {
+  try {
+    const { settlementNotes } = req.body;
+    const Bill = require('../models/Bill');
+    const ReportOrder = require('../models/ReportOrder');
+
+    const bill = await Bill.findOne({
+      _id: req.params.id,
+      companyId: req.companyId
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    if (bill.isSettled) {
+      return res.status(400).json({
+        success: false,
+        message: '该账单已结清，无法重复结算'
+      });
+    }
+
+    if (!settlementNotes || !Array.isArray(settlementNotes) || settlementNotes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '请填写结算备注'
+      });
+    }
+
+    // 验证所有订单的结算状态
+    const orders = await ReportOrder.find({
+      settlementBillNo: bill.billNo,
+      companyId: req.companyId
+    });
+
+    const validationErrors = [];
+    for (const order of orders) {
+      if (order.settlementStatus === '已结清') {
+        validationErrors.push(`订单 ${order.orderNo} 已结清`);
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: '部分订单状态异常：' + validationErrors.join('；')
+      });
+    }
+
+    // 更新账单
+    bill.isSettled = true;
+    bill.settlementTime = new Date();
+    bill.settlementNotes = settlementNotes.map(note => ({
+      bdName: note.bdName,
+      bankAccount: note.bankAccount || '',
+      bankFlowNo: note.bankFlowNo || '',
+      note: note.note || ''
+    }));
+
+    await bill.save();
+
+    // 更新订单的结算状态
+    await ReportOrder.updateMany(
+      { settlementBillNo: bill.billNo, companyId: req.companyId },
+      { $set: { settlementStatus: '已结清' } }
+    );
+
+    res.json({
+      success: true,
+      message: '结算成功',
+      data: bill
+    });
+
+  } catch (error) {
+    console.error('Settle bill error:', error);
+    res.status(500).json({
+      success: false,
+      message: '结算失败',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

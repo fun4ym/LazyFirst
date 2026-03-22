@@ -15,7 +15,7 @@
       <el-table :data="departments" v-loading="loading" border row-key="_id" :tree-props="{ children: 'children' }">
         <el-table-column prop="name" :label="$t('department.departmentName')" width="250" />
         <el-table-column prop="description" :label="$t('role.description')" />
-        <el-table-column prop="manager.realName" :label="$t('department.manager')" width="120" />
+        <el-table-column prop="managerId.realName" :label="$t('department.manager')" width="120" />
         <el-table-column :label="$t('common.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">

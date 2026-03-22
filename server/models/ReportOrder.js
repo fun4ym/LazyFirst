@@ -223,6 +223,19 @@ const reportOrderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
     comment: '标记该订单的达人是否为黑名单'
+  },
+  // 结算标记
+  settlementStatus: {
+    type: String,
+    enum: ['未结清', '已结清'],
+    default: '未结清',
+    comment: '结算标记：未结清/已结清'
+  },
+  // 结清账单号
+  settlementBillNo: {
+    type: String,
+    default: '',
+    comment: '结清账单号'
   }
 }, {
   timestamps: true

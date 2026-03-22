@@ -5,6 +5,10 @@
         <div class="page-header">
           <h3>{{ $t('order.orderManagement') }}</h3>
           <div class="header-actions">
+            <el-button type="warning" @click="handleGenerateBill" :loading="generatingBill" :disabled="selectedOrders.length === 0">
+              <el-icon><Tickets /></el-icon>
+              生成账单 ({{ selectedOrders.length }})
+            </el-button>
             <el-button type="success" @click="handleMatchBD" :loading="matchingBD" v-if="hasPermission('orders:btn-match-bd')">
               <el-icon><Connection /></el-icon>
               {{ $t('order.bdMatch') }}
@@ -16,6 +20,12 @@
           </div>
         </div>
       </template>
+
+      <!-- 页签 -->
+      <el-tabs v-model="activeTab" class="order-tabs">
+        <el-tab-pane label="TikTok订单" name="orders"></el-tab-pane>
+        <el-tab-pane label="账单" name="bills"></el-tab-pane>
+      </el-tabs>
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
@@ -95,8 +105,11 @@
         </el-form-item>
       </el-form>
 
-      <!-- 表格 -->
-      <el-table :data="orders" v-loading="loading" stripe border @sort-change="handleSortChange">
+      <!-- 订单列表 -->
+      <div v-show="activeTab === 'orders'">
+        <!-- 表格 -->
+        <el-table :data="orders" v-loading="loading" stripe border @sort-change="handleSortChange" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="50" fixed="left" />
         <el-table-column
           label="TikTok ID"
           width="160"
@@ -261,6 +274,14 @@
           </template>
         </el-table-column>
 
+        <el-table-column label="结算" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-tag :type="row.settlementStatus === '已结清' ? 'success' : 'warning'" size="small">
+              {{ row.settlementStatus || '未结清' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
         <el-table-column label="操作" fixed="right" width="120">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
@@ -270,6 +291,7 @@
 
       <!-- 分页 -->
       <el-pagination
+        v-show="activeTab === 'orders'"
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.limit"
         :total="pagination.total"
@@ -279,6 +301,54 @@
         @current-change="loadOrders"
         style="margin-top: 20px"
       />
+      </div>
+
+      <!-- 账单列表 -->
+      <div v-show="activeTab === 'bills'" v-loading="billsLoading">
+        <el-table :data="bills" stripe border>
+          <el-table-column prop="billNo" label="账单号" width="180" />
+          <el-table-column label="有效日期区间" width="200">
+            <template #default="{ row }">
+              {{ formatDate(row.validStartDate) }} ~ {{ formatDate(row.validEndDate) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="佣金总额" width="150">
+            <template #default="{ row }">
+              <span class="commission-total">{{ formatMoney(row.totalCommission) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="orderCount" label="订单数" width="100" />
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.isSettled ? 'success' : 'warning'" size="small">
+                {{ row.isSettled ? '已结清' : '未结清' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="创建时间" width="160">
+            <template #default="{ row }">
+              {{ formatDate(row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" fixed="right" width="180">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="viewBillDetail(row)">详情</el-button>
+              <el-button link type="success" @click="showSettleDialog(row)" :disabled="row.isSettled">结算</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <el-pagination
+          v-model:current-page="billsPagination.page"
+          v-model:page-size="billsPagination.limit"
+          :total="billsPagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadBills"
+          @current-change="loadBills"
+          style="margin-top: 20px"
+        />
+      </div>
     </el-card>
 
     <!-- 导入对话框 -->
@@ -385,6 +455,146 @@
         <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 账单详情对话框 -->
+    <el-dialog v-model="billDetailDialogVisible" title="账单详情" width="900px">
+      <div v-if="currentBill">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="账单号">{{ currentBill.billNo }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="currentBill.isSettled ? 'success' : 'warning'">
+              {{ currentBill.isSettled ? '已结清' : '未结清' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="有效日期区间" :span="2">
+            {{ formatDate(currentBill.validStartDate) }} ~ {{ formatDate(currentBill.validEndDate) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="佣金总额">
+            <span class="commission-total">{{ formatMoney(currentBill.totalCommission) }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="订单数">{{ currentBill.orderCount }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDate(currentBill.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="结算时间" v-if="currentBill.isSettled">
+            {{ formatDate(currentBill.settlementTime) }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- BD明细 -->
+        <div v-if="currentBill.orderDetails" style="margin-top: 20px">
+          <h4>BD明细</h4>
+          <el-table :data="currentBill.orderDetails" stripe border>
+            <el-table-column prop="bdName" label="BD" width="150" />
+            <el-table-column label="佣金总额" width="150">
+              <template #default="{ row }">
+                <span class="commission-total">{{ formatMoney(row.commission) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="orderCount" label="订单数" width="100" />
+          </el-table>
+
+          <!-- 订单详情 -->
+          <div v-for="bd in currentBill.orderDetails" :key="bd.bdName" style="margin-top: 16px">
+            <h5>{{ bd.bdName }} - 订单明细</h5>
+            <el-table :data="bd.orders" stripe border size="small" max-height="300">
+              <el-table-column prop="orderNo" label="订单号" width="180" />
+              <el-table-column prop="productName" label="商品名称" min-width="200" />
+              <el-table-column label="佣金" width="120">
+                <template #default="{ row }">
+                  {{ formatMoney(row.commission) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="结算状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="row.settlementStatus === '已结清' ? 'success' : 'warning'" size="small">
+                    {{ row.settlementStatus || '未结清' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="paymentNo" label="打款单号" width="150" />
+              <el-table-column label="打款日期" width="120">
+                <template #default="{ row }">
+                  {{ row.commissionSettlementTime ? formatDate(row.commissionSettlementTime) : '--' }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="billDetailDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 结算对话框 -->
+    <el-dialog v-model="settleDialogVisible" title="结算账单" width="600px">
+      <div v-if="currentBill">
+        <el-alert
+          title="结算确认"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 20px"
+        >
+          <template #default>
+            <p>账单号：{{ currentBill.billNo }}</p>
+            <p>佣金总额：{{ formatMoney(currentBill.totalCommission) }}</p>
+          </template>
+        </el-alert>
+
+        <el-form :model="settleForm" label-width="100px">
+          <el-form-item label="选择BD" required>
+            <el-select v-model="settleForm.bdName" placeholder="请选择BD" style="width: 100%" @change="handleBdChange">
+              <el-option
+                v-for="bd in currentBill.bdList"
+                :key="bd.bdName"
+                :label="bd.bdName"
+                :value="bd.bdName"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="银行账号">
+            <el-input v-model="settleForm.bankAccount" placeholder="请输入银行账号" />
+          </el-form-item>
+
+          <el-form-item label="银行流水号" required>
+            <el-input v-model="settleForm.bankFlowNo" placeholder="请输入银行流水单号" />
+          </el-form-item>
+
+          <el-form-item label="备注">
+            <el-input v-model="settleForm.note" type="textarea" placeholder="请输入备注" :rows="2" />
+          </el-form-item>
+
+          <el-divider />
+
+          <el-button type="primary" link @click="addSettlementNote" + v-if="settleForm.bdName">
+            <el-icon><Plus /></el-icon> 添加下一条
+          </el-button>
+
+          <div v-if="settleForm.notes.length > 0" style="margin-top: 16px">
+            <h4>已添加的结算记录</h4>
+            <el-table :data="settleForm.notes" stripe border size="small">
+              <el-table-column prop="bdName" label="BD" width="120" />
+              <el-table-column prop="bankAccount" label="银行账号" width="180" />
+              <el-table-column prop="bankFlowNo" label="流水号" width="150" />
+              <el-table-column prop="note" label="备注" min-width="150" />
+              <el-table-column label="操作" width="80">
+                <template #default="{ $index }">
+                  <el-button link type="danger" size="small" @click="removeSettlementNote($index)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <el-button @click="settleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSettle" :loading="settling" :disabled="settleForm.notes.length === 0">
+          确认结算
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -397,7 +607,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import request from '@/utils/request'
-import { Upload, UploadFilled, CircleCheck, Clock, Connection, Loading } from '@element-plus/icons-vue'
+import { Upload, UploadFilled, CircleCheck, Clock, Connection, Loading, Tickets, Plus } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 
@@ -409,6 +619,7 @@ const userStore = useUserStore()
 const loading = ref(false)
 const importing = ref(false)
 const matchingBD = ref(false)
+const generatingBill = ref(false)
 const importDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const orders = ref([])
@@ -422,6 +633,32 @@ const sortBy = ref('')
 const sortOrder = ref('')
 const popoverInfluencer = ref(null)
 const popoverLoading = ref(false)
+
+// 多选相关
+const selectedOrders = ref([])
+const activeTab = ref('orders')
+
+// 账单相关
+const billsLoading = ref(false)
+const bills = ref([])
+const billsPagination = reactive({
+  page: 1,
+  limit: 10,
+  total: 0
+})
+const billDetailDialogVisible = ref(false)
+const currentBill = ref(null)
+
+// 结算相关
+const settleDialogVisible = ref(false)
+const settling = ref(false)
+const settleForm = reactive({
+  bdName: '',
+  bankAccount: '',
+  bankFlowNo: '',
+  note: '',
+  notes: []
+})
 
 const searchForm = reactive({
   orderNo: '',
@@ -551,6 +788,170 @@ const handleMatchBD = async () => {
     matchingBD.value = false
   }
 }
+
+// 多选变化
+const handleSelectionChange = (selection) => {
+  selectedOrders.value = selection
+}
+
+// 生成账单
+const handleGenerateBill = async () => {
+  if (selectedOrders.value.length === 0) {
+    ElMessage.warning('请先选择要生成账单的订单')
+    return
+  }
+
+  const orderIds = selectedOrders.value.map(o => o._id)
+
+  await ElMessageBox.confirm(
+    `已选择 ${selectedOrders.value.length} 条订单，确定要生成账单吗？`,
+    '生成账单',
+    {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    }
+  )
+
+  generatingBill.value = true
+  try {
+    const res = await request.post('/report-orders/bills/generate', { orderIds })
+    ElMessage.success('账单生成成功！')
+    selectedOrders.value = []
+    // 刷新订单列表
+    loadOrders()
+    // 切换到账单页签
+    activeTab.value = 'bills'
+    loadBills()
+  } catch (error) {
+    console.error('Generate bill error:', error)
+    ElMessage.error(error.response?.data?.message || '生成账单失败')
+  } finally {
+    generatingBill.value = false
+  }
+}
+
+// 加载账单列表
+const loadBills = async () => {
+  billsLoading.value = true
+  try {
+    const params = {
+      page: billsPagination.page,
+      limit: billsPagination.limit
+    }
+    const res = await request.get('/report-orders/bills', { params })
+    bills.value = res.data?.bills || []
+    billsPagination.total = res.data?.pagination?.total || 0
+  } catch (error) {
+    console.error('Load bills error:', error)
+  } finally {
+    billsLoading.value = false
+  }
+}
+
+// 查看账单详情
+const viewBillDetail = async (row) => {
+  try {
+    const res = await request.get(`/report-orders/bills/${row._id}`)
+    currentBill.value = res.data
+    billDetailDialogVisible.value = true
+  } catch (error) {
+    console.error('Load bill detail error:', error)
+    ElMessage.error('加载账单详情失败')
+  }
+}
+
+// 显示结算对话框
+const showSettleDialog = (row) => {
+  currentBill.value = row
+  settleForm.bdName = ''
+  settleForm.bankAccount = ''
+  settleForm.bankFlowNo = ''
+  settleForm.note = ''
+  settleForm.notes = []
+  settleDialogVisible.value = true
+}
+
+// BD变化时获取银行账号
+const handleBdChange = async (bdName) => {
+  if (!bdName) return
+  try {
+    // 获取该BD的用户信息
+    const res = await request.get('/users', {
+      params: { search: bdName, limit: 10 }
+    })
+    const users = res.users || []
+    const bdUser = users.find(u => u.realName === bdName)
+    if (bdUser?.bankAccount) {
+      settleForm.bankAccount = bdUser.bankAccount
+    } else {
+      settleForm.bankAccount = ''
+    }
+  } catch (error) {
+    console.error('Load BD bank account error:', error)
+  }
+}
+
+// 添加结算备注
+const addSettlementNote = () => {
+  if (!settleForm.bdName) {
+    ElMessage.warning('请选择BD')
+    return
+  }
+  if (!settleForm.bankFlowNo) {
+    ElMessage.warning('请输入银行流水号')
+    return
+  }
+
+  settleForm.notes.push({
+    bdName: settleForm.bdName,
+    bankAccount: settleForm.bankAccount,
+    bankFlowNo: settleForm.bankFlowNo,
+    note: settleForm.note
+  })
+
+  // 重置单条输入
+  settleForm.bdName = ''
+  settleForm.bankAccount = ''
+  settleForm.bankFlowNo = ''
+  settleForm.note = ''
+}
+
+// 删除结算备注
+const removeSettlementNote = (index) => {
+  settleForm.notes.splice(index, 1)
+}
+
+// 提交结算
+const handleSettle = async () => {
+  if (settleForm.notes.length === 0) {
+    ElMessage.warning('请至少添加一条结算记录')
+    return
+  }
+
+  settling.value = true
+  try {
+    const res = await request.post(`/report-orders/bills/${currentBill.value._id}/settle`, {
+      settlementNotes: settleForm.notes
+    })
+    ElMessage.success('结算成功！')
+    settleDialogVisible.value = false
+    loadBills()
+  } catch (error) {
+    console.error('Settle error:', error)
+    ElMessage.error(error.response?.data?.message || '结算失败')
+  } finally {
+    settling.value = false
+  }
+}
+
+// 监听页签变化
+import { watch } from 'vue'
+watch(activeTab, (newTab) => {
+  if (newTab === 'bills') {
+    loadBills()
+  }
+})
 
 const loadOrders = async () => {
   loading.value = true

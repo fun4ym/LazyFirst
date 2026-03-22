@@ -13,38 +13,46 @@
               <el-icon><Plus /></el-icon>
               {{ $t('bdDaily.addRecord') }}
             </el-button>
+            <el-button type="warning" @click="handleExport" v-if="hasPermission('bd-daily:read')">
+              <el-icon><Download /></el-icon>
+              导出
+            </el-button>
           </div>
         </div>
       </template>
 
-      <!-- 搜索筛选 -->
-      <el-form :model="searchForm" inline class="search-form">
-        <el-form-item :label="$t('bdDaily.dateRange')">
-          <el-date-picker
-            v-model="dateRange"
-            type="daterange"
-            range-separator="-"
-            :start-placeholder="$t('bdDaily.startDate')"
-            :end-placeholder="$t('bdDaily.endDate')"
-            value-format="YYYY-MM-DD"
-            style="width: 240px"
-          />
-        </el-form-item>
+      <!-- 页签切换 -->
+      <el-tabs v-model="activeTab" class="bd-daily-tabs">
+        <!-- 按日统计页签 -->
+        <el-tab-pane label="按日统计" name="daily">
+          <!-- 搜索筛选 -->
+          <el-form :model="searchForm" inline class="search-form">
+            <el-form-item :label="$t('bdDaily.dateRange')">
+              <el-date-picker
+                v-model="dateRange"
+                type="daterange"
+                range-separator="-"
+                :start-placeholder="$t('bdDaily.startDate')"
+                :end-placeholder="$t('bdDaily.endDate')"
+                value-format="YYYY-MM-DD"
+                style="width: 240px"
+              />
+            </el-form-item>
 
-        <el-form-item label="BD">
-          <el-input
-            v-model="searchForm.salesman"
-            :placeholder="$t('bdDaily.bdName')"
-            clearable
-            style="width: 150px"
-          />
-        </el-form-item>
+            <el-form-item label="BD">
+              <el-input
+                v-model="searchForm.salesman"
+                :placeholder="$t('bdDaily.bdName')"
+                clearable
+                style="width: 150px"
+              />
+            </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" @click="loadData">{{ $t('common.search') }}</el-button>
-          <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
+            <el-form-item>
+              <el-button type="primary" @click="loadData">{{ $t('common.search') }}</el-button>
+              <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
 
       <!-- 表格 -->
       <el-table
@@ -60,7 +68,11 @@
           width="120"
           prop="date"
           sortable
+          fixed
         >
+          <template #header>
+            <div class="table-header-cell">{{ $t('common.date') }}</div>
+          </template>
           <template #default="{ row }">
             <div class="column-text">{{ formatDate(row.date) }}</div>
           </template>
@@ -71,7 +83,11 @@
           width="120"
           prop="salesman"
           sortable
+          fixed
         >
+          <template #header>
+            <div class="table-header-cell">BD</div>
+          </template>
           <template #default="{ row }">
             <div class="column-text">{{ row.salesman || '--' }}</div>
           </template>
@@ -183,6 +199,128 @@
         @current-change="loadData"
         style="margin-top: 20px"
       />
+        </el-tab-pane>
+
+        <!-- 按月统计页签 -->
+        <el-tab-pane label="按月统计" name="monthly">
+          <!-- 月份选择 -->
+          <el-form inline class="search-form">
+            <el-form-item label="选择月份">
+              <el-date-picker
+                v-model="monthPickerValue"
+                type="month"
+                placeholder="选择月份"
+                value-format="YYYY-MM"
+                :disabled-date="disableFutureDate"
+                style="width: 180px"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="loadMonthlyData" :loading="monthlyLoading">展示</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 按月统计表格 -->
+          <el-table
+            :data="monthlyTableData"
+            v-loading="monthlyLoading"
+            stripe
+            border
+            class="bd-daily-table"
+          >
+            <el-table-column label="BD" width="150" fixed>
+              <template #header>
+                <div class="table-header-cell">BD</div>
+              </template>
+              <template #default="{ row }">
+                <div class="column-text">{{ row.salesman || '--' }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="月份" width="120" fixed>
+              <template #header>
+                <div class="table-header-cell">月份</div>
+              </template>
+              <template #default="{ row }">
+                <div class="column-text">{{ row.month }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="申样数" width="150" sortable prop="sampleCount">
+              <template #default="{ row }">
+                <div class="stat-value">{{ row.sampleCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="订单数" width="150" sortable prop="orderCount">
+              <template #default="{ row }">
+                <div class="stat-value">{{ row.orderCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="成交金额" width="150" sortable prop="revenue">
+              <template #default="{ row }">
+                <div class="stat-value highlight">฿{{ formatMoney(row.revenue || 0) }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="预估服务费" width="150" sortable prop="estimatedCommission">
+              <template #default="{ row }">
+                <div class="stat-value">฿{{ formatMoney(row.estimatedCommission || 0) }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="结算佣金" width="150" sortable prop="commission">
+              <template #default="{ row }">
+                <div class="stat-value">฿{{ formatMoney(row.commission || 0) }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="成单数" width="120" sortable prop="orderGeneratedCount">
+              <template #default="{ row }">
+                <div class="stat-value">{{ row.orderGeneratedCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="工作天数" width="120" sortable prop="workDays">
+              <template #default="{ row }">
+                <div class="stat-value">{{ row.workDays || 0 }} 天</div>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 月度统计汇总 -->
+          <el-divider v-if="monthlyTableData.length > 0" />
+          <div v-if="monthlyTableData.length > 0" class="monthly-summary">
+            <el-row :gutter="20">
+              <el-col :span="6">
+                <div class="summary-card">
+                  <div class="summary-label">总申样数</div>
+                  <div class="summary-value">{{ monthlySummary.sampleCount }}</div>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="summary-card">
+                  <div class="summary-label">总订单数</div>
+                  <div class="summary-value">{{ monthlySummary.orderCount }}</div>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="summary-card">
+                  <div class="summary-label">总成交金额</div>
+                  <div class="summary-value">฿{{ formatMoney(monthlySummary.revenue) }}</div>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="summary-card">
+                  <div class="summary-label">总结算佣金</div>
+                  <div class="summary-value">฿{{ formatMoney(monthlySummary.commission) }}</div>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
 
       <!-- 生成统计对话框 -->
@@ -371,7 +509,8 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Plus, MagicStick } from '@element-plus/icons-vue'
+import { Plus, MagicStick, Download } from '@element-plus/icons-vue'
+import * as XLSX from 'xlsx'
 import AuthManager from '@/utils/auth'
 
 // 权限检查
@@ -387,6 +526,113 @@ const isEdit = ref(false)
 const tableData = ref([])
 const formRef = ref(null)
 const dateRange = ref([])
+
+// 按月统计相关
+const activeTab = ref('daily')
+const monthPickerValue = ref('')
+const monthlyLoading = ref(false)
+const monthlyTableData = ref([])
+const monthlySummary = ref({
+  sampleCount: 0,
+  orderCount: 0,
+  revenue: 0,
+  commission: 0
+})
+
+// 获取当前月份
+const getCurrentMonth = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+// 禁用未来月份
+const disableFutureDate = (date) => {
+  const now = new Date()
+  return date > now
+}
+
+// 加载按月统计数据
+const loadMonthlyData = async () => {
+  if (!monthPickerValue.value) {
+    ElMessage.warning('请选择月份')
+    return
+  }
+
+  monthlyLoading.value = true
+  try {
+    const [year, month] = monthPickerValue.value.split('-')
+    const startDate = `${monthPickerValue.value}-01`
+    // 获取该月最后一天
+    const lastDay = new Date(year, parseInt(month), 0).getDate()
+    const endDate = `${monthPickerValue.value}-${String(lastDay).padStart(2, '0')}`
+
+    const params = {
+      startDate,
+      endDate,
+      limit: 10000
+    }
+
+    const res = await request.get('/bd-daily', { params })
+    const allData = res.bdDailies || []
+
+    // 按 BD 分组汇总
+    const bdSummary = {}
+    allData.forEach(item => {
+      const bd = item.salesman || '未知'
+      if (!bdSummary[bd]) {
+        bdSummary[bd] = {
+          salesman: bd,
+          month: monthPickerValue.value,
+          sampleCount: 0,
+          orderCount: 0,
+          revenue: 0,
+          estimatedCommission: 0,
+          commission: 0,
+          orderGeneratedCount: 0,
+          workDays: new Set()
+        }
+      }
+      bdSummary[bd].sampleCount += item.sampleCount || 0
+      bdSummary[bd].orderCount += item.orderCount || 0
+      bdSummary[bd].revenue += item.revenue || 0
+      bdSummary[bd].estimatedCommission += item.estimatedCommission || 0
+      bdSummary[bd].commission += item.commission || 0
+      bdSummary[bd].orderGeneratedCount += item.orderGeneratedCount || 0
+      if (item.date) {
+        bdSummary[bd].workDays.add(item.date)
+      }
+    })
+
+    // 转换为数组并计算工作天数
+    monthlyTableData.value = Object.values(bdSummary).map(item => ({
+      ...item,
+      workDays: item.workDays.size
+    })).sort((a, b) => b.sampleCount - a.sampleCount)
+
+    // 计算汇总
+    monthlySummary.value = {
+      sampleCount: monthlyTableData.value.reduce((sum, item) => sum + item.sampleCount, 0),
+      orderCount: monthlyTableData.value.reduce((sum, item) => sum + item.orderCount, 0),
+      revenue: monthlyTableData.value.reduce((sum, item) => sum + item.revenue, 0),
+      commission: monthlyTableData.value.reduce((sum, item) => sum + item.commission, 0)
+    }
+
+    if (monthlyTableData.value.length === 0) {
+      ElMessage.warning('所选月份没有数据')
+    }
+  } catch (error) {
+    console.error('Load monthly data error:', error)
+    ElMessage.error('加载月度数据失败')
+  } finally {
+    monthlyLoading.value = false
+  }
+}
+
+// 初始化月份选择器
+const initMonthPicker = () => {
+  monthPickerValue.value = getCurrentMonth()
+  loadMonthlyData()
+}
 
 const searchForm = reactive({
   salesman: ''
@@ -638,12 +884,77 @@ const deleteRecord = async (row) => {
   }
 }
 
+// 导出当前检索列表为 Excel
+const handleExport = async () => {
+  try {
+    // 获取全部数据（不受分页限制）
+    const params = {
+      page: 1,
+      limit: 10000,
+      ...searchForm
+    }
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.startDate = dateRange.value[0]
+      params.endDate = dateRange.value[1]
+    }
+
+    const res = await request.get('/bd-daily', { params })
+    const exportData = res.bdDailies || []
+
+    if (exportData.length === 0) {
+      ElMessage.warning('没有数据可导出')
+      return
+    }
+
+    // 转换为 Excel 格式
+    const data = exportData.map(item => ({
+      '日期': formatDate(item.date),
+      'BD': item.salesman || '',
+      '申样数': item.sampleCount || 0,
+      '订单数': item.orderCount || 0,
+      '成交金额': item.revenue || 0,
+      '预估服务费': item.estimatedCommission || 0,
+      '结算佣金': item.commission || 0,
+      '成单数': item.orderGeneratedCount || 0,
+      '备注': item.remark || ''
+    }))
+
+    // 创建工作簿
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'BD每日统计')
+
+    // 设置列宽
+    ws['!cols'] = [
+      { wch: 12 }, // 日期
+      { wch: 10 }, // BD
+      { wch: 8 },  // 申样数
+      { wch: 8 },  // 订单数
+      { wch: 12 }, // 成交金额
+      { wch: 12 }, // 预估服务费
+      { wch: 12 }, // 结算佣金
+      { wch: 8 },  // 成单数
+      { wch: 20 }  // 备注
+    ]
+
+    // 导出文件
+    const fileName = `BD每日统计_${dateRange.value ? `${dateRange.value[0]}_${dateRange.value[1]}` : '全部'}.xlsx`
+    XLSX.writeFile(wb, fileName)
+
+    ElMessage.success(`导出成功，共 ${data.length} 条数据`)
+  } catch (error) {
+    console.error('Export error:', error)
+    ElMessage.error('导出失败')
+  }
+}
+
 watch(tableData, (newVal) => {
   console.log('[BD Daily] tableData 变化:', newVal.length, '条')
 }, { deep: true })
 
 onMounted(() => {
   loadData()
+  initMonthPicker()
 })
 </script>
 
@@ -694,6 +1005,14 @@ onMounted(() => {
   font-weight: 600;
   font-size: 13px;
   border-bottom: 2px solid #ce93d8;
+}
+
+.table-header-cell {
+  background: linear-gradient(135deg, #ce93d8 0%, #ba68c8 100%);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: 600;
 }
 
 .bd-daily-table :deep(.el-table__body tr:hover > td) {
@@ -753,5 +1072,52 @@ onMounted(() => {
 .el-form-item :deep(.el-form-item__label) {
   color: #595959;
   font-weight: 500;
+}
+
+/* 页签样式 */
+.bd-daily-tabs :deep(.el-tabs__header) {
+  margin-bottom: 20px;
+}
+
+.bd-daily-tabs :deep(.el-tabs__item) {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.bd-daily-tabs :deep(.el-tabs__item.is-active) {
+  color: #9c4dcc;
+  font-weight: 600;
+}
+
+.bd-daily-tabs :deep(.el-tabs__active-bar) {
+  background-color: #9c4dcc;
+}
+
+/* 月度汇总卡片 */
+.monthly-summary {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-radius: 8px;
+}
+
+.summary-card {
+  text-align: center;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #9c4dcc;
 }
 </style>

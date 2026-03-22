@@ -160,6 +160,10 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="银行账号">
+          <el-input v-model="form.bankAccount" placeholder="请输入银行账号（非必填）" />
+        </el-form-item>
+
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio label="active">启用</el-radio>
@@ -276,7 +280,8 @@ const form = reactive({
   email: '',
   roleId: '',
   deptId: '',
-  status: 'active'
+  status: 'active',
+  bankAccount: ''
 })
 
 const rules = {
@@ -355,7 +360,8 @@ const showEditDialog = (row) => {
     email: row.email,
     roleId: row.roleId?._id || row.roleId,
     deptId: row.deptId?._id || row.deptId,
-    status: row.status
+    status: row.status,
+    bankAccount: row.bankAccount || ''
   })
 }
 
@@ -413,7 +419,8 @@ const resetForm = () => {
     email: '',
     roleId: '',
     deptId: '',
-    status: 'active'
+    status: 'active',
+    bankAccount: ''
   })
   if (formRef.value) {
     formRef.value.clearValidate()
