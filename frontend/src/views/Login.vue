@@ -2,8 +2,9 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
+        <img src="https://cdn.jsdelivr.net/gh/fun4ym/LazyFirst@main/frontend/public/logo.png" alt="LazyFirst" class="login-logo" />
         <h1>{{ $t('login.title') }}</h1>
-        <p>TikTok Influencer Management</p>
+        <p>TikTok Shop Affiliate Partner</p>
       </div>
 
       <el-form
@@ -47,7 +48,7 @@
       </el-form>
 
       <div class="login-footer">
-        <p>© 2024 TAP System. All rights reserved.</p>
+        <p>Copyright © 2026 LazyFirst Digital System © Encrypted | TAP Ecosystem Certified | All Intellectual Properties Reserved</p>
       </div>
     </div>
   </div>
@@ -124,6 +125,12 @@ const handleLogin = async () => {
 .login-header {
   text-align: center;
   margin-bottom: 40px;
+}
+
+.login-logo {
+  width: 200px;
+  height: auto;
+  margin-bottom: 20px;
 }
 
 .login-header h1 {

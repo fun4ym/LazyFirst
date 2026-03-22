@@ -82,7 +82,7 @@ export default {
     bdWorkspace: 'BD Workspace'
   },
   login: {
-    title: 'TAP System',
+    title: 'LazyFirst',
     username: 'Username',
     password: 'Password',
     login: 'Login',

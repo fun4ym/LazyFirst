@@ -83,7 +83,7 @@ export default {
     bdWorkspace: 'BD工作台'
   },
   login: {
-    title: 'TAP 系统',
+    title: 'LazyFirst',
     username: '用户名',
     password: '密码',
     login: '登录',
