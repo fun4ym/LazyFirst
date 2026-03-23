@@ -209,12 +209,12 @@ const showDetail = (item) => {
 
 const buildConnection = async (item) => {
   try {
-    await request.post('/influencer-managements', {
-      influencerId: item._id,
-      action: 'build_connection',
+    await request.post(`/influencer-managements/${item._id}/claim`, {
       remark: '移动端建联'
     })
     ElMessage.success('建联成功！')
+    // 刷新列表
+    loadInfluencers()
   } catch (error) {
     console.error('建联失败:', error)
     ElMessage.error(error.response?.data?.message || '建联失败')
