@@ -337,7 +337,10 @@ const loadOrderStats = async () => {
     if (!influencerIds) return
     
     const res = await request.get('/product-stats/influencer-order-stats', {
-      params: { influencerIds }
+      params: { 
+        influencerIds,
+        companyId: userStore.companyId
+      }
     })
     
     const data = res.data || res
