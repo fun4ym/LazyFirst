@@ -139,7 +139,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 
@@ -177,11 +178,18 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('zh-CN')
 }
 
+const userStore = useUserStore()
+
 const loadRecords = async () => {
   recordsLoading.value = true
   try {
-    const res = await request.get('/samples/my')
-    records.value = res.data.data || []
+    const res = await request.get('/samples', { 
+      params: { 
+        salesmanId: userStore.user?.username || userStore.username,
+        limit: 100 
+      } 
+    })
+    records.value = res.data?.data?.samples || []
   } catch (error) {
     console.error('加载记录失败:', error)
     ElMessage.error('加载记录失败')
@@ -196,10 +204,10 @@ const searchInfluencer = async () => {
     return
   }
   try {
-    const res = await request.get('/influencers', { 
-      params: { keyword: influencerKeyword.value, limit: 20 } 
+    const res = await request.get('/influencer-managements', { 
+      params: { keyword: influencerKeyword.value, limit: 20, poolType: '' } 
     })
-    influencerOptions.value = res.data.data || []
+    influencerOptions.value = res.data.influencers || []
   } catch (error) {
     console.error('搜索达人失败:', error)
   }
