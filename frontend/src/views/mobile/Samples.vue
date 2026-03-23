@@ -1,7 +1,8 @@
 <template>
   <div class="page-container">
+    <!-- 顶部 -->
     <div class="page-header">
-      <h1>样品管理</h1>
+      <h1>样品申请</h1>
     </div>
 
     <!-- 标签切换 -->
@@ -11,6 +12,7 @@
         :class="{ active: activeTab === 'apply' }"
         @click="activeTab = 'apply'"
       >
+        <span class="tab-icon">➕</span>
         申请样品
       </div>
       <div 
@@ -18,6 +20,7 @@
         :class="{ active: activeTab === 'records' }"
         @click="activeTab = 'records'; loadRecords()"
       >
+        <span class="tab-icon">📋</span>
         申请记录
       </div>
     </div>
@@ -25,38 +28,68 @@
     <!-- 申请样品 -->
     <div v-if="activeTab === 'apply'" class="tab-content">
       <div class="form-card">
+        <!-- 选择达人 -->
         <div class="form-item">
-          <label>选择达人</label>
+          <label>选择达人 <span class="required">*</span></label>
           <div class="influencer-select" @click="showInfluencerPicker = true">
-            <span v-if="selectedInfluencer">{{ selectedInfluencer.tiktokName || selectedInfluencer.tiktokId }}</span>
+            <span v-if="selectedInfluencer" class="selected-value">
+              {{ selectedInfluencer.tiktokName || selectedInfluencer.tiktokId }}
+            </span>
             <span v-else class="placeholder">请选择达人</span>
             <span class="arrow">›</span>
           </div>
         </div>
 
+        <!-- 选择商品 -->
         <div class="form-item">
-          <label>样品名称</label>
-          <input v-model="form.productName" type="text" placeholder="请输入样品名称" />
+          <label>选择商品 <span class="required">*</span></label>
+          <div class="product-select" @click="showProductPicker = true">
+            <span v-if="selectedProduct" class="selected-value">
+              {{ selectedProduct.name }}
+            </span>
+            <span v-else class="placeholder">请选择商品</span>
+            <span class="arrow">›</span>
+          </div>
         </div>
 
+        <!-- 申请日期 -->
         <div class="form-item">
-          <label>样品规格</label>
-          <input v-model="form.specification" type="text" placeholder="请输入规格" />
+          <label>申请日期 <span class="required">*</span></label>
+          <input 
+            v-model="form.date" 
+            type="date" 
+            class="date-input"
+          />
         </div>
 
+        <!-- 达人粉丝数 -->
         <div class="form-item">
-          <label>申请数量</label>
-          <input v-model="form.quantity" type="number" placeholder="请输入数量" />
+          <label>达人粉丝数</label>
+          <input 
+            v-model="form.followerCount" 
+            type="number" 
+            placeholder="请输入粉丝数"
+          />
         </div>
 
+        <!-- 样品数量 -->
         <div class="form-item">
-          <label>样品单价(¥)</label>
-          <input v-model="form.unitPrice" type="number" placeholder="请输入单价" />
+          <label>样品数量</label>
+          <input 
+            v-model="form.quantity" 
+            type="number" 
+            placeholder="请输入数量"
+          />
         </div>
 
+        <!-- 备注 -->
         <div class="form-item">
           <label>备注</label>
-          <textarea v-model="form.remark" placeholder="请输入备注" rows="3"></textarea>
+          <textarea 
+            v-model="form.remark" 
+            placeholder="请输入备注信息"
+            rows="3"
+          ></textarea>
         </div>
 
         <button class="btn-submit" @click="submitApplication" :disabled="submitting">
@@ -74,31 +107,46 @@
           class="record-card"
         >
           <div class="record-header">
-            <span class="record-title">{{ item.productName }}</span>
-            <span class="record-status" :class="item.status">{{ getStatusText(item.status) }}</span>
+            <div class="record-title">{{ item.productName }}</div>
+            <div class="record-status" :class="getSampleStatusClass(item.sampleStatus)">
+              {{ getSampleStatusText(item.sampleStatus) }}
+            </div>
           </div>
-          <div class="record-info">
-            <div class="info-row">
-              <span>达人：</span>
-              <span>{{ item.influencerName || '-' }}</span>
+          
+          <div class="record-body">
+            <div class="record-row">
+              <span class="label">达人：</span>
+              <span class="value">@{{ item.influencerAccount }}</span>
+              <span v-if="item.isBlacklistedInfluencer" class="blacklist-badge">黑名单</span>
             </div>
-            <div class="info-row">
-              <span>数量：</span>
-              <span>{{ item.quantity }}件</span>
+            <div class="record-row">
+              <span class="label">日期：</span>
+              <span class="value">{{ formatDate(item.date) }}</span>
             </div>
-            <div class="info-row">
-              <span>金额：</span>
-              <span>¥{{ item.totalPrice || item.unitPrice * item.quantity }}</span>
+            <div class="record-row" v-if="item.trackingNumber">
+              <span class="label">快递：</span>
+              <span class="value">{{ item.trackingNumber }}</span>
             </div>
-            <div class="info-row">
-              <span>申请时间：</span>
-              <span>{{ formatDate(item.createdAt) }}</span>
+            <div class="record-row">
+              <span class="label">出单：</span>
+              <span class="value">
+                <span :class="item.isOrderGenerated ? 'status-success' : 'status-pending'">
+                  {{ item.isOrderGenerated ? '已出单' : '未出单' }}
+                </span>
+              </span>
             </div>
+          </div>
+
+          <div class="record-footer">
+            <button class="action-btn" @click="viewDetail(item)">
+              查看详情
+            </button>
           </div>
         </div>
-        
+
         <div v-if="!recordsLoading && records.length === 0" class="empty">
-          暂无申请记录
+          <div class="empty-icon">📭</div>
+          <div class="empty-text">暂无申请记录</div>
         </div>
       </div>
     </div>
@@ -111,25 +159,63 @@
           <span class="close" @click="showInfluencerPicker = false">×</span>
         </div>
         <div class="modal-body">
-          <input 
-            v-model="influencerKeyword" 
-            type="text" 
-            placeholder="搜索达人..."
-            class="search-input"
-            @input="searchInfluencer"
-          />
-          <div class="influencer-list">
+          <div class="search-box">
+            <input 
+              v-model="influencerKeyword" 
+              type="text" 
+              placeholder="搜索达人名称/TikTok号"
+              @input="searchInfluencer"
+            />
+          </div>
+          <div class="picker-list">
             <div 
               v-for="item in influencerOptions" 
-              :key="item._id"
-              class="influencer-option"
+              :key="item._id" 
+              class="picker-item"
               @click="selectInfluencer(item)"
             >
-              <span class="name">{{ item.tiktokName || item.tiktokId }}</span>
-              <span class="id">@{{ item.tiktokId }}</span>
+              <div class="item-avatar">{{ item.tiktokName?.charAt(0) || '?' }}</div>
+              <div class="item-info">
+                <div class="item-name">{{ item.tiktokName || '-' }}</div>
+                <div class="item-id">@{{ item.tiktokId }}</div>
+              </div>
             </div>
-            <div v-if="influencerOptions.length === 0" class="empty">
-              未找到达人
+            <div v-if="!influencerOptions.length" class="empty-picker">
+              搜索达人...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品选择器 -->
+    <div v-if="showProductPicker" class="modal-mask" @click="showProductPicker = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>选择商品</h2>
+          <span class="close" @click="showProductPicker = false">×</span>
+        </div>
+        <div class="modal-body">
+          <div class="picker-list">
+            <div 
+              v-for="item in productOptions" 
+              :key="item._id" 
+              class="picker-item"
+              @click="selectProduct(item)"
+            >
+              <div class="item-avatar product">
+                <span v-if="item.imageUrl">
+                  <img :src="item.imageUrl" alt="" />
+                </span>
+                <span v-else>📦</span>
+              </div>
+              <div class="item-info">
+                <div class="item-name">{{ item.name }}</div>
+                <div class="item-id">{{ item.sku || '无SKU' }}</div>
+              </div>
+            </div>
+            <div v-if="!productOptions.length" class="empty-picker">
+              暂无商品数据
             </div>
           </div>
         </div>
@@ -139,63 +225,62 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { useUserStore } from '@/stores/user'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
 
 const activeTab = ref('apply')
 const recordsLoading = ref(false)
 const records = ref([])
+const submitting = ref(false)
 const showInfluencerPicker = ref(false)
+const showProductPicker = ref(false)
+
 const influencerKeyword = ref('')
 const influencerOptions = ref([])
 const selectedInfluencer = ref(null)
-const submitting = ref(false)
+const selectedProduct = ref(null)
+const productOptions = ref([])
 
-const form = reactive({
-  productName: '',
-  specification: '',
+const form = ref({
+  date: new Date().toISOString().split('T')[0],
+  followerCount: '',
   quantity: 1,
-  unitPrice: 0,
   remark: ''
 })
 
-const getStatusText = (status) => {
+const getSampleStatusText = (status) => {
   const map = {
     pending: '待审核',
     approved: '已通过',
-    rejected: '已拒绝',
-    shipped: '已发货',
+    refused: '已拒绝',
+    sample_sent: '已寄样',
     received: '已收货',
     completed: '已完成'
   }
-  return map[status] || status
+  return map[status] || '待审核'
+}
+
+const getSampleStatusClass = (status) => {
+  const map = {
+    pending: 'status-pending',
+    approved: 'status-approved',
+    refused: 'status-refused',
+    sample_sent: 'status-sent',
+    received: 'status-received',
+    completed: 'status-completed'
+  }
+  return map[status] || 'status-pending'
 }
 
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('zh-CN')
-}
-
-const userStore = useUserStore()
-
-const loadRecords = async () => {
-  recordsLoading.value = true
-  try {
-    const res = await request.get('/samples', { 
-      params: { 
-        salesmanId: userStore.user?.username || userStore.username,
-        limit: 100 
-      } 
-    })
-    records.value = res.data?.samples || []
-  } catch (error) {
-    console.error('加载记录失败:', error)
-    ElMessage.error('加载记录失败')
-  } finally {
-    recordsLoading.value = false
-  }
 }
 
 const searchInfluencer = async () => {
@@ -205,7 +290,11 @@ const searchInfluencer = async () => {
   }
   try {
     const res = await request.get('/influencer-managements', { 
-      params: { keyword: influencerKeyword.value, limit: 20, poolType: '' } 
+      params: { 
+        keyword: influencerKeyword.value, 
+        limit: 20,
+        poolType: '' 
+      } 
     })
     influencerOptions.value = res.influencers || []
   } catch (error) {
@@ -215,7 +304,29 @@ const searchInfluencer = async () => {
 
 const selectInfluencer = (item) => {
   selectedInfluencer.value = item
+  form.value.followerCount = item.latestFollowers || ''
   showInfluencerPicker.value = false
+}
+
+const loadProducts = async () => {
+  try {
+    const res = await request.get('/products', { params: { limit: 100 } })
+    productOptions.value = res.products || res.data?.products || []
+  } catch (error) {
+    console.error('加载商品失败:', error)
+    // 尝试其他返回格式
+    try {
+      const res = await request.get('/products')
+      productOptions.value = res.data || []
+    } catch (e) {
+      console.error('加载商品失败:', e)
+    }
+  }
+}
+
+const selectProduct = (item) => {
+  selectedProduct.value = item
+  showProductPicker.value = false
 }
 
 const submitApplication = async () => {
@@ -223,34 +334,37 @@ const submitApplication = async () => {
     ElMessage.warning('请选择达人')
     return
   }
-  if (!form.productName) {
-    ElMessage.warning('请输入样品名称')
+  if (!selectedProduct.value) {
+    ElMessage.warning('请选择商品')
     return
   }
-  if (form.quantity < 1) {
-    ElMessage.warning('请输入正确的数量')
+  if (!form.value.date) {
+    ElMessage.warning('请选择申请日期')
     return
   }
 
   submitting.value = true
   try {
     await request.post('/samples', {
-      influencerId: selectedInfluencer.value._id,
-      influencerName: selectedInfluencer.value.tiktokName || selectedInfluencer.value.tiktokId,
-      productName: form.productName,
-      specification: form.specification,
-      quantity: form.quantity,
-      unitPrice: form.unitPrice,
-      remark: form.remark
+      date: form.value.date,
+      productName: selectedProduct.value.name,
+      productId: selectedProduct.value._id || selectedProduct.value.id,
+      influencerAccount: selectedInfluencer.value.tiktokId,
+      followerCount: form.value.followerCount || 0,
+      quantity: form.value.quantity || 1,
+      remark: form.value.remark
     })
-    ElMessage.success('申请提交成功！')
+    ElMessage.success('申请提交成功')
     // 重置表单
     selectedInfluencer.value = null
-    form.productName = ''
-    form.specification = ''
-    form.quantity = 1
-    form.unitPrice = 0
-    form.remark = ''
+    selectedProduct.value = null
+    form.value = {
+      date: new Date().toISOString().split('T')[0],
+      followerCount: '',
+      quantity: 1,
+      remark: ''
+    }
+    // 切换到记录页面
     activeTab.value = 'records'
     loadRecords()
   } catch (error) {
@@ -261,59 +375,100 @@ const submitApplication = async () => {
   }
 }
 
+const loadRecords = async () => {
+  recordsLoading.value = true
+  try {
+    const res = await request.get('/samples', { 
+      params: { 
+        limit: 100 
+      } 
+    })
+    // 处理不同的返回格式
+    records.value = res.data?.samples || res.samples || []
+  } catch (error) {
+    console.error('加载记录失败:', error)
+    ElMessage.error('加载记录失败')
+  } finally {
+    recordsLoading.value = false
+  }
+}
+
+const viewDetail = (item) => {
+  // 可以跳转到详情页或显示详情弹窗
+  ElMessage.info('查看详情功能开发中')
+}
+
 onMounted(() => {
-  loadRecords()
+  loadProducts()
 })
 </script>
 
 <style scoped>
 .page-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(180deg, #f8f9fc 0%, #eef1f6 100%);
 }
 
+/* 头部 */
 .page-header {
-  background: #4a148c;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  padding: 20px 16px;
   color: #fff;
-  padding: 16px;
-  text-align: center;
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
+/* 标签 */
 .tabs {
   display: flex;
   background: #fff;
+  padding: 0 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .tab {
   flex: 1;
-  text-align: center;
-  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 0;
+  font-size: 14px;
+  color: #666;
   cursor: pointer;
   border-bottom: 2px solid transparent;
+  transition: all 0.2s;
 }
 
 .tab.active {
-  color: #4a148c;
-  border-bottom-color: #4a148c;
+  color: #11998e;
+  border-bottom-color: #11998e;
+  font-weight: 600;
 }
 
+.tab-icon {
+  font-size: 16px;
+}
+
+/* 内容区 */
 .tab-content {
-  padding: 12px;
-}
-
-.form-card {
-  background: #fff;
-  border-radius: 12px;
   padding: 16px;
 }
 
+/* 表单卡片 */
+.form-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
 .form-item {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .form-item label {
@@ -321,111 +476,223 @@ onMounted(() => {
   font-size: 14px;
   color: #333;
   margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.required {
+  color: #f56c6c;
 }
 
 .form-item input,
-.form-item textarea {
+.form-item textarea,
+.form-item select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
+  background: #fafafa;
+  color: #333;
   box-sizing: border-box;
+  transition: all 0.2s;
 }
 
-.influencer-select {
+.form-item input:focus,
+.form-item textarea:focus {
+  outline: none;
+  border-color: #11998e;
+  box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+}
+
+.date-input {
+  color: #333;
+}
+
+.influencer-select,
+.product-select {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 10px;
+  background: #fafafa;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.influencer-select .placeholder {
-  color: #999;
+.influencer-select:active,
+.product-select:active {
+  border-color: #11998e;
 }
 
-.influencer-select .arrow {
-  font-size: 20px;
+.selected-value {
+  color: #333;
+  font-size: 14px;
+}
+
+.placeholder {
   color: #999;
+  font-size: 14px;
+}
+
+.arrow {
+  color: #ccc;
+  font-size: 18px;
 }
 
 .btn-submit {
   width: 100%;
   padding: 14px;
-  background: #4a148c;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
 }
 
 .btn-submit:disabled {
-  background: #ccc;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 记录列表 */
+.records-list {
+  padding-bottom: 80px;
 }
 
 .record-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 12px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
 .record-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, #f8f9fc 0%, #fff 100%);
+  border-bottom: 1px solid #f0f2f5;
 }
 
 .record-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #333;
 }
 
 .record-status {
-  font-size: 12px;
   padding: 4px 10px;
   border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.record-status.pending {
+.status-pending {
   background: #fff3e0;
-  color: #f57c00;
+  color: #e65100;
 }
 
-.record-status.approved,
-.record-status.shipped {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.record-status.rejected {
-  background: #ffebee;
-  color: #c62828;
-}
-
-.record-status.completed {
+.status-approved {
   background: #e8f5e9;
   color: #2e7d32;
 }
 
-.record-info .info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 14px;
-  color: #666;
+.status-refused {
+  background: #ffebee;
+  color: #c62828;
 }
 
+.status-sent {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-received {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.status-completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.record-body {
+  padding: 14px 16px;
+}
+
+.record-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.record-row .label {
+  color: #999;
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.record-row .value {
+  color: #333;
+}
+
+.blacklist-badge {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.status-success {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.status-pending-color {
+  color: #e65100;
+}
+
+.record-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.action-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, #f8f9fc 0%, #eef1f6 100%);
+  color: #11998e;
+  border: 1px solid #11998e;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* 空状态 */
 .empty {
   text-align: center;
-  padding: 40px;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 14px;
   color: #999;
 }
 
@@ -436,17 +703,18 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: flex-end;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background: #fff;
   width: 100%;
-  max-height: 80vh;
-  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+  border-radius: 20px 20px 0 0;
   overflow: hidden;
 }
 
@@ -454,8 +722,9 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: #fff;
 }
 
 .modal-header h2 {
@@ -465,44 +734,99 @@ onMounted(() => {
 
 .close {
   font-size: 28px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
+  line-height: 1;
 }
 
 .modal-body {
   padding: 16px;
-  max-height: 60vh;
+  max-height: 70vh;
   overflow-y: auto;
 }
 
-.search-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 20px;
-  font-size: 14px;
+/* 选择器 */
+.search-box {
   margin-bottom: 12px;
 }
 
-.influencer-option {
+.search-box input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.picker-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.picker-item {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
-.influencer-option:hover {
-  background: #f9f9f9;
+.picker-item:active {
+  background: #f5f5f5;
 }
 
-.influencer-option .name {
-  font-size: 15px;
+.item-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.item-avatar.product {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  overflow: hidden;
+}
+
+.item-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 14px;
+  font-weight: 500;
   color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.influencer-option .id {
-  font-size: 13px;
+.item-id {
+  font-size: 12px;
   color: #999;
+  margin-top: 2px;
+}
+
+.empty-picker {
+  text-align: center;
+  padding: 30px;
+  color: #999;
+  font-size: 13px;
 }
 </style>
