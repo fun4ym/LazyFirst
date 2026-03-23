@@ -33,7 +33,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
     # 注意：生产环境不使用 volume 挂载代码，确保使用镜像内的代码
 
-  # 前端 - 使用nginx在80端口提供静态服务
+  # 前端 - 使用nginx在8080端口提供静态服务
   frontend:
     build:
       context: ./frontend
@@ -41,7 +41,7 @@ services:
     container_name: tap-frontend
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
 
