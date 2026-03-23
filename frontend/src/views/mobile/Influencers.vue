@@ -2,12 +2,12 @@
   <div class="page-container">
     <!-- 顶部搜索 -->
     <div class="page-header">
-      <h1>我的达人</h1>
+      <h1>达人</h1>
       <div class="search-box">
         <input 
           v-model="searchKeyword" 
           type="text" 
-          placeholder="搜索达人名称/TikTok号"
+          placeholder="搜索达人名称/TikTok号（公海+私域）"
           @input="debounceSearch"
         />
         <span class="search-icon">🔍</span>
@@ -308,8 +308,8 @@ const loadInfluencers = async () => {
       page: 1,
       limit: limit.value,
       keyword: searchKeyword.value,
-      companyId: userStore.companyId,
-      poolType: 'private' // 只获取私域达人
+      companyId: userStore.companyId
+      // 公海 + 自己私域所有达人（后端默认逻辑）
     }
     const res = await request.get('/influencer-managements', { params })
     influencers.value = res.influencers || []
@@ -377,8 +377,7 @@ const loadMore = async () => {
       page: page.value,
       limit: limit.value,
       keyword: searchKeyword.value,
-      companyId: userStore.companyId,
-      poolType: 'private'
+      companyId: userStore.companyId
     }
     const res = await request.get('/influencer-managements', { params })
     influencers.value.push(...(res.influencers || []))
