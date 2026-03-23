@@ -166,8 +166,8 @@ const loadInfluencers = async () => {
       poolType: filterPool.value
     }
     const res = await request.get('/influencer-managements', { params })
-    influencers.value = res.data.influencers || []
-    hasMore.value = res.data.influencers?.length === limit.value
+    influencers.value = res.influencers || []
+    hasMore.value = res.influencers?.length === limit.value
   } catch (error) {
     console.error('加载达人失败:', error)
     ElMessage.error('加载达人失败')
@@ -189,8 +189,8 @@ const loadMore = async () => {
       poolType: filterPool.value
     }
     const res = await request.get('/influencer-managements', { params })
-    influencers.value.push(...(res.data.influencers || []))
-    hasMore.value = res.data.influencers?.length === limit.value
+    influencers.value.push(...(res.influencers || []))
+    hasMore.value = res.influencers?.length === limit.value
   } catch (error) {
     page.value--
   } finally {

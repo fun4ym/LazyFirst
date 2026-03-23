@@ -189,7 +189,7 @@ const loadRecords = async () => {
         limit: 100 
       } 
     })
-    records.value = res.data?.data?.samples || []
+    records.value = res.data?.samples || []
   } catch (error) {
     console.error('加载记录失败:', error)
     ElMessage.error('加载记录失败')
@@ -207,7 +207,7 @@ const searchInfluencer = async () => {
     const res = await request.get('/influencer-managements', { 
       params: { keyword: influencerKeyword.value, limit: 20, poolType: '' } 
     })
-    influencerOptions.value = res.data.influencers || []
+    influencerOptions.value = res.influencers || []
   } catch (error) {
     console.error('搜索达人失败:', error)
   }
