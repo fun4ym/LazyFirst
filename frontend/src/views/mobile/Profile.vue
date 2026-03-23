@@ -8,17 +8,23 @@
         </div>
         <div class="user-detail">
           <div class="user-name">{{ userInfo.name || userInfo.username || 'BD' }}</div>
-          <div class="user-role">{{ userInfo.role?.name || '员工' }}</div>
+          <div class="user-role">{{ userInfo.role?.name || $t('common.name') }}</div>
         </div>
       </div>
-      <button class="logout-btn" @click="logout">退出</button>
+      <div class="header-actions">
+        <!-- 语言切换 -->
+        <button class="lang-btn" @click="toggleLanguage">
+          {{ isEnglish ? '中' : 'EN' }}
+        </button>
+        <button class="logout-btn" @click="logout">{{ $t('mobile.profile.logout') }}</button>
+      </div>
     </div>
 
     <!-- 数据概览 -->
     <div class="stats-section" v-if="bdStats">
       <div class="section-title">
-        <span class="title-text">数据概览</span>
-        <span class="stats-date">统计日期: {{ formatDate(bdStats.statsDate) }}</span>
+        <span class="title-text">{{ $t('mobile.profile.dataOverview') }}</span>
+        <span class="stats-date">{{ $t('mobile.profile.statsDate', { date: formatDate(bdStats.statsDate) }) }}</span>
       </div>
 
       <!-- 统计卡片 -->
@@ -29,7 +35,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ bdStats.yesterdayStats?.sampleCount || 0 }}</div>
-            <div class="stat-label">昨日样品</div>
+            <div class="stat-label">{{ $t('mobile.profile.yesterdaySample') }}</div>
           </div>
         </div>
 
@@ -39,7 +45,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ bdStats.yesterdayStats?.orderCount || 0 }}</div>
-            <div class="stat-label">昨日订单</div>
+            <div class="stat-label">{{ $t('mobile.profile.yesterdayOrder') }}</div>
           </div>
         </div>
 
@@ -49,7 +55,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">฿{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
-            <div class="stat-label">昨日佣金</div>
+            <div class="stat-label">{{ $t('mobile.profile.yesterdayCommission') }}</div>
           </div>
         </div>
 
@@ -59,7 +65,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">฿{{ formatMoney(bdStats.monthlyCommission?.estimated || 0) }}</div>
-            <div class="stat-label">本月佣金</div>
+            <div class="stat-label">{{ $t('mobile.profile.monthCommission') }}</div>
           </div>
         </div>
       </div>
@@ -67,7 +73,7 @@
       <!-- 占比信息 -->
       <div class="percentage-section">
         <div class="percentage-card">
-          <div class="percentage-title">样品占比</div>
+          <div class="percentage-title">{{ $t('mobile.profile.samplePercentage') }}</div>
           <div class="percentage-info">
             <div class="percentage-circle">
               <svg viewBox="0 0 36 36" class="circular-chart">
@@ -88,18 +94,18 @@
             <div class="percentage-detail">
               <div class="detail-item">
                 <span class="dot personal"></span>
-                <span>个人: {{ bdStats.yesterdayStats?.sampleCount || 0 }} 条</span>
+                <span>{{ $t('mobile.profile.personal') }}: {{ bdStats.yesterdayStats?.sampleCount || 0 }} {{ isEnglish ? 'items' : '条' }}</span>
               </div>
               <div class="detail-item">
                 <span class="dot team"></span>
-                <span>团队: {{ bdStats.teamStats?.sampleCount || 0 }} 条</span>
+                <span>{{ $t('mobile.profile.team') }}: {{ bdStats.teamStats?.sampleCount || 0 }} {{ isEnglish ? 'items' : '条' }}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="percentage-card">
-          <div class="percentage-title">订单占比</div>
+          <div class="percentage-title">{{ $t('mobile.profile.orderPercentage') }}</div>
           <div class="percentage-info">
             <div class="percentage-circle">
               <svg viewBox="0 0 36 36" class="circular-chart">
@@ -120,11 +126,11 @@
             <div class="percentage-detail">
               <div class="detail-item">
                 <span class="dot personal"></span>
-                <span>个人: {{ bdStats.yesterdayStats?.orderCount || 0 }} 单</span>
+                <span>{{ $t('mobile.profile.personal') }}: {{ bdStats.yesterdayStats?.orderCount || 0 }} {{ isEnglish ? 'orders' : '单' }}</span>
               </div>
               <div class="detail-item">
                 <span class="dot team"></span>
-                <span>团队: {{ bdStats.teamStats?.orderCount || 0 }} 单</span>
+                <span>{{ $t('mobile.profile.team') }}: {{ bdStats.teamStats?.orderCount || 0 }} {{ isEnglish ? 'orders' : '单' }}</span>
               </div>
             </div>
           </div>
@@ -134,13 +140,13 @@
       <!-- 近一周成单 -->
       <div class="orders-section">
         <div class="section-title">
-          <span class="title-text">近一周成单</span>
-          <span class="order-count">共 {{ bdStats.recentOrders?.total || 0 }} 单</span>
+          <span class="title-text">{{ $t('mobile.profile.recentOrders') }}</span>
+          <span class="order-count">{{ $t('mobile.profile.totalOrders', { count: bdStats.recentOrders?.total || 0 }) }}</span>
         </div>
-        
+
         <div class="orders-list" v-if="bdStats.recentOrders?.list?.length">
-          <div 
-            v-for="order in bdStats.recentOrders.list" 
+          <div
+            v-for="order in bdStats.recentOrders.list"
             :key="order.orderId"
             class="order-item"
           >
@@ -155,7 +161,7 @@
           </div>
         </div>
         <div v-else class="no-orders">
-          <span>暂无成单记录</span>
+          <span>{{ $t('mobile.profile.noOrders') }}</span>
         </div>
       </div>
     </div>
@@ -163,28 +169,37 @@
     <!-- 加载状态 -->
     <div v-else-if="loading" class="loading-state">
       <div class="loading-icon">📊</div>
-      <div>加载数据中...</div>
+      <div>{{ $t('mobile.profile.loadingData') }}</div>
     </div>
 
     <!-- 非BD用户 -->
     <div v-else class="non-bd-state">
       <div class="non-bd-icon">🔒</div>
-      <div>此页面仅BD账号可访问</div>
+      <div>{{ $t('mobile.profile.nonBdAccess') }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import AuthManager from '@/utils/auth'
 
+const { t, locale } = useI18n()
 const router = useRouter()
+
 const userInfo = ref({})
 const bdStats = ref(null)
 const loading = ref(false)
+
+const isEnglish = computed(() => locale.value === 'en')
+
+const toggleLanguage = () => {
+  locale.value = locale.value === 'en' ? 'zh' : 'en'
+}
 
 const formatMoney = (value) => {
   if (!value) return '0'
@@ -219,9 +234,11 @@ const loadBDStats = async () => {
 
 const logout = async () => {
   try {
-    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      isEnglish.value ? 'Are you sure you want to logout?' : '确定要退出登录吗？',
+      isEnglish.value ? 'Confirm' : '提示',
+      { type: 'warning' }
+    )
     AuthManager.logout()
     router.push('/login')
   } catch (e) {
@@ -246,7 +263,7 @@ onMounted(() => {
     } else if (typeof role === 'object' && role !== null) {
       hasBDRole = (role.name || '').toLowerCase() === 'bd'
     }
-    
+
     if (hasBDRole) {
       loadBDStats()
     }
@@ -303,6 +320,22 @@ onMounted(() => {
 .user-role {
   font-size: 13px;
   opacity: 0.8;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.lang-btn {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .logout-btn {

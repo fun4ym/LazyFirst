@@ -51,6 +51,31 @@
         <p>Copyright © 2026 LazyFirst Digital System © Encrypted | TAP Ecosystem Certified | All Intellectual Properties Reserved</p>
       </div>
     </div>
+
+    <!-- 设备选择弹窗 -->
+    <el-dialog
+      v-model="showDeviceDialog"
+      :title="t('login.selectDevice')"
+      width="90%"
+      :close-on-click-modal="false"
+      :show-close="false"
+    >
+      <div class="device-dialog-content">
+        <p class="device-dialog-title">{{ t('login.selectDeviceTip') }}</p>
+        <div class="device-options">
+          <div class="device-option" @click="selectDevice('mobile')">
+            <el-icon :size="48" color="#4a148c"><Iphone /></el-icon>
+            <span>{{ t('login.mobileVersion') }}</span>
+            <p class="device-desc">{{ t('login.mobileDesc') }}</p>
+          </div>
+          <div class="device-option" @click="selectDevice('pc')">
+            <el-icon :size="48" color="#4a148c"><Monitor /></el-icon>
+            <span>{{ t('login.pcVersion') }}</span>
+            <p class="device-desc">{{ t('login.pcDesc') }}</p>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -59,7 +84,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
+import { User, Lock, Iphone, Monitor } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
 const { t } = useI18n()
@@ -67,6 +92,8 @@ const router = useRouter()
 
 const formRef = ref(null)
 const loading = ref(false)
+const showDeviceDialog = ref(false)
+const isMobileDevice = ref(false)
 
 const form = reactive({
   username: '',
@@ -83,6 +110,18 @@ const rules = {
   ]
 }
 
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+const selectDevice = (device) => {
+  if (device === 'mobile') {
+    router.push('/mobile/profile')
+  } else {
+    router.push('/dashboard')
+  }
+}
+
 const handleLogin = async () => {
   if (!formRef.value) return
 
@@ -94,9 +133,8 @@ const handleLogin = async () => {
       await AuthManager.login(form.username, form.password)
       ElMessage.success(t('auth.loginSuccess'))
       // 判断是否移动端设备
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      if (isMobile) {
-        router.push('/mobile/profile')
+      if (isMobile()) {
+        showDeviceDialog.value = true
       } else {
         router.push('/dashboard')
       }
@@ -180,5 +218,51 @@ const handleLogin = async () => {
   text-align: center;
   color: #8c8c8c;
   font-size: 12px;
+}
+
+.device-dialog-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.device-dialog-title {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.device-options {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.device-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 20px 30px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.device-option:hover {
+  background: #f5f0fa;
+  border-color: #9c4dcc;
+}
+
+.device-option span {
+  font-size: 18px;
+  font-weight: 500;
+  color: #4a148c;
+  margin-top: 12px;
+}
+
+.device-desc {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-top: 4px;
 }
 </style>

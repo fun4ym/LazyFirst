@@ -38,6 +38,17 @@ const influencerMaintenanceSchema = new mongoose.Schema({
   maintainerName: {
     type: String,
     required: true
+  },
+  // 记录类型：maintenance-维护记录, sample_application-样品申请
+  recordType: {
+    type: String,
+    enum: ['maintenance', 'sample_application'],
+    default: 'maintenance'
+  },
+  // 关联的样品ID（当recordType为sample_application时）
+  sampleId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SampleManagement'
   }
 }, {
   timestamps: true

@@ -2,12 +2,17 @@
   <div class="page-container">
     <!-- 顶部搜索 -->
     <div class="page-header">
-      <h1>达人</h1>
+      <div class="header-title">
+        <h1>{{ t2('title') }}</h1>
+        <button class="lang-btn" @click="toggleLanguage">
+          {{ isEnglish ? '中' : 'EN' }}
+        </button>
+      </div>
       <div class="search-box">
-        <input 
-          v-model="searchKeyword" 
-          type="text" 
-          placeholder="搜索达人名称/TikTok号（公海+私域）"
+        <input
+          v-model="searchKeyword"
+          type="text"
+          :placeholder="t2('searchPlaceholder')"
           @input="debounceSearch"
         />
         <span class="search-icon">🔍</span>
@@ -16,9 +21,9 @@
 
     <!-- 达人列表 -->
     <div class="influencer-list" v-loading="loading">
-      <div 
-        v-for="item in influencers" 
-        :key="item._id" 
+      <div
+        v-for="item in influencers"
+        :key="item._id"
         class="influencer-card"
       >
         <!-- 卡片头部：交易标识 + 状态 -->
@@ -26,21 +31,21 @@
           <div class="trade-badges">
             <!-- 7天内成单标识 -->
             <span v-if="hasOrderIn7Days(item._id)" class="badge success">
-              <span class="badge-icon">✓</span> 7天成单
+              <span class="badge-icon">✓</span> {{ t2('orders7Days') }}
             </span>
             <!-- 30天订单超过10个 -->
             <span v-if="orderCount30Days(item._id) > 10" class="badge warning">
-              <span class="badge-icon">📦</span> {{ orderCount30Days(item._id) }}单
+              <span class="badge-icon">📦</span> {{ orderCount30Days(item._id) }}{{ isEnglish ? ' orders' : '单' }}
             </span>
           </div>
           <div class="card-actions">
             <!-- 拉黑状态 -->
             <span v-if="item.isBlacklisted" class="blacklist-tag">
-              <span class="blacklist-icon">🚫</span> 黑名单
+              <span class="blacklist-icon">🚫</span> {{ t2('blocked') }}
             </span>
             <!-- 编辑按钮 -->
             <button class="edit-btn" @click.stop="editInfluencer(item)">
-              ✏️ 编辑
+              ✏️ {{ t2('edit') }}
             </button>
           </div>
         </div>
@@ -64,88 +69,112 @@
           <div class="data-stats">
             <div class="stat-item">
               <span class="stat-value">¥{{ formatNumber(item.latestGmv) }}</span>
-              <span class="stat-label">月GMV</span>
+              <span class="stat-label">{{ isEnglish ? 'Month GMV' : '月GMV' }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
               <span class="stat-value">{{ formatNumber(item.latestFollowers) }}</span>
-              <span class="stat-label">粉丝</span>
+              <span class="stat-label">{{ t2('followers') }}</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ item.monthlySalesCount || 0 }}</span>
+              <span class="stat-label">{{ isEnglish ? 'Monthly Sales' : '月销' }}</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ formatNumber(item.avgVideoViews) }}</span>
+              <span class="stat-label">{{ isEnglish ? 'Avg Views' : '视频均播' }}</span>
             </div>
           </div>
           <div class="maintenance-info">
             <span class="remark-text" v-if="item.latestRemark">
-              备注：{{ item.latestRemark }}
+              {{ isEnglish ? 'Remark: ' : '备注：' }}{{ item.latestRemark }}
             </span>
-            <span class="remark-empty" v-else>暂无备注</span>
+            <span class="remark-empty" v-else>{{ isEnglish ? 'No remark' : '暂无备注' }}</span>
             <button class="detail-btn" @click.stop="showDetail(item)">
-              详情/维护 →
+              {{ isEnglish ? 'Detail →' : '详情/维护 →' }}
             </button>
           </div>
         </div>
       </div>
-      
+
       <div v-if="!loading && influencers.length === 0" class="empty">
         <div class="empty-icon">📭</div>
-        <div class="empty-text">暂无自己的达人</div>
-        <div class="empty-hint">去公域认领达人吧</div>
+        <div class="empty-text">{{ t2('noData') }}</div>
       </div>
     </div>
 
     <!-- 加载更多 -->
     <div v-if="hasMore" class="load-more" @click="loadMore">
-      {{ loadingMore ? '加载中...' : '点击加载更多' }}
+      {{ loadingMore ? (isEnglish ? 'Loading...' : '加载中...') : (isEnglish ? 'Load more' : '点击加载更多') }}
     </div>
 
     <!-- 达人详情弹窗 -->
     <div v-if="showDetailModal" class="modal-mask" @click="showDetailModal = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>达人详情</h2>
+          <h2>{{ t2('influencerDetail') }}</h2>
           <span class="close" @click="showDetailModal = false">×</span>
         </div>
         <div class="modal-body">
           <div class="detail-section">
             <div class="detail-row">
-              <span class="label">TikTok号：</span>
+              <span class="label">{{ t2('tiktokId') }}:</span>
               <span class="value copy-value" @click="copyId(currentInfluencer.tiktokId)">
                 @{{ currentInfluencer.tiktokId }} 📋
               </span>
             </div>
             <div class="detail-row">
-              <span class="label">昵称：</span>
+              <span class="label">{{ t2('tiktokName') }}:</span>
               <span class="value">{{ currentInfluencer.tiktokName || '-' }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">状态：</span>
+              <span class="label">{{ t2('status') }}:</span>
               <span class="value">
                 <span :class="['status-tag', currentInfluencer.status]">
-                  {{ currentInfluencer.status === 'enabled' ? '启用' : '禁用' }}
+                  {{ currentInfluencer.status === 'enabled' ? (isEnglish ? 'Enabled' : '启用') : (isEnglish ? 'Disabled' : '禁用') }}
                 </span>
               </span>
             </div>
             <div class="detail-row">
-              <span class="label">归属：</span>
-              <span class="value">私域</span>
+              <span class="label">{{ t2('bd') }}:</span>
+              <span class="value">{{ isEnglish ? 'Private Pool' : '私域' }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">粉丝数：</span>
+              <span class="label">{{ t2('followers') }}:</span>
               <span class="value">{{ formatNumber(currentInfluencer.latestFollowers) }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">月GMV：</span>
+              <span class="label">{{ isEnglish ? 'Month GMV:' : '月GMV:' }}</span>
               <span class="value">¥{{ formatNumber(currentInfluencer.latestGmv) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">{{ isEnglish ? 'Monthly Sales:' : '月销件数:' }}</span>
+              <span class="value">{{ currentInfluencer.monthlySalesCount || 0 }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">{{ isEnglish ? 'Avg Views:' : '视频均播:' }}</span>
+              <span class="value">{{ formatNumber(currentInfluencer.avgVideoViews) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">{{ isEnglish ? 'Suitable Categories:' : '适合类目:' }}</span>
+              <span class="value">
+                <span v-for="cat in currentInfluencer.suitableCategories" :key="cat._id" class="category-tag">{{ cat.name }}</span>
+                <span v-if="!currentInfluencer.suitableCategories || currentInfluencer.suitableCategories.length === 0">-</span>
+              </span>
             </div>
           </div>
 
           <!-- 维护记录 -->
           <div class="maintenance-section">
             <div class="section-title">
-              <span>维护记录</span>
-              <button class="add-btn" @click="showAddMaintenance = true">+ 添加维护</button>
+              <span>{{ isEnglish ? 'Maintenance Records' : '维护记录' }}</span>
+              <button class="add-btn" @click="showAddMaintenance = true">+ {{ isEnglish ? 'Add' : '添加维护' }}</button>
             </div>
             <div class="maintenance-list">
               <div v-if="!maintenances.length" class="no-maintenance">
-                暂无维护记录
+                {{ isEnglish ? 'No maintenance records' : '暂无维护记录' }}
               </div>
               <div v-for="m in maintenances" :key="m._id" class="maintenance-item">
                 <div class="m-header">
@@ -153,7 +182,7 @@
                   <span class="m-date">{{ formatDate(m.createdAt) }}</span>
                 </div>
                 <div class="m-stats">
-                  <span>粉丝: {{ formatNumber(m.followers) }}</span>
+                  <span>{{ isEnglish ? 'Followers: ' : '粉丝: ' }}{{ formatNumber(m.followers) }}</span>
                   <span>GMV: ¥{{ formatNumber(m.gmv) }}</span>
                 </div>
                 <div class="m-remark" v-if="m.remark">{{ m.remark }}</div>
@@ -168,24 +197,24 @@
     <div v-if="showAddMaintenance" class="modal-mask" @click="showAddMaintenance = false">
       <div class="modal-content small" @click.stop>
         <div class="modal-header">
-          <h2>添加维护</h2>
+          <h2>{{ isEnglish ? 'Add Maintenance' : '添加维护' }}</h2>
           <span class="close" @click="showAddMaintenance = false">×</span>
         </div>
         <div class="modal-body">
           <div class="form-item">
-            <label>当前粉丝数</label>
-            <input v-model="maintenanceForm.followers" type="number" placeholder="请输入粉丝数" />
+            <label>{{ isEnglish ? 'Followers' : '当前粉丝数' }}</label>
+            <input v-model="maintenanceForm.followers" type="number" :placeholder="isEnglish ? 'Enter followers' : '请输入粉丝数'" />
           </div>
           <div class="form-item">
-            <label>月GMV(¥)</label>
-            <input v-model="maintenanceForm.gmv" type="number" placeholder="请输入月GMV" />
+            <label>{{ isEnglish ? 'Month GMV (฿)' : '月GMV(฿)' }}</label>
+            <input v-model="maintenanceForm.gmv" type="number" :placeholder="isEnglish ? 'Enter GMV' : '请输入月GMV'" />
           </div>
           <div class="form-item">
-            <label>备注</label>
-            <textarea v-model="maintenanceForm.remark" placeholder="请输入备注" rows="3"></textarea>
+            <label>{{ isEnglish ? 'Remark' : '备注' }}</label>
+            <textarea v-model="maintenanceForm.remark" :placeholder="isEnglish ? 'Enter remark' : '请输入备注'" rows="3"></textarea>
           </div>
           <button class="btn-submit" @click="submitMaintenance" :disabled="submitting">
-            {{ submitting ? '提交中...' : '提交' }}
+            {{ submitting ? (isEnglish ? 'Submitting...' : '提交中...') : (isEnglish ? 'Submit' : '提交') }}
           </button>
         </div>
       </div>
@@ -195,42 +224,50 @@
     <div v-if="showEditModal" class="modal-mask" @click="showEditModal = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>编辑达人</h2>
+          <h2>{{ t2('editInfluencer') }}</h2>
           <span class="close" @click="showEditModal = false">×</span>
         </div>
         <div class="modal-body">
           <div class="form-item">
-            <label>TikTok号</label>
-            <input v-model="editForm.tiktokId" type="text" placeholder="TikTok号" />
+            <label>{{ t2('tiktokId') }}</label>
+            <input v-model="editForm.tiktokId" type="text" :placeholder="t2('tiktokId')" />
           </div>
           <div class="form-item">
-            <label>昵称</label>
-            <input v-model="editForm.tiktokName" type="text" placeholder="昵称" />
+            <label>{{ t2('tiktokName') }}</label>
+            <input v-model="editForm.tiktokName" type="text" :placeholder="t2('tiktokName')" />
           </div>
           <div class="form-item">
-            <label>黑名单</label>
+            <label>{{ isEnglish ? 'Monthly Sales' : '月销件数' }}</label>
+            <input v-model="editForm.monthlySalesCount" type="number" :placeholder="isEnglish ? 'Enter monthly sales' : '请输入月销件数'" />
+          </div>
+          <div class="form-item">
+            <label>{{ isEnglish ? 'Avg Video Views' : '视频均播' }}</label>
+            <input v-model="editForm.avgVideoViews" type="number" :placeholder="isEnglish ? 'Enter avg video views' : '请输入视频均播'" />
+          </div>
+          <div class="form-item">
+            <label>{{ isEnglish ? 'Blacklist' : '黑名单' }}</label>
             <div class="blacklist-toggle">
               <span :class="['toggle-status', editForm.isBlacklisted ? 'on' : 'off']">
-                {{ editForm.isBlacklisted ? '已拉黑' : '正常' }}
+                {{ editForm.isBlacklisted ? t2('blocked') : t2('normal') }}
               </span>
-              <button 
-                v-if="!editForm.isBlacklisted" 
-                class="btn-blacklist" 
+              <button
+                v-if="!editForm.isBlacklisted"
+                class="btn-blacklist"
                 @click="confirmBlacklist"
               >
-                拉黑
+                {{ t2('blacklist') }}
               </button>
-              <button 
-                v-else 
-                class="btn-unblacklist" 
+              <button
+                v-else
+                class="btn-unblacklist"
                 @click="confirmUnblacklist"
               >
-                取消拉黑
+                {{ t2('unblacklist') }}
               </button>
             </div>
           </div>
           <button class="btn-submit" @click="saveEdit" :disabled="submitting">
-            {{ submitting ? '保存中...' : '保存' }}
+            {{ submitting ? (isEnglish ? 'Saving...' : '保存中...') : t2('save') }}
           </button>
         </div>
       </div>
@@ -238,16 +275,26 @@
 
     <!-- 复制提示 -->
     <div v-if="showCopyTip" class="copy-toast">
-      已复制到剪贴板
+      {{ isEnglish ? 'Copied to clipboard' : '已复制到剪贴板' }}
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
+
+const { t, locale } = useI18n()
+const isEnglish = computed(() => locale.value === 'en')
+
+const toggleLanguage = () => {
+  locale.value = locale.value === 'en' ? 'zh' : 'en'
+}
+
+const t2 = (key) => t('mobile.influencers.' + key)
 
 const userStore = useUserStore()
 
@@ -275,7 +322,9 @@ const maintenanceForm = ref({
 const editForm = ref({
   tiktokId: '',
   tiktokName: '',
-  isBlacklisted: false
+  isBlacklisted: false,
+  monthlySalesCount: 0,
+  avgVideoViews: 0
 })
 
 let searchTimer = null
@@ -314,14 +363,14 @@ const loadInfluencers = async () => {
     const res = await request.get('/influencer-managements', { params })
     influencers.value = res.influencers || []
     hasMore.value = res.influencers?.length === limit.value
-    
+
     // 加载订单统计
     if (influencers.value.length > 0) {
       loadOrderStats()
     }
   } catch (error) {
     console.error('加载达人失败:', error)
-    ElMessage.error('加载达人失败')
+    ElMessage.error(isEnglish.value ? 'Failed to load influencers' : '加载达人失败')
   } finally {
     loading.value = false
   }
@@ -406,25 +455,27 @@ const editInfluencer = (item) => {
   editForm.value = {
     tiktokId: item.tiktokId,
     tiktokName: item.tiktokName,
-    isBlacklisted: item.isBlacklisted || false
+    isBlacklisted: item.isBlacklisted || false,
+    monthlySalesCount: item.monthlySalesCount || 0,
+    avgVideoViews: item.avgVideoViews || 0
   }
   showEditModal.value = true
 }
 
 // 确认拉黑
 const confirmBlacklist = async () => {
-  if (!confirm('确定要将该达人拉入黑名单吗？')) return
+  if (!confirm(isEnglish.value ? t2('confirmBlacklist') : '确定要将该达人拉入黑名单吗？')) return
   submitting.value = true
   try {
     await request.post(`/influencer-managements/${currentInfluencer.value._id}/blacklist`, {
-      reason: '移动端拉黑'
+      reason: isEnglish.value ? 'Blocked via mobile' : '移动端拉黑'
     })
-    ElMessage.success('已拉黑')
+    ElMessage.success(isEnglish.value ? 'Blocked' : '已拉黑')
     editForm.value.isBlacklisted = true
     loadInfluencers()
   } catch (error) {
     console.error('拉黑失败:', error)
-    ElMessage.error(error.response?.data?.message || '拉黑失败')
+    ElMessage.error(error.response?.data?.message || (isEnglish.value ? 'Block failed' : '拉黑失败'))
   } finally {
     submitting.value = false
   }
@@ -432,16 +483,16 @@ const confirmBlacklist = async () => {
 
 // 确认取消拉黑
 const confirmUnblacklist = async () => {
-  if (!confirm('确定要取消拉黑该达人吗？')) return
+  if (!confirm(isEnglish.value ? t2('confirmUnblacklist') : '确定要取消拉黑该达人吗？')) return
   submitting.value = true
   try {
     await request.delete(`/influencer-managements/${currentInfluencer.value._id}/blacklist`)
-    ElMessage.success('已取消拉黑')
+    ElMessage.success(isEnglish.value ? 'Unblocked' : '已取消拉黑')
     editForm.value.isBlacklisted = false
     loadInfluencers()
   } catch (error) {
     console.error('取消拉黑失败:', error)
-    ElMessage.error(error.response?.data?.message || '取消拉黑失败')
+    ElMessage.error(error.response?.data?.message || (isEnglish.value ? 'Unblock failed' : '取消拉黑失败'))
   } finally {
     submitting.value = false
   }
@@ -449,21 +500,23 @@ const confirmUnblacklist = async () => {
 
 const saveEdit = async () => {
   if (!editForm.value.tiktokId) {
-    ElMessage.warning('请输入TikTok号')
+    ElMessage.warning(isEnglish.value ? 'Please enter TikTok ID' : '请输入TikTok号')
     return
   }
   submitting.value = true
   try {
     await request.put(`/influencer-managements/${currentInfluencer.value._id}`, {
       tiktokId: editForm.value.tiktokId,
-      tiktokName: editForm.value.tiktokName
+      tiktokName: editForm.value.tiktokName,
+      monthlySalesCount: editForm.value.monthlySalesCount,
+      avgVideoViews: editForm.value.avgVideoViews
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(isEnglish.value ? 'Saved successfully' : '保存成功')
     showEditModal.value = false
     loadInfluencers()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error(error.response?.data?.message || '保存失败')
+    ElMessage.error(error.response?.data?.message || (isEnglish.value ? 'Save failed' : '保存失败'))
   } finally {
     submitting.value = false
   }
@@ -471,7 +524,7 @@ const saveEdit = async () => {
 
 const submitMaintenance = async () => {
   if (!maintenanceForm.value.followers && !maintenanceForm.value.gmv) {
-    ElMessage.warning('请填写粉丝数或GMV')
+    ElMessage.warning(isEnglish.value ? 'Please enter followers or GMV' : '请填写粉丝数或GMV')
     return
   }
   submitting.value = true
@@ -481,7 +534,7 @@ const submitMaintenance = async () => {
       gmv: Number(maintenanceForm.value.gmv) || 0,
       remark: maintenanceForm.value.remark
     })
-    ElMessage.success('添加成功')
+    ElMessage.success(isEnglish.value ? 'Added successfully' : '添加成功')
     showAddMaintenance.value = false
     maintenanceForm.value = { followers: '', gmv: '', remark: '' }
     // 刷新详情
@@ -489,7 +542,7 @@ const submitMaintenance = async () => {
     loadInfluencers()
   } catch (error) {
     console.error('添加维护失败:', error)
-    ElMessage.error(error.response?.data?.message || '添加维护失败')
+    ElMessage.error(error.response?.data?.message || (isEnglish.value ? 'Add failed' : '添加维护失败'))
   } finally {
     submitting.value = false
   }
@@ -886,6 +939,17 @@ onMounted(() => {
 
 .copy-value {
   cursor: pointer;
+}
+
+.category-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #2e7d32;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 .status-tag {

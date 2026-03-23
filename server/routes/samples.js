@@ -4,6 +4,7 @@ const { authenticate, authorize, filterByDataScope } = require('../middleware/au
 const SampleManagement = require('../models/SampleManagement');
 const Product = require('../models/Product');
 const Influencer = require('../models/Influencer');
+const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -249,7 +250,37 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
       }
     });
 
-    await SampleManagement.create(sampleData);
+    const sample = await SampleManagement.create(sampleData);
+
+    // 查找对应的达人，创建维护记录
+    const influencer = await Influencer.findOne({
+      companyId: req.companyId,
+      tiktokId: influencerAccount
+    });
+
+    if (influencer) {
+      const maintenance = new InfluencerMaintenance({
+        companyId: req.companyId,
+        influencerId: influencer._id,
+        followers: parseInt(followerCount) || 0,
+        gmv: 0,
+        poolType: influencer.poolType,
+        remark: `申请样品：${productId}`,
+        maintainerId: req.user._id,
+        maintainerName: req.user.realName || req.user.username,
+        recordType: 'sample_application',
+        sampleId: sample._id
+      });
+      await maintenance.save();
+
+      // 更新达人的最新维护信息
+      influencer.latestFollowers = parseInt(followerCount) || 0;
+      influencer.latestMaintenanceTime = maintenance.createdAt;
+      influencer.latestMaintainerId = req.user._id;
+      influencer.latestMaintainerName = req.user.realName || req.user.username;
+      influencer.latestRemark = `申请样品：${productId}`;
+      await influencer.save();
+    }
 
     res.status(201).json({
       success: true,

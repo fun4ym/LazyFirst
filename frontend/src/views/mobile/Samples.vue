@@ -2,26 +2,31 @@
   <div class="page-container">
     <!-- 顶部 -->
     <div class="page-header">
-      <h1>样品申请</h1>
+      <div class="header-title">
+        <h1>{{ t2('title') }}</h1>
+        <button class="lang-btn" @click="toggleLanguage">
+          {{ isEnglish ? '中' : 'EN' }}
+        </button>
+      </div>
     </div>
 
     <!-- 标签切换 -->
     <div class="tabs">
-      <div 
-        class="tab" 
+      <div
+        class="tab"
         :class="{ active: activeTab === 'apply' }"
         @click="activeTab = 'apply'"
       >
         <span class="tab-icon">➕</span>
-        申请样品
+        {{ isEnglish ? 'Apply Sample' : '申请样品' }}
       </div>
-      <div 
-        class="tab" 
+      <div
+        class="tab"
         :class="{ active: activeTab === 'records' }"
         @click="activeTab = 'records'; loadRecords()"
       >
         <span class="tab-icon">📋</span>
-        申请记录
+        {{ isEnglish ? 'Records' : '申请记录' }}
       </div>
     </div>
 
@@ -30,70 +35,70 @@
       <div class="form-card">
         <!-- 选择达人 -->
         <div class="form-item">
-          <label>选择达人 <span class="required">*</span></label>
+          <label>{{ isEnglish ? 'Select Influencer' : '选择达人' }} <span class="required">*</span></label>
           <div class="influencer-select" @click="showInfluencerPicker = true">
             <span v-if="selectedInfluencer" class="selected-value">
               {{ selectedInfluencer.tiktokName || selectedInfluencer.tiktokId }}
             </span>
-            <span v-else class="placeholder">请选择达人</span>
+            <span v-else class="placeholder">{{ isEnglish ? 'Select influencer' : '请选择达人' }}</span>
             <span class="arrow">›</span>
           </div>
         </div>
 
         <!-- 选择商品 -->
         <div class="form-item">
-          <label>选择商品 <span class="required">*</span></label>
+          <label>{{ isEnglish ? 'Select Product' : '选择商品' }} <span class="required">*</span></label>
           <div class="product-select" @click="showProductPicker = true">
             <span v-if="selectedProduct" class="selected-value">
               {{ selectedProduct.name }}
             </span>
-            <span v-else class="placeholder">请选择商品</span>
+            <span v-else class="placeholder">{{ isEnglish ? 'Select product' : '请选择商品' }}</span>
             <span class="arrow">›</span>
           </div>
         </div>
 
         <!-- 申请日期 -->
         <div class="form-item">
-          <label>申请日期 <span class="required">*</span></label>
-          <input 
-            v-model="form.date" 
-            type="date" 
+          <label>{{ isEnglish ? 'Apply Date' : '申请日期' }} <span class="required">*</span></label>
+          <input
+            v-model="form.date"
+            type="date"
             class="date-input"
           />
         </div>
 
         <!-- 达人粉丝数 -->
         <div class="form-item">
-          <label>达人粉丝数</label>
-          <input 
-            v-model="form.followerCount" 
-            type="number" 
-            placeholder="请输入粉丝数"
+          <label>{{ isEnglish ? 'Followers' : '达人粉丝数' }}</label>
+          <input
+            v-model="form.followerCount"
+            type="number"
+            :placeholder="isEnglish ? 'Enter followers' : '请输入粉丝数'"
           />
         </div>
 
         <!-- 样品数量 -->
         <div class="form-item">
-          <label>样品数量</label>
-          <input 
-            v-model="form.quantity" 
-            type="number" 
-            placeholder="请输入数量"
+          <label>{{ isEnglish ? 'Quantity' : '样品数量' }}</label>
+          <input
+            v-model="form.quantity"
+            type="number"
+            :placeholder="isEnglish ? 'Enter quantity' : '请输入数量'"
           />
         </div>
 
         <!-- 备注 -->
         <div class="form-item">
-          <label>备注</label>
-          <textarea 
-            v-model="form.remark" 
-            placeholder="请输入备注信息"
+          <label>{{ isEnglish ? 'Remark' : '备注' }}</label>
+          <textarea
+            v-model="form.remark"
+            :placeholder="isEnglish ? 'Enter remark' : '请输入备注信息'"
             rows="3"
           ></textarea>
         </div>
 
         <button class="btn-submit" @click="submitApplication" :disabled="submitting">
-          {{ submitting ? '提交中...' : '提交申请' }}
+          {{ submitting ? (isEnglish ? 'Submitting...' : '提交中...') : (isEnglish ? 'Submit' : '提交申请') }}
         </button>
       </div>
     </div>
@@ -101,9 +106,9 @@
     <!-- 申请记录 -->
     <div v-if="activeTab === 'records'" class="tab-content">
       <div class="records-list" v-loading="recordsLoading">
-        <div 
-          v-for="item in records" 
-          :key="item._id" 
+        <div
+          v-for="item in records"
+          :key="item._id"
           class="record-card"
         >
           <div class="record-header">
@@ -112,26 +117,26 @@
               {{ getSampleStatusText(item.sampleStatus) }}
             </div>
           </div>
-          
+
           <div class="record-body">
             <div class="record-row">
-              <span class="label">达人：</span>
+              <span class="label">{{ isEnglish ? 'Influencer:' : '达人：' }}</span>
               <span class="value">@{{ item.influencerAccount }}</span>
-              <span v-if="item.isBlacklistedInfluencer" class="blacklist-badge">黑名单</span>
+              <span v-if="item.isBlacklistedInfluencer" class="blacklist-badge">{{ isEnglish ? 'Blocked' : '黑名单' }}</span>
             </div>
             <div class="record-row">
-              <span class="label">日期：</span>
+              <span class="label">{{ isEnglish ? 'Date:' : '日期：' }}</span>
               <span class="value">{{ formatDate(item.date) }}</span>
             </div>
             <div class="record-row" v-if="item.trackingNumber">
-              <span class="label">快递：</span>
+              <span class="label">{{ isEnglish ? 'Tracking:' : '快递：' }}</span>
               <span class="value">{{ item.trackingNumber }}</span>
             </div>
             <div class="record-row">
-              <span class="label">出单：</span>
+              <span class="label">{{ isEnglish ? 'Order:' : '出单：' }}</span>
               <span class="value">
                 <span :class="item.isOrderGenerated ? 'status-success' : 'status-pending'">
-                  {{ item.isOrderGenerated ? '已出单' : '未出单' }}
+                  {{ item.isOrderGenerated ? (isEnglish ? 'Ordered' : '已出单') : (isEnglish ? 'No order' : '未出单') }}
                 </span>
               </span>
             </div>
@@ -139,14 +144,14 @@
 
           <div class="record-footer">
             <button class="action-btn" @click="viewDetail(item)">
-              查看详情
+              {{ t2('viewDetail') }}
             </button>
           </div>
         </div>
 
         <div v-if="!recordsLoading && records.length === 0" class="empty">
           <div class="empty-icon">📭</div>
-          <div class="empty-text">暂无申请记录</div>
+          <div class="empty-text">{{ t2('noData') }}</div>
         </div>
       </div>
     </div>
@@ -155,22 +160,22 @@
     <div v-if="showInfluencerPicker" class="modal-mask" @click="showInfluencerPicker = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>选择达人</h2>
+          <h2>{{ isEnglish ? 'Select Influencer' : '选择达人' }}</h2>
           <span class="close" @click="showInfluencerPicker = false">×</span>
         </div>
         <div class="modal-body">
           <div class="search-box">
-            <input 
-              v-model="influencerKeyword" 
-              type="text" 
-              placeholder="搜索达人名称/TikTok号"
+            <input
+              v-model="influencerKeyword"
+              type="text"
+              :placeholder="isEnglish ? 'Search name/ID' : '搜索达人名称/TikTok号'"
               @input="searchInfluencer"
             />
           </div>
           <div class="picker-list">
-            <div 
-              v-for="item in influencerOptions" 
-              :key="item._id" 
+            <div
+              v-for="item in influencerOptions"
+              :key="item._id"
               class="picker-item"
               @click="selectInfluencer(item)"
             >
@@ -181,7 +186,7 @@
               </div>
             </div>
             <div v-if="!influencerOptions.length" class="empty-picker">
-              搜索达人...
+              {{ isEnglish ? 'Search influencer...' : '搜索达人...' }}
             </div>
           </div>
         </div>
@@ -192,7 +197,7 @@
     <div v-if="showProductPicker" class="modal-mask" @click="showProductPicker = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>选择商品</h2>
+          <h2>{{ isEnglish ? 'Select Product' : '选择商品' }}</h2>
           <span class="close" @click="showProductPicker = false">×</span>
         </div>
         <div class="modal-body">
@@ -215,7 +220,7 @@
               </div>
             </div>
             <div v-if="!productOptions.length" class="empty-picker">
-              暂无商品数据
+              {{ isEnglish ? 'No products' : '暂无商品数据' }}
             </div>
           </div>
         </div>
@@ -226,7 +231,7 @@
     <div v-if="showDetailModal" class="modal-mask" @click="showDetailModal = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>样品详情</h2>
+          <h2>{{ t2('sampleDetail') }}</h2>
           <span class="close" @click="showDetailModal = false">×</span>
         </div>
         <div class="modal-body">
@@ -234,65 +239,65 @@
           <div class="status-progress">
             <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 0 }">
               <div class="step-dot">1</div>
-              <div class="step-label">待审核</div>
+              <div class="step-label">{{ isEnglish ? 'Pending' : '待审核' }}</div>
             </div>
             <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 1 }"></div>
             <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 1 }">
               <div class="step-dot">2</div>
-              <div class="step-label">已通过</div>
+              <div class="step-label">{{ isEnglish ? 'Approved' : '已通过' }}</div>
             </div>
             <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 2 }"></div>
             <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 2 }">
               <div class="step-dot">3</div>
-              <div class="step-label">已寄样</div>
+              <div class="step-label">{{ isEnglish ? 'Shipped' : '已寄样' }}</div>
             </div>
             <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 3 }"></div>
             <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 3 }">
               <div class="step-dot">4</div>
-              <div class="step-label">已收货</div>
+              <div class="step-label">{{ isEnglish ? 'Received' : '已收货' }}</div>
             </div>
             <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 4 }"></div>
             <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 4 }">
               <div class="step-dot">5</div>
-              <div class="step-label">已完成</div>
+              <div class="step-label">{{ isEnglish ? 'Completed' : '已完成' }}</div>
             </div>
           </div>
 
           <!-- 基本信息 -->
           <div class="detail-section">
-            <div class="section-title">基本信息</div>
+            <div class="section-title">{{ t2('sampleInfo') }}</div>
             <div class="detail-row">
-              <span class="label">样品状态</span>
+              <span class="label">{{ t2('status') }}</span>
               <span class="value" :class="getSampleStatusClass(currentRecord.sampleStatus)">
                 {{ getSampleStatusText(currentRecord.sampleStatus) }}
               </span>
             </div>
             <div class="detail-row">
-              <span class="label">商品名称</span>
+              <span class="label">{{ t2('productName') }}</span>
               <span class="value">{{ currentRecord.productName || '-' }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">达人账号</span>
+              <span class="label">{{ t2('tiktokId') }}</span>
               <span class="value">@{{ currentRecord.influencerAccount }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">达人粉丝</span>
+              <span class="label">{{ isEnglish ? 'Followers' : '达人粉丝' }}</span>
               <span class="value">{{ currentRecord.followerCount || '-' }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">申请日期</span>
+              <span class="label">{{ t2('applyDate') }}</span>
               <span class="value">{{ formatDate(currentRecord.date) }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">样品数量</span>
+              <span class="label">{{ isEnglish ? 'Quantity' : '样品数量' }}</span>
               <span class="value">{{ currentRecord.quantity || 1 }}</span>
             </div>
             <div class="detail-row" v-if="currentRecord.applicantName">
-              <span class="label">申请人</span>
+              <span class="label">{{ isEnglish ? 'Applicant' : '申请人' }}</span>
               <span class="value">{{ currentRecord.applicantName }}</span>
             </div>
             <div class="detail-row" v-if="currentRecord.trackingNumber">
-              <span class="label">快递单号</span>
+              <span class="label">{{ t2('trackingNo') }}</span>
               <span class="value copy-value" @click="copyText(currentRecord.trackingNumber)">
                 {{ currentRecord.trackingNumber }} 📋
               </span>
@@ -305,21 +310,21 @@
 
           <!-- 出单信息 -->
           <div class="detail-section">
-            <div class="section-title">出单信息</div>
+            <div class="section-title">{{ t2('orderInfo') }}</div>
             <div class="detail-row">
-              <span class="label">是否出单</span>
+              <span class="label">{{ isEnglish ? 'Order Status' : '是否出单' }}</span>
               <span class="value">
                 <span :class="currentRecord.isOrderGenerated ? 'status-success' : 'status-pending'">
-                  {{ currentRecord.isOrderGenerated ? '已出单' : '未出单' }}
+                  {{ currentRecord.isOrderGenerated ? (isEnglish ? 'Ordered' : '已出单') : (isEnglish ? 'No order' : '未出单') }}
                 </span>
               </span>
             </div>
             <div class="detail-row" v-if="currentRecord.orderCount">
-              <span class="label">订单数量</span>
+              <span class="label">{{ t2('orderCount') }}</span>
               <span class="value">{{ currentRecord.orderCount }}</span>
             </div>
             <div class="detail-row" v-if="currentRecord.orderAmount">
-              <span class="label">订单金额</span>
+              <span class="label">{{ t2('orderAmount') }}</span>
               <span class="value">¥{{ currentRecord.orderAmount }}</span>
             </div>
           </div>
@@ -330,14 +335,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 
+const { t, locale } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
+
+const isEnglish = computed(() => locale.value === 'en')
+
+const toggleLanguage = () => {
+  locale.value = locale.value === 'en' ? 'zh' : 'en'
+}
+
+const t2 = (key) => t('mobile.samples.' + key)
 
 const activeTab = ref('apply')
 const recordsLoading = ref(false)
@@ -361,14 +376,14 @@ const form = ref({
 
 const getSampleStatusText = (status) => {
   const map = {
-    pending: '待审核',
-    approved: '已通过',
-    refused: '已拒绝',
-    sample_sent: '已寄样',
-    received: '已收货',
-    completed: '已完成'
+    pending: isEnglish.value ? 'Pending' : '待审核',
+    approved: isEnglish.value ? 'Approved' : '已通过',
+    refused: isEnglish.value ? 'Rejected' : '已拒绝',
+    sample_sent: isEnglish.value ? 'Shipped' : '已寄样',
+    received: isEnglish.value ? 'Received' : '已收货',
+    completed: isEnglish.value ? 'Completed' : '已完成'
   }
-  return map[status] || '待审核'
+  return map[status] || (isEnglish.value ? 'Pending' : '待审核')
 }
 
 const getSampleStatusClass = (status) => {
@@ -543,9 +558,26 @@ onMounted(() => {
   color: #fff;
 }
 
-.page-header h1 {
+.header-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title h1 {
   margin: 0;
   font-size: 20px;
+  font-weight: 600;
+}
+
+.lang-btn {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
   font-weight: 600;
 }
 

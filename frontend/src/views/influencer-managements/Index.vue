@@ -79,10 +79,26 @@
           </template>
         </el-table-column>
         <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
-        <el-table-column :label="$t('influencer.latestGmv')" width="150">
+        <el-table-column :label="$t('influencer.influencerParams')" width="150">
           <template #default="{ row }">
             <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers }}</div>
             <div>GMV: {{ row.latestGmv }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('influencer.monthlySalesCount')" width="100">
+          <template #default="{ row }">
+            <span>{{ row.monthlySalesCount || 0 }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('influencer.suitableCategories')" width="150">
+          <template #default="{ row }">
+            <el-tag v-for="cat in row.suitableCategories" :key="cat._id" size="small" type="success">{{ cat.name }}</el-tag>
+            <span v-if="!row.suitableCategories || row.suitableCategories.length === 0" class="text-gray">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('influencer.avgVideoViews')" width="100">
+          <template #default="{ row }">
+            <span>{{ row.avgVideoViews || 0 }}</span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('influencer.categoryTag')" width="120">
@@ -263,6 +279,26 @@
               </el-select>
               <div class="form-tip">* {{ $t('influencer.categoryTagTip') }}</div>
             </el-form-item>
+            <!-- 达人参数 -->
+            <el-row :gutter="16">
+              <el-col :span="8">
+                <el-form-item :label="$t('influencer.monthlySalesCount')">
+                  <el-input-number v-model="form.monthlySalesCount" :min="0" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item :label="$t('influencer.avgVideoViews')">
+                  <el-input-number v-model="form.avgVideoViews" :min="0" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item :label="$t('influencer.suitableCategories')">
+                  <el-select v-model="form.suitableCategories" multiple :placeholder="$t('common.select')" style="width: 100%">
+                    <el-option v-for="cat in suitableCategoryOptions" :key="cat._id" :label="cat.name" :value="cat._id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
           </div>
 
           <!-- 真实信息 -->
@@ -446,6 +482,7 @@ const hasPermission = (perm) => AuthManager.hasPermission(perm)
 const activeTab = ref('list')
 const influencers = ref([])
 const categoryTags = ref([])
+const suitableCategoryOptions = ref([])
 const selectedIds = ref([])
 const showCreateDialog = ref(false)
 const showDetailDialog = ref(false)
@@ -483,6 +520,9 @@ const form = reactive({
   originalTiktokId: '',
   status: 'enabled',
   categoryTags: [],
+  suitableCategories: [],
+  monthlySalesCount: 0,
+  avgVideoViews: 0,
   realName: '',
   nickname: '',
   gender: 'other',
@@ -539,6 +579,17 @@ const loadCategoryTags = async () => {
       params: { type: 'influencerCategory' }
     })
     categoryTags.value = res.data || []
+  } catch (error) {
+    console.error(t('influencer.loadFailed') + ':', error)
+  }
+}
+
+const loadSuitableCategories = async () => {
+  try {
+    const res = await request.get('/base-data', {
+      params: { type: 'category' }
+    })
+    suitableCategoryOptions.value = res.data || []
   } catch (error) {
     console.error(t('influencer.loadFailed') + ':', error)
   }
@@ -747,6 +798,9 @@ const createInfluencer = async () => {
       originalTiktokId: form.originalTiktokId,
       status: form.status,
       categoryTags: form.categoryTags,
+      suitableCategories: form.suitableCategories,
+      monthlySalesCount: form.monthlySalesCount,
+      avgVideoViews: form.avgVideoViews,
       realName: form.realName,
       nickname: form.nickname,
       gender: form.gender,
@@ -803,6 +857,9 @@ const editInfluencer = (row) => {
     originalTiktokId: row.originalTiktokId,
     status: row.status,
     categoryTags: (row.categoryTags || []).map(t => t._id || t),
+    suitableCategories: (row.suitableCategories || []).map(c => c._id || c),
+    monthlySalesCount: row.monthlySalesCount || 0,
+    avgVideoViews: row.avgVideoViews || 0,
     realName: row.realName,
     nickname: row.nickname,
     gender: row.gender,
@@ -911,6 +968,9 @@ const resetForm = () => {
     originalTiktokId: '',
     status: 'enabled',
     categoryTags: [],
+    suitableCategories: [],
+    monthlySalesCount: 0,
+    avgVideoViews: 0,
     realName: '',
     nickname: '',
     gender: 'other',
@@ -922,6 +982,7 @@ const resetForm = () => {
 
 onMounted(() => {
   loadCategoryTags()
+  loadSuitableCategories()
   loadData()
 })
 </script>

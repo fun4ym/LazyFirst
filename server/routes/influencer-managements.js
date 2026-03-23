@@ -77,6 +77,7 @@ router.get('/', authenticate, authorize('influencers:read'), filterByDataScope({
     const influencers = await Influencer.find(query)
       .populate('assignedTo', 'username realName')
       .populate('categoryTags', 'name')
+      .populate('suitableCategories', 'name')
       .populate('latestMaintainerId', 'username realName')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -103,6 +104,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const influencer = await Influencer.findById(req.params.id)
       .populate('assignedTo', 'username realName')
       .populate('categoryTags', 'name')
+      .populate('suitableCategories', 'name')
       .populate('latestMaintainerId', 'username realName');
 
     if (!influencer) {
@@ -132,7 +134,8 @@ router.post('/', authenticate, authorize('influencers:create'), async (req, res)
     console.log('创建达人 - 收到数据:', JSON.stringify(req.body, null, 2));
 
     const { companyId, tiktokName, tiktokId, formerNames, formerIds, originalTiktokId, status, categoryTags,
-      realName, nickname, gender, addresses, phoneNumbers, socialAccounts } = req.body;
+      realName, nickname, gender, addresses, phoneNumbers, socialAccounts,
+      monthlySalesCount, suitableCategories, avgVideoViews } = req.body;
 
     const userId = req.user.id;
 
@@ -143,7 +146,10 @@ router.post('/', authenticate, authorize('influencers:create'), async (req, res)
       categoryTags,
       addresses,
       phoneNumbers,
-      socialAccounts
+      socialAccounts,
+      monthlySalesCount,
+      suitableCategories,
+      avgVideoViews
     });
 
     // 检查TikTok ID是否已存在
@@ -167,7 +173,10 @@ router.post('/', authenticate, authorize('influencers:create'), async (req, res)
       addresses: addresses || [],
       phoneNumbers: phoneNumbers || [],
       socialAccounts: socialAccounts || [],
-      poolType: 'public'
+      poolType: 'public',
+      monthlySalesCount: monthlySalesCount || 0,
+      suitableCategories: suitableCategories || [],
+      avgVideoViews: avgVideoViews || 0
     });
 
     await influencer.save();
@@ -184,7 +193,8 @@ router.post('/', authenticate, authorize('influencers:create'), async (req, res)
 router.put('/:id', authenticate, authorize('influencers:update'), async (req, res) => {
   try {
     const { tiktokName, tiktokId, formerNames, formerIds, originalTiktokId, status, categoryTags,
-      realName, nickname, gender, addresses, phoneNumbers, socialAccounts } = req.body;
+      realName, nickname, gender, addresses, phoneNumbers, socialAccounts,
+      monthlySalesCount, suitableCategories, avgVideoViews } = req.body;
 
     const influencer = await Influencer.findById(req.params.id);
 
@@ -222,6 +232,9 @@ router.put('/:id', authenticate, authorize('influencers:update'), async (req, re
     influencer.addresses = addresses || influencer.addresses;
     influencer.phoneNumbers = phoneNumbers || influencer.phoneNumbers;
     influencer.socialAccounts = socialAccounts || influencer.socialAccounts;
+    influencer.monthlySalesCount = monthlySalesCount !== undefined ? monthlySalesCount : influencer.monthlySalesCount;
+    influencer.suitableCategories = suitableCategories || influencer.suitableCategories;
+    influencer.avgVideoViews = avgVideoViews !== undefined ? avgVideoViews : influencer.avgVideoViews;
 
     await influencer.save();
 
@@ -508,6 +521,7 @@ router.get('/blacklist/list', authenticate, async (req, res) => {
     const influencers = await Influencer.find(query)
       .populate('assignedTo', 'username realName')
       .populate('categoryTags', 'name')
+      .populate('suitableCategories', 'name')
       .populate('latestMaintainerId', 'username realName')
       .sort({ blacklistedAt: -1 })
       .skip(skip)

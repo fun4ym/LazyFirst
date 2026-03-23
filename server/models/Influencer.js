@@ -108,6 +108,19 @@ const influencerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // 达人参数
+  monthlySalesCount: {
+    type: Number,
+    default: 0
+  },
+  suitableCategories: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BaseData'
+  }],
+  avgVideoViews: {
+    type: Number,
+    default: 0
+  },
   // 黑名单相关
   isBlacklisted: {
     type: Boolean,
