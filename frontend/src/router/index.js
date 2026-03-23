@@ -2,6 +2,33 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AuthManager from '@/utils/auth'
 
 const routes = [
+  // 移动端页面
+  {
+    path: '/mobile',
+    component: () => import('@/views/mobile/Index.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        redirect: '/mobile/influencers'
+      },
+      {
+        path: 'influencers',
+        component: () => import('@/views/mobile/Influencers.vue'),
+        meta: { title: '达人列表' }
+      },
+      {
+        path: 'samples',
+        component: () => import('@/views/mobile/Samples.vue'),
+        meta: { title: '样品管理' }
+      },
+      {
+        path: 'profile',
+        component: () => import('@/views/mobile/Profile.vue'),
+        meta: { title: '个人中心' }
+      }
+    ]
+  },
   {
     path: '/login',
     name: 'Login',
