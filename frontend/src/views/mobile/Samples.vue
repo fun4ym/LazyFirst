@@ -221,6 +221,111 @@
         </div>
       </div>
     </div>
+
+    <!-- 详情弹窗 -->
+    <div v-if="showDetailModal" class="modal-mask" @click="showDetailModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>样品详情</h2>
+          <span class="close" @click="showDetailModal = false">×</span>
+        </div>
+        <div class="modal-body">
+          <!-- 状态进度 -->
+          <div class="status-progress">
+            <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 0 }">
+              <div class="step-dot">1</div>
+              <div class="step-label">待审核</div>
+            </div>
+            <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 1 }"></div>
+            <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 1 }">
+              <div class="step-dot">2</div>
+              <div class="step-label">已通过</div>
+            </div>
+            <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 2 }"></div>
+            <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 2 }">
+              <div class="step-dot">3</div>
+              <div class="step-label">已寄样</div>
+            </div>
+            <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 3 }"></div>
+            <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 3 }">
+              <div class="step-dot">4</div>
+              <div class="step-label">已收货</div>
+            </div>
+            <div class="progress-line" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 4 }"></div>
+            <div class="progress-step" :class="{ active: getStatusStep(currentRecord.sampleStatus) >= 4 }">
+              <div class="step-dot">5</div>
+              <div class="step-label">已完成</div>
+            </div>
+          </div>
+
+          <!-- 基本信息 -->
+          <div class="detail-section">
+            <div class="section-title">基本信息</div>
+            <div class="detail-row">
+              <span class="label">样品状态</span>
+              <span class="value" :class="getSampleStatusClass(currentRecord.sampleStatus)">
+                {{ getSampleStatusText(currentRecord.sampleStatus) }}
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="label">商品名称</span>
+              <span class="value">{{ currentRecord.productName || '-' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">达人账号</span>
+              <span class="value">@{{ currentRecord.influencerAccount }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">达人粉丝</span>
+              <span class="value">{{ currentRecord.followerCount || '-' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">申请日期</span>
+              <span class="value">{{ formatDate(currentRecord.date) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">样品数量</span>
+              <span class="value">{{ currentRecord.quantity || 1 }}</span>
+            </div>
+            <div class="detail-row" v-if="currentRecord.applicantName">
+              <span class="label">申请人</span>
+              <span class="value">{{ currentRecord.applicantName }}</span>
+            </div>
+            <div class="detail-row" v-if="currentRecord.trackingNumber">
+              <span class="label">快递单号</span>
+              <span class="value copy-value" @click="copyText(currentRecord.trackingNumber)">
+                {{ currentRecord.trackingNumber }} 📋
+              </span>
+            </div>
+            <div class="detail-row" v-if="currentRecord.remark">
+              <span class="label">备注</span>
+              <span class="value">{{ currentRecord.remark }}</span>
+            </div>
+          </div>
+
+          <!-- 出单信息 -->
+          <div class="detail-section">
+            <div class="section-title">出单信息</div>
+            <div class="detail-row">
+              <span class="label">是否出单</span>
+              <span class="value">
+                <span :class="currentRecord.isOrderGenerated ? 'status-success' : 'status-pending'">
+                  {{ currentRecord.isOrderGenerated ? '已出单' : '未出单' }}
+                </span>
+              </span>
+            </div>
+            <div class="detail-row" v-if="currentRecord.orderCount">
+              <span class="label">订单数量</span>
+              <span class="value">{{ currentRecord.orderCount }}</span>
+            </div>
+            <div class="detail-row" v-if="currentRecord.orderAmount">
+              <span class="label">订单金额</span>
+              <span class="value">¥{{ currentRecord.orderAmount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -394,8 +499,30 @@ const loadRecords = async () => {
 }
 
 const viewDetail = (item) => {
-  // 可以跳转到详情页或显示详情弹窗
-  ElMessage.info('查看详情功能开发中')
+  currentRecord.value = item
+  showDetailModal.value = true
+}
+
+const showDetailModal = ref(false)
+const currentRecord = ref({})
+
+const getStatusStep = (status) => {
+  const steps = {
+    pending: 0,
+    approved: 1,
+    sample_sent: 2,
+    received: 3,
+    completed: 4
+  }
+  return steps[status] || 0
+}
+
+const copyText = (text) => {
+  navigator.clipboard.writeText(text).then(() => {
+    ElMessage.success('已复制')
+  }).catch(() => {
+    ElMessage.error('复制失败')
+  })
 }
 
 onMounted(() => {
@@ -828,5 +955,99 @@ onMounted(() => {
   padding: 30px;
   color: #999;
   font-size: 13px;
+}
+
+/* 详情弹窗样式 */
+.status-progress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 10px;
+  background: linear-gradient(135deg, #f8f9fc 0%, #eef1f6 100%);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ddd;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.progress-step.active .step-dot {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: #fff;
+}
+
+.step-label {
+  font-size: 10px;
+  color: #999;
+}
+
+.progress-step.active .step-label {
+  color: #11998e;
+  font-weight: 500;
+}
+
+.progress-line {
+  flex: 1;
+  height: 2px;
+  background: #ddd;
+  margin-top: 11px;
+  margin: 11px 4px 0;
+}
+
+.progress-line.active {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section .section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.detail-row {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.detail-row .label {
+  width: 90px;
+  color: #999;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.detail-row .value {
+  flex: 1;
+  color: #333;
+  font-size: 13px;
+}
+
+.copy-value {
+  cursor: pointer;
 }
 </style>

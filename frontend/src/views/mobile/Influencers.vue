@@ -25,12 +25,12 @@
         <div class="card-header">
           <div class="trade-badges">
             <!-- 7天内成单标识 -->
-            <span v-if="item.hasOrderIn7Days" class="badge success">
+            <span v-if="hasOrderIn7Days(item._id)" class="badge success">
               <span class="badge-icon">✓</span> 7天成单
             </span>
             <!-- 30天订单超过10个 -->
-            <span v-if="item.orderCount30Days > 10" class="badge warning">
-              <span class="badge-icon">📦</span> {{ item.orderCount30Days }}单
+            <span v-if="orderCount30Days(item._id) > 10" class="badge warning">
+              <span class="badge-icon">📦</span> {{ orderCount30Days(item._id) }}单
             </span>
           </div>
           <div class="card-actions">
@@ -208,11 +208,26 @@
             <input v-model="editForm.tiktokName" type="text" placeholder="昵称" />
           </div>
           <div class="form-item">
-            <label>状态</label>
-            <select v-model="editForm.status">
-              <option value="enabled">启用</option>
-              <option value="disabled">禁用</option>
-            </select>
+            <label>黑名单</label>
+            <div class="blacklist-toggle">
+              <span :class="['toggle-status', editForm.isBlacklisted ? 'on' : 'off']">
+                {{ editForm.isBlacklisted ? '已拉黑' : '正常' }}
+              </span>
+              <button 
+                v-if="!editForm.isBlacklisted" 
+                class="btn-blacklist" 
+                @click="confirmBlacklist"
+              >
+                拉黑
+              </button>
+              <button 
+                v-else 
+                class="btn-unblacklist" 
+                @click="confirmUnblacklist"
+              >
+                取消拉黑
+              </button>
+            </div>
           </div>
           <button class="btn-submit" @click="saveEdit" :disabled="submitting">
             {{ submitting ? '保存中...' : '保存' }}
@@ -232,6 +247,9 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const loading = ref(false)
 const loadingMore = ref(false)
@@ -257,7 +275,7 @@ const maintenanceForm = ref({
 const editForm = ref({
   tiktokId: '',
   tiktokName: '',
-  status: 'enabled'
+  isBlacklisted: false
 })
 
 let searchTimer = null
@@ -290,17 +308,61 @@ const loadInfluencers = async () => {
       page: 1,
       limit: limit.value,
       keyword: searchKeyword.value,
+      companyId: userStore.companyId,
       poolType: 'private' // 只获取私域达人
     }
     const res = await request.get('/influencer-managements', { params })
     influencers.value = res.influencers || []
     hasMore.value = res.influencers?.length === limit.value
+    
+    // 加载订单统计
+    if (influencers.value.length > 0) {
+      loadOrderStats()
+    }
   } catch (error) {
     console.error('加载达人失败:', error)
     ElMessage.error('加载达人失败')
   } finally {
     loading.value = false
   }
+}
+
+// 订单统计数据
+const orderStats = ref({})
+
+// 加载达人订单统计
+const loadOrderStats = async () => {
+  try {
+    const influencerIds = influencers.value.map(i => i._id).join(',')
+    if (!influencerIds) return
+    
+    const res = await request.get('/product-stats/influencer-order-stats', {
+      params: { influencerIds }
+    })
+    
+    const data = res.data || res
+    if (Array.isArray(data)) {
+      const statsMap = {}
+      data.forEach(item => {
+        statsMap[item.influencerId] = item.stats
+      })
+      orderStats.value = statsMap
+    }
+  } catch (error) {
+    console.error('加载订单统计失败:', error)
+  }
+}
+
+// 计算属性：判断7天内是否有成单
+const hasOrderIn7Days = (influencerId) => {
+  const stats = orderStats.value[influencerId]
+  return stats?.lastWeekCount > 0
+}
+
+// 计算属性：30天订单数
+const orderCount30Days = (influencerId) => {
+  const stats = orderStats.value[influencerId]
+  return stats?.lastMonthCount || 0
 }
 
 const loadMore = async () => {
@@ -312,6 +374,7 @@ const loadMore = async () => {
       page: page.value,
       limit: limit.value,
       keyword: searchKeyword.value,
+      companyId: userStore.companyId,
       poolType: 'private'
     }
     const res = await request.get('/influencer-managements', { params })
@@ -341,9 +404,45 @@ const editInfluencer = (item) => {
   editForm.value = {
     tiktokId: item.tiktokId,
     tiktokName: item.tiktokName,
-    status: item.status
+    isBlacklisted: item.isBlacklisted || false
   }
   showEditModal.value = true
+}
+
+// 确认拉黑
+const confirmBlacklist = async () => {
+  if (!confirm('确定要将该达人拉入黑名单吗？')) return
+  submitting.value = true
+  try {
+    await request.post(`/influencer-managements/${currentInfluencer.value._id}/blacklist`, {
+      reason: '移动端拉黑'
+    })
+    ElMessage.success('已拉黑')
+    editForm.value.isBlacklisted = true
+    loadInfluencers()
+  } catch (error) {
+    console.error('拉黑失败:', error)
+    ElMessage.error(error.response?.data?.message || '拉黑失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 确认取消拉黑
+const confirmUnblacklist = async () => {
+  if (!confirm('确定要取消拉黑该达人吗？')) return
+  submitting.value = true
+  try {
+    await request.delete(`/influencer-managements/${currentInfluencer.value._id}/blacklist`)
+    ElMessage.success('已取消拉黑')
+    editForm.value.isBlacklisted = false
+    loadInfluencers()
+  } catch (error) {
+    console.error('取消拉黑失败:', error)
+    ElMessage.error(error.response?.data?.message || '取消拉黑失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const saveEdit = async () => {
@@ -353,7 +452,10 @@ const saveEdit = async () => {
   }
   submitting.value = true
   try {
-    await request.put(`/influencer-managements/${currentInfluencer.value._id}`, editForm.value)
+    await request.put(`/influencer-managements/${currentInfluencer.value._id}`, {
+      tiktokId: editForm.value.tiktokId,
+      tiktokName: editForm.value.tiktokName
+    })
     ElMessage.success('保存成功')
     showEditModal.value = false
     loadInfluencers()
@@ -892,6 +994,48 @@ onMounted(() => {
 
 .form-item input,
 .form-item textarea,
+.blacklist-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-status {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.toggle-status.on {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  color: #c62828;
+}
+
+.toggle-status.off {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #2e7d32;
+}
+
+.btn-blacklist {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-unblacklist {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .form-item select {
   width: 100%;
   padding: 12px 14px;
