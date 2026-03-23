@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>TikTok活动管理</h3>
           <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('activities:create')">
             <el-icon><Plus /></el-icon>
             新建活动

@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>我的样品申请</h3>
           <div class="header-actions">
             <el-button type="success" @click="showCreateDialog" v-if="hasPermission('samples-bd:create')">
               <el-icon><Plus /></el-icon>
@@ -42,30 +41,6 @@
             style="width: 150px"
             value-format="YYYY-MM-DD"
           />
-        </el-form-item>
-
-        <el-form-item label="是否寄样">
-          <el-select
-            v-model="searchForm.isSampleSent"
-            placeholder="全部"
-            clearable
-            style="width: 100px"
-          >
-            <el-option label="是" :value="true" />
-            <el-option label="否" :value="false" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="是否出单">
-          <el-select
-            v-model="searchForm.isOrderGenerated"
-            placeholder="全部"
-            clearable
-            style="width: 100px"
-          >
-            <el-option label="是" :value="true" />
-            <el-option label="否" :value="false" />
-          </el-select>
         </el-form-item>
 
         <el-form-item>
@@ -682,43 +657,6 @@
 
         <el-form-item label="样品图片">
           <el-input v-model="createForm.sampleImage" placeholder="图片URL" />
-        </el-form-item>
-
-        <el-divider>寄样信息</el-divider>
-
-        <el-form-item label="是否寄样">
-          <el-switch v-model="createForm.isSampleSent" />
-        </el-form-item>
-
-        <template v-if="createForm.isSampleSent">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="发货单号">
-                <el-input v-model="createForm.trackingNumber" placeholder="发货单号" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="物流公司">
-                <el-input v-model="createForm.logisticsCompany" placeholder="物流公司" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-form-item label="发货日期">
-            <el-date-picker
-              v-model="createForm.shippingDate"
-              type="date"
-              placeholder="选择发货日期"
-              value-format="YYYY-MM-DD"
-              style="width: 100%"
-            />
-          </el-form-item>
-        </template>
-
-        <el-divider>履约信息</el-divider>
-
-        <el-form-item label="是否出单">
-          <el-switch v-model="createForm.isOrderGenerated" />
         </el-form-item>
       </el-form>
 

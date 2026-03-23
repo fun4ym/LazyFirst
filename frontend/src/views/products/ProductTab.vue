@@ -22,7 +22,7 @@
           </el-select>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('products:create')">新建产品</el-button>
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('products:create')">新增商品</el-button>
         </el-col>
       </el-row>
     </div>
@@ -194,7 +194,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="showDialog"
-      :title="editingProduct ? '编辑合作产品' : '新建合作产品'"
+      :title="editingProduct ? '编辑商品' : '新增商品'"
       width="900px"
       :close-on-click-modal="false"
     >
@@ -219,7 +219,7 @@
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="店铺名称">
+                <el-form-item label="店铺">
                   <el-select v-model="form.shopId" placeholder="请选择店铺" style="width: 100%">
                     <el-option v-for="shop in shops" :key="shop._id" :label="shop.shopName" :value="shop._id" />
                   </el-select>
@@ -242,64 +242,19 @@
             </el-row>
           </div>
 
-          <!-- 样品信息 -->
-          <div class="form-section">
-            <div class="section-header">
-              <span class="section-title">样品信息</span>
-            </div>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="商品等级">
-                  <el-select v-model="form.productGrade" placeholder="请选择">
-                    <el-option label="普通" value="ordinary" />
-                    <el-option label="爆款" value="hot" />
-                    <el-option label="主推款" value="main" />
-                    <el-option label="新品" value="new" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="TAP专属链" class="tiktok-green-label">
-                  <el-input v-model="form.tapExclusiveLink" placeholder="可选" class="tiktok-green-input" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="寄样方式">
-                  <el-select v-model="form.sampleMethod" placeholder="请选择" style="width: 100%">
-                    <el-option label="线上" value="线上" />
-                    <el-option label="线下" value="线下" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="合作国家">
-                  <el-select v-model="form.cooperationCountry" placeholder="请选择国家" style="width: 100%">
-                    <el-option v-for="country in countries" :key="country" :label="country" :value="country" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="寄样目标">
-                  <el-input v-model="form.sampleTarget" placeholder="请输入寄样目标" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="达人要求">
-                  <el-input v-model="form.influencerRequirement" placeholder="请输入达人要求" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </div>
-
           <!-- 商品信息 -->
           <div class="form-section">
             <div class="section-header">
               <span class="section-title">商品信息</span>
             </div>
+            <el-form-item label="商品等级">
+              <el-select v-model="form.productGrade" placeholder="请选择">
+                <el-option label="普通" value="ordinary" />
+                <el-option label="爆款" value="hot" />
+                <el-option label="主推款" value="main" />
+                <el-option label="新品" value="new" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="商品简介">
               <el-input v-model="form.productIntro" type="textarea" :rows="3" placeholder="请输入商品简介" />
             </el-form-item>
@@ -308,6 +263,67 @@
             </el-form-item>
             <el-form-item label="卖点">
               <el-input v-model="form.sellingPoints" type="textarea" :rows="2" placeholder="请输入商品卖点" />
+            </el-form-item>
+          </div>
+
+          <!-- 活动配置 -->
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-title">活动配置</span>
+            </div>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="TAP专属链" class="tiktok-green-label">
+                  <el-input v-model="form.tapExclusiveLink" placeholder="可选" class="tiktok-green-input" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="寄样方式">
+                  <el-select v-model="form.sampleMethod" placeholder="请选择" style="width: 100%">
+                    <el-option label="线上" value="线上" />
+                    <el-option label="线下" value="线下" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="合作国家">
+                  <el-select v-model="form.cooperationCountry" placeholder="请选择国家" style="width: 100%">
+                    <el-option v-for="country in countries" :key="country" :label="country" :value="country" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <!-- 达人要求 -->
+            <div class="subsection-header">达人要求</div>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="GMV">
+                  <el-input-number v-model="form.requirementGmv" :min="0" placeholder="GMV以上" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="月销售件数">
+                  <el-input-number v-model="form.requirementMonthlySales" :min="0" placeholder="月销售件数以上" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="粉丝数">
+                  <el-input-number v-model="form.requirementFollowers" :min="0" placeholder="粉丝数以上" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="月均播放量">
+                  <el-input-number v-model="form.requirementAvgViews" :min="0" placeholder="月均播放量以上" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item label="要求说明">
+              <el-input v-model="form.requirementRemark" type="textarea" :rows="3" :maxlength="1000" placeholder="请输入要求说明（最多1000个字符）" />
             </el-form-item>
           </div>
 
@@ -607,8 +623,11 @@ const form = reactive({
   tapExclusiveLink: '',
   sampleMethod: '线上',
   cooperationCountry: '',
-  sampleTarget: '',
-  influencerRequirement: '',
+  requirementGmv: 0,
+  requirementMonthlySales: 0,
+  requirementFollowers: 0,
+  requirementAvgViews: 0,
+  requirementRemark: '',
   productImages: [],
   productIntro: '',
   referenceVideo: '',
@@ -1308,6 +1327,16 @@ defineExpose({
   font-size: 15px;
   font-weight: 600;
   color: #212529;
+}
+
+.subsection-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin: 16px 0 12px;
+  padding: 8px 12px;
+  background: #e9ecef;
+  border-radius: 4px;
 }
 
 /* TikTok绿色样式 */

@@ -1,12 +1,6 @@
 <template>
   <div class="products-page">
     <el-card>
-      <template #header>
-        <div class="page-header">
-          <h3>{{ $t('menu.products') }}</h3>
-        </div>
-      </template>
-
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
         <!-- 合作产品页签 -->
         <el-tab-pane :label="$t('product.productList')" name="products">
