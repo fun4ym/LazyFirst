@@ -93,7 +93,13 @@ const handleLogin = async () => {
     try {
       await AuthManager.login(form.username, form.password)
       ElMessage.success(t('auth.loginSuccess'))
-      router.push('/dashboard')
+      // 判断是否移动端设备
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile) {
+        router.push('/mobile/profile')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error) {
       ElMessage.error(error.message || t('common.error'))
     } finally {
