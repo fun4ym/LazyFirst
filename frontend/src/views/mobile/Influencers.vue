@@ -165,7 +165,7 @@ const loadInfluencers = async () => {
       status: filterStatus.value,
       poolType: filterPool.value
     }
-    const res = await request.get('/influencers', { params })
+    const res = await request.get('/influencer-managements', { params })
     influencers.value = res.data.data || []
     hasMore.value = res.data.data?.length === limit.value
   } catch (error) {
@@ -188,7 +188,7 @@ const loadMore = async () => {
       status: filterStatus.value,
       poolType: filterPool.value
     }
-    const res = await request.get('/influencers', { params })
+    const res = await request.get('/influencer-managements', { params })
     influencers.value.push(...(res.data.data || []))
     hasMore.value = res.data.data?.length === limit.value
   } catch (error) {
