@@ -624,8 +624,8 @@ router.post('/influencers', authenticate, verifyAdmin, upload.single('file'), as
       const savedInfluencer = await Influencer.findOne({ tiktokId: item.influencer.tiktokId, companyId });
       
       if (savedInfluencer) {
-        // 查找维护人对应的 User
-        let maintainerId = null;
+        // 查找维护人对应的 User，如果找不到则使用当前导入用户
+        let maintainerId = req.userId;
         if (item.row.update_by !== undefined && item.row.update_by !== null && item.row.update_by !== '') {
           const user = await User.findOne({ username: String(item.row.update_by) }).lean();
           if (user) {
