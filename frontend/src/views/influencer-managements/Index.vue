@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>{{ $t('menu.influencerList') }}</h3>
           <el-button type="primary" @click="showCreateDialog = true" v-if="hasPermission('influencers:create')">{{ $t('influencer.addInfluencer') }}</el-button>
         </div>
       </template>

@@ -60,7 +60,7 @@
               </span>
             </template>
             <div class="shop-info-popover">
-              <div class="shop-info-item"><strong>店铺名称：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
+              <div class="shop-info-item"><strong>店铺：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
               <div class="shop-info-item"><strong>店铺号：</strong>{{ row.shopId?.shopNumber || '-' }}</div>
               <div class="shop-info-item" v-if="row.shopId?.contactId?.name"><strong>联系人：</strong>{{ row.shopId.contactId.name }}</div>
               <div class="shop-info-item" v-if="row.shopId?.contactId?.phone"><strong>电话：</strong>{{ row.shopId.contactId.phone }}</div>
@@ -410,7 +410,7 @@
           <el-descriptions-item label="TikTok商品ID">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</el-descriptions-item>
           <el-descriptions-item label="商品名称">{{ currentProduct.name || currentProduct.productName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="SKU">{{ currentProduct.sku || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="店铺名称">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="店铺">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="商品类目">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
           <el-descriptions-item label="价格">{{ currentProduct.price ? '$' + currentProduct.price : '-' }}</el-descriptions-item>
           <el-descriptions-item label="TAP专属链">{{ currentProduct.tapExclusiveLink || '-' }}</el-descriptions-item>
