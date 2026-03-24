@@ -10,7 +10,7 @@
           </el-select>
         </el-col>
         <el-col :span="4">
-          <el-input v-model="filters.keyword" placeholder="搜索店铺名称/店铺号" clearable @change="loadData">
+          <el-input v-model="filters.keyword" placeholder="搜索店铺/店铺号" clearable @change="loadData">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -30,7 +30,7 @@
           <el-avatar v-else :size="50">店</el-avatar>
         </template>
       </el-table-column>
-      <el-table-column prop="shopName" label="店铺名称" width="150" />
+      <el-table-column prop="shopName" label="店铺" width="150" />
       <el-table-column prop="shopNumber" label="店铺号" width="120" />
       <el-table-column label="申样链接" min-width="180">
         <template #default="{ row }">
@@ -99,7 +99,7 @@
         <el-form-item label="店铺头像">
           <el-input v-model="form.avatar" placeholder="请输入头像URL" />
         </el-form-item>
-        <el-form-item label="店铺名称" prop="shopName" required>
+        <el-form-item label="店铺" prop="shopName" required>
           <el-input v-model="form.shopName" placeholder="请输入店铺名称" />
         </el-form-item>
         <el-form-item label="店铺号" prop="shopNumber" required>

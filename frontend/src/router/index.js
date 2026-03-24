@@ -67,7 +67,7 @@ const routes = [
         path: 'products',
         name: 'Products',
         component: () => import('@/views/products/Index.vue'),
-        meta: { title: '合作产品' }
+        meta: { title: '' }
       },
       {
         path: 'shops',

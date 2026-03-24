@@ -1,11 +1,42 @@
 const mongoose = require('mongoose');
 
-// 活动佣金配置子文档
-const activityCommissionSchema = new mongoose.Schema({
+// 活动配置子文档（包含达人要求、样品信息、佣金配置）
+const activityConfigSchema = new mongoose.Schema({
   activityId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Activity',
     required: true
+  },
+  // 达人要求
+  requirementGmv: {
+    type: Number,
+    default: 0
+  },
+  requirementMonthlySales: {
+    type: Number,
+    default: 0
+  },
+  requirementFollowers: {
+    type: Number,
+    default: 0
+  },
+  requirementAvgViews: {
+    type: Number,
+    default: 0
+  },
+  requirementRemark: {
+    type: String,
+    default: '',
+    maxlength: 1000
+  },
+  // 样品信息
+  sampleMethod: {
+    type: String,
+    default: ''
+  },
+  cooperationCountry: {
+    type: String,
+    default: ''
   },
   // 推广时佣金配置
   promotionInfluencerRate: {
@@ -109,7 +140,7 @@ const productSchema = new mongoose.Schema({
       default: true
     }
   },
-  // 样品信息（从合作产品迁移）
+  // 商品信息
   productGrade: {
     type: String,
     enum: ['ordinary', 'hot', 'main', 'new'],
@@ -119,23 +150,6 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  sampleMethod: {
-    type: String,
-    default: ''
-  },
-  cooperationCountry: {
-    type: String,
-    default: ''
-  },
-  sampleTarget: {
-    type: String,
-    default: ''
-  },
-  influencerRequirement: {
-    type: String,
-    default: ''
-  },
-  // 商品信息（从合作产品迁移）
   productImages: [String],
   productIntro: {
     type: String,
@@ -149,8 +163,8 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  // 活动佣金配置（从合作产品迁移）
-  activityCommissions: [activityCommissionSchema],
+  // 活动配置（一个商品可参与多个活动，每个活动有独立的要求和佣金）
+  activityConfigs: [activityConfigSchema],
   images: [String],
   description: String,
   status: {
@@ -164,8 +178,8 @@ const productSchema = new mongoose.Schema({
 
 // 验证同一产品不能参与同一活动多次
 productSchema.pre('save', function(next) {
-  if (this.activityCommissions && this.activityCommissions.length > 0) {
-    const activityIds = this.activityCommissions.map(ac => ac.activityId.toString());
+  if (this.activityConfigs && this.activityConfigs.length > 0) {
+    const activityIds = this.activityConfigs.map(ac => ac.activityId.toString());
     const uniqueIds = [...new Set(activityIds)];
     if (activityIds.length !== uniqueIds.length) {
       return next(new Error('同一产品不能重复参与同一活动'));

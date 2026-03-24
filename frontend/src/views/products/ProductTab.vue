@@ -266,130 +266,122 @@
             </el-form-item>
           </div>
 
-          <!-- 活动配置 -->
+          <!-- 活动配置（一个商品可参与多个活动） -->
           <div class="form-section">
             <div class="section-header">
               <span class="section-title">活动配置</span>
-            </div>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="TAP专属链" class="tiktok-green-label">
-                  <el-input v-model="form.tapExclusiveLink" placeholder="可选" class="tiktok-green-input" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="寄样方式">
-                  <el-select v-model="form.sampleMethod" placeholder="请选择" style="width: 100%">
-                    <el-option label="线上" value="线上" />
-                    <el-option label="线下" value="线下" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="合作国家">
-                  <el-select v-model="form.cooperationCountry" placeholder="请选择国家" style="width: 100%">
-                    <el-option v-for="country in countries" :key="country" :label="country" :value="country" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-
-            <!-- 达人要求 -->
-            <div class="subsection-header">达人要求</div>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="GMV">
-                  <el-input-number v-model="form.requirementGmv" :min="0" placeholder="GMV以上" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="月销售件数">
-                  <el-input-number v-model="form.requirementMonthlySales" :min="0" placeholder="月销售件数以上" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="粉丝数">
-                  <el-input-number v-model="form.requirementFollowers" :min="0" placeholder="粉丝数以上" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="月均播放量">
-                  <el-input-number v-model="form.requirementAvgViews" :min="0" placeholder="月均播放量以上" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-form-item label="要求说明">
-              <el-input v-model="form.requirementRemark" type="textarea" :rows="3" :maxlength="1000" placeholder="请输入要求说明（最多1000个字符）" />
-            </el-form-item>
-          </div>
-
-          <!-- 佣金信息 -->
-          <div class="form-section">
-            <div class="section-header">
-              <span class="section-title">活动佣金配置</span>
-              <el-button type="primary" size="small" @click="addActivityCommission">
+              <el-button type="primary" size="small" @click="addActivityConfig">
                 <el-icon><Plus /></el-icon>
                 添加活动
               </el-button>
             </div>
-            <div v-if="form.activityCommissions.length === 0" class="empty-tip">
+            <div v-if="form.activityConfigs.length === 0" class="empty-tip">
               请至少添加一个活动配置
             </div>
-            <div v-for="(ac, index) in form.activityCommissions" :key="index" class="activity-commission-item">
+            <div v-for="(config, index) in form.activityConfigs" :key="index" class="activity-commission-item">
               <div class="activity-header">
-                <span class="activity-title">活动配置 {{ index + 1 }}</span>
-                <el-button link type="danger" size="small" @click="removeActivityCommission(index)" v-if="form.activityCommissions.length > 1">
+                <span class="activity-title">活动 {{ index + 1 }}</span>
+                <el-button link type="danger" size="small" @click="removeActivityConfig(index)" v-if="form.activityConfigs.length > 1">
                   删除
                 </el-button>
               </div>
+              
+              <!-- 选择活动 -->
               <el-row :gutter="16">
                 <el-col :span="24">
-                  <el-form-item label="活动名称" :prop="`activityCommissions.${index}.activityId`" :rules="{ required: true, message: '请选择活动', trigger: 'change' }">
-                    <el-select v-model="ac.activityId" placeholder="选择活动" style="width: 100%" @change="validateActivityDuplication(index)">
+                  <el-form-item label="活动名称" :prop="`activityConfigs.${index}.activityId`" :rules="{ required: true, message: '请选择活动', trigger: 'change' }">
+                    <el-select v-model="config.activityId" placeholder="选择活动" style="width: 100%" @change="validateActivityDuplication(index)">
                       <el-option v-for="act in activities" :key="act._id" :label="act.name" :value="act._id" />
                     </el-select>
                   </el-form-item>
                 </el-col>
               </el-row>
+              
+              <!-- 达人要求 -->
+              <el-divider content-position="left">达人要求</el-divider>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="GMV">
+                    <el-input-number v-model="config.requirementGmv" :min="0" placeholder="GMV以上" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="月销售件数">
+                    <el-input-number v-model="config.requirementMonthlySales" :min="0" placeholder="月销售件数以上" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="粉丝数">
+                    <el-input-number v-model="config.requirementFollowers" :min="0" placeholder="粉丝数以上" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="月均播放量">
+                    <el-input-number v-model="config.requirementAvgViews" :min="0" placeholder="月均播放量以上" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-form-item label="要求说明">
+                <el-input v-model="config.requirementRemark" type="textarea" :rows="2" :maxlength="1000" placeholder="请输入要求说明（最多1000个字符）" />
+              </el-form-item>
+              
+              <!-- 样品信息 -->
+              <el-divider content-position="left">样品信息</el-divider>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="寄样方式">
+                    <el-select v-model="config.sampleMethod" placeholder="请选择" style="width: 100%">
+                      <el-option label="线上" value="线上" />
+                      <el-option label="线下" value="线下" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="合作国家">
+                    <el-select v-model="config.cooperationCountry" placeholder="请选择国家" style="width: 100%">
+                      <el-option v-for="country in countries" :key="country" :label="country" :value="country" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              
               <!-- 推广时佣金配置 -->
-              <el-divider content-position="left">推广时</el-divider>
+              <el-divider content-position="left">推广时佣金</el-divider>
               <el-row :gutter="16">
                 <el-col :span="8">
                   <el-form-item label="给达人(%)">
-                    <el-input-number v-model="ac.promotionInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.promotionInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="原本(%)">
-                    <el-input-number v-model="ac.promotionOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.promotionOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="公司自留(%)">
-                    <el-input-number v-model="ac.promotionCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.promotionCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
               <!-- 投广告时佣金配置 -->
-              <el-divider content-position="left">投广告时</el-divider>
+              <el-divider content-position="left">投广告时佣金</el-divider>
               <el-row :gutter="16">
                 <el-col :span="8">
                   <el-form-item label="给达人(%)">
-                    <el-input-number v-model="ac.adInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.adInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="原本(%)">
-                    <el-input-number v-model="ac.adOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.adOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="公司自留(%)">
-                    <el-input-number v-model="ac.adCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.adCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -431,8 +423,8 @@
         </el-descriptions>
 
         <el-divider>活动佣金配置</el-divider>
-        <div v-if="currentProduct.activityCommissions && currentProduct.activityCommissions.length > 0">
-          <div v-for="(ac, index) in currentProduct.activityCommissions" :key="index" style="margin-bottom: 16px;">
+        <div v-if="currentProduct.activityConfigs && currentProduct.activityConfigs.length > 0">
+          <div v-for="(ac, index) in currentProduct.activityConfigs" :key="index" style="margin-bottom: 16px;">
             <el-card>
               <template #header>
                 <span>活动配置 {{ index + 1 }} - {{ activities.find(a => a._id === ac.activityId)?.name || '-' }}</span>
@@ -621,19 +613,12 @@ const form = reactive({
   productCategory: '',
   productGrade: 'ordinary',
   tapExclusiveLink: '',
-  sampleMethod: '线上',
-  cooperationCountry: '',
-  requirementGmv: 0,
-  requirementMonthlySales: 0,
-  requirementFollowers: 0,
-  requirementAvgViews: 0,
-  requirementRemark: '',
   productImages: [],
   productIntro: '',
   referenceVideo: '',
   sellingPoints: '',
   squareCommissionRate: 0,
-  activityCommissions: []
+  activityConfigs: []
 })
 
 const loadActivities = async () => {
@@ -690,9 +675,18 @@ const loadBaseData = async () => {
   }
 }
 
-const addActivityCommission = () => {
-  form.activityCommissions.push({
+const addActivityConfig = () => {
+  form.activityConfigs.push({
     activityId: '',
+    // 达人要求
+    requirementGmv: 0,
+    requirementMonthlySales: 0,
+    requirementFollowers: 0,
+    requirementAvgViews: 0,
+    requirementRemark: '',
+    // 样品信息
+    sampleMethod: '',
+    cooperationCountry: '',
     // 推广时
     promotionInfluencerRate: 0,
     promotionOriginalRate: 0,
@@ -710,9 +704,9 @@ const convertCommissionRates = (data) => {
   if (data.squareCommissionRate !== undefined) {
     data.squareCommissionRate = data.squareCommissionRate / 100
   }
-  // 转换活动佣金率
-  if (data.activityCommissions && Array.isArray(data.activityCommissions)) {
-    data.activityCommissions = data.activityCommissions.map(ac => ({
+  // 转换活动配置佣金率
+  if (data.activityConfigs && Array.isArray(data.activityConfigs)) {
+    data.activityConfigs = data.activityConfigs.map(ac => ({
       ...ac,
       // 推广时
       promotionInfluencerRate: ac.promotionInfluencerRate / 100,
@@ -739,8 +733,8 @@ const convertCommissionRates = (data) => {
 
 // 获取数据时转换佣金率为百分比
 const convertCommissionRatesToPercent = (data) => {
-  if (data.activityCommissions && Array.isArray(data.activityCommissions)) {
-    data.activityCommissions = data.activityCommissions.map(ac => ({
+  if (data.activityConfigs && Array.isArray(data.activityConfigs)) {
+    data.activityConfigs = data.activityConfigs.map(ac => ({
       ...ac,
       // 推广时
       promotionInfluencerRate: (ac.promotionInfluencerRate || 0) * 100,
@@ -755,25 +749,25 @@ const convertCommissionRatesToPercent = (data) => {
   return data
 }
 
-const removeActivityCommission = (index) => {
-  if (form.activityCommissions.length <= 1) {
+const removeActivityConfig = (index) => {
+  if (form.activityConfigs.length <= 1) {
     ElMessage.warning('至少需要保留一个活动配置')
     return
   }
-  form.activityCommissions.splice(index, 1)
+  form.activityConfigs.splice(index, 1)
 }
 
 const validateActivityDuplication = (currentIndex) => {
-  const currentActivityId = form.activityCommissions[currentIndex]?.activityId
+  const currentActivityId = form.activityConfigs[currentIndex]?.activityId
   if (!currentActivityId) return
 
-  const duplicateIndex = form.activityCommissions.findIndex((ac, index) =>
+  const duplicateIndex = form.activityConfigs.findIndex((ac, index) =>
     index !== currentIndex && ac.activityId === currentActivityId
   )
 
   if (duplicateIndex !== -1) {
     ElMessage.error('同一产品不能重复参与同一活动')
-    form.activityCommissions[currentIndex].activityId = ''
+    form.activityConfigs[currentIndex].activityId = ''
   }
 }
 
@@ -834,10 +828,6 @@ const editProduct = (row) => {
     productCategory: row.productCategory,
     productGrade: row.productGrade,
     tapExclusiveLink: row.tapExclusiveLink,
-    sampleMethod: row.sampleMethod || '线上',
-    cooperationCountry: row.cooperationCountry,
-    sampleTarget: row.sampleTarget,
-    influencerRequirement: row.influencerRequirement,
     productImages: row.productImages || [],
     productIntro: row.productIntro,
     referenceVideo: row.referenceVideo,
@@ -847,14 +837,14 @@ const editProduct = (row) => {
     sku: row.sku || row.tiktokProductId || '',
     name: row.name || row.productName || '',
     price: row.price || 0,
-    activityCommissions: row.activityCommissions && row.activityCommissions.length > 0
-      ? JSON.parse(JSON.stringify(row.activityCommissions))
+    activityConfigs: row.activityConfigs && row.activityConfigs.length > 0
+      ? JSON.parse(JSON.stringify(row.activityConfigs))
       : []
   }
   convertCommissionRatesToPercent(formData)
   Object.assign(form, formData)
-  if (form.activityCommissions.length === 0) {
-    addActivityCommission()
+  if (form.activityConfigs.length === 0) {
+    addActivityConfig()
   }
   showDialog.value = true
 }
@@ -877,20 +867,20 @@ const deleteProduct = async (row) => {
 
 const handleSubmit = async () => {
   // 验证至少有一个活动配置
-  if (!form.activityCommissions || form.activityCommissions.length === 0) {
+  if (!form.activityConfigs || form.activityConfigs.length === 0) {
     ElMessage.error('请至少添加一个活动配置')
     return
   }
 
   // 验证每个活动配置都有活动ID
-  const hasEmptyActivity = form.activityCommissions.some(ac => !ac.activityId)
+  const hasEmptyActivity = form.activityConfigs.some(ac => !ac.activityId)
   if (hasEmptyActivity) {
     ElMessage.error('请为每个活动配置选择活动')
     return
   }
 
   // 验证活动是否有重复
-  const activityIds = form.activityCommissions.map(ac => ac.activityId)
+  const activityIds = form.activityConfigs.map(ac => ac.activityId)
   const uniqueIds = [...new Set(activityIds)]
   if (activityIds.length !== uniqueIds.length) {
     ElMessage.error('同一产品不能重复参与同一活动')
@@ -940,9 +930,9 @@ const resetForm = () => {
     sku: '',
     name: '',
     price: 0,
-    activityCommissions: []
+    activityConfigs: []
   })
-  addActivityCommission()
+  addActivityConfig()
 }
 
 const getGradeText = (grade) => {

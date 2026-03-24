@@ -33,7 +33,7 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
 
     // 按活动筛选
     if (activityId) {
-      query['activityCommissions.activityId'] = activityId;
+      query['activityConfigs.activityId'] = activityId;
     }
 
     // 关键词搜索（兼容合作产品）
@@ -49,7 +49,7 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
       .populate('supplierId', 'name')
       .populate('shopId', 'name shopName shopNumber')
       .populate('categoryId', 'name')
-      .populate('activityCommissions.activityId', 'name')
+      .populate('activityConfigs.activityId', 'name')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ createdAt: -1 });
@@ -148,7 +148,7 @@ router.get('/:id', authenticate, authorize('products:read'), async (req, res) =>
     .populate('shopId', 'name country')
     .populate('categoryId', 'name')
     .populate('gradeId', 'name')
-    .populate('activityCommissions.activityId', 'name');
+    .populate('activityConfigs.activityId', 'name');
 
     if (!product) {
       return res.status(404).json({
@@ -248,7 +248,7 @@ router.delete('/:id', authenticate, authorize('products:delete'), async (req, re
  */
 router.put('/:id/activity-commission', authenticate, authorize('products:update'), async (req, res) => {
   try {
-    const { activityCommissions } = req.body;
+    const { activityConfigs } = req.body;
 
     const product = await Product.findOne({
       _id: req.params.id,
@@ -262,12 +262,12 @@ router.put('/:id/activity-commission', authenticate, authorize('products:update'
       });
     }
 
-    product.activityCommissions = activityCommissions || [];
+    product.activityConfigs = activityConfigs || [];
     await product.save();
 
     res.json({
       success: true,
-      message: '活动佣金配置更新成功',
+      message: '活动配置更新成功',
       data: { product }
     });
 
