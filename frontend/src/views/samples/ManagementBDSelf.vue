@@ -283,7 +283,7 @@
     <!-- 详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      :title="currentSample?.isBlacklistedInfluencer ? '样品申请详情（黑名单达人）' : '样品申请详情'"
+      :title="currentSample?.isBlacklistedInfluencer ? '详情（黑名单达人）' : '详情'"
       width="900px"
       class="business-detail-dialog"
     >
@@ -582,7 +582,7 @@
     <!-- 新增对话框 -->
     <el-dialog
       v-model="createDialogVisible"
-      title="新增样品申请"
+      title="新增"
       width="700px"
     >
       <el-form
