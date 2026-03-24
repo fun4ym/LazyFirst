@@ -61,7 +61,7 @@ const routes = [
         path: 'influencer-managements',
         name: 'InfluencerManagements',
         component: () => import('@/views/influencer-managements/Index.vue'),
-        meta: { title: '达人管理' }
+        meta: { title: '' }
       },
       {
         path: 'products',
@@ -80,19 +80,19 @@ const routes = [
         path: 'activities',
         name: 'Activities',
         component: () => import('@/views/activities/Index.vue'),
-        meta: { title: 'TikTok活动' }
+        meta: { title: '活动' }
       },
       {
         path: 'samples',
         name: 'Samples',
         component: () => import('@/views/samples/Management.vue'),
-        meta: { title: '样品申请' }
+        meta: { title: '' }
       },
       {
         path: 'samples-bd',
         name: 'SamplesBD',
         component: () => import('@/views/samples/ManagementBDSelf.vue'),
-        meta: { title: '样品申请' }
+        meta: { title: '' }
       },
       {
         path: 'orders',
