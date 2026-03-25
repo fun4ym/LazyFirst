@@ -30,7 +30,7 @@ const upload = multer({
  * @access  Private
  * @notes   支持 samples:read (管理员) 和 samples-bd:read (BD) 两种权限
  */
-router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesmanId', deptField: 'deptId' }), async (req, res) => {
+router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesman', deptField: 'deptId', ownerValue: (req) => req.user.username }), async (req, res) => {
   try {
     const {
       page = 1,
@@ -48,11 +48,15 @@ router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filt
     const query = { ...req.dataScope.query };
     
     // BD用户按salesman名称过滤（因为样品数据用salesman而不是salesmanId）
+    // 兼容存储的 realName 和 username
     if (req.dataScope.scope === 'self' && req.user.username) {
-      // 如果没有 salesmanId 字段的数据，则使用 salesman 字段匹配
+      const salesmanNames = [req.user.username];
+      if (req.user.realName) {
+        salesmanNames.push(req.user.realName);
+      }
       query.$or = [
         { salesmanId: req.user._id },
-        { salesman: req.user.username }
+        { salesman: { $in: salesmanNames } }
       ];
       delete query.salesmanId;
     }
@@ -123,8 +127,10 @@ router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filt
     // 为每个样品添加黑名单信息
     const samplesWithBlacklist = samples.map(sample => {
       const blacklistInfo = blacklistMap[sample.influencerAccount] || { isBlacklisted: false };
+      const sampleObj = sample.toObject();
       return {
-        ...sample.toObject(),
+        ...sampleObj,
+        productId: sampleObj.productId ? sampleObj.productId.toString() : '',
         isBlacklistedInfluencer: blacklistInfo.isBlacklisted,
         influencerBlacklistInfo: blacklistInfo.isBlacklisted ? blacklistInfo : null
       };
@@ -162,7 +168,6 @@ router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filt
  */
 router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'), [
   body('date').notEmpty().withMessage('日期不能为空'),
-  body('productName').notEmpty().withMessage('商品名称不能为空'),
   body('productId').notEmpty().withMessage('商品ID不能为空'),
   body('influencerAccount').notEmpty().withMessage('达人账号不能为空')
 ], async (req, res) => {
@@ -178,8 +183,8 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
 
     const {
       date,
-      productName,
-      productId,
+      productName: inputProductName,
+      productId: inputProductId,
       influencerAccount,
       followerCount,
       salesman,
@@ -198,11 +203,35 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
       isOrderGenerated
     } = req.body;
 
-    // 构建唯一键：日期 + 达人账号 + 商品ID
+    // 验证并获取 Product 信息
+    let productIdObj;
+    let productName = inputProductName;
+    
+    try {
+      const product = await Product.findById(inputProductId);
+      if (!product) {
+        return res.status(400).json({
+          success: false,
+          message: '商品不存在'
+        });
+      }
+      productIdObj = product._id;
+      // 如果没传 productName，使用 Product 的 name
+      if (!productName) {
+        productName = product.name;
+      }
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: '无效的商品ID'
+      });
+    }
+
+    // 构建唯一键：日期 + 达人账号 + 商品ID (ObjectId)
     const uniqueKey = {
       date: new Date(date),
       influencerAccount,
-      productId
+      productId: productIdObj
     };
 
     // 检查记录是否已存在
@@ -224,7 +253,7 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
       creatorId: req.user._id,
       date: new Date(date),
       productName,
-      productId,
+      productId: productIdObj,
       influencerAccount,
       followerCount: parseInt(followerCount) || 0,
       salesman: salesman || '',
@@ -265,7 +294,7 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
         followers: parseInt(followerCount) || 0,
         gmv: 0,
         poolType: influencer.poolType,
-        remark: `申请样品：${productId}`,
+        remark: `申请样品：${productName}`,
         maintainerId: req.user._id,
         maintainerName: req.user.realName || req.user.username,
         recordType: 'sample_application',
@@ -278,7 +307,7 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
       influencer.latestMaintenanceTime = maintenance.createdAt;
       influencer.latestMaintainerId = req.user._id;
       influencer.latestMaintainerName = req.user.realName || req.user.username;
-      influencer.latestRemark = `申请样品：${productId}`;
+      influencer.latestRemark = `申请样品：${productName}`;
       await influencer.save();
     }
 
@@ -509,11 +538,55 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
           continue;
         }
 
+        // 根据商品ID或名称查找 Product
+        let productIdObj = null;
+        let productName = row['商品名称'] || '';
+        const productIdInput = row['商品ID'];
+        
+        if (productIdInput) {
+          // 尝试用 ID 查找
+          try {
+            const product = await Product.findById(productIdInput);
+            if (product) {
+              productIdObj = product._id;
+              productName = product.name || productName;
+            }
+          } catch (err) {
+            // ID 格式不对，尝试用 tiktokProductId 查找
+          }
+          
+          // 如果没找到，尝试用 tiktokProductId 查找
+          if (!productIdObj) {
+            const productByTiktokId = await Product.findOne({ tiktokProductId: productIdInput });
+            if (productByTiktokId) {
+              productIdObj = productByTiktokId._id;
+              productName = productByTiktokId.name || productName;
+            }
+          }
+          
+          // 如果还没找到，尝试用 name 查找
+          if (!productIdObj && productName) {
+            const productByName = await Product.findOne({ name: productName });
+            if (productByName) {
+              productIdObj = productByName._id;
+            }
+          }
+        }
+        
+        if (!productIdObj) {
+          result.failed++;
+          result.errors.push({
+            row: rowIndex + 1,
+            message: `商品不存在: ${productIdInput || productName}`
+          });
+          continue;
+        }
+
         // 构建唯一键：日期 + 达人账号 + 商品ID
         const uniqueKey = {
           date: date,
           influencerAccount: row['达人账号'],
-          productId: row['商品ID']
+          productId: productIdObj
         };
 
         // 检查记录是否已存在
@@ -527,8 +600,8 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
           companyId: req.companyId,
           creatorId: req.user._id,
           date: date,
-          productName: row['商品名称'],
-          productId: row['商品ID'],
+          productName: productName,
+          productId: productIdObj,
           influencerAccount: row['达人账号'],
           followerCount: parseInt(row['粉丝数']) || 0,
           salesman: row['归属业务员'] || '',

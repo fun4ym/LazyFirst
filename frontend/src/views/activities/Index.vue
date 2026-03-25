@@ -215,6 +215,98 @@
           <el-input v-model="form.partnerCenter" placeholder="合作中心" />
         </el-form-item>
 
+        <!-- 活动配置 -->
+        <el-divider content-position="left">活动配置</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="TAP专属链">
+              <el-input v-model="form.tapLink" placeholder="TAP专属链接" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="寄样方式">
+              <el-select v-model="form.sampleMethod" placeholder="选择寄样方式" clearable style="width: 100%">
+                <el-option label="线上" value="线上" />
+                <el-option label="线下" value="线下" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="合作国家">
+              <el-input v-model="form.cooperationCountry" placeholder="合作国家" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 达人要求 -->
+        <el-divider content-position="left">达人要求</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="GMV">
+              <el-input-number v-model="form.requirementGmv" :min="0" placeholder="GMV以上" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="月销售件数">
+              <el-input-number v-model="form.requirementMonthlySales" :min="0" placeholder="月销售件数以上" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="粉丝数">
+              <el-input-number v-model="form.requirementFollowers" :min="0" placeholder="粉丝数以上" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="月均播放量">
+              <el-input-number v-model="form.requirementAvgViews" :min="0" placeholder="月均播放量以上" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="要求说明">
+          <el-input v-model="form.requirementRemark" type="textarea" :rows="2" placeholder="达人要求说明" />
+        </el-form-item>
+
+        <!-- 佣金配置 - 推广时 -->
+        <el-divider content-position="left">佣金配置 - 推广时</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="给达人(%)">
+              <el-input-number v-model="form.promotionInfluencerRate" :min="0" :max="100" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="原本(%)">
+              <el-input-number v-model="form.promotionOriginalRate" :min="0" :max="100" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="公司自留(%)">
+              <el-input-number v-model="form.promotionCompanyRate" :min="0" :max="100" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 佣金配置 - 投广告时 -->
+        <el-divider content-position="left">佣金配置 - 投广告时</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="给达人(%)">
+              <el-input-number v-model="form.adInfluencerRate" :min="0" :max="100" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="原本(%)">
+              <el-input-number v-model="form.adOriginalRate" :min="0" :max="100" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="公司自留(%)">
+              <el-input-number v-model="form.adCompanyRate" :min="0" :max="100" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-form-item label="活动描述">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="活动描述" />
         </el-form-item>
@@ -270,8 +362,67 @@
           <el-descriptions-item label="预算">
             ฿{{ formatMoney(currentActivity.budget) }}
           </el-descriptions-item>
-          <el-descriptions-item label="活动描述" :span="2">
-            {{ currentActivity.description || '-' }}
+        </el-descriptions>
+
+        <!-- 活动配置 -->
+        <h4 class="section-title">活动配置</h4>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="TAP专属链">
+            {{ currentActivity.tapLink || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="寄样方式">
+            {{ currentActivity.sampleMethod || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="合作国家">
+            {{ currentActivity.cooperationCountry || '-' }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 达人要求 -->
+        <h4 class="section-title">达人要求</h4>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="GMV">
+            {{ currentActivity.requirementGmv || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="月销件数">
+            {{ currentActivity.requirementMonthlySales || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="粉丝数">
+            {{ currentActivity.requirementFollowers || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="月均播放量">
+            {{ currentActivity.requirementAvgViews || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="要求说明" :span="2">
+            {{ currentActivity.requirementRemark || '-' }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 佣金配置 - 推广时 -->
+        <h4 class="section-title">佣金配置 - 推广时</h4>
+        <el-descriptions :column="3" border>
+          <el-descriptions-item label="给达人(%)">
+            {{ currentActivity.promotionInfluencerRate || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="原本(%)">
+            {{ currentActivity.promotionOriginalRate || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="公司自留(%)">
+            {{ currentActivity.promotionCompanyRate || 0 }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 佣金配置 - 投广告时 -->
+        <h4 class="section-title">佣金配置 - 投广告时</h4>
+        <el-descriptions :column="3" border>
+          <el-descriptions-item label="给达人(%)">
+            {{ currentActivity.adInfluencerRate || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="原本(%)">
+            {{ currentActivity.adOriginalRate || 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="公司自留(%)">
+            {{ currentActivity.adCompanyRate || 0 }}
           </el-descriptions-item>
         </el-descriptions>
 
@@ -374,11 +525,28 @@ const form = reactive({
   name: '',
   type: 'self_initiated',
   partnerCenter: '',
+  tapLink: '',
+  sampleMethod: '',
+  cooperationCountry: '',
   startDate: '',
   endDate: '',
   budget: 0,
   description: '',
-  status: 'pending'
+  status: 'pending',
+  // 达人要求
+  requirementGmv: 0,
+  requirementMonthlySales: 0,
+  requirementFollowers: 0,
+  requirementAvgViews: 0,
+  requirementRemark: '',
+  // 佣金配置 - 推广时
+  promotionInfluencerRate: 0,
+  promotionOriginalRate: 0,
+  promotionCompanyRate: 0,
+  // 佣金配置 - 投广告时
+  adInfluencerRate: 0,
+  adOriginalRate: 0,
+  adCompanyRate: 0
 })
 
 const rules = {
@@ -515,7 +683,24 @@ const showEditDialog = (row) => {
     endDate: row.endDate,
     budget: row.budget,
     description: row.description,
-    status: row.status
+    status: row.status,
+    // 佣金配置
+    promotionInfluencerRate: row.promotionInfluencerRate || 0,
+    promotionOriginalRate: row.promotionOriginalRate || 0,
+    promotionCompanyRate: row.promotionCompanyRate || 0,
+    adInfluencerRate: row.adInfluencerRate || 0,
+    adOriginalRate: row.adOriginalRate || 0,
+    adCompanyRate: row.adCompanyRate || 0,
+    // 活动配置
+    tapLink: row.tapLink || '',
+    cooperationCountry: row.cooperationCountry || '',
+    // 达人要求
+    requirementGmv: row.requirementGmv || 0,
+    requirementMonthlySales: row.requirementMonthlySales || 0,
+    requirementFollowers: row.requirementFollowers || 0,
+    requirementAvgViews: row.requirementAvgViews || 0,
+    requirementRemark: row.requirementRemark || '',
+    sampleMethod: row.sampleMethod || ''
   })
 }
 
@@ -545,11 +730,28 @@ const resetForm = () => {
     name: '',
     type: 'self_initiated',
     partnerCenter: '',
+    tapLink: '',
+    sampleMethod: '',
+    cooperationCountry: '',
     startDate: '',
     endDate: '',
     budget: 0,
     description: '',
-    status: 'pending'
+    status: 'pending',
+    // 达人要求
+    requirementGmv: 0,
+    requirementMonthlySales: 0,
+    requirementFollowers: 0,
+    requirementAvgViews: 0,
+    requirementRemark: '',
+    // 佣金配置 - 推广时
+    promotionInfluencerRate: 0,
+    promotionOriginalRate: 0,
+    promotionCompanyRate: 0,
+    // 佣金配置 - 投广告时
+    adInfluencerRate: 0,
+    adOriginalRate: 0,
+    adCompanyRate: 0
   })
   if (formRef.value) {
     formRef.value.clearValidate()

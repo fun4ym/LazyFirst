@@ -18,9 +18,10 @@ const sampleManagementSchema = new mongoose.Schema({
     comment: '商品名称'
   },
   productId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
     required: true,
-    comment: '商品ID'
+    comment: '商品ID (关联Product._id)'
   },
   influencerAccount: {
     type: String,

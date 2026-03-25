@@ -267,7 +267,7 @@ router.delete('/:id', authenticate, authorize('influencers:delete'), async (req,
 // 添加维护记录
 router.post('/:id/maintenance', authenticate, async (req, res) => {
   try {
-    const { followers, gmv, remark } = req.body;
+    const { followers, gmv, monthlySalesCount, avgVideoViews, remark } = req.body;
     const influencerId = req.params.id;
     const userId = req.user.id;
 
@@ -282,6 +282,8 @@ router.post('/:id/maintenance', authenticate, async (req, res) => {
       influencerId,
       followers: followers || 0,
       gmv: gmv || 0,
+      monthlySalesCount: monthlySalesCount || 0,
+      avgVideoViews: avgVideoViews || 0,
       remark: remark || '',
       maintainerId: userId,
       maintainerName: req.user.realName || req.user.username
@@ -292,6 +294,8 @@ router.post('/:id/maintenance', authenticate, async (req, res) => {
     // 更新达人最新维护信息
     influencer.latestFollowers = followers || 0;
     influencer.latestGmv = gmv || 0;
+    influencer.monthlySalesCount = monthlySalesCount || 0;
+    influencer.avgVideoViews = avgVideoViews || 0;
     influencer.latestMaintenanceTime = maintenance.createdAt;
     influencer.latestMaintainerId = userId;
     influencer.latestMaintainerName = req.user.realName || req.user.username;

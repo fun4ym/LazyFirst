@@ -1,13 +1,13 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
-const CooperationProduct = require('../models/CooperationProduct');
+const Product = require('../models/Product');
 
 const router = express.Router();
 
-// 清除所有合作产品数据（仅管理员）
+// 清除所有商品数据（仅管理员）
 router.delete('/clear-all', authenticate, authorize('admin'), async (req, res) => {
   try {
-    await CooperationProduct.deleteMany({});
+    await Product.deleteMany({});
 
     res.json({
       success: true,

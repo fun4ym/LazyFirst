@@ -276,12 +276,12 @@
               </el-button>
             </div>
             <div v-if="form.activityConfigs.length === 0" class="empty-tip">
-              请至少添加一个活动配置
+              暂无活动配置，需要时可添加
             </div>
             <div v-for="(config, index) in form.activityConfigs" :key="index" class="activity-commission-item">
               <div class="activity-header">
                 <span class="activity-title">活动 {{ index + 1 }}</span>
-                <el-button link type="danger" size="small" @click="removeActivityConfig(index)" v-if="form.activityConfigs.length > 1">
+                <el-button link type="danger" size="small" @click="removeActivityConfig(index)">
                   删除
                 </el-button>
               </div>
@@ -396,16 +396,24 @@
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="合作产品详情" width="900px" :close-on-click-modal="false">
-      <div v-if="currentProduct">
+    <el-dialog v-model="showDetailDialog" title="商品详情" width="900px" :close-on-click-modal="false">
+      <div v-if="currentProduct" class="product-detail">
+        <!-- 基本信息 -->
+        <h4 class="section-title">基本信息</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="TikTok商品ID">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="商品名称">{{ currentProduct.name || currentProduct.productName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="商品" :span="2" label-class-name="detail-label">
+            <div class="product-cell">
+              <span class="tiktok-id">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</span>
+              <span class="product-name" :title="currentProduct.name || currentProduct.productName">{{ currentProduct.name || currentProduct.productName || '-' }}</span>
+            </div>
+          </el-descriptions-item>
           <el-descriptions-item label="SKU">{{ currentProduct.sku || '-' }}</el-descriptions-item>
           <el-descriptions-item label="店铺">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="商品类目">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
           <el-descriptions-item label="价格">{{ currentProduct.price ? '$' + currentProduct.price : '-' }}</el-descriptions-item>
-          <el-descriptions-item label="TAP专属链">{{ currentProduct.tapExclusiveLink || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="TAP专属链" :span="2" label-class-name="detail-label">
+            <span class="long-text" :title="currentProduct.tapExclusiveLink">{{ currentProduct.tapExclusiveLink || '-' }}</span>
+          </el-descriptions-item>
           <el-descriptions-item label="达人要求">{{ currentProduct.influencerRequirement || '-' }}</el-descriptions-item>
           <el-descriptions-item label="广场佣金率">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
           <el-descriptions-item label="状态">
@@ -415,14 +423,22 @@
           </el-descriptions-item>
         </el-descriptions>
 
-        <el-divider>商品信息</el-divider>
+        <!-- 商品信息 -->
+        <h4 class="section-title">商品信息</h4>
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="商品简介">{{ currentProduct.productIntro || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="参考视频">{{ currentProduct.referenceVideo || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="卖点">{{ currentProduct.sellingPoints || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="商品简介" label-class-name="detail-label">
+            <span class="long-text">{{ currentProduct.productIntro || '-' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="参考视频" label-class-name="detail-label">
+            <span class="long-text" :title="currentProduct.referenceVideo">{{ currentProduct.referenceVideo || '-' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="卖点" label-class-name="detail-label">
+            <span class="long-text">{{ currentProduct.sellingPoints || '-' }}</span>
+          </el-descriptions-item>
         </el-descriptions>
 
-        <el-divider>活动佣金配置</el-divider>
+        <!-- 活动佣金配置 -->
+        <h4 class="section-title">活动佣金配置</h4>
         <div v-if="currentProduct.activityConfigs && currentProduct.activityConfigs.length > 0">
           <div v-for="(ac, index) in currentProduct.activityConfigs" :key="index" style="margin-bottom: 16px;">
             <el-card>
@@ -750,10 +766,6 @@ const convertCommissionRatesToPercent = (data) => {
 }
 
 const removeActivityConfig = (index) => {
-  if (form.activityConfigs.length <= 1) {
-    ElMessage.warning('至少需要保留一个活动配置')
-    return
-  }
   form.activityConfigs.splice(index, 1)
 }
 
@@ -761,6 +773,7 @@ const validateActivityDuplication = (currentIndex) => {
   const currentActivityId = form.activityConfigs[currentIndex]?.activityId
   if (!currentActivityId) return
 
+  // 检查是否重复选择同一活动
   const duplicateIndex = form.activityConfigs.findIndex((ac, index) =>
     index !== currentIndex && ac.activityId === currentActivityId
   )
@@ -768,6 +781,27 @@ const validateActivityDuplication = (currentIndex) => {
   if (duplicateIndex !== -1) {
     ElMessage.error('同一产品不能重复参与同一活动')
     form.activityConfigs[currentIndex].activityId = ''
+    return
+  }
+
+  // 从活动中读取佣金配置
+  const activity = activities.value.find(a => a._id === currentActivityId)
+  if (activity) {
+    const config = form.activityConfigs[currentIndex]
+    // 填充活动的佣金配置（作为默认值，用户可以修改）
+    config.promotionInfluencerRate = activity.promotionInfluencerRate || 0
+    config.promotionOriginalRate = activity.promotionOriginalRate || 0
+    config.promotionCompanyRate = activity.promotionCompanyRate || 0
+    config.adInfluencerRate = activity.adInfluencerRate || 0
+    config.adOriginalRate = activity.adOriginalRate || 0
+    config.adCompanyRate = activity.adCompanyRate || 0
+    config.requirementGmv = activity.requirementGmv || 0
+    config.requirementMonthlySales = activity.requirementMonthlySales || 0
+    config.requirementFollowers = activity.requirementFollowers || 0
+    config.requirementAvgViews = activity.requirementAvgViews || 0
+    config.requirementRemark = activity.requirementRemark || ''
+    config.sampleMethod = activity.sampleMethod || ''
+    config.cooperationCountry = activity.cooperationCountry || ''
   }
 }
 
@@ -843,9 +877,7 @@ const editProduct = (row) => {
   }
   convertCommissionRatesToPercent(formData)
   Object.assign(form, formData)
-  if (form.activityConfigs.length === 0) {
-    addActivityConfig()
-  }
+  // 活动配置是可选的，不再自动添加
   showDialog.value = true
 }
 
@@ -866,25 +898,22 @@ const deleteProduct = async (row) => {
 }
 
 const handleSubmit = async () => {
-  // 验证至少有一个活动配置
-  if (!form.activityConfigs || form.activityConfigs.length === 0) {
-    ElMessage.error('请至少添加一个活动配置')
-    return
-  }
+  // 活动配置是可选的，如果填写了则验证
+  if (form.activityConfigs && form.activityConfigs.length > 0) {
+    // 验证每个活动配置都有活动ID
+    const hasEmptyActivity = form.activityConfigs.some(ac => !ac.activityId)
+    if (hasEmptyActivity) {
+      ElMessage.error('请为每个活动配置选择活动')
+      return
+    }
 
-  // 验证每个活动配置都有活动ID
-  const hasEmptyActivity = form.activityConfigs.some(ac => !ac.activityId)
-  if (hasEmptyActivity) {
-    ElMessage.error('请为每个活动配置选择活动')
-    return
-  }
-
-  // 验证活动是否有重复
-  const activityIds = form.activityConfigs.map(ac => ac.activityId)
-  const uniqueIds = [...new Set(activityIds)]
-  if (activityIds.length !== uniqueIds.length) {
-    ElMessage.error('同一产品不能重复参与同一活动')
-    return
+    // 验证活动是否有重复
+    const activityIds = form.activityConfigs.map(ac => ac.activityId)
+    const uniqueIds = [...new Set(activityIds)]
+    if (activityIds.length !== uniqueIds.length) {
+      ElMessage.error('同一产品不能重复参与同一活动')
+      return
+    }
   }
 
   try {
@@ -932,7 +961,7 @@ const resetForm = () => {
     price: 0,
     activityConfigs: []
   })
-  addActivityConfig()
+  // 不再自动添加活动配置，让它变为可选
 }
 
 const getGradeText = (grade) => {
@@ -1435,5 +1464,57 @@ defineExpose({
 
 .report-card {
   margin-bottom: 16px;
+}
+
+/* 商品详情弹层样式 */
+.product-detail {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.product-detail .section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin: 20px 0 12px;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
+}
+
+.product-detail .section-title:first-child {
+  margin-top: 0;
+}
+
+.product-detail .long-text {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+.product-detail .detail-label {
+  font-weight: 500;
+  color: #606266;
+  background: #f5f7fa;
+}
+
+.product-detail .product-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.product-detail .product-cell .tiktok-id {
+  color: #6DAD19;
+  font-size: 12px;
+}
+
+.product-detail .product-cell .product-name {
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

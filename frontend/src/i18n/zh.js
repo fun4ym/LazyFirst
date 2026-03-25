@@ -80,7 +80,10 @@ export default {
     commissionRules: '抽点设置',
     systemModels: '系统模型',
     initialization: '初始化',
-    bdWorkspace: 'BD工作台'
+    bdWorkspace: 'BD工作台',
+    shops: '店铺管理',
+    bdDashboard: 'BD仪表盘',
+    initImport: '初始化导入'
   },
   login: {
     title: 'LazyFirst',
@@ -276,6 +279,35 @@ export default {
     price: '价格',
     commission: '佣金',
     performance: '业绩'
+  },
+  shop: {
+    shopList: '店铺列表',
+    addShop: '新建店铺',
+    editShop: '编辑店铺',
+    shopName: '店铺',
+    shopNumber: '店铺号',
+    shopAvatar: '店铺头像',
+    sampleLink: '申样链接',
+    generated: '已生成',
+    notGenerated: '未生成',
+    copy: '复制',
+    creditRating: '信用等级',
+    cooperationRating: '配合程度',
+    detail: '详情',
+    edit: '编辑',
+    delete: '删除',
+    search: '搜索店铺/店铺号',
+    status: '状态',
+    enable: '启用',
+    disable: '禁用',
+    active: '启用',
+    inactive: '禁用',
+    contactName: '联系人姓名',
+    contactPhone: '联系电话',
+    contactEmail: '联系人邮箱',
+    saveSuccess: '保存成功',
+    deleteSuccess: '删除成功',
+    deleteConfirm: '确定要删除该店铺吗？'
   },
   baseData: {
     country: '国家',

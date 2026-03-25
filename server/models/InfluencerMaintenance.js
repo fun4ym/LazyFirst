@@ -21,6 +21,14 @@ const influencerMaintenanceSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  monthlySalesCount: {
+    type: Number,
+    default: 0
+  },
+  avgVideoViews: {
+    type: Number,
+    default: 0
+  },
   poolType: {
     type: String,
     enum: ['public', 'private'],

@@ -4,38 +4,38 @@
     <div class="filter-section">
       <el-row :gutter="16">
         <el-col :span="4">
-          <el-select v-model="filters.status" placeholder="状态" clearable @change="loadData">
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+          <el-select v-model="filters.status" :placeholder="$t('shop.status')" clearable @change="loadData">
+            <el-option :label="$t('shop.enable')" value="active" />
+            <el-option :label="$t('shop.disable')" value="inactive" />
           </el-select>
         </el-col>
         <el-col :span="4">
-          <el-input v-model="filters.keyword" placeholder="搜索店铺/店铺号" clearable @change="loadData">
+          <el-input v-model="filters.keyword" :placeholder="$t('shop.search')" clearable @change="loadData">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('shops:create')">新建店铺</el-button>
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('shops:create')">{{ $t('shop.addShop') }}</el-button>
         </el-col>
       </el-row>
     </div>
 
     <!-- 店铺列表 -->
     <el-table :data="shops" stripe v-loading="loading">
-      <el-table-column label="店铺头像" width="80">
+      <el-table-column :label="$t('shop.shopAvatar')" width="80">
         <template #default="{ row }">
           <el-avatar v-if="row.avatar" :src="row.avatar" :size="50" />
           <el-avatar v-else :size="50">店</el-avatar>
         </template>
       </el-table-column>
-      <el-table-column prop="shopName" label="店铺" width="150" />
-      <el-table-column prop="shopNumber" label="店铺号" width="120" />
-      <el-table-column label="申样链接" min-width="180">
+      <el-table-column prop="shopName" :label="$t('shop.shopName')" width="150" />
+      <el-table-column prop="shopNumber" :label="$t('shop.shopNumber')" width="120" />
+      <el-table-column :label="$t('shop.sampleLink')" min-width="180">
         <template #default="{ row }">
           <div v-if="row.identificationCode" class="sample-link">
-            <el-tag type="success" size="small">已生成</el-tag>
+            <el-tag type="success" size="small">{{ $t('shop.generated') }}</el-tag>
             <span class="generated-time">{{ formatDate(row.identificationCodeGeneratedAt) }}</span>
             <el-button
               link
@@ -43,34 +43,34 @@
               size="small"
               @click="copySampleLink(row)"
             >
-              复制
+              {{ $t('shop.copy') }}
             </el-button>
           </div>
-          <span v-else class="no-code">未生成</span>
+          <span v-else class="no-code">{{ $t('shop.notGenerated') }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="creditRating" label="信用等级" width="100">
+      <el-table-column prop="creditRating" :label="$t('shop.creditRating')" width="100">
         <template #default="{ row }">
           ★{{ row.creditRating || 0 }}
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="80">
+      <el-table-column prop="status" :label="$t('shop.status')" width="80">
         <template #default="{ row }">
           <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-            {{ row.status === 'active' ? '启用' : '禁用' }}
+            {{ row.status === 'active' ? $t('shop.enable') : $t('shop.disable') }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="cooperationRating" label="配合程度" width="100">
+      <el-table-column prop="cooperationRating" :label="$t('shop.cooperationRating')" width="100">
         <template #default="{ row }">
           ★{{ row.cooperationRating || 0 }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column :label="$t('common.operation')" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="viewShop(row)" v-if="hasPermission('shops:read')">详情</el-button>
-          <el-button link type="primary" @click="editShop(row)" v-if="hasPermission('shops:update')">编辑</el-button>
-          <el-button link type="danger" @click="deleteShop(row)" v-if="hasPermission('shops:delete')">删除</el-button>
+          <el-button link type="primary" @click="viewShop(row)" v-if="hasPermission('shops:read')">{{ $t('shop.detail') }}</el-button>
+          <el-button link type="primary" @click="editShop(row)" v-if="hasPermission('shops:update')">{{ $t('shop.edit') }}</el-button>
+          <el-button link type="danger" @click="deleteShop(row)" v-if="hasPermission('shops:delete')">{{ $t('shop.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -91,43 +91,43 @@
     <!-- 新建/编辑店铺对话框 -->
     <el-dialog
       v-model="showDialog"
-      :title="editingShop ? '编辑店铺' : '新建店铺'"
+      :title="editingShop ? $t('shop.editShop') : $t('shop.addShop')"
       width="700px"
       :close-on-click-modal="false"
     >
       <el-form :model="form" ref="formRef" label-width="120px" label-position="right">
-        <el-form-item label="店铺头像">
-          <el-input v-model="form.avatar" placeholder="请输入头像URL" />
+        <el-form-item :label="$t('shop.shopAvatar')">
+          <el-input v-model="form.avatar" :placeholder="$t('common.input') + ' avatar URL'" />
         </el-form-item>
-        <el-form-item label="店铺" prop="shopName" required>
-          <el-input v-model="form.shopName" placeholder="请输入店铺名称" />
+        <el-form-item :label="$t('shop.shopName')" prop="shopName" required>
+          <el-input v-model="form.shopName" :placeholder="$t('common.input') + $t('shop.shopName')" />
         </el-form-item>
-        <el-form-item label="店铺号" prop="shopNumber" required>
-          <el-input v-model="form.shopNumber" placeholder="请输入店铺号" />
+        <el-form-item :label="$t('shop.shopNumber')" prop="shopNumber" required>
+          <el-input v-model="form.shopNumber" :placeholder="$t('common.input') + $t('shop.shopNumber')" />
         </el-form-item>
         <el-form-item label="联系地址">
-          <el-input v-model="form.contactAddress" type="textarea" :rows="2" placeholder="请输入联系地址" />
+          <el-input v-model="form.contactAddress" type="textarea" :rows="2" :placeholder="$t('common.input') + '联系地址'" />
         </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注" />
+        <el-form-item :label="$t('common.remark')">
+          <el-input v-model="form.remark" type="textarea" :rows="2" :placeholder="$t('common.input') + $t('common.remark')" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="$t('shop.status')">
           <el-radio-group v-model="form.status">
-            <el-radio value="active">启用</el-radio>
-            <el-radio value="inactive">禁用</el-radio>
+            <el-radio value="active">{{ $t('shop.enable') }}</el-radio>
+            <el-radio value="inactive">{{ $t('shop.disable') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">保存</el-button>
+        <el-button @click="showDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 店铺详情对话框 -->
     <el-dialog
       v-model="showDetailDialog"
-      title="店铺详情"
+      :title="$t('shop.detail')"
       width="1000px"
       :close-on-click-modal="false"
     >

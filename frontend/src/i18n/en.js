@@ -79,7 +79,10 @@ export default {
     bdDaily: 'BD Daily',
     commissionRules: 'Commission Rules',
     systemModels: 'System Models',
-    bdWorkspace: 'BD Workspace'
+    bdWorkspace: 'BD Workspace',
+    shops: 'Shops',
+    bdDashboard: 'BD Dashboard',
+    initImport: 'Initial Import'
   },
   login: {
     title: 'LazyFirst',
@@ -275,6 +278,35 @@ export default {
     price: 'Price',
     commission: 'Commission',
     performance: 'Performance'
+  },
+  shop: {
+    shopList: 'Shop List',
+    addShop: 'Add Shop',
+    editShop: 'Edit Shop',
+    shopName: 'Shop',
+    shopNumber: 'Shop Number',
+    shopAvatar: 'Shop Avatar',
+    sampleLink: 'Sample Link',
+    generated: 'Generated',
+    notGenerated: 'Not Generated',
+    copy: 'Copy',
+    creditRating: 'Credit Rating',
+    cooperationRating: 'Cooperation Rating',
+    detail: 'Detail',
+    edit: 'Edit',
+    delete: 'Delete',
+    search: 'Search shop/number',
+    status: 'Status',
+    enable: 'Enable',
+    disable: 'Disable',
+    active: 'Enabled',
+    inactive: 'Disabled',
+    contactName: 'Contact Name',
+    contactPhone: 'Contact Phone',
+    contactEmail: 'Contact Email',
+    saveSuccess: 'Saved successfully',
+    deleteSuccess: 'Deleted successfully',
+    deleteConfirm: 'Are you sure you want to delete this shop?'
   },
   baseData: {
     country: 'Country',

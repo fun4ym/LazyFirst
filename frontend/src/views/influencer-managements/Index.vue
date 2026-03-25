@@ -78,26 +78,18 @@
           </template>
         </el-table-column>
         <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
-        <el-table-column :label="$t('influencer.influencerParams')" width="150">
+        <el-table-column :label="$t('influencer.influencerParams')" width="200">
           <template #default="{ row }">
-            <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers }}</div>
-            <div>GMV: {{ row.latestGmv }}</div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('influencer.monthlySalesCount')" width="100">
-          <template #default="{ row }">
-            <span>{{ row.monthlySalesCount || 0 }}</span>
+            <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers || 0 }}</div>
+            <div>GMV: {{ row.latestGmv || 0 }}</div>
+            <div>{{ $t('influencer.monthlySalesCount') }}: {{ row.monthlySalesCount || 0 }}</div>
+            <div>{{ $t('influencer.avgVideoViews') }}: {{ row.avgVideoViews || 0 }}</div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('influencer.suitableCategories')" width="150">
           <template #default="{ row }">
             <el-tag v-for="cat in row.suitableCategories" :key="cat._id" size="small" type="success">{{ cat.name }}</el-tag>
             <span v-if="!row.suitableCategories || row.suitableCategories.length === 0" class="text-gray">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('influencer.avgVideoViews')" width="100">
-          <template #default="{ row }">
-            <span>{{ row.avgVideoViews || 0 }}</span>
           </template>
         </el-table-column>
         <el-table-column :label="$t('influencer.categoryTag')" width="120">
@@ -407,6 +399,8 @@
           <el-descriptions-item :label="$t('common.status')">{{ currentInfluencer.status === 'enabled' ? $t('common.enabled') : $t('common.disabled') }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.latestFollowersNum')">{{ currentInfluencer.latestFollowers }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.latestGmvAmount')">{{ currentInfluencer.latestGmv }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.monthlySalesCount')">{{ currentInfluencer.monthlySalesCount || 0 }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.avgVideoViews')">{{ currentInfluencer.avgVideoViews || 0 }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.latestMaintenanceTime')">{{ formatDate(currentInfluencer.latestMaintenanceTime) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.maintainer')">{{ currentInfluencer.latestMaintainerName }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.blacklist')">
@@ -426,6 +420,8 @@
           </el-table-column>
           <el-table-column prop="followers" :label="$t('influencer.followers')" width="100" />
           <el-table-column prop="gmv" label="GMV" width="100" />
+          <el-table-column prop="monthlySalesCount" :label="$t('influencer.monthlySalesCount')" width="100" />
+          <el-table-column prop="avgVideoViews" :label="$t('influencer.avgVideoViews')" width="100" />
           <el-table-column prop="maintainerName" :label="$t('influencer.maintainer')" width="120" />
           <el-table-column prop="remark" :label="$t('common.remark')" />
         </el-table>
@@ -435,17 +431,29 @@
           <el-divider>{{ $t('influencer.addMaintenanceRecord') }}</el-divider>
           <el-form :model="maintenanceForm" label-width="80px">
             <el-row :gutter="20">
-              <el-col :span="8">
+              <el-col :span="6">
                 <el-form-item :label="$t('influencer.followers')">
                   <el-input-number v-model="maintenanceForm.followers" :min="0" />
                 </el-form-item>
               </el-col>
-              <el-col :span="8">
+              <el-col :span="6">
                 <el-form-item label="GMV">
                   <el-input-number v-model="maintenanceForm.gmv" :min="0" />
                 </el-form-item>
               </el-col>
-              <el-col :span="8">
+              <el-col :span="6">
+                <el-form-item :label="$t('influencer.monthlySalesCount')">
+                  <el-input-number v-model="maintenanceForm.monthlySalesCount" :min="0" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item :label="$t('influencer.avgVideoViews')">
+                  <el-input-number v-model="maintenanceForm.avgVideoViews" :min="0" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="24">
                 <el-form-item :label="$t('common.remark')">
                   <el-input v-model="maintenanceForm.remark" />
                 </el-form-item>
@@ -539,6 +547,8 @@ const rules = {
 const maintenanceForm = reactive({
   followers: 0,
   gmv: 0,
+  monthlySalesCount: 0,
+  avgVideoViews: 0,
   remark: ''
 })
 
@@ -887,6 +897,8 @@ const addMaintenance = async () => {
     ElMessage.success(t('influencer.addRecordSuccess'))
     maintenanceForm.followers = 0
     maintenanceForm.gmv = 0
+    maintenanceForm.monthlySalesCount = 0
+    maintenanceForm.avgVideoViews = 0
     maintenanceForm.remark = ''
     viewDetail(currentInfluencer.value)
     loadData()

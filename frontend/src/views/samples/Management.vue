@@ -684,11 +684,11 @@
             <el-option
               v-for="product in cooperationProducts"
               :key="product._id"
-              :label="`${product.productName} (${product.productId})`"
+              :label="`${product.name || product.productName} (${product.tiktokProductId || product.productId || product._id})`"
               :value="product._id"
             >
-              <span>{{ product.productName }}</span>
-              <span style="color: #6DAD19; font-size: 12px;"> - {{ product.productId }}</span>
+              <span>{{ product.name || product.productName }}</span>
+              <span style="color: #6DAD19; font-size: 12px;"> - {{ product.tiktokProductId || product.productId || product._id }}</span>
             </el-option>
           </el-select>
           <el-input v-model="createForm.productName" type="hidden" />
@@ -990,6 +990,7 @@ const loadSamples = async () => {
     const params = {
       page: pagination.page,
       limit: pagination.limit,
+      companyId: userStore.companyId,
       ...searchForm
     }
     const res = await request.get('/samples', { params })
@@ -1071,7 +1072,7 @@ const searchProducts = async (query) => {
 const handleProductSelect = (productId) => {
   const product = cooperationProducts.value.find(p => p._id === productId)
   if (product) {
-    createForm.productName = product.productName
+    createForm.productName = product.name || product.productName || ''
     createForm.productId = product._id  // 使用MongoDB _id作为关联
   }
 }

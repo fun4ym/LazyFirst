@@ -397,6 +397,17 @@ router.post('/products', authenticate, verifyAdmin, upload.single('file'), async
       // 优先用原始值匹配(code或name忽略大小写)，找不到则保留原值
       const matchedCategory = categoryMap[rawCategory] || categoryMap[rawCategory.toLowerCase()] || rawCategory;
 
+      // 处理TAP专属链：如果是被JSON数组格式包装的，提取链接
+      let tapLinkValue = String(row.tap_link || '');
+      try {
+        if (tapLinkValue.startsWith('[')) {
+          const arr = JSON.parse(tapLinkValue);
+          tapLinkValue = arr[0]?.value || '';
+        }
+      } catch (e) {
+        // 解析失败，保持原值
+      }
+
       const product = {
         companyId: companyId,
         shopId: shopId,
@@ -406,8 +417,10 @@ router.post('/products', authenticate, verifyAdmin, upload.single('file'), async
         tiktokSku: String(row.goods_no || ''),
         price: parseFloat(row.price) || 0,
         productCategory: matchedCategory,
-        squareCommissionRate: parseFloat(row.commission_market) || 0,
-        tapExclusiveLink: String(row.tap_link || ''),
+        // 广场佣金率：Excel中存储的是百分数(如8表示8%)，导入时转为小数(如0.08)
+        squareCommissionRate: (parseFloat(row.commission_market) || 0) * 0.01,
+        // TAP专属链：如果是被JSON数组格式包装的，提取链接
+        tapExclusiveLink: tapLinkValue,
         influencerRequirement: String(row.tk_expert_require || ''),
         status: 'active',
         createdAt: new Date(),

@@ -7,7 +7,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 const Shop = require('../models/Shop');
 const ShopContact = require('../models/ShopContact');
-const CooperationProduct = require('../models/CooperationProduct');
+const Product = require('../models/Product');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 
@@ -158,6 +158,18 @@ async function importProducts(data, companyId) {
 
   for (const row of data) {
     const originalId = String(row.id);
+
+    // 处理TAP专属链：如果是被JSON数组格式包装的，提取链接
+    let tapLinkValue = row.tap_link || '';
+    try {
+      if (tapLinkValue.startsWith('[')) {
+        const arr = JSON.parse(tapLinkValue);
+        tapLinkValue = arr[0]?.value || '';
+      }
+    } catch (e) {
+      // 解析失败，保持原值
+    }
+
     const product = {
       _id: originalId,
       companyId: companyId,
@@ -165,8 +177,10 @@ async function importProducts(data, companyId) {
       productName: row.goods_name || '',
       shopId: String(row.shop_id || ''),
       productCategory: row.goods_type || '',
-      squareCommissionRate: parseFloat(row.commission_market) || 0,
-      tapExclusiveLink: row.tap_link || '',
+      // 广场佣金率：Excel中存储的是百分数(如8表示8%)，导入时转为小数(如0.08)
+      squareCommissionRate: (parseFloat(row.commission_market) || 0) * 0.01,
+      // TAP专属链：如果是被JSON数组格式包装的，提取链接
+      tapExclusiveLink: tapLinkValue,
       influencerRequirement: row.tk_expert_require || '',
       goodsIntroduce: row.goods_introduce || '',
       status: 'active',
@@ -183,7 +197,7 @@ async function importProducts(data, companyId) {
 
   // 批量插入商品数据
   if (products.length > 0) {
-    await CooperationProduct.insertMany(products, { ordered: false }).catch(err => {
+    await Product.insertMany(products, { ordered: false }).catch(err => {
       console.log('部分商品插入失败:', err.message);
     });
   }

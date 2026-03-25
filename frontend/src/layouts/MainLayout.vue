@@ -2,7 +2,7 @@
   <el-container class="main-layout">
     <el-aside width="200px" class="sidebar">
       <div class="logo">
-        <img src="/logo.png" alt="TAP Logo" class="logo-image" />
+        <img src="/logo.png" alt="LazyFirst Logo" class="logo-image" />
       </div>
 
       <el-menu
@@ -44,7 +44,7 @@
             <span>{{ $t('menu.activities') }}</span>
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.shops()" index="/shops">
-            <span>店铺管理</span>
+            <span>{{ $t('menu.shops') }}</span>
           </el-menu-item>
           <!-- 合作产品已合并到产品管理中 -->
         </el-sub-menu>
@@ -70,7 +70,7 @@
             <span>{{ $t('menu.reports') }}</span>
           </template>
           <el-menu-item v-if="menuPermissions.bdDashboard()" index="/bd-dashboard">
-            <span>BD仪表盘</span>
+            <span>{{ $t('menu.bdDashboard') }}</span>
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.bdDaily()" index="/bd-daily">
             <span>{{ $t('menu.bdDaily') }}</span>
@@ -106,7 +106,7 @@
             <span>{{ $t('menu.systemModels') }}</span>
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.initImport()" index="/settings/init-import">
-            <span>初始化导入</span>
+            <span>{{ $t('menu.initImport') }}</span>
           </el-menu-item>
         </el-sub-menu>
       </el-menu>
@@ -192,7 +192,7 @@ const route = useRoute()
 const router = useRouter()
 
 const activeMenu = computed(() => route.path)
-const currentTitle = computed(() => route.meta?.title || 'TAP系统')
+const currentTitle = computed(() => 'LazyFirst Co., Ltd.')
 const realName = computed(() => AuthManager.getUser()?.realName || '')
 
 // 菜单权限判断

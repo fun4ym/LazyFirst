@@ -1,6 +1,7 @@
 const express = require('express');
 const SampleManagement = require('../models/SampleManagement');
 const Shop = require('../models/Shop');
+const Product = require('../models/Product');
 const Company = require('../models/Company');
 const Influencer = require('../models/Influencer');
 
@@ -45,10 +46,10 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // 2. 获取该店铺关联的商品ID列表
-    const productIdList = shop.products || [];
+    // 2. 用 shopId 查询该店铺关联的商品
+    const products = await Product.find({ shopId: shop._id }).select('_id tiktokProductId name');
 
-    if (productIdList.length === 0) {
+    if (products.length === 0) {
       return res.json({
         success: true,
         data: {
@@ -64,7 +65,10 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // 3. 查询样品申请
+    // 3. 获取商品ID列表（直接使用 Product._id ObjectId）
+    const productIdList = products.map(p => p._id);
+
+    // 4. 查询样品申请
     const { 
       page = 1, 
       limit = 20,
@@ -132,7 +136,7 @@ router.get('/', async (req, res) => {
       date: sample.date,
       influencerAccount: sample.influencerAccount,
       productName: sample.productName,
-      productId: sample.productId,
+      productId: sample.productId ? sample.productId.toString() : '',
       followerCount: sample.followerCount,
       gmv: influencerMap[sample.influencerAccount]?.latestGmv || 0,
       salesman: sample.salesman,
@@ -220,8 +224,9 @@ router.put('/batch', async (req, res) => {
       });
     }
 
-    // 获取该店铺的商品ID列表
-    const productIdList = shop.products || [];
+    // 获取该店铺的商品ID列表（使用 Product._id）
+    const products = await Product.find({ shopId: shop._id }).select('_id');
+    const productIdList = products.map(p => p._id);
 
     // 构建查询条件：必须是该店铺的商品
     const query = {
