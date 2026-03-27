@@ -1159,4 +1159,246 @@ router.get('/bills/:id/settlement-history', authenticate, authorize('orders:view
   }
 });
 
+/**
+ * @route   GET /api/report-orders/bd-payment-records/:bdName
+ * @desc    获取指定BD的打款记录（薪水或提成）
+ * @access  Private
+ */
+router.get('/bd-payment-records/:bdName', authenticate, authorize('orders:view'), async (req, res) => {
+  try {
+    const { bdName } = req.params;
+    const { type } = req.query; // 不传type则查所有类型
+    const Bill = require('../models/Bill');
+
+    // 获取该BD的所有账单的settlementNotes
+    // 先尝试精确匹配，再尝试模糊匹配（兼容realName和username不一致的情况）
+    let bills = await Bill.find({
+      companyId: req.companyId,
+      'settlementNotes.bdName': bdName
+    }).sort({ createdAt: -1 });
+
+    // 如果精确匹配没找到，尝试用模糊匹配（bdName包含bdName或被bdName包含）
+    if (bills.length === 0) {
+      bills = await Bill.find({
+        companyId: req.companyId,
+        'settlementNotes.bdName': { $regex: bdName, $options: 'i' }
+      }).sort({ createdAt: -1 });
+    }
+
+    // 如果模糊匹配也没找到，尝试用用户名查询用户，再匹配
+    if (bills.length === 0) {
+      const User = require('../models/User');
+      const user = await User.findOne({
+        companyId: req.companyId,
+        $or: [
+          { realName: { $regex: bdName, $options: 'i' } },
+          { username: { $regex: bdName, $options: 'i' } }
+        ]
+      });
+      if (user) {
+        const searchName = user.realName || user.username;
+        bills = await Bill.find({
+          companyId: req.companyId,
+          'settlementNotes.bdName': { $regex: searchName, $options: 'i' }
+        }).sort({ createdAt: -1 });
+      }
+    }
+
+    // 收集符合类型的打款记录（不传type则显示所有）
+    // 使用模糊匹配，兼容realName和username不一致的情况
+    const records = [];
+    const bdNameLower = bdName.toLowerCase();
+    bills.forEach(bill => {
+      bill.settlementNotes.forEach(note => {
+        const noteType = note.type || 'commission';
+        const noteBdNameLower = (note.bdName || '').toLowerCase();
+        // 不传type或type为空时显示所有类型
+        // bdName匹配：精确匹配或模糊匹配（忽略大小写）
+        const isNameMatch = note.bdName === bdName || noteBdNameLower.includes(bdNameLower) || bdNameLower.includes(noteBdNameLower);
+        if (isNameMatch && (!type || noteType === type)) {
+          records.push({
+            _id: note._id,
+            billId: bill._id,
+            billNo: bill.billNo,
+            type: noteType,
+            bdName: note.bdName,
+            bankAccount: note.bankAccount,
+            bankFlowNo: note.bankFlowNo,
+            amount: note.amount,
+            note: note.note,
+            paymentTime: note.createdAt,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+            creatorName: note.creatorName
+          });
+        }
+      });
+    });
+
+    // 按时间倒序
+    records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({
+      success: true,
+      records
+    });
+
+  } catch (error) {
+    console.error('Get BD payment records error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取打款记录失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/report-orders/bd-payment-records
+ * @desc    新增BD打款记录
+ * @access  Private
+ */
+router.post('/bd-payment-records', authenticate, authorize('orders:update'), [
+  require('express-validator').body('bdName').notEmpty().withMessage('BD名称不能为空'),
+  require('express-validator').body('type').notEmpty().withMessage('类型不能为空')
+], async (req, res) => {
+  try {
+    const errors = require('express-validator').validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: '数据验证失败',
+        errors: errors.array()
+      });
+    }
+
+    const { billId, bdName, type, bankAccount, bankFlowNo, amount, paymentTime, note } = req.body;
+    const Bill = require('../models/Bill');
+
+    let bill = null;
+    
+    // 如果有账单ID，则关联到指定账单
+    if (billId) {
+      bill = await Bill.findOne({
+        _id: billId,
+        companyId: req.companyId
+      });
+
+      if (!bill) {
+        return res.status(404).json({
+          success: false,
+          message: '账单不存在'
+        });
+      }
+    } else {
+      // 没有账单ID时，找一个最近的账单或创建临时账单
+      bill = await Bill.findOne({
+        companyId: req.companyId
+      }).sort({ createdAt: -1 });
+
+      // 如果没有任何账单，创建一个临时账单
+      if (!bill) {
+        bill = await Bill.create({
+          companyId: req.companyId,
+          billNo: `TEMP${Date.now()}`,
+          validStartDate: new Date(),
+          validEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          totalCommission: 0,
+          isSettled: false,
+          orderCount: 0,
+          bdList: [],
+          creatorId: req.user?._id
+        });
+      }
+    }
+
+    // 检查是否已存在该BD的同类型结算记录
+    const existingNote = bill.settlementNotes.find(n => n.bdName === bdName && n.type === type);
+    if (existingNote) {
+      return res.status(400).json({
+        success: false,
+        message: `该BD的${type === 'salary' ? '薪水' : '提成'}记录已存在，请使用编辑功能`
+      });
+    }
+
+    // 新增结算记录
+    bill.settlementNotes.push({
+      type: type || 'commission',
+      bdName,
+      bankAccount: bankAccount || '',
+      bankFlowNo: bankFlowNo || '',
+      amount: amount || 0,
+      note: note || '',
+      createdAt: paymentTime ? new Date(paymentTime) : new Date(),
+      creatorId: req.user?._id,
+      creatorName: req.user?.realName || req.user?.username || '未知用户'
+    });
+
+    await bill.save();
+
+    res.json({
+      success: true,
+      message: '新增打款记录成功',
+      data: bill
+    });
+
+  } catch (error) {
+    console.error('Add BD payment record error:', error);
+    res.status(500).json({
+      success: false,
+      message: '新增打款记录失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/report-orders/bd-payment-records/:billId/:noteIndex
+ * @desc    删除BD打款记录
+ * @access  Private
+ */
+router.delete('/bd-payment-records/:billId/:noteIndex', authenticate, authorize('orders:update'), async (req, res) => {
+  try {
+    const { billId, noteIndex } = req.params;
+    const Bill = require('../models/Bill');
+
+    const bill = await Bill.findOne({
+      _id: billId,
+      companyId: req.companyId
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    const idx = parseInt(noteIndex);
+    if (isNaN(idx) || idx < 0 || idx >= bill.settlementNotes.length) {
+      return res.status(400).json({
+        success: false,
+        message: '无效的记录索引'
+      });
+    }
+
+    // 删除记录
+    bill.settlementNotes.splice(idx, 1);
+    await bill.save();
+
+    res.json({
+      success: true,
+      message: '删除成功'
+    });
+
+  } catch (error) {
+    console.error('Delete BD payment record error:', error);
+    res.status(500).json({
+      success: false,
+      message: '删除打款记录失败',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

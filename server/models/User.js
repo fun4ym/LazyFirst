@@ -56,6 +56,23 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
     comment: '银行账号'
+  },
+  // 任职状态: fulltime(全职) / parttime(兼职) / nocommission(无底薪)
+  employmentStatus: {
+    type: String,
+    enum: ['fulltime', 'parttime', 'nocommission'],
+    default: 'fulltime'
+  },
+  // 结算类型: monthly(月结) / weekly(周结)
+  settlementType: {
+    type: String,
+    enum: ['monthly', 'weekly'],
+    default: 'monthly'
+  },
+  // 结算日: 月结时为1-31，周结时为1-7(1=周一)
+  settlementDay: {
+    type: Number,
+    default: 15
   }
 }, {
   timestamps: true

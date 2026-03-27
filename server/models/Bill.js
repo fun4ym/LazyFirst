@@ -35,11 +35,18 @@ const billSchema = new mongoose.Schema({
   settlementTime: {
     type: Date
   },
-  // 结算备注（多条记录）
+  // 结算备注（多条记录）- 薪水或提成
   settlementNotes: [{
+    // 类型：salary-薪水，commission-提成
+    type: {
+      type: String,
+      enum: ['salary', 'commission'],
+      default: 'commission'
+    },
     bdName: String,
     bankAccount: String,
     bankFlowNo: String,
+    amount: Number,
     note: String,
     createdAt: {
       type: Date,

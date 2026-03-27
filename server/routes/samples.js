@@ -541,10 +541,10 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
         // 根据商品ID或名称查找 Product
         let productIdObj = null;
         let productName = row['商品名称'] || '';
-        const productIdInput = row['商品ID'];
+        const productIdInput = String(row['商品ID'] || '').trim();
         
         if (productIdInput) {
-          // 尝试用 ID 查找
+          // 1. 尝试用 MongoDB _id 查找
           try {
             const product = await Product.findById(productIdInput);
             if (product) {
@@ -552,10 +552,10 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
               productName = product.name || productName;
             }
           } catch (err) {
-            // ID 格式不对，尝试用 tiktokProductId 查找
+            // ID 格式不对，继续尝试其他方式
           }
           
-          // 如果没找到，尝试用 tiktokProductId 查找
+          // 2. 如果没找到，尝试用 tiktokProductId 查找
           if (!productIdObj) {
             const productByTiktokId = await Product.findOne({ tiktokProductId: productIdInput });
             if (productByTiktokId) {
@@ -564,11 +564,38 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
             }
           }
           
-          // 如果还没找到，尝试用 name 查找
+          // 3. 如果还没找到，尝试用 sku 查找
+          if (!productIdObj) {
+            const productBySku = await Product.findOne({ sku: productIdInput });
+            if (productBySku) {
+              productIdObj = productBySku._id;
+              productName = productBySku.name || productName;
+            }
+          }
+          
+          // 4. 如果还没找到，尝试用 tiktokSku 查找
+          if (!productIdObj) {
+            const productByTiktokSku = await Product.findOne({ tiktokSku: productIdInput });
+            if (productByTiktokSku) {
+              productIdObj = productByTiktokSku._id;
+              productName = productByTiktokSku.name || productName;
+            }
+          }
+          
+          // 5. 如果还没找到，尝试用 name 查找
           if (!productIdObj && productName) {
             const productByName = await Product.findOne({ name: productName });
             if (productByName) {
               productIdObj = productByName._id;
+            }
+          }
+          
+          // 6. 如果还没找到，模糊匹配 name
+          if (!productIdObj && productName) {
+            const productByNameLike = await Product.findOne({ name: { $regex: productName, $options: 'i' } });
+            if (productByNameLike) {
+              productIdObj = productByNameLike._id;
+              productName = productByNameLike.name || productName;
             }
           }
         }

@@ -123,7 +123,7 @@ router.post('/', authenticate, authorize('users:create'), [
       });
     }
 
-    const { username, password, realName, phone, email, roleId, deptId, status, bankAccount } = req.body;
+    const { username, password, realName, phone, email, roleId, deptId, status, bankAccount, employmentStatus, settlementType, settlementDay } = req.body;
 
     // 检查用户名是否已存在
     const existingUser = await User.findOne({ username });
@@ -144,7 +144,10 @@ router.post('/', authenticate, authorize('users:create'), [
       roleId: roleId || null,
       deptId: deptId || null,
       status: status || 'active',
-      bankAccount: bankAccount || ''
+      bankAccount: bankAccount || '',
+      employmentStatus: employmentStatus || 'fulltime',
+      settlementType: settlementType || 'monthly',
+      settlementDay: settlementDay || 15
     });
 
     res.status(201).json({
@@ -181,9 +184,12 @@ router.put('/:id', authenticate, authorize('users:update'), [
       });
     }
 
-    const { realName, phone, email, roleId, deptId, status, password, bankAccount } = req.body;
+    const { realName, phone, email, roleId, deptId, status, password, bankAccount, employmentStatus, settlementType, settlementDay } = req.body;
 
     const updateData = { realName, phone, email, roleId, deptId, status, bankAccount };
+    if (employmentStatus !== undefined) updateData.employmentStatus = employmentStatus;
+    if (settlementType !== undefined) updateData.settlementType = settlementType;
+    if (settlementDay !== undefined) updateData.settlementDay = settlementDay;
     if (password) {
       updateData.password = password;
     }

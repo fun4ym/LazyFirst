@@ -195,6 +195,9 @@ const tableData = ref([
       { field: 'email', type: 'String', description: '邮箱' },
       { field: 'avatar', type: 'String', description: '头像URL' },
       { field: 'bankAccount', type: 'String', default: '', description: '银行账号' },
+      { field: 'employmentStatus', type: 'String', default: 'fulltime', description: '任职状态: fulltime/parttime/nocommission' },
+      { field: 'settlementType', type: 'String', default: 'monthly', description: '结算类型: monthly/weekly' },
+      { field: 'settlementDay', type: 'Number', default: 15, description: '结算日: 月结1-31, 周结1-7' },
       { field: 'status', type: 'String', default: 'active', description: '状态: active/inactive/suspended' },
       { field: 'createdAt', type: 'Date', description: '创建时间' },
       { field: 'updatedAt', type: 'Date', description: '更新时间' }
