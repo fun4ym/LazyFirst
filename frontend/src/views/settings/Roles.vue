@@ -684,10 +684,18 @@ const showEditDialog = (row) => {
     }
   }
 
-  // 解析数据权限 - 默认全部
-  Object.keys(controlPermissionsMap.value).forEach(code => {
+  // 解析数据权限 - 优先从moduleDataScopes读取键（确保即使没有控件权限也能显示数据权限）
+  const dataScopeKeys = row.moduleDataScopes ? Object.keys(row.moduleDataScopes) : []
+  const controlKeys = Object.keys(controlPermissionsMap.value)
+  
+  // 合并两个来源的键
+  const allKeys = new Set([...dataScopeKeys, ...controlKeys])
+  
+  allKeys.forEach(code => {
     const controls = controlPermissionsMap.value[code]
-    if (Object.values(controls).some(v => v === true)) {
+    const hasAnyControl = controls && Object.values(controls).some(v => v === true)
+    // 如果有控件权限，或者是已保存的数据权限键
+    if (hasAnyControl || dataScopeKeys.includes(code)) {
       // 读取已保存的数据权限，如果没有保存过或值为空，默认设置为 'all'
       const savedScope = row.moduleDataScopes?.[code]
       dataScopeConfig.value[code] = savedScope || 'all'
