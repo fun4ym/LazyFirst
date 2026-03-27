@@ -44,7 +44,26 @@ const billSchema = new mongoose.Schema({
     createdAt: {
       type: Date,
       default: Date.now
-    }
+    },
+    // 编辑记录
+    updatedAt: Date,
+    creatorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    creatorName: String,
+    // 历史记录
+    history: [{
+      bankAccount: String,
+      bankFlowNo: String,
+      note: String,
+      updatedAt: Date,
+      editorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      editorName: String
+    }]
   }],
   // 包含的订单数量
   orderCount: {

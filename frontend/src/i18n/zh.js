@@ -158,7 +158,7 @@ export default {
     orderStatus: '交易状态',
     createDate: '创建时间',
     paymentTime: '打款时间',
-    onlyPaid: '只显示已打款',
+    showPaidOnly: '只显示已打款',
     completed: '已完成',
     inProgress: '进行中'
   },

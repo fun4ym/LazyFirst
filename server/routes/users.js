@@ -123,7 +123,7 @@ router.post('/', authenticate, authorize('users:create'), [
       });
     }
 
-    const { username, password, realName, phone, email, roleId, deptId, status } = req.body;
+    const { username, password, realName, phone, email, roleId, deptId, status, bankAccount } = req.body;
 
     // 检查用户名是否已存在
     const existingUser = await User.findOne({ username });
@@ -143,7 +143,8 @@ router.post('/', authenticate, authorize('users:create'), [
       email,
       roleId: roleId || null,
       deptId: deptId || null,
-      status: status || 'active'
+      status: status || 'active',
+      bankAccount: bankAccount || ''
     });
 
     res.status(201).json({
@@ -180,9 +181,9 @@ router.put('/:id', authenticate, authorize('users:update'), [
       });
     }
 
-    const { realName, phone, email, roleId, deptId, status, password } = req.body;
+    const { realName, phone, email, roleId, deptId, status, password, bankAccount } = req.body;
 
-    const updateData = { realName, phone, email, roleId, deptId, status };
+    const updateData = { realName, phone, email, roleId, deptId, status, bankAccount };
     if (password) {
       updateData.password = password;
     }

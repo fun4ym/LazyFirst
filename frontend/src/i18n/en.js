@@ -157,7 +157,7 @@ export default {
     orderStatus: 'Order Status',
     createDate: 'Create Date',
     paymentTime: 'Payment Time',
-    onlyPaid: 'Show Paid Only',
+    showPaidOnly: 'Show Paid Only',
     completed: 'Completed',
     inProgress: 'In Progress'
   },

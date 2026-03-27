@@ -173,6 +173,8 @@ const relationsData = ref([
   { sourceTable: 'InfluencerMaintenance', sourceField: 'influencerId', targetTable: 'Influencer', targetField: '_id', type: 'FK', description: '达人' },
   { sourceTable: 'InfluencerMaintenance', sourceField: 'operatorId', targetTable: 'User', targetField: '_id', type: 'FK', description: '操作人' },
   { sourceTable: 'CooperationProduct', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Bill', sourceField: 'companyId', targetTable: 'Company', targetField: '_id', type: 'FK', description: '所属公司' },
+  { sourceTable: 'Bill', sourceField: 'creatorId', targetTable: 'User', targetField: '_id', type: 'FK', description: '创建人' },
 ])
 
 // 原始数据表结构（未排序）
@@ -192,6 +194,7 @@ const tableData = ref([
       { field: 'phone', type: 'String', default: '', description: '手机号' },
       { field: 'email', type: 'String', description: '邮箱' },
       { field: 'avatar', type: 'String', description: '头像URL' },
+      { field: 'bankAccount', type: 'String', default: '', description: '银行账号' },
       { field: 'status', type: 'String', default: 'active', description: '状态: active/inactive/suspended' },
       { field: 'createdAt', type: 'Date', description: '创建时间' },
       { field: 'updatedAt', type: 'Date', description: '更新时间' }
@@ -701,6 +704,26 @@ const tableData = ref([
       { field: 'userName', type: 'String', required: true, description: '用户名' },
       { field: 'action', type: 'String', required: true, description: '操作描述' },
       { field: 'trackingDate', type: 'Date', description: '跟踪日期' },
+      { field: 'createdAt', type: 'Date', description: '创建时间' },
+      { field: 'updatedAt', type: 'Date', description: '更新时间' }
+    ]
+  },
+  {
+    name: 'Bill',
+    description: '账单表 - 佣金结算账单',
+    fields: [
+      { field: '_id', type: 'ObjectId', required: true, description: '主键ID' },
+      { field: 'companyId', type: 'ObjectId', required: true, ref: 'Company', description: '所属公司' },
+      { field: 'billNo', type: 'String', required: true, description: '账单号(唯一)' },
+      { field: 'validStartDate', type: 'Date', required: true, description: '有效开始日期' },
+      { field: 'validEndDate', type: 'Date', required: true, description: '有效结束日期' },
+      { field: 'totalCommission', type: 'Number', default: 0, description: '佣金总金额' },
+      { field: 'isSettled', type: 'Boolean', default: false, description: '是否结清' },
+      { field: 'settlementTime', type: 'Date', description: '结算时间' },
+      { field: 'settlementNotes', type: 'Array', description: '结算备注(多条记录)' },
+      { field: 'orderCount', type: 'Number', default: 0, description: '包含的订单数量' },
+      { field: 'bdList', type: 'Array', description: '包含的BD列表' },
+      { field: 'creatorId', type: 'ObjectId', ref: 'User', description: '创建人' },
       { field: 'createdAt', type: 'Date', description: '创建时间' },
       { field: 'updatedAt', type: 'Date', description: '更新时间' }
     ]

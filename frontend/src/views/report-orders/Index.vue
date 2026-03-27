@@ -5,9 +5,9 @@
         <div class="page-header">
           <h3>{{ $t('order.orderManagement') }}</h3>
           <div class="header-actions">
-            <el-button type="warning" @click="handleGenerateBill" :loading="generatingBill" :disabled="selectedOrders.length === 0">
+            <el-button type="warning" @click="handleGenerateBill" :loading="generatingBill" :disabled="selectedOrderIds.size === 0">
               <el-icon><Tickets /></el-icon>
-              生成账单 ({{ selectedOrders.length }})
+              生成账单 ({{ selectedOrderIds.size }})
             </el-button>
             <el-button type="success" @click="handleMatchBD" :loading="matchingBD" v-if="hasPermission('orders:btn-match-bd')">
               <el-icon><Connection /></el-icon>
@@ -27,88 +27,149 @@
         <el-tab-pane label="账单" name="bills"></el-tab-pane>
       </el-tabs>
 
-      <!-- 搜索筛选 -->
-      <el-form :model="searchForm" inline class="search-form">
-        <el-form-item :label="$t('order.orderNo')">
-          <el-input
-            v-model="searchForm.orderNo"
-            :placeholder="$t('order.orderNo')"
-            clearable
-            style="width: 180px"
-          />
-        </el-form-item>
-        <el-form-item :label="$t('influencer.tiktokId')">
-          <el-input
-            v-model="searchForm.influencerUsername"
-            :placeholder="$t('influencer.tiktokId')"
-            clearable
-            style="width: 150px"
-          />
-        </el-form-item>
-        <el-form-item :label="$t('order.shop')">
-          <el-input
-            v-model="searchForm.shopName"
-            :placeholder="$t('order.shop')"
-            clearable
-            style="width: 150px"
-          />
-        </el-form-item>
-        <el-form-item label="商品ID">
-          <el-input
-            v-model="searchForm.productId"
-            placeholder="商品ID"
-            clearable
-            style="width: 150px"
-          />
-        </el-form-item>
-        <el-form-item :label="$t('order.orderStatus')">
-          <el-select
-            v-model="searchForm.orderStatus"
-            :placeholder="$t('order.orderStatus')"
-            clearable
-            style="width: 120px"
-          >
-            <el-option :label="$t('common.all')" value="" />
-            <el-option :label="$t('order.completed')" value="已完成" />
-            <el-option :label="$t('order.inProgress')" value="进行中" />
-            <el-option :label="$t('status.cancelled')" value="已取消" />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('order.createTime')">
-          <el-date-picker
-            v-model="createTimeRange"
-            type="daterange"
-            range-separator="-"
-            :start-placeholder="$t('common.startDate')"
-            :end-placeholder="$t('common.endDate')"
-            value-format="YYYY-MM-DD"
-            style="width: 200px"
-          />
-        </el-form-item>
-        <el-form-item :label="$t('order.paymentTime')">
-          <el-date-picker
-            v-model="paymentTimeRange"
-            type="daterange"
-            range-separator="-"
-            :start-placeholder="$t('common.startDate')"
-            :end-placeholder="$t('common.endDate')"
-            value-format="YYYY-MM-DD"
-            style="width: 200px"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-checkbox v-model="searchForm.onlyPaid">{{ $t('order.showPaidOnly') }}</el-checkbox>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="loadOrders">{{ $t('common.search') }}</el-button>
-          <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
+      <!-- TikTok订单搜索筛选 -->
+      <div v-show="activeTab === 'orders'" class="search-section">
+        <el-form :model="searchForm" inline class="search-form">
+          <el-form-item :label="$t('order.orderNo')">
+            <el-input
+              v-model="searchForm.orderNo"
+              :placeholder="$t('order.orderNo')"
+              clearable
+              style="width: 170px"
+            />
+          </el-form-item>
+          <el-form-item :label="$t('influencer.tiktokId')">
+            <el-input
+              v-model="searchForm.influencerUsername"
+              :placeholder="$t('influencer.tiktokId')"
+              clearable
+              style="width: 140px"
+            />
+          </el-form-item>
+          <el-form-item label="归属BD">
+            <el-input
+              v-model="searchForm.bdName"
+              placeholder="归属BD"
+              clearable
+              style="width: 120px"
+            />
+          </el-form-item>
+          <el-form-item :label="$t('order.shop')">
+            <el-input
+              v-model="searchForm.shopName"
+              :placeholder="$t('order.shop')"
+              clearable
+              style="width: 140px"
+            />
+          </el-form-item>
+          <el-form-item label="商品ID">
+            <el-input
+              v-model="searchForm.productId"
+              placeholder="商品ID"
+              clearable
+              style="width: 130px"
+            />
+          </el-form-item>
+          <el-form-item :label="$t('order.orderStatus')">
+            <el-select
+              v-model="searchForm.orderStatus"
+              :placeholder="$t('order.orderStatus')"
+              clearable
+              style="width: 110px"
+            >
+              <el-option :label="$t('common.all')" value="" />
+              <el-option :label="$t('order.completed')" value="已完成" />
+              <el-option :label="$t('order.inProgress')" value="进行中" />
+              <el-option :label="$t('status.cancelled')" value="已取消" />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="$t('order.createTime')">
+            <el-date-picker
+              v-model="createTimeRange"
+              type="daterange"
+              range-separator="-"
+              :start-placeholder="$t('common.startDate')"
+              :end-placeholder="$t('common.endDate')"
+              value-format="YYYY-MM-DD"
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item :label="$t('order.paymentTime')">
+            <el-date-picker
+              v-model="paymentTimeRange"
+              type="daterange"
+              range-separator="-"
+              :start-placeholder="$t('common.startDate')"
+              :end-placeholder="$t('common.endDate')"
+              value-format="YYYY-MM-DD"
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-checkbox v-model="searchForm.onlyPaid">{{ $t('order.showPaidOnly') }}</el-checkbox>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadOrders">{{ $t('common.search') }}</el-button>
+            <el-button @click="resetSearch">{{ $t('common.reset') }}</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 账单搜索筛选 -->
+      <div v-show="activeTab === 'bills'" class="search-section">
+        <el-form :model="billSearchForm" inline class="search-form">
+          <el-form-item label="账单号">
+            <el-input
+              v-model="billSearchForm.billNo"
+              placeholder="账单号"
+              clearable
+              style="width: 170px"
+            />
+          </el-form-item>
+          <el-form-item label="账单状态">
+            <el-select
+              v-model="billSearchForm.isSettled"
+              placeholder="请选择"
+              clearable
+              style="width: 110px"
+            >
+              <el-option label="全部" value="" />
+              <el-option label="已结清" :value="true" />
+              <el-option label="未结清" :value="false" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="创建时间">
+            <el-date-picker
+              v-model="billCreateTimeRange"
+              type="daterange"
+              range-separator="-"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              value-format="YYYY-MM-DD"
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item label="有效日期">
+            <el-date-picker
+              v-model="billSearchForm.validDate"
+              type="date"
+              placeholder="选择日期"
+              value-format="YYYY-MM-DD"
+              style="width: 140px"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadBills">{{ $t('common.search') }}</el-button>
+            <el-button @click="resetBillSearch">{{ $t('common.reset') }}</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
       <!-- 订单列表 -->
       <div v-show="activeTab === 'orders'">
         <!-- 表格 -->
-        <el-table :data="orders" v-loading="loading" stripe border @sort-change="handleSortChange" @selection-change="handleSelectionChange">
+        <el-table ref="orderTableRef" :data="orders" v-loading="loading" stripe border row-key="_id" @sort-change="handleSortChange" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" fixed="left" />
         <el-table-column
           label="TikTok ID"
@@ -480,17 +541,111 @@
         </el-descriptions>
 
         <!-- BD明细 -->
-        <div v-if="currentBill.orderDetails" style="margin-top: 20px">
-          <h4>BD明细</h4>
-          <el-table :data="currentBill.orderDetails" stripe border>
-            <el-table-column prop="bdName" label="BD" width="150" />
-            <el-table-column label="佣金总额" width="150">
+        <div v-if="currentBill.isSettled" style="margin-top: 20px">
+          <div class="bd-details-header">
+            <h4>BD明细</h4>
+            <el-button type="primary" size="small" @click="showAddSettlementDialog">
+              <el-icon><Plus /></el-icon> 新增
+            </el-button>
+          </div>
+          <el-table v-if="currentBill.settlementNotes && currentBill.settlementNotes.length > 0" :data="currentBill.settlementNotes" stripe border>
+            <el-table-column prop="bdName" label="BD" width="120" />
+            <el-table-column label="佣金总额" width="130">
               <template #default="{ row }">
-                <span class="commission-total">{{ formatMoney(row.commission) }}</span>
+                <span class="commission-total">{{ getBdCommission(row.bdName) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="orderCount" label="订单数" width="100" />
+            <el-table-column prop="bankAccount" label="银行账号" width="180">
+              <template #default="{ row }">
+                {{ row.bankAccount || '--' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="bankFlowNo" label="银行流水号" width="150">
+              <template #default="{ row }">
+                {{ row.bankFlowNo || '--' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="note" label="备注" min-width="120">
+              <template #default="{ row }">
+                {{ row.note || '--' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="150" fixed="right">
+              <template #default="{ row, $index }">
+                <el-button link type="primary" size="small" @click="showEditSettlementDialog(row, $index)">编辑</el-button>
+                <el-button link type="success" size="small" @click="showSettlementHistory(row, $index)">历史</el-button>
+              </template>
+            </el-table-column>
           </el-table>
+
+          <!-- 编辑结算记录对话框 -->
+          <el-dialog v-model="editSettlementVisible" title="编辑结算记录" width="500px">
+            <el-form :model="editSettlementForm" label-width="100px">
+              <el-form-item label="BD">
+                <el-input v-model="editSettlementForm.bdName" disabled />
+              </el-form-item>
+              <el-form-item label="银行账号">
+                <el-input v-model="editSettlementForm.bankAccount" placeholder="请输入银行账号" />
+              </el-form-item>
+              <el-form-item label="银行流水号">
+                <el-input v-model="editSettlementForm.bankFlowNo" placeholder="请输入银行流水号" />
+              </el-form-item>
+              <el-form-item label="备注">
+                <el-input v-model="editSettlementForm.note" type="textarea" placeholder="请输入备注" :rows="2" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="editSettlementVisible = false">取消</el-button>
+              <el-button type="primary" @click="handleUpdateSettlement" :loading="updatingSettlement">保存</el-button>
+            </template>
+          </el-dialog>
+
+          <!-- 查看历史对话框 -->
+          <el-dialog v-model="settlementHistoryVisible" title="结算记录历史" width="700px">
+            <div v-if="settlementHistoryLoading" v-loading="settlementHistoryLoading"></div>
+            <div v-else>
+              <el-descriptions :column="2" border size="small" style="margin-bottom: 20px">
+                <el-descriptions-item label="BD">{{ currentSettlementNote?.bdName }}</el-descriptions-item>
+                <el-descriptions-item label="当前银行账号">{{ currentSettlementNote?.bankAccount || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="当前银行流水号">{{ currentSettlementNote?.bankFlowNo || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="当前备注">{{ currentSettlementNote?.note || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="创建人">{{ currentSettlementNote?.creatorName || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="创建时间">{{ formatDateTime(currentSettlementNote?.createdAt) }}</el-descriptions-item>
+                <el-descriptions-item label="最后修改人" v-if="currentSettlementNote?.updatedAt">{{ currentSettlementNote?.creatorName }}</el-descriptions-item>
+                <el-descriptions-item label="最后修改时间" v-if="currentSettlementNote?.updatedAt">{{ formatDateTime(currentSettlementNote?.updatedAt) }}</el-descriptions-item>
+              </el-descriptions>
+
+              <h4>历史变更记录</h4>
+              <el-table v-if="settlementHistory.length > 0" :data="settlementHistory" stripe border size="small">
+                <el-table-column label="序号" type="index" width="60" />
+                <el-table-column prop="bankAccount" label="银行账号" width="150">
+                  <template #default="{ row }">
+                    {{ row.bankAccount || '--' }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="bankFlowNo" label="银行流水号" width="150">
+                  <template #default="{ row }">
+                    {{ row.bankFlowNo || '--' }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="note" label="备注" min-width="120">
+                  <template #default="{ row }">
+                    {{ row.note || '--' }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="editorName" label="编辑人" width="100" />
+                <el-table-column label="编辑时间" width="160">
+                  <template #default="{ row }">
+                    {{ formatDateTime(row.updatedAt) }}
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-else description="暂无历史变更记录" />
+            </div>
+            <template #footer>
+              <el-button @click="settlementHistoryVisible = false">关闭</el-button>
+            </template>
+          </el-dialog>
 
           <!-- 订单详情 -->
           <div v-for="bd in currentBill.orderDetails" :key="bd.bdName" style="margin-top: 16px">
@@ -518,8 +673,69 @@
               </el-table-column>
             </el-table>
           </div>
+          <el-empty v-if="!currentBill.settlementNotes || currentBill.settlementNotes.length === 0" description="暂无结算记录，请点击上方新增按钮添加" />
+        </div>
+
+        <!-- 订单详情 -->
+        <div v-if="currentBill.orderDetails" v-for="bd in currentBill.orderDetails" :key="bd.bdName" style="margin-top: 16px">
+          <h5>{{ bd.bdName }} - 订单明细</h5>
+          <el-table :data="bd.orders" stripe border size="small" max-height="300">
+            <el-table-column prop="orderNo" label="订单号" width="200" />
+            <el-table-column prop="productName" label="商品名称" width="300" show-overflow-tooltip />
+            <el-table-column label="佣金" width="120">
+              <template #default="{ row }">
+                {{ formatMoney(row.commission) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="结算状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.settlementStatus === '已结清' ? 'success' : 'warning'" size="small">
+                  {{ row.settlementStatus || '未结清' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="paymentNo" label="打款单号" width="250" />
+            <el-table-column label="打款日期" width="120">
+              <template #default="{ row }">
+                {{ row.commissionSettlementTime ? formatDate(row.commissionSettlementTime) : '--' }}
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
       </div>
+
+      <!-- 新增结算记录对话框 -->
+      <el-dialog v-model="addSettlementVisible" title="新增结算记录" width="500px">
+        <el-form :model="addSettlementForm" label-width="100px">
+          <el-form-item label="选择BD" required>
+            <el-select v-model="addSettlementForm.bdName" placeholder="请选择BD" style="width: 100%" filterable @change="onBdChange">
+              <el-option
+                v-for="bd in currentBill.orderDetails || []"
+                :key="bd.bdName"
+                :label="bd.bdName"
+                :value="bd.bdName"
+                :disabled="!bd.bdName"
+              />
+            </el-select>
+            <div v-if="addSettlementForm.bdName" style="margin-top: 8px; color: #409eff; font-size: 14px">
+              该BD佣金总额：{{ getBdCommission(addSettlementForm.bdName) }}
+            </div>
+          </el-form-item>
+          <el-form-item label="银行账号">
+            <el-input v-model="addSettlementForm.bankAccount" placeholder="请输入银行账号" />
+          </el-form-item>
+          <el-form-item label="银行流水号">
+            <el-input v-model="addSettlementForm.bankFlowNo" placeholder="请输入银行流水号" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="addSettlementForm.note" type="textarea" placeholder="请输入备注" :rows="2" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="addSettlementVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleAddSettlement" :loading="addingSettlement">保存</el-button>
+        </template>
+      </el-dialog>
 
       <template #footer>
         <el-button @click="billDetailDialogVisible = false">关闭</el-button>
@@ -551,6 +767,10 @@
                 :value="bd.bdName"
               />
             </el-select>
+            <div v-if="currentBdCommission !== null" class="bd-commission-info">
+              <span class="label">本次应付金额：</span>
+              <span class="value">{{ formatMoney(currentBdCommission) }}</span>
+            </div>
           </el-form-item>
 
           <el-form-item label="银行账号">
@@ -599,7 +819,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -636,6 +856,8 @@ const popoverLoading = ref(false)
 
 // 多选相关
 const selectedOrders = ref([])
+const selectedOrderIds = ref(new Set())
+const orderTableRef = ref(null)
 const activeTab = ref('orders')
 
 // 账单相关
@@ -660,10 +882,39 @@ const settleForm = reactive({
   notes: []
 })
 
+// 编辑结算记录相关
+const editSettlementVisible = ref(false)
+const updatingSettlement = ref(false)
+const editSettlementForm = reactive({
+  noteIndex: -1,
+  bdName: '',
+  bankAccount: '',
+  bankFlowNo: '',
+  note: ''
+})
+
+// 结算历史相关
+const settlementHistoryVisible = ref(false)
+const settlementHistoryLoading = ref(false)
+const currentSettlementNote = ref(null)
+const settlementHistory = ref([])
+const currentNoteIndex = ref(-1)
+
+// 新增结算记录相关
+const addSettlementVisible = ref(false)
+const addingSettlement = ref(false)
+const addSettlementForm = reactive({
+  bdName: '',
+  bankAccount: '',
+  bankFlowNo: '',
+  note: ''
+})
+
 const searchForm = reactive({
   orderNo: '',
   shopName: '',
   influencerUsername: '',
+  bdName: '',
   productId: '',
   orderStatus: '',
   startDate: '',
@@ -672,6 +923,16 @@ const searchForm = reactive({
   paymentEndDate: '',
   onlyPaid: false
 })
+
+// 账单搜索表单
+const billSearchForm = reactive({
+  billNo: '',
+  isSettled: '',
+  startDate: '',
+  endDate: '',
+  validDate: ''
+})
+const billCreateTimeRange = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -690,6 +951,11 @@ const formatMoney = (value) => {
 const formatDate = (date) => {
   if (!date) return '--'
   return new Date(date).toLocaleDateString('zh-CN')
+}
+
+const formatDateTime = (date) => {
+  if (!date) return '--'
+  return new Date(date).toLocaleString('zh-CN')
 }
 
 const truncateText = (text, maxLength) => {
@@ -791,20 +1057,85 @@ const handleMatchBD = async () => {
 
 // 多选变化
 const handleSelectionChange = (selection) => {
+  // 如果正在恢复选中状态，跳过处理
+  if (isRestoringSelection) {
+    console.log('[翻页选] 恢复中跳过, selection:', selection.length)
+    return
+  }
+  
+  // 将所有ID转为字符串，确保类型一致
+  const currentIds = new Set(selection.map(o => String(o._id)))
+  
+  // 如果当前页没有任何选中，检查是否应该保留之前的选择
+  if (currentIds.size === 0) {
+    // 如果之前有选择，说明是翻页触发的空选择，保留之前的选择
+    if (selectedOrderIds.value.size > 0) {
+      console.log('[翻页选] 空选择跳过, 保留之前选择:', selectedOrderIds.value.size)
+      return
+    }
+    // 之前没有选择，说明是初始状态
+    selectedOrderIds.value = new Set()
+    selectedOrders.value = []
+    return
+  }
+  
+  // 翻页时需要累加，不能直接覆盖
+  // 关键：只处理当前页内的取消选中，跨页的不应该删除
+  // 获取当前页所有订单ID
+  const currentPageIds = new Set(orders.value.map(o => String(o._id)))
+  
+  // 只找出当前页内被取消选中的（之前选中，现在未选）
+  const deselected = [...selectedOrderIds.value].filter(id => {
+    const idStr = String(id)
+    // 只处理当前页内的ID
+    return currentPageIds.has(idStr) && !currentIds.has(idStr)
+  })
+  
+  // 累加新选中的，移除当前页取消选中的
+  const newIds = new Set([...selectedOrderIds.value].map(id => String(id)))
+  currentIds.forEach(id => newIds.add(id))
+  deselected.forEach(id => newIds.delete(String(id)))
+  
+  selectedOrderIds.value = newIds
   selectedOrders.value = selection
+  
+  console.log('[翻页选] 选中变化, 已选数量:', selectedOrderIds.value.size, '取消选中:', deselected.length, 'IDs:', Array.from(selectedOrderIds.value))
+}
+
+// 恢复表格选中状态 - 使用标志位避免重复触发
+let isRestoringSelection = false
+// 使用恢复序列号来区分恢复触发的事件和用户触发的事件
+let restoreGeneration = 0
+
+// 更新已选订单ID集合
+const updateSelectedOrderIds = () => {
+  selectedOrderIds.value = new Set(selectedOrders.value.map(o => o._id))
+}
+
+// 恢复表格选中状态
+const restoreSelection = (tableRef) => {
+  if (!tableRef) return
+  const table = tableRef.$refs.tableRef || tableRef
+  if (table) {
+    orders.value.forEach(order => {
+      if (selectedOrderIds.value.has(order._id)) {
+        table.toggleRowSelection(order, true)
+      }
+    })
+  }
 }
 
 // 生成账单
 const handleGenerateBill = async () => {
-  if (selectedOrders.value.length === 0) {
+  if (selectedOrderIds.value.size === 0) {
     ElMessage.warning('请先选择要生成账单的订单')
     return
   }
 
-  const orderIds = selectedOrders.value.map(o => o._id)
+  const orderIds = [...selectedOrderIds.value]
 
   await ElMessageBox.confirm(
-    `已选择 ${selectedOrders.value.length} 条订单，确定要生成账单吗？`,
+    `已选择 ${selectedOrderIds.value.size} 条订单，确定要生成账单吗？`,
     '生成账单',
     {
       type: 'warning',
@@ -818,6 +1149,7 @@ const handleGenerateBill = async () => {
     const res = await request.post('/report-orders/bills/generate', { orderIds })
     ElMessage.success('账单生成成功！')
     selectedOrders.value = []
+    selectedOrderIds.value = new Set()
     // 刷新订单列表
     loadOrders()
     // 切换到账单页签
@@ -837,11 +1169,21 @@ const loadBills = async () => {
   try {
     const params = {
       page: billsPagination.page,
-      limit: billsPagination.limit
+      limit: billsPagination.limit,
+      billNo: billSearchForm.billNo,
+      isSettled: billSearchForm.isSettled,
+      validDate: billSearchForm.validDate
     }
+
+    // 处理创建时间范围
+    if (billCreateTimeRange.value && billCreateTimeRange.value.length === 2) {
+      params.startDate = billCreateTimeRange.value[0]
+      params.endDate = billCreateTimeRange.value[1]
+    }
+
     const res = await request.get('/report-orders/bills', { params })
-    bills.value = res.data?.bills || []
-    billsPagination.total = res.data?.pagination?.total || 0
+    bills.value = res.bills || []
+    billsPagination.total = res.pagination?.total || 0
   } catch (error) {
     console.error('Load bills error:', error)
   } finally {
@@ -849,11 +1191,23 @@ const loadBills = async () => {
   }
 }
 
+// 重置账单搜索
+const resetBillSearch = () => {
+  billSearchForm.billNo = ''
+  billSearchForm.isSettled = ''
+  billSearchForm.startDate = ''
+  billSearchForm.endDate = ''
+  billSearchForm.validDate = ''
+  billCreateTimeRange.value = []
+  billsPagination.page = 1
+  loadBills()
+}
+
 // 查看账单详情
 const viewBillDetail = async (row) => {
   try {
     const res = await request.get(`/report-orders/bills/${row._id}`)
-    currentBill.value = res.data
+    currentBill.value = res.data || res
     billDetailDialogVisible.value = true
   } catch (error) {
     console.error('Load bill detail error:', error)
@@ -945,12 +1299,168 @@ const handleSettle = async () => {
   }
 }
 
+// 获取BD的佣金金额（优先从bdList查找，没有则从orderDetails查找）
+const getBdCommission = (bdName) => {
+  if (!currentBill.value || !bdName) return `${currencySymbol.value}0.00`
+  // 优先从bdList查找
+  let bdInfo = currentBill.value.bdList?.find(b => b.bdName === bdName)
+  // 如果bdList没有或为空，从orderDetails查找
+  if (!bdInfo?.commission && currentBill.value.orderDetails) {
+    bdInfo = currentBill.value.orderDetails.find(b => b.bdName === bdName)
+  }
+  return formatMoney(bdInfo?.commission || 0)
+}
+
+// 显示编辑结算记录对话框
+const showEditSettlementDialog = (row, index) => {
+  editSettlementForm.noteIndex = index
+  editSettlementForm.bdName = row.bdName
+  editSettlementForm.bankAccount = row.bankAccount || ''
+  editSettlementForm.bankFlowNo = row.bankFlowNo || ''
+  editSettlementForm.note = row.note || ''
+  editSettlementVisible.value = true
+}
+
+// 更新结算记录
+const handleUpdateSettlement = async () => {
+  if (editSettlementForm.noteIndex < 0) {
+    ElMessage.warning('无效的记录')
+    return
+  }
+
+  updatingSettlement.value = true
+  try {
+    const res = await request.put(`/report-orders/bills/${currentBill.value._id}/settlement-note`, {
+      noteIndex: editSettlementForm.noteIndex,
+      bankAccount: editSettlementForm.bankAccount,
+      bankFlowNo: editSettlementForm.bankFlowNo,
+      note: editSettlementForm.note
+    })
+    ElMessage.success('更新成功！')
+    editSettlementVisible.value = false
+    // 刷新账单详情
+    viewBillDetail(currentBill.value)
+  } catch (error) {
+    console.error('Update settlement error:', error)
+    ElMessage.error(error.response?.data?.message || '更新失败')
+  } finally {
+    updatingSettlement.value = false
+  }
+}
+
+// 显示结算历史
+const showSettlementHistory = async (row, index) => {
+  currentNoteIndex.value = index
+  currentSettlementNote.value = row
+  settlementHistory.value = []
+  settlementHistoryVisible.value = true
+  settlementHistoryLoading.value = true
+
+  try {
+    const res = await request.get(`/report-orders/bills/${currentBill.value._id}/settlement-history`, {
+      params: { noteIndex: index }
+    })
+    if (res.data) {
+      currentSettlementNote.value = res.data.note || row
+      settlementHistory.value = res.data.history || []
+    }
+  } catch (error) {
+    console.error('Load settlement history error:', error)
+    ElMessage.error('加载历史记录失败')
+  } finally {
+    settlementHistoryLoading.value = false
+  }
+}
+
+// 显示新增结算记录对话框
+const showAddSettlementDialog = () => {
+  addSettlementForm.bdName = ''
+  addSettlementForm.bankAccount = ''
+  addSettlementForm.bankFlowNo = ''
+  addSettlementForm.note = ''
+  addSettlementVisible.value = true
+}
+
+// 选择BD时带出银行账号
+const onBdChange = async (bdName) => {
+  if (bdName) {
+    addSettlementForm.bankAccount = ''
+    
+    // 优先从bdList获取bankAccount
+    const bdList = currentBill.value.bdList || []
+    let bdInfo = bdList.find(b => b.bdName === bdName)
+    if (bdInfo?.bankAccount) {
+      addSettlementForm.bankAccount = bdInfo.bankAccount
+      console.log('从bdList获取bankAccount:', bdInfo.bankAccount)
+      return
+    }
+    
+    // 从orderDetails获取bankAccount
+    const orderDetails = currentBill.value.orderDetails || []
+    bdInfo = orderDetails.find(b => b.bdName === bdName)
+    if (bdInfo?.bankAccount) {
+      addSettlementForm.bankAccount = bdInfo.bankAccount
+      console.log('从orderDetails获取bankAccount:', bdInfo.bankAccount)
+      return
+    }
+    
+    // 如果本地数据都没有，调用API查询User表
+    console.log('本地数据没有bankAccount，调用API查询')
+    try {
+      const res = await request.get('/users', {
+        params: { search: bdName, limit: 100 }
+      })
+      console.log('API返回:', res)
+      const users = res.users || []
+      let user = users.find(u => u.realName === bdName || u.username === bdName)
+      console.log('找到用户:', user)
+      addSettlementForm.bankAccount = user?.bankAccount || ''
+    } catch (error) {
+      console.error('查询用户银行账号失败:', error)
+      addSettlementForm.bankAccount = ''
+    }
+  }
+}
+
+// 新增结算记录
+const handleAddSettlement = async () => {
+  if (!addSettlementForm.bdName) {
+    ElMessage.warning('请选择BD')
+    return
+  }
+
+  addingSettlement.value = true
+  try {
+    const res = await request.post(`/report-orders/bills/${currentBill.value._id}/settlement-note`, {
+      bdName: addSettlementForm.bdName,
+      bankAccount: addSettlementForm.bankAccount,
+      bankFlowNo: addSettlementForm.bankFlowNo,
+      note: addSettlementForm.note
+    })
+    ElMessage.success('新增成功！')
+    addSettlementVisible.value = false
+    // 刷新账单详情
+    viewBillDetail(currentBill.value)
+  } catch (error) {
+    console.error('Add settlement error:', error)
+    ElMessage.error(error.response?.data?.message || '新增失败')
+  } finally {
+    addingSettlement.value = false
+  }
+}
+
 // 监听页签变化
-import { watch } from 'vue'
 watch(activeTab, (newTab) => {
   if (newTab === 'bills') {
     loadBills()
   }
+})
+
+// 计算当前BD的应付金额
+const currentBdCommission = computed(() => {
+  if (!currentBill.value || !settleForm.bdName) return null
+  const bdInfo = currentBill.value.bdList?.find(b => b.bdName === settleForm.bdName)
+  return bdInfo?.commission || 0
 })
 
 const loadOrders = async () => {
@@ -983,6 +1493,73 @@ const loadOrders = async () => {
     const res = await request.get('/report-orders', { params })
     orders.value = res.orders || []
     pagination.total = res.pagination?.total || 0
+
+    // 恢复之前的选中状态（使用nextTick确保表格渲染完成）
+    nextTick(() => {
+      setTimeout(() => {
+        const table = orderTableRef.value
+        const savedIds = selectedOrderIds.value
+        console.log('[翻页选] loadOrders完成后, table:', !!table, '已选IDs:', savedIds.size, Array.from(savedIds))
+        
+        // 将savedIds转换为Set用于快速查找（处理字符串和ObjectId混合情况）
+        const savedIdsSet = new Set()
+        savedIds.forEach(id => {
+          savedIdsSet.add(String(id))
+          savedIdsSet.add(id)
+        })
+        
+        if (table && savedIdsSet.size > 0) {
+          console.log('[翻页选] 开始恢复, 当前页订单数:', orders.value.length)
+          console.log('[翻页选] 当前页订单IDs:', orders.value.map(o => o._id))
+          
+          // 设置标志位，避免恢复过程中触发selection-change
+          // 注意：必须在clearSelection之前设置，防止clearSelection触发selection-change
+          isRestoringSelection = true
+          const thisGeneration = ++restoreGeneration
+          
+          // 先清空表格选择状态（在设置标志位之后）
+          table.clearSelection()
+          
+          // 直接为需要选中的行调用toggleRowSelection
+          for (const order of orders.value) {
+            const orderIdStr = String(order._id)
+            const shouldSelect = savedIdsSet.has(orderIdStr) || savedIdsSet.has(order._id)
+            if (shouldSelect) {
+              console.log('[翻页选] 选中订单:', order._id)
+              table.toggleRowSelection(order, true)
+            }
+          }
+          
+          // 强制同步一次selectedOrderIds（确保状态正确）
+          selectedOrderIds.value = new Set(savedIds)
+          
+          // 手动同步当前页的选中状态到selectedOrderIds（因为isRestoringSelection阻止了handleSelectionChange）
+          const currentPageIds = new Set()
+          for (const order of orders.value) {
+            const orderIdStr = String(order._id)
+            if (savedIdsSet.has(orderIdStr) || savedIdsSet.has(order._id)) {
+              currentPageIds.add(order._id)
+              currentPageIds.add(orderIdStr)
+            }
+          }
+          // 合并当前页选中ID到selectedOrderIds
+          currentPageIds.forEach(id => savedIds.add(id))
+          selectedOrderIds.value = new Set(savedIds)
+          console.log('[翻页选] 恢复后同步, selectedOrderIds:', selectedOrderIds.value.size, Array.from(selectedOrderIds.value))
+          
+          // 使用较长延迟清除标志位
+          setTimeout(() => {
+            // 只有当前是最新一代的恢复操作才清除标志位
+            if (thisGeneration === restoreGeneration) {
+              isRestoringSelection = false
+            }
+            console.log('[翻页选] 恢复完成, savedIds保持:', savedIds.size, Array.from(savedIds))
+          }, 500)
+        } else {
+          console.log('[翻页选] 跳过恢复, table:', !!table, 'savedIds.size:', savedIds?.size)
+        }
+      }, 100)
+    })
   } catch (error) {
     console.error('Load orders error:', error)
     ElMessage.error('加载数据失败')
@@ -1046,6 +1623,7 @@ const resetSearch = () => {
     orderNo: '',
     shopName: '',
     influencerUsername: '',
+    bdName: '',
     productId: '',
     orderStatus: '',
     startDate: '',
@@ -1114,6 +1692,20 @@ onMounted(() => {
   margin-bottom: 16px;
   padding: 16px 0;
   border-bottom: 1px solid #e8e8e8;
+}
+
+.bd-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bd-details-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .column-text {
@@ -1251,5 +1843,24 @@ onMounted(() => {
 /* TikTok绿色样式 */
 :deep(.el-descriptions__label.tiktok-green-label) {
   color: #6DAD19;
+}
+.bd-commission-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f0f9ff;
+  border-radius: 4px;
+  border-left: 3px solid #409EFF;
+}
+
+.bd-commission-info .label {
+  color: #606266;
+  font-size: 13px;
+}
+
+.bd-commission-info .value {
+  color: #409EFF;
+  font-weight: 600;
+  font-size: 15px;
+  margin-left: 8px;
 }
 </style>

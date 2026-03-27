@@ -32,6 +32,7 @@ router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ modu
       orderNo,
       shopName,
       influencerUsername,
+      bdName,
       productId,
       orderStatus,
       sortBy,
@@ -55,6 +56,11 @@ router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ modu
     // 达人搜索
     if (influencerUsername) {
       query.influencerUsername = { $regex: influencerUsername, $options: 'i' };
+    }
+
+    // 归属BD搜索
+    if (bdName) {
+      query.bdName = { $regex: bdName, $options: 'i' };
     }
 
     // 商品ID搜索（精确匹配）
@@ -658,27 +664,61 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
  */
 router.get('/bills', authenticate, authorize('orders:read'), async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, billNo, isSettled, startDate, endDate, validDate } = req.query;
     const Bill = require('../models/Bill');
 
-    const bills = await Bill.find({ companyId: req.companyId })
+    // 构建查询条件
+    const query = { companyId: req.companyId };
+
+    // 账单号模糊搜索
+    if (billNo) {
+      query.billNo = { $regex: billNo, $options: 'i' };
+    }
+
+    // 账单状态
+    if (isSettled !== undefined && isSettled !== '') {
+      query.isSettled = isSettled === 'true';
+    }
+
+    // 创建时间范围
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = endDateTime;
+      }
+    }
+
+    // 有效日期包含搜索日期：validStartDate <= validDate AND validEndDate >= validDate
+    if (validDate) {
+      const searchDate = new Date(validDate);
+      searchDate.setHours(0, 0, 0, 0);
+      query.validStartDate = { $lte: searchDate };
+      const searchDateEnd = new Date(validDate);
+      searchDateEnd.setHours(23, 59, 59, 999);
+      query.validEndDate = { $gte: searchDateEnd };
+    }
+
+    const bills = await Bill.find(query)
       .populate('creatorId', 'realName')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
 
-    const total = await Bill.countDocuments({ companyId: req.companyId });
+    const total = await Bill.countDocuments(query);
 
     res.json({
       success: true,
-      data: {
-        bills,
-        pagination: {
-          total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(total / parseInt(limit))
-        }
+      bills,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
       }
     });
 
@@ -700,6 +740,7 @@ router.get('/bills/:id', authenticate, authorize('orders:read'), async (req, res
   try {
     const Bill = require('../models/Bill');
     const ReportOrder = require('../models/ReportOrder');
+    const User = require('../models/User');
 
     const bill = await Bill.findOne({
       _id: req.params.id,
@@ -746,11 +787,54 @@ router.get('/bills/:id', authenticate, authorize('orders:read'), async (req, res
       });
     }
 
+    // 从orderDetails获取BD列表
+    const orderDetails = Object.values(bdDetails);
+    const bdNames = orderDetails.map(bd => bd.bdName).filter(name => name && name !== '未分配');
+
+    // 获取所有BD的用户信息（包含银行账号），同时用realName和username查询
+    const bdUsers = await User.find({
+      companyId: req.companyId,
+      $or: [
+        { realName: { $in: bdNames } },
+        { username: { $in: bdNames } }
+      ]
+    }).select('realName username bankAccount');
+    const bdUserMap = {};
+    bdUsers.forEach(u => {
+      // 优先用realName匹配，其次用username
+      if (bdNames.includes(u.realName)) {
+        bdUserMap[u.realName] = u.bankAccount || '';
+      }
+      if (bdNames.includes(u.username)) {
+        bdUserMap[u.username] = u.bankAccount || '';
+      }
+    });
+
+    // 构建bdList，优先使用bill.bdList，否则使用orderDetails
+    let bdListWithBank = [];
+    if (bill.bdList && bill.bdList.length > 0) {
+      bdListWithBank = bill.bdList
+        .filter(bd => bd && bd.bdName)
+        .map(bd => ({
+          ...bd,
+          bankAccount: bdUserMap[bd.bdName] || ''
+        }));
+    } else {
+      // 从orderDetails构建bdList
+      bdListWithBank = orderDetails.map(bd => ({
+        bdName: bd.bdName,
+        commission: bd.commission,
+        orderCount: bd.orderCount,
+        bankAccount: bdUserMap[bd.bdName] || ''
+      }));
+    }
+
     res.json({
       success: true,
       data: {
         ...bill.toObject(),
-        orderDetails: Object.values(bdDetails)
+        bdList: bdListWithBank,
+        orderDetails: orderDetails
       }
     });
 
@@ -849,6 +933,227 @@ router.post('/bills/:id/settle', authenticate, authorize('orders:update'), async
     res.status(500).json({
       success: false,
       message: '结算失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/report-orders/bills/:id/settlement-note
+ * @desc    更新结算记录
+ * @access  Private
+ */
+router.put('/bills/:id/settlement-note', authenticate, authorize('orders:update'), async (req, res) => {
+  try {
+    const { noteIndex, bankAccount, bankFlowNo, note } = req.body;
+    const Bill = require('../models/Bill');
+
+    const bill = await Bill.findOne({
+      _id: req.params.id,
+      companyId: req.companyId
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    if (!bill.isSettled) {
+      return res.status(400).json({
+        success: false,
+        message: '该账单未结清，无法编辑'
+      });
+    }
+
+    if (noteIndex === undefined || noteIndex < 0 || noteIndex >= bill.settlementNotes.length) {
+      return res.status(400).json({
+        success: false,
+        message: '无效的结算记录索引'
+      });
+    }
+
+    const currentNote = bill.settlementNotes[noteIndex];
+
+    // 记录历史
+    const historyEntry = {
+      bankAccount: currentNote.bankAccount || '',
+      bankFlowNo: currentNote.bankFlowNo || '',
+      note: currentNote.note || '',
+      updatedAt: new Date(),
+      editorId: req.userId,
+      editorName: req.user?.realName || req.user?.username || '未知用户'
+    };
+
+    if (!currentNote.history) {
+      currentNote.history = [];
+    }
+    currentNote.history.push(historyEntry);
+
+    // 更新当前记录
+    currentNote.bankAccount = bankAccount || '';
+    currentNote.bankFlowNo = bankFlowNo || '';
+    currentNote.note = note || '';
+    currentNote.updatedAt = new Date();
+    currentNote.creatorId = currentNote.creatorId || req.userId;
+    currentNote.creatorName = currentNote.creatorName || req.user?.realName || req.user?.username || '未知用户';
+
+    await bill.save();
+
+    res.json({
+      success: true,
+      message: '结算记录更新成功',
+      data: bill
+    });
+
+  } catch (error) {
+    console.error('Update settlement note error:', error);
+    res.status(500).json({
+      success: false,
+      message: '更新结算记录失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/report-orders/bills/:id/settlement-note
+ * @desc    新增结算记录
+ * @access  Private
+ */
+router.post('/bills/:id/settlement-note', authenticate, authorize('orders:update'), async (req, res) => {
+  try {
+    const { bdName, bankAccount, bankFlowNo, note } = req.body;
+    const Bill = require('../models/Bill');
+
+    const bill = await Bill.findOne({
+      _id: req.params.id,
+      companyId: req.companyId
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    if (!bill.isSettled) {
+      return res.status(400).json({
+        success: false,
+        message: '该账单未结清，无法添加结算记录'
+      });
+    }
+
+    if (!bdName) {
+      return res.status(400).json({
+        success: false,
+        message: '请选择BD'
+      });
+    }
+
+    // 检查是否已存在该BD的结算记录
+    const existingNote = bill.settlementNotes.find(n => n.bdName === bdName);
+    if (existingNote) {
+      return res.status(400).json({
+        success: false,
+        message: '该BD的结算记录已存在，请使用编辑功能'
+      });
+    }
+
+    // 新增结算记录
+    bill.settlementNotes.push({
+      bdName,
+      bankAccount: bankAccount || '',
+      bankFlowNo: bankFlowNo || '',
+      note: note || '',
+      createdAt: new Date(),
+      creatorId: req.userId,
+      creatorName: req.user?.realName || req.user?.username || '未知用户'
+    });
+
+    await bill.save();
+
+    res.json({
+      success: true,
+      message: '新增结算记录成功',
+      data: bill
+    });
+
+  } catch (error) {
+    console.error('Add settlement note error:', error);
+    res.status(500).json({
+      success: false,
+      message: '新增结算记录失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/report-orders/bills/:id/settlement-history
+ * @desc    获取结算记录历史
+ * @access  Private
+ */
+router.get('/bills/:id/settlement-history', authenticate, authorize('orders:view'), async (req, res) => {
+  try {
+    const { noteIndex } = req.query;
+    const Bill = require('../models/Bill');
+
+    const bill = await Bill.findOne({
+      _id: req.params.id,
+      companyId: req.companyId
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    // 如果指定了noteIndex，返回单条记录的历史
+    if (noteIndex !== undefined) {
+      const idx = parseInt(noteIndex);
+      if (isNaN(idx) || idx < 0 || idx >= bill.settlementNotes.length) {
+        return res.status(400).json({
+          success: false,
+          message: '无效的结算记录索引'
+        });
+      }
+
+      const note = bill.settlementNotes[idx];
+      return res.json({
+        success: true,
+        data: {
+          note: note,
+          history: note.history || []
+        }
+      });
+    }
+
+    // 否则返回所有记录及其历史
+    res.json({
+      success: true,
+      data: bill.settlementNotes.map((note, idx) => ({
+        index: idx,
+        bdName: note.bdName,
+        bankAccount: note.bankAccount,
+        bankFlowNo: note.bankFlowNo,
+        note: note.note,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        creatorName: note.creatorName,
+        history: note.history || []
+      }))
+    });
+
+  } catch (error) {
+    console.error('Get settlement history error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取结算历史失败',
       error: error.message
     });
   }
