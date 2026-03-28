@@ -86,11 +86,19 @@ router.get('/bd-stats', authenticate, async (req, res) => {
       console.log('[Dashboard] Getting BD stats for current user:', { username, realName, isBD, isAdmin });
     }
 
-    // 1. 使用系统时间当天的前一天作为目标日期
-    const today = new Date();
-    const targetDate = new Date(today);
-    targetDate.setDate(targetDate.getDate() - 1);
-    targetDate.setHours(0, 0, 0, 0);
+    // 1. 支持前端传入日期，否则默认前一天
+    let targetDate;
+    if (req.query.date) {
+      // 使用前端传入的日期
+      targetDate = new Date(req.query.date);
+      targetDate.setHours(0, 0, 0, 0);
+    } else {
+      // 默认使用系统时间当天的前一天
+      const today = new Date();
+      targetDate = new Date(today);
+      targetDate.setDate(targetDate.getDate() - 1);
+      targetDate.setHours(0, 0, 0, 0);
+    }
 
     // 计算一天的起始和结束
     const dayStart = new Date(targetDate);

@@ -96,7 +96,19 @@ export default {
     mobileVersion: 'Mobile',
     mobileDesc: 'Phone/Tablet Portrait',
     pcVersion: 'PC',
-    pcDesc: 'Desktop Browser'
+    pcDesc: 'Desktop Browser',
+    terms: 'I have read and agree to',
+    termsOfService: 'Terms of Service',
+    and: 'and',
+    privacyPolicy: 'Privacy Policy',
+    agreeToTermsFirst: 'Please read and agree to the Terms of Service and Privacy Policy',
+    passwordLogin: 'Password',
+    tiktokLoginTip: 'Login quickly with your TikTok account',
+    loginWithTikTok: 'Login with TikTok',
+    tiktokComingSoon: 'TikTok login coming soon',
+    accountLocked: 'Account locked',
+    failedAttempts: 'Failed attempts',
+    minutes: 'min'
   },
   auth: {
     loginSuccess: 'Login successful',

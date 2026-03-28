@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <!-- BD用户选择器 -->
+    <!-- BD用户选择器和日期选择器 -->
     <div class="bd-selector">
       <span class="selector-label">选择BD：</span>
       <el-select
@@ -18,6 +18,17 @@
           :value="bd._id"
         />
       </el-select>
+      <span class="selector-label" style="margin-left: 20px;">统计日期：</span>
+      <el-date-picker
+        v-model="selectedDate"
+        type="date"
+        placeholder="选择日期"
+        format="YYYY-MM-DD"
+        value-format="YYYY-MM-DD"
+        :disabled-date="disabledFutureDate"
+        style="width: 180px"
+        @change="handleDateChange"
+      />
     </div>
 
     <!-- BD数据概览 -->
@@ -228,11 +239,20 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 import request from '@/utils/request'
+import AuthManager from '@/utils/auth'
 import { Box, ShoppingCart, Money, Calendar } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
+
+// 日期选择 - 默认前一天
+const getDefaultDate = () => {
+  const date = new Date()
+  date.setDate(date.getDate() - 1)
+  return date
+}
+const selectedDate = ref(getDefaultDate())
 
 const selectedBDId = ref('')
 const bdUsers = ref([])
@@ -270,6 +290,23 @@ const handleBDChange = () => {
     // 全部（团队）数据
     loadBDStats(null, 'all')
   }
+}
+
+const handleDateChange = () => {
+  console.log('[BDDashboard] handleDateChange, selectedDate:', selectedDate.value)
+  // 日期改变时重新加载数据
+  if (selectedBDId.value === 'unassigned') {
+    loadBDStats(null, 'unassigned')
+  } else if (selectedBDId.value) {
+    loadBDStats(selectedBDId.value)
+  } else {
+    loadBDStats(null, 'all')
+  }
+}
+
+// 禁用未来日期
+const disabledFutureDate = (time) => {
+  return time.getTime() > Date.now()
 }
 
 const sampleTrendData = computed(() => {
@@ -355,6 +392,15 @@ const loadBDStats = async (userId, special) => {
       // 不传userId，让后端使用当前登录用户
     } else if (userId) {
       params.userId = userId
+    }
+    // 添加日期参数
+    if (selectedDate.value) {
+      const dateStr = selectedDate.value
+      if (typeof dateStr === 'object') {
+        params.date = `${dateStr.getFullYear()}-${String(dateStr.getMonth() + 1).padStart(2, '0')}-${String(dateStr.getDate()).padStart(2, '0')}`
+      } else {
+        params.date = dateStr
+      }
     }
     console.log('[BDDashboard] loadBDStats params:', params)
     const res = await request.get('/dashboard/bd-stats', { params })

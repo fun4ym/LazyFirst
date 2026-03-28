@@ -35,6 +35,18 @@ const routes = [
     component: () => import('@/views/Login.vue'),
     meta: { requiresAuth: false }
   },
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: () => import('@/views/Terms.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('@/views/Privacy.vue'),
+    meta: { requiresAuth: false }
+  },
   // 公开样品申请页面（通过识别码访问）
   {
     path: '/samples/public',

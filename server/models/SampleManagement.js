@@ -33,6 +33,18 @@ const sampleManagementSchema = new mongoose.Schema({
     default: 0,
     comment: '粉丝数'
   },
+  // 月销件数
+  monthlySalesCount: {
+    type: Number,
+    default: 0,
+    comment: '月销件数'
+  },
+  // 视频均播
+  avgVideoViews: {
+    type: Number,
+    default: 0,
+    comment: '视频均播'
+  },
   salesman: {
     type: String,
     comment: '归属业务员ID'

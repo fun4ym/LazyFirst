@@ -7,7 +7,31 @@
         <p>TikTok Shop Affiliate Partner</p>
       </div>
 
+      <!-- 登录模式切换 -->
+      <div class="login-mode-tabs">
+        <div
+          class="mode-tab"
+          :class="{ active: loginMode === 'password' }"
+          @click="loginMode = 'password'"
+        >
+          <el-icon><Lock /></el-icon>
+          <span>{{ $t('login.passwordLogin') }}</span>
+        </div>
+        <div
+          class="mode-tab"
+          :class="{ active: loginMode === 'tiktok' }"
+          @click="loginMode = 'tiktok'"
+        >
+          <svg class="tiktok-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+          </svg>
+          <span>TikTok</span>
+        </div>
+      </div>
+
+      <!-- 账号密码登录 -->
       <el-form
+        v-if="loginMode === 'password'"
         ref="formRef"
         :model="form"
         :rules="rules"
@@ -20,6 +44,7 @@
             :placeholder="$t('login.username')"
             size="large"
             :prefix-icon="User"
+            :disabled="isLocked"
           />
         </el-form-item>
 
@@ -31,7 +56,22 @@
             size="large"
             :prefix-icon="Lock"
             show-password
+            :disabled="isLocked"
           />
+        </el-form-item>
+
+        <!-- 登录失败提示 -->
+        <div v-if="failedAttempts > 0" class="failed-attempts-tip">
+          <el-icon><WarningFilled /></el-icon>
+          <span v-if="isLocked">{{ $t('login.accountLocked') }} ({{ lockedTimeRemaining }}{{ $t('login.minutes') }})</span>
+          <span v-else>{{ $t('login.failedAttempts') }}: {{ failedAttempts }}/3</span>
+        </div>
+
+        <el-form-item>
+          <el-checkbox v-model="form.agreedToTerms">{{ $t('login.terms') }}</el-checkbox>
+          <a href="/terms" target="_blank" class="policy-link" @click.stop>{{ $t('login.termsOfService') }}</a>
+          <span class="and-text">{{ $t('login.and') }}</span>
+          <a href="/privacy" target="_blank" class="policy-link" @click.stop>{{ $t('login.privacyPolicy') }}</a>
         </el-form-item>
 
         <el-form-item>
@@ -40,15 +80,50 @@
             size="large"
             class="login-button"
             :loading="loading"
+            :disabled="isLocked"
             @click="handleLogin"
           >
-            {{ loading ? $t('common.loading') : $t('login.login') }}
+            {{ isLocked ? $t('login.login') + ' (' + lockedTimeRemaining + ')' : (loading ? $t('common.loading') : $t('login.login')) }}
           </el-button>
         </el-form-item>
       </el-form>
 
+      <!-- TikTok登录 -->
+      <div v-if="loginMode === 'tiktok'" class="login-form tiktok-login">
+        <div class="tiktok-login-tip">
+          <svg class="tiktok-icon-large" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+          </svg>
+          <p>{{ $t('login.tiktokLoginTip') }}</p>
+        </div>
+
+        <el-form-item>
+          <el-checkbox v-model="form.agreedToTerms">{{ $t('login.terms') }}</el-checkbox>
+          <a href="/terms" target="_blank" class="policy-link" @click.stop>{{ $t('login.termsOfService') }}</a>
+          <span class="and-text">{{ $t('login.and') }}</span>
+          <a href="/privacy" target="_blank" class="policy-link" @click.stop>{{ $t('login.privacyPolicy') }}</a>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            class="login-button tiktok-btn"
+            :loading="loading"
+            :disabled="!form.agreedToTerms"
+            @click="handleTikTokLogin"
+          >
+            <svg class="tiktok-btn-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+            </svg>
+            {{ $t('login.loginWithTikTok') }}
+          </el-button>
+        </el-form-item>
+      </div>
+
       <div class="login-footer">
-        <p>Copyright © 2026 LazyFirst Digital System © Encrypted | TAP Ecosystem Certified | All Intellectual Properties Reserved</p>
+        <p>Copyright © 2026 LazyFirst. All Rights Reserved.</p>
+        <p>Encrypted Digital System・TAP Ecosystem Certified</p>
       </div>
     </div>
 
@@ -80,11 +155,11 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Iphone, Monitor } from '@element-plus/icons-vue'
+import { User, Lock, Iphone, Monitor, WarningFilled } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
 const { t } = useI18n()
@@ -94,10 +169,26 @@ const formRef = ref(null)
 const loading = ref(false)
 const showDeviceDialog = ref(false)
 const isMobileDevice = ref(false)
+const loginMode = ref('password')
+
+// 登录失败次数和锁定
+const failedAttempts = ref(0)
+const lockEndTime = ref(0)
+const lockTimer = ref(null)
+const countdownTimer = ref(null)
+const lockedTimeRemaining = ref(0)
+
+const LOCK_DURATION = 5 * 60 * 1000 // 5分钟
+const MAX_FAILED_ATTEMPTS = 3
+
+const isLocked = computed(() => {
+  return Date.now() < lockEndTime.value
+})
 
 const form = reactive({
   username: '',
-  password: ''
+  password: '',
+  agreedToTerms: false
 })
 
 const rules = {
@@ -108,6 +199,46 @@ const rules = {
     { required: true, message: t('login.password'), trigger: 'blur' },
     { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
   ]
+}
+
+// 从localStorage恢复失败次数和锁定状态
+onMounted(() => {
+  const savedFailedAttempts = localStorage.getItem('loginFailedAttempts')
+  const savedLockEndTime = localStorage.getItem('loginLockEndTime')
+
+  if (savedFailedAttempts) {
+    failedAttempts.value = parseInt(savedFailedAttempts)
+  }
+
+  if (savedLockEndTime) {
+    lockEndTime.value = parseInt(savedLockEndTime)
+    if (isLocked.value) {
+      startCountdown()
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (lockTimer.value) clearInterval(lockTimer.value)
+  if (countdownTimer.value) clearInterval(countdownTimer.value)
+})
+
+const startCountdown = () => {
+  updateLockedTimeRemaining()
+  countdownTimer.value = setInterval(() => {
+    updateLockedTimeRemaining()
+    if (!isLocked.value) {
+      clearInterval(countdownTimer.value)
+      failedAttempts.value = 0
+      localStorage.removeItem('loginFailedAttempts')
+      localStorage.removeItem('loginLockEndTime')
+    }
+  }, 1000)
+}
+
+const updateLockedTimeRemaining = () => {
+  const remaining = Math.max(0, Math.ceil((lockEndTime.value - Date.now()) / 1000))
+  lockedTimeRemaining.value = Math.ceil(remaining / 60) || 1
 }
 
 const isMobile = () => {
@@ -125,13 +256,30 @@ const selectDevice = (device) => {
 const handleLogin = async () => {
   if (!formRef.value) return
 
+  // 检查是否被锁定
+  if (isLocked.value) {
+    ElMessage.warning(t('login.accountLocked') + ' (' + lockedTimeRemaining.value + ' ' + t('login.minutes') + ')')
+    return
+  }
+
   await formRef.value.validate(async (valid) => {
     if (!valid) return
+
+    if (!form.agreedToTerms) {
+      ElMessage.warning(t('login.agreeToTermsFirst'))
+      return
+    }
 
     loading.value = true
     try {
       await AuthManager.login(form.username, form.password)
       ElMessage.success(t('auth.loginSuccess'))
+
+      // 登录成功，重置失败次数
+      failedAttempts.value = 0
+      localStorage.removeItem('loginFailedAttempts')
+      localStorage.removeItem('loginLockEndTime')
+
       // 判断是否移动端设备
       if (isMobile()) {
         showDeviceDialog.value = true
@@ -139,11 +287,33 @@ const handleLogin = async () => {
         router.push('/dashboard')
       }
     } catch (error) {
-      ElMessage.error(error.message || t('common.error'))
+      // 登录失败，增加失败次数
+      failedAttempts.value++
+      localStorage.setItem('loginFailedAttempts', failedAttempts.value.toString())
+
+      if (failedAttempts.value >= MAX_FAILED_ATTEMPTS) {
+        // 锁定账号
+        lockEndTime.value = Date.now() + LOCK_DURATION
+        localStorage.setItem('loginLockEndTime', lockEndTime.value.toString())
+        startCountdown()
+        ElMessage.error(t('login.accountLocked') + ' (' + lockedTimeRemaining.value + ' ' + t('login.minutes') + ')')
+      } else {
+        ElMessage.error(error.message || t('common.error'))
+      }
     } finally {
       loading.value = false
     }
   })
+}
+
+const handleTikTokLogin = async () => {
+  if (!form.agreedToTerms) {
+    ElMessage.warning(t('login.agreeToTermsFirst'))
+    return
+  }
+
+  // TikTok登录逻辑（预留）
+  ElMessage.info(t('login.tiktokComingSoon'))
 }
 </script>
 
@@ -201,8 +371,116 @@ const handleLogin = async () => {
   margin: 0;
 }
 
+.login-mode-tabs {
+  display: flex;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e4e7ed;
+}
+
+.mode-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  background: #f5f7fa;
+  color: #8c8c8c;
+  font-size: 14px;
+  transition: all 0.3s;
+  border-right: 1px solid #e4e7ed;
+}
+
+.mode-tab:last-child {
+  border-right: none;
+}
+
+.mode-tab.active {
+  background: #4a148c;
+  color: white;
+}
+
+.mode-tab:hover:not(.active) {
+  background: #f0e6f5;
+}
+
+.tiktok-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.tiktok-icon-large {
+  width: 64px;
+  height: 64px;
+  color: #4a148c;
+}
+
+.failed-attempts-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fef0f0;
+  border-radius: 6px;
+  color: #f56c6c;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
 .login-form {
   margin-bottom: 32px;
+}
+
+.tiktok-login {
+  padding-top: 20px;
+}
+
+.tiktok-login-tip {
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.tiktok-login-tip p {
+  color: #666;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.tiktok-btn {
+  background: #000 !important;
+  border-color: #000 !important;
+}
+
+.tiktok-btn:hover {
+  background: #333 !important;
+  border-color: #333 !important;
+}
+
+.tiktok-btn-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+.policy-link {
+  color: #4a148c;
+  text-decoration: none;
+  font-size: 14px;
+  margin: 0 4px;
+}
+
+.policy-link:hover {
+  text-decoration: underline;
+}
+
+.and-text {
+  color: #8c8c8c;
+  font-size: 14px;
+  margin: 0 4px;
 }
 
 .login-button {

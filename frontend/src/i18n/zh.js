@@ -97,7 +97,19 @@ export default {
     mobileVersion: '移动端',
     mobileDesc: '手机/平板竖屏',
     pcVersion: '电脑端',
-    pcDesc: '桌面浏览器'
+    pcDesc: '桌面浏览器',
+    terms: '我已阅读并同意',
+    termsOfService: '服务条款',
+    and: '和',
+    privacyPolicy: '隐私政策',
+    agreeToTermsFirst: '请先阅读并同意服务条款和隐私政策',
+    passwordLogin: '账号密码',
+    tiktokLoginTip: '使用TikTok账号快速登录',
+    loginWithTikTok: '使用TikTok登录',
+    tiktokComingSoon: 'TikTok登录功能即将上线',
+    accountLocked: '账号已被锁定',
+    failedAttempts: '登录失败次数',
+    minutes: '分钟'
   },
   auth: {
     loginSuccess: '登录成功',

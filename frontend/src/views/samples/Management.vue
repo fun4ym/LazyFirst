@@ -272,12 +272,22 @@
 
         <el-table-column
           label="达人数据"
-          width="120"
+          width="200"
         >
           <template #default="{ row }">
             <div class="influencer-data">
-              <el-tag type="info" size="small">粉丝</el-tag>
-              <span class="follower-count">{{ formatNumber(row.followerCount) }}</span>
+              <div class="data-row">
+                <el-tag type="info" size="small">粉丝</el-tag>
+                <span class="follower-count">{{ formatNumber(row.followerCount) }}</span>
+              </div>
+              <div class="data-row">
+                <el-tag type="info" size="small">月销</el-tag>
+                <span class="follower-count">{{ formatNumber(row.monthlySalesCount) }}</span>
+              </div>
+              <div class="data-row">
+                <el-tag type="info" size="small">均播</el-tag>
+                <span class="follower-count">{{ formatNumber(row.avgVideoViews) }}</span>
+              </div>
             </div>
           </template>
         </el-table-column>
@@ -406,13 +416,25 @@
                 <span v-else class="info-value">-</span>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <div class="info-item">
                 <div class="info-label">粉丝数</div>
                 <div class="info-value highlight-value">{{ formatNumber(currentSample.followerCount) }}</div>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
+              <div class="info-item">
+                <div class="info-label">月销件数</div>
+                <div class="info-value highlight-value">{{ formatNumber(currentSample.monthlySalesCount) }}</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="info-item">
+                <div class="info-label">视频均播</div>
+                <div class="info-value highlight-value">{{ formatNumber(currentSample.avgVideoViews) }}</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
               <div class="info-item">
                 <div class="info-label">GMV</div>
                 <div class="info-value">{{ currentSample.gmv || '-' }}</div>
@@ -711,6 +733,19 @@
           </el-col>
         </el-row>
 
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="月销件数" prop="monthlySalesCount">
+              <el-input-number v-model="createForm.monthlySalesCount" :min="0" :controls="false" placeholder="月销件数" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="视频均播" prop="avgVideoViews">
+              <el-input-number v-model="createForm.avgVideoViews" :min="0" :controls="false" placeholder="视频均播" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-form-item label="收货信息" prop="shippingInfo">
           <el-input
             v-model="createForm.shippingInfo"
@@ -910,6 +945,8 @@ const createForm = reactive({
   productId: '',
   influencerAccount: '',
   followerCount: 0,
+  monthlySalesCount: 0,
+  avgVideoViews: 0,
   gmv: 0,
   salesman: '',
   shippingInfo: '',
@@ -1086,6 +1123,8 @@ const showCreateDialog = () => {
     productId: '',
     influencerAccount: '',
     followerCount: 0,
+    monthlySalesCount: 0,
+    avgVideoViews: 0,
     gmv: 0,
     salesman: currentUser?._id || currentUser?.id || '',
     shippingInfo: '',
