@@ -380,7 +380,8 @@ const menuTree = ref([
           { code: 'btn-add', name: '新增用户' },
           { code: 'btn-edit', name: '编辑' },
           { code: 'btn-delete', name: '删除' },
-          { code: 'btn-reset-pwd', name: '重置密码' }
+          { code: 'btn-reset-pwd', name: '重置密码' },
+          { code: 'btn-payment-records', name: '打款记录' }
         ]
       },
       {

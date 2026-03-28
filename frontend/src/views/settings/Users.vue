@@ -97,7 +97,7 @@
             <template v-else>
               <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">编辑</el-button>
               <el-button link type="warning" @click="showPasswordResetDialog(row)" v-if="hasPermission('users:btn-reset-pwd')">重置密码</el-button>
-              <el-button link type="success" @click="showPaymentRecordsDialog(row)" v-if="hasPermission('users:read')">打款记录</el-button>
+              <el-button link type="success" @click="showPaymentRecordsDialog(row)" v-if="hasPermission('users:btn-payment-records') || hasPermission('users:read')">打款记录</el-button>
               <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">删除</el-button>
             </template>
           </template>
