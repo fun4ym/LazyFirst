@@ -145,8 +145,30 @@ router.post('/category', authenticate, verifyAdmin, upload.single('file'), async
       }
     }
 
-    if (insertedData.length > 0) {
-      await BaseData.insertMany(insertedData);
+    // 增量导入：存在则更新，不存在则新增
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    for (const item of insertedData) {
+      // 使用 companyId + type + name 作为唯一标识
+      const existing = await BaseData.findOne({
+        companyId: item.companyId,
+        type: item.type,
+        name: item.name
+      });
+
+      if (existing) {
+        // 更新已有记录
+        await BaseData.updateOne(
+          { _id: existing._id },
+          { $set: { englishName: item.englishName, status: item.status, updatedAt: new Date() } }
+        );
+        updatedCount++;
+      } else {
+        // 新增记录
+        await BaseData.create(item);
+        addedCount++;
+      }
     }
 
     // 清理上传文件
@@ -154,8 +176,10 @@ router.post('/category', authenticate, verifyAdmin, upload.single('file'), async
 
     res.json({
       success: true,
-      message: `成功导入 ${insertedData.length} 条类目数据`,
-      count: insertedData.length
+      message: `成功导入类目数据：新增 ${addedCount} 条，更新 ${updatedCount} 条`,
+      count: addedCount + updatedCount,
+      added: addedCount,
+      updated: updatedCount
     });
   } catch (error) {
     console.error('导入类目失败:', error);
@@ -243,43 +267,92 @@ router.post('/shops', authenticate, verifyAdmin, upload.single('file'), async (r
       }
     }
 
-    // 批量插入店铺
-    if (shops.length > 0) {
-      await Shop.insertMany(shops);
-    }
+    // 增量导入店铺：存在则更新，不存在则新增
+    let addedCount = 0;
+    let updatedCount = 0;
 
-    // 填充shopId并插入联系人
-    const contactsToInsert = [];
-    for (const item of contactData) {
-      const savedShop = await Shop.findOne({ 
-        companyId: companyId, 
-        shopNumber: item.shopNumber 
+    for (const shop of shops) {
+      const existing = await Shop.findOne({
+        companyId: shop.companyId,
+        shopNumber: shop.shopNumber
       });
-      
-      if (savedShop) {
-        contactsToInsert.push({
-          companyId: companyId,
-          shopId: savedShop._id,
-          name: item.name,
-          phone: item.phone,
-          email: item.email,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt
-        });
 
-        // 记录ID对照关系
-        mappings.push({
-          tableName: 'shop',
-          originalId: item.originalId,
-          newId: savedShop._id,
-          companyId: companyId
-        });
+      if (existing) {
+        // 更新已有记录
+        await Shop.updateOne(
+          { _id: existing._id },
+          { $set: { shopName: shop.shopName, contactAddress: shop.contactAddress, status: shop.status, updatedAt: new Date() } }
+        );
+        shop._id = existing._id;
+        updatedCount++;
+      } else {
+        // 新增记录
+        const newShop = await Shop.create(shop);
+        shop._id = newShop._id;
+        addedCount++;
       }
     }
 
-    // 插入联系人
-    if (contactsToInsert.length > 0) {
-      await ShopContact.insertMany(contactsToInsert);
+    // 填充shopId并处理联系人（upsert模式）
+    for (const item of contactData) {
+      const savedShop = await Shop.findOne({
+        companyId: companyId,
+        shopNumber: item.shopNumber
+      });
+
+      if (savedShop) {
+        // 检查联系人是否已存在
+        const existingContact = await ShopContact.findOne({
+          companyId: companyId,
+          shopId: savedShop._id,
+          phone: item.phone
+        });
+
+        if (existingContact) {
+          // 更新联系人
+          await ShopContact.updateOne(
+            { _id: existingContact._id },
+            { $set: { name: item.name, email: item.email, updatedAt: new Date() } }
+          );
+        } else {
+          // 新增联系人
+          await ShopContact.create({
+            companyId: companyId,
+            shopId: savedShop._id,
+            name: item.name,
+            phone: item.phone,
+            email: item.email,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt
+          });
+        }
+
+        // 记录ID对照关系
+        const existingMapping = await TempIdMapping.findOne({
+          tableName: 'shop',
+          originalId: item.originalId,
+          companyId: companyId
+        });
+
+        if (existingMapping) {
+          await TempIdMapping.updateOne(
+            { _id: existingMapping._id },
+            { $set: { newId: savedShop._id } }
+          );
+        } else {
+          mappings.push({
+            tableName: 'shop',
+            originalId: item.originalId,
+            newId: savedShop._id,
+            companyId: companyId
+          });
+        }
+      }
+    }
+
+    // 批量插入联系人映射（如果有新的）
+    if (mappings.length > 0) {
+      await TempIdMapping.insertMany(mappings, { ordered: false });
     }
 
     // 记录ID映射
@@ -291,8 +364,10 @@ router.post('/shops', authenticate, verifyAdmin, upload.single('file'), async (r
 
     res.json({
       success: true,
-      message: `成功导入 ${shops.length} 条店铺数据`,
-      count: shops.length
+      message: `成功导入店铺数据：新增 ${addedCount} 条，更新 ${updatedCount} 条`,
+      count: addedCount + updatedCount,
+      added: addedCount,
+      updated: updatedCount
     });
   } catch (error) {
     console.error('导入店铺失败:', error);
