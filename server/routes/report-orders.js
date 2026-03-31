@@ -243,6 +243,10 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
           console.log('=====================================\n');
         }
 
+        // 退货退款逻辑：如果"已全部退货或全额退款"="是"，则退货数量=下单件数
+        const isAllReturned = row['已全部退货或全额退款'] === '是';
+        const importedOrderQuantity = parseInt(row['下单件数']) || 0;
+
         const orderData = {
           companyId: req.companyId,
           orderNo: orderNo,
@@ -250,36 +254,31 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
           influencerUsername: row['达人用户名'],
           productId: row['商品 ID'],
           productName: row['商品名称'],
-          sku: row['SKU'],
+          sku: row['SKU ID'],  // A. 改为SKU ID
           productPrice: parseFloat(row['商品价格']) || 0,
-          orderQuantity: parseInt(row['下单件数']) || 0,
+          orderQuantity: importedOrderQuantity,
           shopName: row['店铺名称'],
           shopCode: row['店铺代码'],
           orderStatus: row['订单状态'],
           contentType: row['内容形式'],
           contentId: row['内容 ID'],
-          affiliatePartnerCommissionRate: (parseFloat(row['联盟合作伙伴佣金率']) || 0) / 100,
-          creatorCommissionRate: (parseFloat(row['创作者佣金率']) || 0) / 100,
-          serviceProviderRewardCommissionRate: (parseFloat(row['服务商奖励佣金率']) || 0) / 100,
-          influencerRewardCommissionRate: (parseFloat(row['达人奖励佣金率']) || 0) / 100,
-          affiliateServiceProviderShopAdCommissionRate: (parseFloat(row['联盟服务商店铺广告佣金率']) || 0) / 100,
-          influencerShopAdCommissionRate: (parseFloat(row['达人店铺广告佣金率']) || 0) / 100,
-          estimatedCommissionAmount: parseFloat(row['预估计佣金额']) || 0,
-          estimatedAffiliatePartnerCommission: parseFloat(row['预计联盟合作伙伴获得的佣金']) || 0,
-          estimatedServiceProviderRewardCommission: parseFloat(row['预计服务商奖励佣金费']) || 0,
-          estimatedInfluencerRewardCommission: parseFloat(row['预计达人奖励佣金费']) || 0,
-          estimatedCreatorCommission: parseFloat(row['预计创作者获得的佣金']) || 0,
-          estimatedInfluencerShopAdPayment: parseFloat(row['预计达人店铺广告佣金付款']) || 0,
-          estimatedAffiliateServiceProviderShopAdPayment: parseFloat(row['预计联盟服务商店铺广告佣金付款']) || 0,
-          actualCommissionAmount: parseFloat(row['实际计佣金额']) || 0,
-          actualAffiliatePartnerCommission: parseFloat(row['联盟合作伙伴获得的实际佣金']) || 0,
-          actualCreatorCommission: parseFloat(row['创作者获得的实际佣金']) || 0,
-          actualServiceProviderRewardCommission: parseFloat(row['实际服务商奖励佣金费']) || 0,
-          actualInfluencerRewardCommission: parseFloat(row['实际达人奖励佣金费']) || 0,
-          actualAffiliateServiceProviderShopAdPayment: parseFloat(row['实际联盟服务商店铺广告佣金付款']) || 0,
-          actualInfluencerShopAdPayment: parseFloat(row['实际达人店铺广告佣金付款']) || 0,
-          returnedProductCount: parseInt(row['已退货的商品数量']) || 0,
-          refundedProductCount: parseInt(row['已退款的商品数量']) || 0,
+          // B. 佣金率修正
+          affiliatePartnerCommissionRate: (parseFloat(row['标准联盟服务商佣金率']) || 0) / 100,  // 标准商佣率
+          affiliateServiceProviderShopAdCommissionRate: (parseFloat(row['联盟服务商店铺广告佣金率']) || 0) / 100,  // 广告佣金率
+          serviceProviderRewardCommissionRate: (parseFloat(row['TikTok 联盟服务商奖金率']) || 0) / 100,  // TikTok奖金率
+          // C. 预计佣金修正
+          estimatedCommissionAmount: parseFloat(row['预计基础佣金']) || 0,  // 预估计佣金额
+          estimatedAffiliatePartnerCommission: parseFloat(row['预计联盟服务商佣金']) || 0,  // 预估商佣
+          estimatedServiceProviderRewardCommission: parseFloat(row['预计联盟服务商奖励佣金']) || 0,  // 预估奖金
+          estimatedAffiliateServiceProviderShopAdPayment: parseFloat(row['预计联盟服务商店铺广告佣金']) || 0,  // 预估推流佣金
+          // D. 实际佣金修正
+          actualCommissionAmount: parseFloat(row['佣金基数']) || 0,  // 计佣金额
+          actualAffiliatePartnerCommission: parseFloat(row['联盟服务商标准佣金']) || 0,  // 实际商佣
+          actualServiceProviderRewardCommission: parseFloat(row['联盟服务商奖励佣金']) || 0,  // 实际奖金
+          actualAffiliateServiceProviderShopAdPayment: parseFloat(row['联盟服务商店铺广告佣金']) || 0,  // 实际推流佣金
+          // E. 退货退款逻辑
+          returnedProductCount: isAllReturned ? importedOrderQuantity : 0,
+          refundedProductCount: isAllReturned ? importedOrderQuantity : 0,
           createTime: parseExcelDate(row['创建时间']),
           orderDeliveryTime: parseExcelDate(row['订单送达时间']),
           commissionSettlementTime: importedCommissionSettlementTime,
@@ -318,27 +317,24 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
           if (hasCommissionSettlementTime) {
             updateData.$set.commissionSettlementTime = importedCommissionSettlementTime;
           }
-          // 更新实际佣金字段（如果有值）
-          if (row['实际计佣金额'] !== undefined && row['实际计佣金额'] !== '') {
-            updateData.$set.actualCommissionAmount = parseFloat(row['实际计佣金额']) || 0;
+          // 更新实际佣金字段（如果有值）- D.修正后的字段
+          if (row['佣金基数'] !== undefined && row['佣金基数'] !== '') {
+            updateData.$set.actualCommissionAmount = parseFloat(row['佣金基数']) || 0;
           }
-          if (row['联盟合作伙伴获得的实际佣金'] !== undefined && row['联盟合作伙伴获得的实际佣金'] !== '') {
-            updateData.$set.actualAffiliatePartnerCommission = parseFloat(row['联盟合作伙伴获得的实际佣金']) || 0;
+          if (row['联盟服务商标准佣金'] !== undefined && row['联盟服务商标准佣金'] !== '') {
+            updateData.$set.actualAffiliatePartnerCommission = parseFloat(row['联盟服务商标准佣金']) || 0;
           }
-          if (row['创作者获得的实际佣金'] !== undefined && row['创作者获得的实际佣金'] !== '') {
-            updateData.$set.actualCreatorCommission = parseFloat(row['创作者获得的实际佣金']) || 0;
+          if (row['联盟服务商奖励佣金'] !== undefined && row['联盟服务商奖励佣金'] !== '') {
+            updateData.$set.actualServiceProviderRewardCommission = parseFloat(row['联盟服务商奖励佣金']) || 0;
           }
-          if (row['实际服务商奖励佣金费'] !== undefined && row['实际服务商奖励佣金费'] !== '') {
-            updateData.$set.actualServiceProviderRewardCommission = parseFloat(row['实际服务商奖励佣金费']) || 0;
+          if (row['联盟服务商店铺广告佣金'] !== undefined && row['联盟服务商店铺广告佣金'] !== '') {
+            updateData.$set.actualAffiliateServiceProviderShopAdPayment = parseFloat(row['联盟服务商店铺广告佣金']) || 0;
           }
-          if (row['实际达人奖励佣金费'] !== undefined && row['实际达人奖励佣金费'] !== '') {
-            updateData.$set.actualInfluencerRewardCommission = parseFloat(row['实际达人奖励佣金费']) || 0;
-          }
-          if (row['实际联盟服务商店铺广告佣金付款'] !== undefined && row['实际联盟服务商店铺广告佣金付款'] !== '') {
-            updateData.$set.actualAffiliateServiceProviderShopAdPayment = parseFloat(row['实际联盟服务商店铺广告佣金付款']) || 0;
-          }
-          if (row['实际达人店铺广告佣金付款'] !== undefined && row['实际达人店铺广告佣金付款'] !== '') {
-            updateData.$set.actualInfluencerShopAdPayment = parseFloat(row['实际达人店铺广告佣金付款']) || 0;
+          // E. 退货退款更新逻辑
+          if (row['已全部退货或全额退款'] !== undefined) {
+            const isAllReturned = row['已全部退货或全额退款'] === '是';
+            updateData.$set.returnedProductCount = isAllReturned ? importedOrderQuantity : 0;
+            updateData.$set.refundedProductCount = isAllReturned ? importedOrderQuantity : 0;
           }
 
           // 如果有更新字段，执行更新
