@@ -7,6 +7,11 @@ const activityConfigSchema = new mongoose.Schema({
     ref: 'Activity',
     required: true
   },
+  // 活动专属链接
+  activityLink: {
+    type: String,
+    default: ''
+  },
   // 达人要求
   requirementGmv: {
     type: Number,
@@ -111,6 +116,20 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: 'USD'
   },
+  // 售价（合作价格）
+  sellingPrice: {
+    type: Number,
+    default: 0
+  },
+  // 价格区间
+  priceRangeMin: {
+    type: Number,
+    default: 0
+  },
+  priceRangeMax: {
+    type: Number,
+    default: 0
+  },
   commissionRate: {
     type: Number,
     default: 0.15
@@ -145,10 +164,6 @@ const productSchema = new mongoose.Schema({
     type: String,
     enum: ['ordinary', 'hot', 'main', 'new'],
     default: 'ordinary'
-  },
-  tapExclusiveLink: {
-    type: String,
-    default: ''
   },
   productImages: [String],
   productIntro: {

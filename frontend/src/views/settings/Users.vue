@@ -319,7 +319,7 @@
           <el-input v-model="paymentRecordForm.bankFlowNo" placeholder="请输入银行流水号" />
         </el-form-item>
         <el-form-item label="打款金额">
-          <el-input-number v-model="paymentRecordForm.amount" :min="0" :precision="2" style="width: 100%" />
+          <el-input-number v-model="paymentRecordForm.amount" :min="0" :precision="2" :controls="false" style="width: 100%" />
         </el-form-item>
         <el-form-item label="打款时间">
           <el-date-picker

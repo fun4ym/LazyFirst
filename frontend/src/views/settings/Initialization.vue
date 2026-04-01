@@ -385,7 +385,7 @@ async function clearProducts() {
     })
     clearingProducts.value = true
     const token = localStorage.getItem('token')
-    const res = await axios.delete(`${API_BASE_URL}/api/cooperation-products/clear-all`, {
+    const res = await axios.delete(`${API_BASE_URL}/api/products/clear-all`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (res.data.success) {

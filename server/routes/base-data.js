@@ -107,6 +107,16 @@ router.post('/', authenticate, authorize('baseData:create'), [
       });
     }
 
+    const { isDefault, type } = req.body;
+
+    // 如果设置为默认，先取消其他记录的默认状态（仅country和priceUnit）
+    if (isDefault && (type === 'country' || type === 'priceUnit')) {
+      await BaseData.updateMany(
+        { companyId: req.companyId, type, isDefault: true },
+        { isDefault: false }
+      );
+    }
+
     const baseData = await BaseData.create({
       ...req.body,
       companyId: req.companyId,
@@ -144,6 +154,16 @@ router.post('/', authenticate, authorize('baseData:create'), [
  */
 router.put('/:id', authenticate, authorize('baseData:update'), async (req, res) => {
   try {
+    const { isDefault, type } = req.body;
+
+    // 如果设置为默认，先取消其他记录的默认状态（仅country和priceUnit）
+    if (isDefault && (type === 'country' || type === 'priceUnit')) {
+      await BaseData.updateMany(
+        { companyId: req.companyId, type, isDefault: true, _id: { $ne: req.params.id } },
+        { isDefault: false }
+      );
+    }
+
     const baseData = await BaseData.findOneAndUpdate(
       { _id: req.params.id, companyId: req.companyId },
       req.body,

@@ -5,6 +5,7 @@ const SampleManagement = require('../models/SampleManagement');
 const Product = require('../models/Product');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
+const User = require('../models/User');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -438,6 +439,27 @@ router.delete('/:id', authenticate, authorize('samples:delete', 'samples-bd:dele
 });
 
 /**
+ * @route   DELETE /api/samples/clear
+ * @desc    清除所有样品申请记录
+ * @access  Private (admin only)
+ */
+router.delete('/clear', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const result = await SampleManagement.deleteMany({});
+    res.json({
+      success: true,
+      message: `已清除 ${result.deletedCount} 条申样记录`
+    });
+  } catch (error) {
+    console.error('清除申样记录错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '清除失败'
+    });
+  }
+});
+
+/**
  * @route   POST /api/samples/import
  * @desc    导入样品申请Excel
  * @access  Private
@@ -628,7 +650,18 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
           ...uniqueKey
         });
 
-        // 构建导入数据
+        // 构建导入数据 - salesman 需要匹配 user 表的 username 获取 ID
+        const salesmanName = row['归属业务员'] || '';
+        let salesmanId = salesmanName;
+        
+        // 如果 salesman 是字符串，尝试匹配 user 表的 username 获取 ID
+        if (salesmanName && typeof salesmanName === 'string') {
+          const user = await User.findOne({ username: salesmanName });
+          if (user) {
+            salesmanId = user._id;
+          }
+        }
+
         const sampleData = {
           companyId: req.companyId,
           creatorId: req.user._id,
@@ -637,7 +670,7 @@ router.post('/import', authenticate, authorize('samples:create', 'samples-bd:cre
           productId: productIdObj,
           influencerAccount: row['达人账号'],
           followerCount: parseInt(row['粉丝数']) || 0,
-          salesman: row['归属业务员'] || '',
+          salesman: salesmanId,
           shippingInfo: row['收货信息'] || '',
           sampleImage: row['样品图片'] || '',
           isSampleSent: row['是否寄样'] === '是' || row['是否寄样'] === true,

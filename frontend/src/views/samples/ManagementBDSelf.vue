@@ -641,7 +641,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="GMV" prop="gmv">
-              <el-input-number v-model="createForm.gmv" :min="0" :precision="2" :controls="false" placeholder="GMV" style="width: 100%" />
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <el-select v-model="createForm.currency" placeholder="币别" style="width: 70px">
+                  <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
+                </el-select>
+                <el-input-number v-model="createForm.gmv" :min="0" :precision="2" :controls="false" style="flex: 1" placeholder="GMV" />
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -767,6 +772,7 @@ const createForm = reactive({
   influencerAccount: '',
   followerCount: 0,
   gmv: 0,
+  currency: '',
   salesman: '',
   shippingInfo: '',
   sampleImage: '',
@@ -776,6 +782,25 @@ const createForm = reactive({
   logisticsCompany: '',
   isOrderGenerated: false
 })
+
+// 货币单位列表
+const currencyList = ref([])
+
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    currencyList.value = res.data || []
+    // 设置默认货币
+    const defaultCurrency = currencyList.value.find(c => c.isDefault)
+    if (defaultCurrency) {
+      createForm.currency = defaultCurrency.code
+    }
+  } catch (error) {
+    console.error('Load currencies error:', error)
+  }
+}
 
 const createRules = {
   date: [{ required: true, message: '请选择日期', trigger: 'change' }],
@@ -1094,6 +1119,7 @@ const goToOrders = async (sample) => {
 
 onMounted(() => {
   loadSamples()
+  loadCurrencies()
 })
 </script>
 

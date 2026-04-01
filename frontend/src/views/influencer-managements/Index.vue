@@ -274,12 +274,12 @@
             <el-row :gutter="16">
               <el-col :span="8">
                 <el-form-item :label="$t('influencer.monthlySalesCount')">
-                  <el-input-number v-model="form.monthlySalesCount" :min="0" style="width: 100%" />
+                  <el-input-number v-model="form.monthlySalesCount" :min="0" :controls="false" style="width: 100%" />
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item :label="$t('influencer.avgVideoViews')">
-                  <el-input-number v-model="form.avgVideoViews" :min="0" style="width: 100%" />
+                  <el-input-number v-model="form.avgVideoViews" :min="0" :controls="false" style="width: 100%" />
                 </el-form-item>
               </el-col>
               <el-col :span="8">
@@ -433,22 +433,27 @@
             <el-row :gutter="20">
               <el-col :span="6">
                 <el-form-item :label="$t('influencer.followers')">
-                  <el-input-number v-model="maintenanceForm.followers" :min="0" />
+                  <el-input-number v-model="maintenanceForm.followers" :min="0" :controls="false" />
                 </el-form-item>
               </el-col>
               <el-col :span="6">
                 <el-form-item label="GMV">
-                  <el-input-number v-model="maintenanceForm.gmv" :min="0" />
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <el-select v-model="maintenanceForm.currency" placeholder="币别" style="width: 70px">
+                      <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
+                    </el-select>
+                    <el-input-number v-model="maintenanceForm.gmv" :min="0" :controls="false" style="flex: 1" />
+                  </div>
                 </el-form-item>
               </el-col>
               <el-col :span="6">
                 <el-form-item :label="$t('influencer.monthlySalesCount')">
-                  <el-input-number v-model="maintenanceForm.monthlySalesCount" :min="0" />
+                  <el-input-number v-model="maintenanceForm.monthlySalesCount" :min="0" :controls="false" />
                 </el-form-item>
               </el-col>
               <el-col :span="6">
                 <el-form-item :label="$t('influencer.avgVideoViews')">
-                  <el-input-number v-model="maintenanceForm.avgVideoViews" :min="0" />
+                  <el-input-number v-model="maintenanceForm.avgVideoViews" :min="0" :controls="false" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -547,10 +552,30 @@ const rules = {
 const maintenanceForm = reactive({
   followers: 0,
   gmv: 0,
+  currency: '',
   monthlySalesCount: 0,
   avgVideoViews: 0,
   remark: ''
 })
+
+// 货币单位列表
+const currencyList = ref([])
+
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    currencyList.value = res.data || []
+    // 设置默认货币
+    const defaultCurrency = currencyList.value.find(c => c.isDefault)
+    if (defaultCurrency) {
+      maintenanceForm.currency = defaultCurrency.code
+    }
+  } catch (error) {
+    console.error('Load currencies error:', error)
+  }
+}
 
 const addPhone = () => {
   form.phoneNumbers.push('')
@@ -995,6 +1020,7 @@ onMounted(() => {
   loadCategoryTags()
   loadSuitableCategories()
   loadData()
+  loadCurrencies()
 })
 </script>
 

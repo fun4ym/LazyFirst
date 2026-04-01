@@ -28,7 +28,6 @@ const shopRoutes = require('./routes/shops');
 const productStatsRoutes = require('./routes/product-stats');
 const publicSampleRoutes = require('./routes/public-samples');
 const initializationRoutes = require('./routes/initialization');
-const cooperationProductRoutes = require('./routes/cooperation-products');
 const initImportRoutes = require('./routes/init-import');
 
 // 中间件导入
@@ -102,7 +101,6 @@ app.use('/api/shops', shopRoutes);
 app.use('/api/product-stats', productStatsRoutes);
 app.use('/api/public/samples', publicSampleRoutes);
 app.use('/api/initialization', initializationRoutes);
-app.use('/api/cooperation-products', cooperationProductRoutes);
 app.use('/api/init-import', initImportRoutes);
 
 // 错误处理

@@ -31,6 +31,11 @@ const baseDataSchema = new mongoose.Schema({
     enum: ['active', 'inactive'],
     default: 'active'
   },
+  // 是否默认（国家/货币单位每个类型只能有一个默认）
+  isDefault: {
+    type: Boolean,
+    default: false
+  },
   creatorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

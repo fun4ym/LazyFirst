@@ -10,6 +10,8 @@ const ShopContact = require('../models/ShopContact');
 const Product = require('../models/Product');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
+const SampleManagement = require('../models/SampleManagement');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -63,6 +65,9 @@ router.post('/import', authenticate, authorize('admin'), upload.single('file'), 
         break;
       case 'influencer':
         importResult = await importInfluencers(data, targetCompanyId);
+        break;
+      case 'sample':
+        importResult = await importSamples(data, targetCompanyId, req.user._id);
         break;
       default:
         return res.status(400).json({ success: false, message: '不支持的导入类型' });
@@ -276,6 +281,190 @@ async function importInfluencers(data, companyId) {
     success: true,
     message: `成功导入 ${influencers.length} 条达人数据和 ${maintenances.length} 条维护记录`,
     count: influencers.length
+  };
+}
+
+// 解析Excel日期
+function parseExcelDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === 'number') {
+    return new Date((value - 25569) * 86400 * 1000);
+  }
+  if (typeof value === 'string') {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) return date;
+  }
+  return null;
+}
+
+// 导入样品申请数据
+async function importSamples(data, companyId, creatorId) {
+  console.log('=== 导入样品申请数据 ===');
+  console.log('Excel行数:', data.length);
+  console.log('第一条数据字段:', Object.keys(data[0] || {}));
+  console.log('第一条数据:', JSON.stringify(data[0]));
+
+  let addedCount = 0;
+  let updatedCount = 0;
+  let failedCount = 0;
+  const errors = [];
+
+  for (let i = 0; i < data.length; i++) {
+    try {
+      const row = data[i];
+      
+      // 解析日期
+      const rawDate = row['日期'];
+      const date = parseExcelDate(rawDate);
+      
+      // 解析发货日期
+      const rawShippingDate = row['发货日期'];
+      const shippingDate = parseExcelDate(rawShippingDate);
+      
+      // 解析收样日期
+      const rawReceivedDate = row['收样日期'];
+      const receivedDate = parseExcelDate(rawReceivedDate);
+      
+      // 解析投流时间
+      const rawAdPromotionTime = row['投流时间'];
+      const adPromotionTime = parseExcelDate(rawAdPromotionTime);
+
+      // 检查必填字段
+      if (!date) {
+        failedCount++;
+        errors.push({ row: i + 2, error: '日期字段为空或格式错误' });
+        continue;
+      }
+      if (!row['商品名称']) {
+        failedCount++;
+        errors.push({ row: i + 2, error: '商品名称不能为空' });
+        continue;
+      }
+      if (!row['商品ID']) {
+        failedCount++;
+        errors.push({ row: i + 2, error: '商品ID不能为空' });
+        continue;
+      }
+      if (!row['达人账号']) {
+        failedCount++;
+        errors.push({ row: i + 2, error: '达人账号不能为空' });
+        continue;
+      }
+
+      // 查找商品
+      let productIdObj = null;
+      const productIdInput = String(row['商品ID'] || '').trim();
+      
+      if (productIdInput) {
+        try {
+          const product = await Product.findById(productIdInput);
+          if (product) {
+            productIdObj = product._id;
+          }
+        } catch (err) {}
+        
+        if (!productIdObj) {
+          const productByTiktokId = await Product.findOne({ tiktokProductId: productIdInput });
+          if (productByTiktokId) {
+            productIdObj = productByTiktokId._id;
+          }
+        }
+        
+        if (!productIdObj) {
+          const productBySku = await Product.findOne({ sku: productIdInput });
+          if (productBySku) {
+            productIdObj = productBySku._id;
+          }
+        }
+        
+        if (!productIdObj) {
+          const productByTiktokSku = await Product.findOne({ tiktokSku: productIdInput });
+          if (productByTiktokSku) {
+            productIdObj = productByTiktokSku._id;
+          }
+        }
+      }
+
+      if (!productIdObj) {
+        failedCount++;
+        errors.push({ row: i + 2, error: `商品不存在: ${productIdInput}` });
+        continue;
+      }
+
+      // salesman 匹配 user 表的 username 获取 ID
+      const salesmanName = row['归属业务员'] || '';
+      let salesmanId = salesmanName;
+      
+      if (salesmanName && typeof salesmanName === 'string') {
+        const user = await User.findOne({ username: salesmanName });
+        if (user) {
+          salesmanId = user._id;
+        }
+      }
+
+      // 构建唯一键：日期 + 达人账号 + 商品ID
+      const uniqueKey = {
+        date: date,
+        influencerAccount: row['达人账号'],
+        productId: productIdObj
+      };
+
+      // 检查记录是否已存在
+      const existing = await SampleManagement.findOne({
+        companyId: companyId,
+        ...uniqueKey
+      });
+
+      const sampleData = {
+        companyId: companyId,
+        creatorId: creatorId,
+        date: date,
+        productName: row['商品名称'] || '',
+        productId: productIdObj,
+        influencerAccount: row['达人账号'],
+        followerCount: parseInt(row['粉丝数']) || 0,
+        salesman: salesmanId,
+        shippingInfo: row['收货信息'] || '',
+        sampleImage: row['样品图片'] || '',
+        isSampleSent: row['是否寄样'] === '是' || row['是否寄样'] === true,
+        trackingNumber: row['发货单号'] || '',
+        shippingDate: shippingDate,
+        logisticsCompany: row['物流公司'] || '',
+        receivedDate: receivedDate,
+        fulfillmentTime: row['履约时间'] || '',
+        videoLink: row['达人视频链接'] || '',
+        videoStreamCode: row['视频推流码'] || '',
+        isAdPromotion: row['是否投流'] === '是' || row['是否投流'] === true,
+        adPromotionTime: adPromotionTime,
+        isOrderGenerated: row['是否出单'] === '是' || row['是否出单'] === true
+      };
+
+      if (existing) {
+        await SampleManagement.updateOne({ _id: existing._id }, sampleData);
+        updatedCount++;
+      } else {
+        await SampleManagement.create(sampleData);
+        addedCount++;
+      }
+
+    } catch (err) {
+      console.error(`处理第 ${i + 2} 行时出错:`, err);
+      failedCount++;
+      errors.push({ row: i + 2, error: err.message });
+    }
+  }
+
+  console.log(`导入完成: 新增 ${addedCount}, 更新 ${updatedCount}, 失败 ${failedCount}`);
+
+  return {
+    success: true,
+    message: `导入完成：新增 ${addedCount} 条，更新 ${updatedCount} 条，失败 ${failedCount} 条`,
+    count: addedCount + updatedCount,
+    added: addedCount,
+    updated: updatedCount,
+    failed: failedCount,
+    errors: errors
   };
 }
 

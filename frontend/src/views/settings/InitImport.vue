@@ -175,6 +175,52 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <!-- 5. 导入申样 -->
+      <el-tab-pane label="导入申样" name="sample">
+        <div class="tab-content">
+          <el-alert
+            title="说明"
+            type="info"
+            :closable="false"
+            show-icon
+            class="info-alert"
+          >
+            <p>上传Excel文件，包含日期、商品ID、商品名称、达人账号、归属业务员等列。</p>
+          </el-alert>
+
+          <div class="action-row">
+            <el-button type="danger" @click="clearSamples" :loading="clearingSamples">
+              <el-icon><Delete /></el-icon>
+              清除现有申样记录
+            </el-button>
+
+            <el-upload
+              class="upload-area"
+              :action="`${API_BASE_URL}/api/initialization/import`"
+              :headers="uploadHeaders"
+              :data="sampleUploadData"
+              :before-upload="beforeUploadSample"
+              :on-success="handleSuccess"
+              :on-error="handleError"
+              :show-file-list="false"
+              accept=".xls,.xlsx"
+            >
+              <el-button type="primary" :loading="uploading">
+                <el-icon><Upload /></el-icon>
+                上传Excel文件
+              </el-button>
+            </el-upload>
+          </div>
+
+          <div v-if="importResult" class="result-tip" :class="importResult.success ? 'success' : 'error'">
+            {{ importResult.message }}
+          </div>
+          <div v-if="clearResult" class="result-tip" :class="clearResult.success ? 'success' : 'error'">
+            {{ clearResult.message }}
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -192,8 +238,12 @@ const uploading = ref(false)
 const clearingShops = ref(false)
 const clearingProducts = ref(false)
 const clearingInfluencers = ref(false)
+const clearingSamples = ref(false)
 const importResult = ref(null)
 const clearResult = ref(null)
+
+// 样品上传时附带的类型参数
+const sampleUploadData = { type: 'sample' }
 
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -278,6 +328,31 @@ const clearInfluencers = async () => {
   } finally {
     clearingInfluencers.value = false
   }
+}
+
+const clearSamples = async () => {
+  clearingSamples.value = true
+  clearResult.value = null
+  try {
+    const token = localStorage.getItem('token')
+    const res = await axios.delete(`${API_BASE_URL}/api/samples/clear`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    clearResult.value = { success: true, message: res.data.message }
+    ElMessage.success(res.data.message)
+  } catch (error) {
+    const msg = error.response?.data?.message || '清除失败'
+    clearResult.value = { success: false, message: msg }
+    ElMessage.error(msg)
+  } finally {
+    clearingSamples.value = false
+  }
+}
+
+const beforeUploadSample = () => {
+  uploading.value = true
+  importResult.value = null
+  clearResult.value = null
 }
 </script>
 

@@ -438,12 +438,12 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="申样数">
-              <el-input-number v-model="form.sampleCount" :min="0" style="width: 100%" />
+              <el-input-number v-model="form.sampleCount" :min="0" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="订单数">
-              <el-input-number v-model="form.orderCount" :min="0" style="width: 100%" />
+              <el-input-number v-model="form.orderCount" :min="0" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -451,17 +451,22 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="成交金额">
-              <el-input-number v-model="form.revenue" :min="0" :precision="2" style="width: 100%" />
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <el-select v-model="form.currency" placeholder="币别" style="width: 70px">
+                  <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
+                </el-select>
+                <el-input-number v-model="form.revenue" :min="0" :precision="2" :controls="false" style="flex: 1" />
+              </div>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="预估服务费">
-              <el-input-number v-model="form.estimatedCommission" :min="0" :precision="2" style="width: 100%" />
+              <el-input-number v-model="form.estimatedCommission" :min="0" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="结算佣金">
-              <el-input-number v-model="form.commission" :min="0" :precision="2" style="width: 100%" />
+              <el-input-number v-model="form.commission" :min="0" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -651,6 +656,7 @@ const form = reactive({
   sampleCount: 0,
   orderCount: 0,
   revenue: 0,
+  currency: '',
   estimatedCommission: 0,
   commission: 0,
   sampleSentCount: 0,
@@ -659,6 +665,25 @@ const form = reactive({
   revenueIds: '',
   remark: ''
 })
+
+// 货币单位列表
+const currencyList = ref([])
+
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    currencyList.value = res.data || []
+    // 设置默认货币
+    const defaultCurrency = currencyList.value.find(c => c.isDefault)
+    if (defaultCurrency) {
+      form.currency = defaultCurrency.code
+    }
+  } catch (error) {
+    console.error('Load currencies error:', error)
+  }
+}
 
 const generateForm = reactive({
   dateRange: []
@@ -955,6 +980,7 @@ watch(tableData, (newVal) => {
 onMounted(() => {
   loadData()
   initMonthPicker()
+  loadCurrencies()
 })
 </script>
 

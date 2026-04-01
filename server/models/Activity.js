@@ -89,6 +89,10 @@ const activitySchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  gmvCurrency: {
+    type: String,
+    default: ''
+  },
   requirementMonthlySales: {
     type: Number,
     default: 0

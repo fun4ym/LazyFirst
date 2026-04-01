@@ -79,6 +79,13 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="isDefault" label="默认" width="80" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
+          <template #default="{ row }">
+            <el-tag :type="row.isDefault ? 'warning' : 'info'">
+              {{ row.isDefault ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
@@ -153,6 +160,11 @@
             <el-radio label="inactive">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
+
+        <el-form-item label="默认" prop="isDefault" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
+          <el-switch v-model="form.isDefault" />
+          <span style="margin-left: 10px; color: #999;">(每个类型只能有一个默认)</span>
+        </el-form-item>
       </el-form>
 
       <template #footer>
@@ -201,7 +213,8 @@ const form = reactive({
   englishName: '',
   value: null,
   description: '',
-  status: 'active'
+  status: 'active',
+  isDefault: false
 })
 
 const rules = {
@@ -271,7 +284,8 @@ const showEditDialog = (row) => {
     englishName: row.englishName || '',
     value: row.value || null,
     description: row.description || '',
-    status: row.status
+    status: row.status,
+    isDefault: row.isDefault || false
   })
 }
 
@@ -282,7 +296,8 @@ const resetForm = () => {
     englishName: '',
     value: null,
     description: '',
-    status: 'active'
+    status: 'active',
+    isDefault: false
   })
   if (formRef.value) {
     formRef.value.clearValidate()

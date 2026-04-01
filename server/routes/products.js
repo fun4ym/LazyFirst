@@ -145,10 +145,10 @@ router.get('/:id', authenticate, authorize('products:read'), async (req, res) =>
       companyId: req.companyId
     })
     .populate('supplierId', 'name contact')
-    .populate('shopId', 'name country')
+    .populate('shopId', 'shopName country')
     .populate('categoryId', 'name')
     .populate('gradeId', 'name')
-    .populate('activityConfigs.activityId', 'name');
+    .populate('activityConfigs.activityId', 'name tikTokActivityId');
 
     if (!product) {
       return res.status(404).json({
@@ -277,6 +277,25 @@ router.put('/:id/activity-commission', authenticate, authorize('products:update'
       success: false,
       message: error.message || '更新活动佣金配置失败'
     });
+  }
+});
+
+/**
+ * @route   DELETE /api/products/clear-all
+ * @desc    清除所有商品数据（仅管理员）
+ * @access  Private (Admin)
+ */
+router.delete('/clear-all', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await Product.deleteMany({});
+
+    res.json({
+      success: true,
+      message: '所有商品数据已清空'
+    });
+  } catch (error) {
+    console.error('清空商品数据失败:', error);
+    res.status(500).json({ success: false, message: '清空失败' });
   }
 });
 

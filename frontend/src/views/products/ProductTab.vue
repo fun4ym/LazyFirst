@@ -236,7 +236,31 @@
             <el-row :gutter="16">
               <el-col :span="12">
                 <el-form-item label="广场佣金率(%)">
-                  <el-input-number v-model="form.squareCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                  <el-input-number v-model="form.squareCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="16">
+              <el-col :span="10">
+                <el-form-item label="售价">
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <el-select v-model="form.currency" placeholder="币别" style="width: 80px">
+                      <el-option v-for="c in currencyOptions" :key="c.code" :label="c.name" :value="c.code" />
+                    </el-select>
+                    <el-input-number v-model="form.sellingPrice" :min="0" :precision="2" :step="0.1" :controls="false" style="flex: 1" placeholder="请输入售价" />
+                  </div>
+                </el-form-item>
+              </el-col>
+              <el-col :span="14">
+                <el-form-item label="价格区间">
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <el-select v-model="form.currency" placeholder="币别" style="width: 80px">
+                      <el-option v-for="c in currencyOptions" :key="c.code" :label="c.name" :value="c.code" />
+                    </el-select>
+                    <el-input-number v-model="form.priceRangeMin" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" placeholder="最低" />
+                    <span>-</span>
+                    <el-input-number v-model="form.priceRangeMax" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" placeholder="最高" />
+                  </div>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -302,24 +326,24 @@
               <el-row :gutter="16">
                 <el-col :span="12">
                   <el-form-item label="GMV">
-                    <el-input-number v-model="config.requirementGmv" :min="0" placeholder="GMV以上" style="width: 100%" />
+                    <el-input-number v-model="config.requirementGmv" :min="0" placeholder="GMV" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="月销售件数">
-                    <el-input-number v-model="config.requirementMonthlySales" :min="0" placeholder="月销售件数以上" style="width: 100%" />
+                    <el-input-number v-model="config.requirementMonthlySales" :min="0" placeholder="月销售件数" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
               <el-row :gutter="16">
                 <el-col :span="12">
                   <el-form-item label="粉丝数">
-                    <el-input-number v-model="config.requirementFollowers" :min="0" placeholder="粉丝数以上" style="width: 100%" />
+                    <el-input-number v-model="config.requirementFollowers" :min="0" placeholder="粉丝数" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="月均播放量">
-                    <el-input-number v-model="config.requirementAvgViews" :min="0" placeholder="月均播放量以上" style="width: 100%" />
+                    <el-input-number v-model="config.requirementAvgViews" :min="0" placeholder="月均播放量" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -352,17 +376,17 @@
               <el-row :gutter="16">
                 <el-col :span="8">
                   <el-form-item label="给达人(%)">
-                    <el-input-number v-model="config.promotionInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.promotionInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="原本(%)">
-                    <el-input-number v-model="config.promotionOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.promotionOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="公司自留(%)">
-                    <el-input-number v-model="config.promotionCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.promotionCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -371,17 +395,17 @@
               <el-row :gutter="16">
                 <el-col :span="8">
                   <el-form-item label="给达人(%)">
-                    <el-input-number v-model="config.adInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.adInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="原本(%)">
-                    <el-input-number v-model="config.adOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.adOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="公司自留(%)">
-                    <el-input-number v-model="config.adCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" style="width: 100%" />
+                    <el-input-number v-model="config.adCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -396,77 +420,88 @@
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="商品详情" width="900px" :close-on-click-modal="false">
-      <div v-if="currentProduct" class="product-detail">
+    <el-dialog v-model="showDetailDialog" title="商品详情" width="900px" :close-on-click-modal="false" class="product-detail-dialog">
+      <div v-if="currentProduct" class="detail-wrapper">
+        <!-- 商品头部 -->
+        <div class="detail-head">
+          <div class="head-main">
+            <span class="head-id">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</span>
+            <h3 class="head-title">{{ currentProduct.name || currentProduct.productName || '-' }}</h3>
+          </div>
+          <el-tag :type="currentProduct.status === 'active' ? 'success' : 'info'">{{ currentProduct.status === 'active' ? '启用' : '禁用' }}</el-tag>
+        </div>
+
         <!-- 基本信息 -->
-        <h4 class="section-title">基本信息</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="商品" :span="2" label-class-name="detail-label">
-            <div class="product-cell">
-              <span class="tiktok-id">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</span>
-              <span class="product-name" :title="currentProduct.name || currentProduct.productName">{{ currentProduct.name || currentProduct.productName || '-' }}</span>
-            </div>
-          </el-descriptions-item>
+        <el-descriptions :column="3" border class="detail-desc">
           <el-descriptions-item label="SKU">{{ currentProduct.sku || '-' }}</el-descriptions-item>
           <el-descriptions-item label="店铺">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="商品类目">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="价格">{{ currentProduct.price ? '$' + currentProduct.price : '-' }}</el-descriptions-item>
-          <el-descriptions-item label="TAP专属链" :span="2" label-class-name="detail-label">
-            <span class="long-text" :title="currentProduct.tapExclusiveLink">{{ currentProduct.tapExclusiveLink || '-' }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="达人要求">{{ currentProduct.influencerRequirement || '-' }}</el-descriptions-item>
           <el-descriptions-item label="广场佣金率">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="currentProduct.status === 'active' ? 'success' : 'info'">
-              {{ currentProduct.status === 'active' ? '启用' : '禁用' }}
-            </el-tag>
+          <el-descriptions-item label="售价" class-name="price-cell">
+            {{ currentProduct.sellingPrice ? currentProduct.sellingPrice + ' ' + (currentProduct.currency || 'USD') : '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="价格区间" :span="2" class-name="price-cell">
+            {{ currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0 ? currentProduct.priceRangeMin : '-' }}
+            {{ (currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0) && (currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0) ? ' - ' : '' }}
+            {{ currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0 ? currentProduct.priceRangeMax + ' ' + (currentProduct.currency || 'USD') : '' }}
           </el-descriptions-item>
         </el-descriptions>
 
-        <!-- 商品信息 -->
-        <h4 class="section-title">商品信息</h4>
-        <el-descriptions :column="1" border>
-          <el-descriptions-item label="商品简介" label-class-name="detail-label">
-            <span class="long-text">{{ currentProduct.productIntro || '-' }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="参考视频" label-class-name="detail-label">
-            <span class="long-text" :title="currentProduct.referenceVideo">{{ currentProduct.referenceVideo || '-' }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="卖点" label-class-name="detail-label">
-            <span class="long-text">{{ currentProduct.sellingPoints || '-' }}</span>
-          </el-descriptions-item>
-        </el-descriptions>
+        <!-- 商品说明 -->
+        <div v-if="currentProduct.productIntro || currentProduct.referenceVideo || currentProduct.sellingPoints" class="detail-section">
+          <div class="section-title">商品说明</div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item v-if="currentProduct.productIntro" label="简介">{{ currentProduct.productIntro }}</el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.referenceVideo" label="参考视频">
+              <a :href="currentProduct.referenceVideo" target="_blank" class="link-text">{{ currentProduct.referenceVideo }}</a>
+            </el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.sellingPoints" label="卖点">{{ currentProduct.sellingPoints }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
 
-        <!-- 活动佣金配置 -->
-        <h4 class="section-title">活动佣金配置</h4>
-        <div v-if="currentProduct.activityConfigs && currentProduct.activityConfigs.length > 0">
-          <div v-for="(ac, index) in currentProduct.activityConfigs" :key="index" style="margin-bottom: 16px;">
-            <el-card>
-              <template #header>
-                <span>活动配置 {{ index + 1 }} - {{ activities.find(a => a._id === ac.activityId)?.name || '-' }}</span>
-              </template>
-              <el-row :gutter="16">
-                <el-col :span="12">
-                  <el-divider content-position="center">推广时</el-divider>
-                  <el-descriptions :column="1" border size="small">
-                    <el-descriptions-item label="给达人">{{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="原本">{{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="公司自留">{{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-                  </el-descriptions>
-                </el-col>
-                <el-col :span="12">
-                  <el-divider content-position="center">投广告时</el-divider>
-                  <el-descriptions :column="1" border size="small">
-                    <el-descriptions-item label="给达人">{{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="原本">{{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="公司自留">{{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-                  </el-descriptions>
-                </el-col>
-              </el-row>
-            </el-card>
+        <!-- 参与活动 -->
+        <div v-if="currentProduct.activityConfigs && currentProduct.activityConfigs.length > 0" class="detail-section">
+          <div class="section-title">参与活动 <span class="section-count">({{ currentProduct.activityConfigs.length }})</span></div>
+          <div v-for="(ac, index) in currentProduct.activityConfigs" :key="index" class="activity-block">
+            <div class="activity-title">
+              <span class="activity-tag">{{ ac.activityId?.tikTokActivityId || '-' }}</span>
+              <span class="activity-name">{{ ac.activityId?.name || '-' }}</span>
+            </div>
+            <el-descriptions :column="3" border size="small">
+              <el-descriptions-item label="活动链接" :span="3">
+                <a v-if="ac.activityLink" :href="ac.activityLink" target="_blank" class="link-text">{{ ac.activityLink }}</a>
+                <span v-else>-</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="GMV">{{ ac.requirementGmv ? ac.requirementGmv + ' ' + (ac.gmvCurrency || currentProduct.currency || 'USD') : '-' }}</el-descriptions-item>
+              <el-descriptions-item label="月销件数">{{ ac.requirementMonthlySales || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="粉丝数">{{ ac.requirementFollowers || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="月均播放">{{ ac.requirementAvgViews || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="寄样方式">{{ ac.sampleMethod || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="合作国家">{{ ac.cooperationCountry || '-' }}</el-descriptions-item>
+            </el-descriptions>
+            <div class="commission-row">
+              <div class="commission-item">
+                <span class="commission-label">推广佣金</span>
+                <div class="commission-rates">
+                  <span>达人 {{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>原本 {{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>公司 {{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
+                </div>
+              </div>
+              <div class="commission-item">
+                <span class="commission-label">广告佣金</span>
+                <div class="commission-rates">
+                  <span>达人 {{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>原本 {{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>公司 {{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div v-else class="empty-tip">暂无活动配置</div>
+        <div v-else class="empty-section">
+          <el-empty description="暂无参与活动" :image-size="60" />
+        </div>
       </div>
       <template #footer>
         <el-button @click="showDetailDialog = false">关闭</el-button>
@@ -590,6 +625,18 @@ const shops = ref([])
 const countries = ref([])
 const productCategories = ref([])
 
+// 货币选项 - 从基础数据获取
+const currencyOptions = ref([
+  { code: 'USD', name: '美元 (USD)' },
+  { code: 'CNY', name: '人民币 (CNY)' },
+  { code: 'THB', name: '泰铢 (THB)' },
+  { code: 'VND', name: '越南盾 (VND)' },
+  { code: 'MYR', name: '马来西亚林吉特 (MYR)' },
+  { code: 'SGD', name: '新加坡元 (SGD)' },
+  { code: 'PHP', name: '菲律宾比索 (PHP)' },
+  { code: 'IDR', name: '印尼盾 (IDR)' }
+])
+
 // 订单统计缓存
 const orderStatsCache = ref({})
 const loadingOrderStats = ref({})
@@ -628,12 +675,16 @@ const form = reactive({
   shopId: '',
   productCategory: '',
   productGrade: 'ordinary',
-  tapExclusiveLink: '',
   productImages: [],
   productIntro: '',
   referenceVideo: '',
   sellingPoints: '',
   squareCommissionRate: 0,
+  // 售价、币别、价格区间
+  sellingPrice: 0,
+  currency: 'USD',
+  priceRangeMin: 0,
+  priceRangeMax: 0,
   activityConfigs: []
 })
 
@@ -694,6 +745,8 @@ const loadBaseData = async () => {
 const addActivityConfig = () => {
   form.activityConfigs.push({
     activityId: '',
+    // 活动专属链接
+    activityLink: '',
     // 达人要求
     requirementGmv: 0,
     requirementMonthlySales: 0,
@@ -845,6 +898,10 @@ const viewProduct = async (row) => {
   try {
     const res = await request.get(`/products/${row._id}`)
     currentProduct.value = res.data?.product || res.product
+    // 确保活动列表已加载
+    if (activities.value.length === 0) {
+      await loadActivities()
+    }
     showDetailDialog.value = true
   } catch (error) {
     console.error('获取产品详情失败:', error)
@@ -861,12 +918,16 @@ const editProduct = (row) => {
     shopId: row.storeId?._id || row.shopId?._id || row.storeId || row.shopId || '',
     productCategory: row.productCategory,
     productGrade: row.productGrade,
-    tapExclusiveLink: row.tapExclusiveLink,
     productImages: row.productImages || [],
     productIntro: row.productIntro,
     referenceVideo: row.referenceVideo,
     sellingPoints: row.sellingPoints,
     squareCommissionRate: row.squareCommissionRate ? row.squareCommissionRate * 100 : 0,
+    // 售价、币别、价格区间
+    sellingPrice: row.sellingPrice || 0,
+    currency: row.currency || 'USD',
+    priceRangeMin: row.priceRangeMin || 0,
+    priceRangeMax: row.priceRangeMax || 0,
     // 兼容 Product 的 sku/name 字段（用于内部标识）
     sku: row.sku || row.tiktokProductId || '',
     name: row.name || row.productName || '',
@@ -945,7 +1006,6 @@ const resetForm = () => {
     shopId: '',
     productCategory: '',
     productGrade: 'ordinary',
-    tapExclusiveLink: '',
     sampleMethod: '线上',
     cooperationCountry: countries.value.length > 0 ? countries.value[0] : '',
     sampleTarget: '',
@@ -1513,8 +1573,178 @@ defineExpose({
 
 .product-detail .product-cell .product-name {
   color: #303133;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-all;
+}
+
+/* 防止横向滚动条 */
+.product-detail-dialog :deep(.el-dialog__body) {
+  overflow-x: hidden;
+  padding: 0 24px 24px;
+}
+
+.product-detail-dialog :deep(.el-dialog__header) {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #ebeef5;
+  margin-right: 0;
+}
+
+.product-detail-dialog :deep(.el-dialog__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 详情弹窗样式 */
+.product-detail-dialog :deep(.el-dialog__body) {
+  padding: 0 24px 24px;
+}
+
+.detail-wrapper {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 0;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.head-id {
+  font-size: 13px;
+  font-weight: 600;
+  color: #775999;
+}
+
+.head-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.detail-desc {
+  margin-top: 16px;
+}
+
+.detail-section {
+  margin-top: 20px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid #775999;
+}
+
+.section-count {
+  font-size: 12px;
+  font-weight: normal;
+  color: #909399;
+  margin-left: 4px;
+}
+
+.price-cell {
+  color: #775999;
+  font-weight: 600;
+}
+
+.link-text {
+  color: #409eff;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.link-text:hover {
+  text-decoration: underline;
+}
+
+.empty-section {
+  padding: 30px 0;
+}
+
+.activity-block {
+  background: #fafafa;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  margin-bottom: 12px;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.activity-block:last-child {
+  margin-bottom: 0;
+}
+
+.activity-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.activity-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #775999;
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid #775999;
+}
+
+.activity-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.activity-block .el-descriptions {
+  margin: 0;
+}
+
+.activity-block .el-descriptions__body {
+  background: #fff;
+}
+
+.commission-row {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  border-top: 1px dashed #ebeef5;
+  background: #fff;
+}
+
+.commission-item {
+  flex: 1;
+}
+
+.commission-label {
+  font-size: 12px;
+  color: #606266;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.commission-rates {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #303133;
 }
 </style>
