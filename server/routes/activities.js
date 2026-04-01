@@ -615,6 +615,10 @@ router.post('/:id/import-products', authenticate, authorize('admin'), upload.sin
         const priceStr = row[priceCol] || '';
         const productLink = row[productLinkCol] || '';
         
+        // 调试：打印原始数据和解析结果
+        console.log(`[导入商品] 第${rowIndex + 1}行: productName=${productName}, productLink=${productLink}, shopName=${shopName}`);
+        console.log(`[导入商品] row数据:`, JSON.stringify(row));
+        
         // 解析价格
         const { min: priceRangeMin, max: priceRangeMax, currency } = parsePriceRange(priceStr);
         
