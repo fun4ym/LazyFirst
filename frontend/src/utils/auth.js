@@ -45,8 +45,8 @@ const AuthManager = {
     const role = user.role
     console.log('[AuthManager] getPermissions role:', role)
     if (!role) return []
-    // 如果是超级管理员（role.name === '超级管理员' 或权限包含 *）
-    if (role.name === '超级管理员' || role.permissions?.includes('*')) {
+    // 如果是超级管理员（role.name === '超级管理员' 或 'admin' 或权限包含 *）
+    if (role.name === '超级管理员' || role.name === 'admin' || role.permissions?.includes('*')) {
       console.log('[AuthManager] 检测到超级管理员，返回*权限')
       return ['*']
     }

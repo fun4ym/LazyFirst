@@ -652,6 +652,7 @@ router.post('/:id/import-products', authenticate, authorize('admin'), upload.sin
           
           const activityConfig = {
             activityId: activity._id,
+            activityLink: productLink,
             requirementGmv: defaultRequirements.requirementGmv,
             requirementMonthlySales: defaultRequirements.requirementMonthlySales,
             requirementFollowers: defaultRequirements.requirementFollowers,
@@ -684,15 +685,6 @@ router.post('/:id/import-products', authenticate, authorize('admin'), upload.sin
           product.currency = currency;
           product.priceRangeMin = priceRangeMin;
           product.priceRangeMax = priceRangeMax;
-          
-          // 更新或添加活动配置中的链接
-          const activityConfigIndex = product.activityConfigs.findIndex(
-            ac => ac.activityId.toString() === activityId
-          );
-          if (activityConfigIndex >= 0) {
-            product.activityConfigs[activityConfigIndex].activityLink = productLink;
-          }
-          
           await product.save();
           results.updated.push({ name: productName, tiktokProductId });
         } else {
