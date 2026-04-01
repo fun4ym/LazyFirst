@@ -4,37 +4,37 @@
     <div class="filter-section">
       <el-row :gutter="16">
         <el-col :span="4">
-          <el-select v-model="filters.status" placeholder="状态" clearable @change="loadData">
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+          <el-select v-model="filters.status" :placeholder="$t('product.statusPlaceholder')" clearable @change="loadData">
+            <el-option :label="$t('product.enabledOption')" value="active" />
+            <el-option :label="$t('product.disabledOption')" value="inactive" />
           </el-select>
         </el-col>
         <el-col :span="4">
-          <el-input v-model="filters.keyword" placeholder="搜索商品ID/名称/店铺" clearable @change="loadData">
+          <el-input v-model="filters.keyword" :placeholder="$t('product.searchPlaceholder')" clearable @change="loadData">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-select v-model="filters.activityId" placeholder="参与活动" clearable @change="loadData">
+          <el-select v-model="filters.activityId" :placeholder="$t('product.activityPlaceholder')" clearable @change="loadData">
             <el-option v-for="act in activities" :key="act._id" :label="act.name" :value="act._id" />
           </el-select>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('products:create')">新增商品</el-button>
+          <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('products:create')">{{ $t('product.addProduct') }}</el-button>
         </el-col>
       </el-row>
     </div>
 
     <!-- 统计信息 -->
     <div class="stats-info">
-      <span>共 {{ pagination.total }} 条</span>
+      <span>{{ $t('product.totalRecords', { total: pagination.total }) }}</span>
     </div>
 
     <!-- 产品列表 -->
     <el-table :data="products" stripe v-loading="loading" :scroll-x="true">
-      <el-table-column label="TikTok商品" width="320" fixed class-name="tiktok-green-label">
+      <el-table-column :label="$t('product.tiktokProduct')" width="320" fixed class-name="tiktok-green-label">
         <template #default="{ row }">
           <div class="tiktok-product-cell">
             <div class="tiktok-id-row">
@@ -46,7 +46,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="店铺" width="150">
+      <el-table-column :label="$t('product.shop')" width="150">
         <template #default="{ row }">
           <el-popover
             placement="right"
@@ -60,26 +60,26 @@
               </span>
             </template>
             <div class="shop-info-popover">
-              <div class="shop-info-item"><strong>店铺：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
-              <div class="shop-info-item"><strong>店铺号：</strong>{{ row.shopId?.shopNumber || '-' }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.name"><strong>联系人：</strong>{{ row.shopId.contactId.name }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.phone"><strong>电话：</strong>{{ row.shopId.contactId.phone }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.email"><strong>邮箱：</strong>{{ row.shopId.contactId.email }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.address"><strong>地址：</strong>{{ row.shopId.contactId.address }}</div>
+              <div class="shop-info-item"><strong>{{ $t('product.shop') }}：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
+              <div class="shop-info-item"><strong>{{ $t('product.shopCode') }}：</strong>{{ row.shopId?.shopNumber || '-' }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.name"><strong>{{ $t('influencer.realName') }}：</strong>{{ row.shopId.contactId.name }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.phone"><strong>{{ $t('influencer.phone') }}：</strong>{{ row.shopId.contactId.phone }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.email"><strong>Email：</strong>{{ row.shopId.contactId.email }}</div>
+              <div class="shop-info-item" v-if="row.shopId?.contactId?.address"><strong>{{ $t('influencer.address') }}：</strong>{{ row.shopId.contactId.address }}</div>
             </div>
           </el-popover>
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="productCategory" label="商品类目" :width="128" show-overflow-tooltip />
-      <el-table-column prop="productGrade" label="商品等级" width="100">
+      <el-table-column prop="productCategory" :label="$t('product.productCategory')" :width="128" show-overflow-tooltip />
+      <el-table-column prop="productGrade" :label="$t('product.productGrade')" width="100">
         <template #default="{ row }">
           <el-tag :type="getGradeType(row.productGrade)">
             {{ getGradeText(row.productGrade) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="过去7天成单" width="120" align="center">
+      <el-table-column :label="$t('product.orders7Days')" width="120" align="center">
         <template #default="{ row }">
           <el-popover
             placement="top"
@@ -92,14 +92,14 @@
                 {{ getOrderCount(row, '7days') }}
               </span>
             </template>
-            <div v-if="loadingOrderStats[row._id]?.loading" class="loading-tip">加载中...</div>
+            <div v-if="loadingOrderStats[row._id]?.loading" class="loading-tip">{{ $t('product.loading') }}</div>
             <div v-else-if="getOrderStats(row, '7days').orders?.length > 0">
               <el-table :data="getPaginatedOrders(row, '7days')" size="small" max-height="300">
-                <el-table-column prop="orderNo" label="订单号" width="200" show-overflow-tooltip />
-                <el-table-column prop="influencerUsername" label="达人" width="100" show-overflow-tooltip />
-                <el-table-column prop="creatorName" label="归属BD" width="80" show-overflow-tooltip />
-                <el-table-column prop="totalAmount" label="交易金额" width="80" />
-                <el-table-column label="创建时间" width="140">
+                <el-table-column prop="orderNo" :label="$t('product.orderNo')" width="200" show-overflow-tooltip />
+                <el-table-column prop="influencerUsername" :label="$t('product.influencer')" width="100" show-overflow-tooltip />
+                <el-table-column prop="creatorName" :label="$t('product.belongingBD')" width="80" show-overflow-tooltip />
+                <el-table-column prop="totalAmount" :label="$t('product.amount')" width="80" />
+                <el-table-column :label="$t('product.createTime')" width="140">
                   <template #default="{ row }">
                     {{ formatDate(row.createTime) }}
                   </template>
@@ -116,11 +116,11 @@
                 />
               </div>
             </div>
-            <div v-else class="empty-tip">暂无订单数据</div>
+            <div v-else class="empty-tip">{{ $t('product.noOrderData') }}</div>
           </el-popover>
         </template>
       </el-table-column>
-      <el-table-column label="过去3个月成单" width="120" align="center">
+      <el-table-column :label="$t('product.orders3Months')" width="120" align="center">
         <template #default="{ row }">
           <el-popover
             placement="top"
@@ -133,14 +133,14 @@
                 {{ getOrderCount(row, '3months') }}
               </span>
             </template>
-            <div v-if="loadingOrderStats[row._id]?.loading" class="loading-tip">加载中...</div>
+            <div v-if="loadingOrderStats[row._id]?.loading" class="loading-tip">{{ $t('product.loading') }}</div>
             <div v-else-if="getOrderStats(row, '3months').orders?.length > 0">
               <el-table :data="getPaginatedOrders(row, '3months')" size="small" max-height="300">
-                <el-table-column prop="orderNo" label="订单号" width="200" show-overflow-tooltip />
-                <el-table-column prop="influencerUsername" label="达人" width="100" show-overflow-tooltip />
-                <el-table-column prop="creatorName" label="归属BD" width="80" show-overflow-tooltip />
-                <el-table-column prop="totalAmount" label="交易金额" width="80" />
-                <el-table-column label="创建时间" width="140">
+                <el-table-column prop="orderNo" :label="$t('product.orderNo')" width="200" show-overflow-tooltip />
+                <el-table-column prop="influencerUsername" :label="$t('product.influencer')" width="100" show-overflow-tooltip />
+                <el-table-column prop="creatorName" :label="$t('product.belongingBD')" width="80" show-overflow-tooltip />
+                <el-table-column prop="totalAmount" :label="$t('product.amount')" width="80" />
+                <el-table-column :label="$t('product.createTime')" width="140">
                   <template #default="{ row }">
                     {{ formatDate(row.createTime) }}
                   </template>
@@ -157,23 +157,23 @@
                 />
               </div>
             </div>
-            <div v-else class="empty-tip">暂无订单数据</div>
+            <div v-else class="empty-tip">{{ $t('product.noOrderData') }}</div>
           </el-popover>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="80">
+      <el-table-column prop="status" :label="$t('product.status')" width="80">
         <template #default="{ row }">
           <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-            {{ row.status === 'active' ? '启用' : '禁用' }}
+            {{ row.status === 'active' ? $t('product.enabled') : $t('product.disabled') }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column :label="$t('product.operation')" width="280" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="viewProduct(row)" v-if="hasPermission('products:read')">详情</el-button>
-          <el-button link type="primary" @click="showReport(row)" v-if="hasPermission('products:read')">报表</el-button>
-          <el-button link type="primary" @click="editProduct(row)" v-if="hasPermission('products:update')">编辑</el-button>
-          <el-button link type="danger" @click="deleteProduct(row)" v-if="hasPermission('products:delete')">删除</el-button>
+          <el-button link type="primary" @click="viewProduct(row)" v-if="hasPermission('products:read')">{{ $t('product.detail') }}</el-button>
+          <el-button link type="primary" @click="showReport(row)" v-if="hasPermission('products:read')">{{ $t('product.report') }}</el-button>
+          <el-button link type="primary" @click="editProduct(row)" v-if="hasPermission('products:update')">{{ $t('product.edit') }}</el-button>
+          <el-button link type="danger" @click="deleteProduct(row)" v-if="hasPermission('products:delete')">{{ $t('product.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -194,7 +194,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="showDialog"
-      :title="editingProduct ? '编辑商品' : '新增商品'"
+      :title="editingProduct ? $t('product.editProduct') : $t('product.addProduct')"
       width="900px"
       :close-on-click-modal="false"
     >
@@ -203,31 +203,31 @@
           <!-- TikTok shop信息 -->
           <div class="form-section">
             <div class="section-header">
-              <span class="section-title">TikTok Shop 信息</span>
+              <span class="section-title">{{ $t('product.tiktokShopInfo') }}</span>
             </div>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="TikTok商品ID" prop="productId" required class="tiktok-green-label">
-                  <el-input v-model="form.productId" placeholder="请输入商品ID" class="tiktok-green-input" />
+                <el-form-item :label="$t('product.productIdRequired')" prop="productId" required class="tiktok-green-label">
+                  <el-input v-model="form.productId" :placeholder="$t('product.productIdRequiredTip')" class="tiktok-green-input" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="商品名称">
-                  <el-input v-model="form.productName" placeholder="请输入商品名称" />
+                <el-form-item :label="$t('product.productName')">
+                  <el-input v-model="form.productName" :placeholder="$t('product.productNameInput')" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="店铺">
-                  <el-select v-model="form.shopId" placeholder="请选择店铺" style="width: 100%">
+                <el-form-item :label="$t('product.shop')">
+                  <el-select v-model="form.shopId" :placeholder="$t('product.shopSelect')" style="width: 100%">
                     <el-option v-for="shop in shops" :key="shop._id" :label="shop.shopName" :value="shop._id" />
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="商品类目">
-                  <el-select v-model="form.productCategory" placeholder="请选择商品类目" style="width: 100%">
+                <el-form-item :label="$t('product.productCategory')">
+                  <el-select v-model="form.productCategory" :placeholder="$t('product.categorySelect')" style="width: 100%">
                     <el-option v-for="cat in productCategories" :key="cat" :label="cat" :value="cat" />
                   </el-select>
                 </el-form-item>
@@ -235,31 +235,31 @@
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="广场佣金率(%)">
+                <el-form-item :label="$t('product.squareCommissionRate')">
                   <el-input-number v-model="form.squareCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="16">
               <el-col :span="10">
-                <el-form-item label="售价">
+                <el-form-item :label="$t('product.sellingPrice')">
                   <div style="display: flex; align-items: center; gap: 4px;">
-                    <el-select v-model="form.currency" placeholder="币别" style="width: 80px">
+                    <el-select v-model="form.currency" :placeholder="$t('product.currency')" style="width: 80px">
                       <el-option v-for="c in currencyOptions" :key="c.code" :label="c.name" :value="c.code" />
                     </el-select>
-                    <el-input-number v-model="form.sellingPrice" :min="0" :precision="2" :step="0.1" :controls="false" style="flex: 1" placeholder="请输入售价" />
+                    <el-input-number v-model="form.sellingPrice" :min="0" :precision="2" :step="0.1" :controls="false" style="flex: 1" :placeholder="$t('product.sellingPrice')" />
                   </div>
                 </el-form-item>
               </el-col>
               <el-col :span="14">
-                <el-form-item label="价格区间">
+                <el-form-item :label="$t('product.priceRange')">
                   <div style="display: flex; align-items: center; gap: 4px;">
-                    <el-select v-model="form.currency" placeholder="币别" style="width: 80px">
+                    <el-select v-model="form.currency" :placeholder="$t('product.currency')" style="width: 80px">
                       <el-option v-for="c in currencyOptions" :key="c.code" :label="c.name" :value="c.code" />
                     </el-select>
-                    <el-input-number v-model="form.priceRangeMin" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" placeholder="最低" />
+                    <el-input-number v-model="form.priceRangeMin" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" :placeholder="$t('product.minPrice')" />
                     <span>-</span>
-                    <el-input-number v-model="form.priceRangeMax" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" placeholder="最高" />
+                    <el-input-number v-model="form.priceRangeMax" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" :placeholder="$t('product.maxPrice')" />
                   </div>
                 </el-form-item>
               </el-col>
@@ -269,52 +269,52 @@
           <!-- 商品信息 -->
           <div class="form-section">
             <div class="section-header">
-              <span class="section-title">商品信息</span>
+              <span class="section-title">{{ $t('product.productInfo') }}</span>
             </div>
-            <el-form-item label="商品等级">
-              <el-select v-model="form.productGrade" placeholder="请选择">
-                <el-option label="普通" value="ordinary" />
-                <el-option label="爆款" value="hot" />
-                <el-option label="主推款" value="main" />
-                <el-option label="新品" value="new" />
+            <el-form-item :label="$t('product.productGrade')">
+              <el-select v-model="form.productGrade" :placeholder="$t('product.gradeSelect')">
+                <el-option :label="$t('product.ordinaryGrade')" value="ordinary" />
+                <el-option :label="$t('product.hotGrade')" value="hot" />
+                <el-option :label="$t('product.mainGrade')" value="main" />
+                <el-option :label="$t('product.newGrade')" value="new" />
               </el-select>
             </el-form-item>
-            <el-form-item label="商品简介">
-              <el-input v-model="form.productIntro" type="textarea" :rows="3" placeholder="请输入商品简介" />
+            <el-form-item :label="$t('product.productIntro')">
+              <el-input v-model="form.productIntro" type="textarea" :rows="3" :placeholder="$t('product.productIntroPlaceholder')" />
             </el-form-item>
-            <el-form-item label="参考视频">
-              <el-input v-model="form.referenceVideo" placeholder="请输入参考视频链接" />
+            <el-form-item :label="$t('product.referenceVideo')">
+              <el-input v-model="form.referenceVideo" :placeholder="$t('product.referenceVideoPlaceholder')" />
             </el-form-item>
-            <el-form-item label="卖点">
-              <el-input v-model="form.sellingPoints" type="textarea" :rows="2" placeholder="请输入商品卖点" />
+            <el-form-item :label="$t('product.sellingPoints')">
+              <el-input v-model="form.sellingPoints" type="textarea" :rows="2" :placeholder="$t('product.sellingPointsPlaceholder')" />
             </el-form-item>
           </div>
 
           <!-- 活动配置（一个商品可参与多个活动） -->
           <div class="form-section">
             <div class="section-header">
-              <span class="section-title">活动配置</span>
+              <span class="section-title">{{ $t('product.activityConfig') }}</span>
               <el-button type="primary" size="small" @click="addActivityConfig">
                 <el-icon><Plus /></el-icon>
-                添加活动
+                {{ $t('product.addActivity') }}
               </el-button>
             </div>
             <div v-if="form.activityConfigs.length === 0" class="empty-tip">
-              暂无活动配置，需要时可添加
+              {{ $t('product.noActivityConfig') }}
             </div>
             <div v-for="(config, index) in form.activityConfigs" :key="index" class="activity-commission-item">
               <div class="activity-header">
-                <span class="activity-title">活动 {{ index + 1 }}</span>
+                <span class="activity-title">{{ $t('product.activityNum', { num: index + 1 }) }}</span>
                 <el-button link type="danger" size="small" @click="removeActivityConfig(index)">
-                  删除
+                  {{ $t('product.remove') }}
                 </el-button>
               </div>
               
               <!-- 选择活动 -->
               <el-row :gutter="16">
                 <el-col :span="24">
-                  <el-form-item label="活动名称" :prop="`activityConfigs.${index}.activityId`" :rules="{ required: true, message: '请选择活动', trigger: 'change' }">
-                    <el-select v-model="config.activityId" placeholder="选择活动" style="width: 100%" @change="validateActivityDuplication(index)">
+                  <el-form-item :label="$t('product.activityName')" :prop="`activityConfigs.${index}.activityId`" :rules="{ required: true, message: $t('product.selectActivityTip'), trigger: 'change' }">
+                    <el-select v-model="config.activityId" :placeholder="$t('product.selectActivity')" style="width: 100%" @change="validateActivityDuplication(index)">
                       <el-option v-for="act in activities" :key="act._id" :label="act.name" :value="act._id" />
                     </el-select>
                   </el-form-item>
@@ -322,49 +322,49 @@
               </el-row>
               
               <!-- 达人要求 -->
-              <el-divider content-position="left">达人要求</el-divider>
+              <el-divider content-position="left">{{ $t('product.influencerRequirement') }}</el-divider>
               <el-row :gutter="16">
                 <el-col :span="12">
-                  <el-form-item label="GMV">
-                    <el-input-number v-model="config.requirementGmv" :min="0" placeholder="GMV" :controls="false" style="width: 100%" />
+                  <el-form-item :label="$t('product.gmv')">
+                    <el-input-number v-model="config.requirementGmv" :min="0" :placeholder="$t('product.gmv')" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="月销售件数">
-                    <el-input-number v-model="config.requirementMonthlySales" :min="0" placeholder="月销售件数" :controls="false" style="width: 100%" />
+                  <el-form-item :label="$t('product.monthlySales')">
+                    <el-input-number v-model="config.requirementMonthlySales" :min="0" :placeholder="$t('product.monthlySales')" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
               <el-row :gutter="16">
                 <el-col :span="12">
-                  <el-form-item label="粉丝数">
-                    <el-input-number v-model="config.requirementFollowers" :min="0" placeholder="粉丝数" :controls="false" style="width: 100%" />
+                  <el-form-item :label="$t('product.followers')">
+                    <el-input-number v-model="config.requirementFollowers" :min="0" :placeholder="$t('product.followers')" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="月均播放量">
-                    <el-input-number v-model="config.requirementAvgViews" :min="0" placeholder="月均播放量" :controls="false" style="width: 100%" />
+                  <el-form-item :label="$t('product.avgViews')">
+                    <el-input-number v-model="config.requirementAvgViews" :min="0" :placeholder="$t('product.avgViews')" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
-              <el-form-item label="要求说明">
-                <el-input v-model="config.requirementRemark" type="textarea" :rows="2" :maxlength="1000" placeholder="请输入要求说明（最多1000个字符）" />
+              <el-form-item :label="$t('product.requirementRemark')">
+                <el-input v-model="config.requirementRemark" type="textarea" :rows="2" :maxlength="1000" :placeholder="$t('product.requirementRemarkPlaceholder')" />
               </el-form-item>
               
               <!-- 样品信息 -->
-              <el-divider content-position="left">样品信息</el-divider>
+              <el-divider content-position="left">{{ $t('product.sampleInfo') }}</el-divider>
               <el-row :gutter="16">
                 <el-col :span="12">
-                  <el-form-item label="寄样方式">
-                    <el-select v-model="config.sampleMethod" placeholder="请选择" style="width: 100%">
-                      <el-option label="线上" value="线上" />
-                      <el-option label="线下" value="线下" />
+                  <el-form-item :label="$t('product.sampleMethod')">
+                    <el-select v-model="config.sampleMethod" :placeholder="$t('common.select')" style="width: 100%">
+                      <el-option :label="$t('product.onlineMethod')" value="线上" />
+                      <el-option :label="$t('product.offlineMethod')" value="线下" />
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="合作国家">
-                    <el-select v-model="config.cooperationCountry" placeholder="请选择国家" style="width: 100%">
+                  <el-form-item :label="$t('product.cooperationCountry')">
+                    <el-select v-model="config.cooperationCountry" :placeholder="$t('product.selectCountry')" style="width: 100%">
                       <el-option v-for="country in countries" :key="country" :label="country" :value="country" />
                     </el-select>
                   </el-form-item>
@@ -372,39 +372,39 @@
               </el-row>
               
               <!-- 推广时佣金配置 -->
-              <el-divider content-position="left">推广时佣金</el-divider>
+              <el-divider content-position="left">{{ $t('product.promotionCommission') }}</el-divider>
               <el-row :gutter="16">
                 <el-col :span="8">
-                  <el-form-item label="给达人(%)">
+                  <el-form-item :label="$t('product.influencerPercent')">
                     <el-input-number v-model="config.promotionInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="原本(%)">
+                  <el-form-item :label="$t('product.originalPercent')">
                     <el-input-number v-model="config.promotionOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="公司自留(%)">
+                  <el-form-item :label="$t('product.companyPercent')">
                     <el-input-number v-model="config.promotionCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
               </el-row>
               <!-- 投广告时佣金配置 -->
-              <el-divider content-position="left">投广告时佣金</el-divider>
+              <el-divider content-position="left">{{ $t('product.adCommission') }}</el-divider>
               <el-row :gutter="16">
                 <el-col :span="8">
-                  <el-form-item label="给达人(%)">
+                  <el-form-item :label="$t('product.influencerPercent')">
                     <el-input-number v-model="config.adInfluencerRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="原本(%)">
+                  <el-form-item :label="$t('product.originalPercent')">
                     <el-input-number v-model="config.adOriginalRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="公司自留(%)">
+                  <el-form-item :label="$t('product.companyPercent')">
                     <el-input-number v-model="config.adCompanyRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                   </el-form-item>
                 </el-col>
@@ -414,13 +414,13 @@
         </el-form>
       </div>
       <template #footer>
-        <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" size="large">保存</el-button>
+        <el-button @click="showDialog = false">{{ $t('product.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" size="large">{{ $t('product.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="商品详情" width="900px" :close-on-click-modal="false" class="product-detail-dialog">
+    <el-dialog v-model="showDetailDialog" :title="$t('product.productDetail')" width="900px" :close-on-click-modal="false" class="product-detail-dialog">
       <div v-if="currentProduct" class="detail-wrapper">
         <!-- 商品头部 -->
         <div class="detail-head">
@@ -428,19 +428,19 @@
             <span class="head-id">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</span>
             <h3 class="head-title">{{ currentProduct.name || currentProduct.productName || '-' }}</h3>
           </div>
-          <el-tag :type="currentProduct.status === 'active' ? 'success' : 'info'">{{ currentProduct.status === 'active' ? '启用' : '禁用' }}</el-tag>
+          <el-tag :type="currentProduct.status === 'active' ? 'success' : 'info'">{{ currentProduct.status === 'active' ? $t('product.enabled') : $t('product.disabled') }}</el-tag>
         </div>
 
         <!-- 基本信息 -->
         <el-descriptions :column="3" border class="detail-desc">
-          <el-descriptions-item label="SKU">{{ currentProduct.sku || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="店铺">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="商品类目">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="广场佣金率">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-          <el-descriptions-item label="售价" class-name="price-cell">
+          <el-descriptions-item :label="$t('product.sku')">{{ currentProduct.sku || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('product.shop')">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('product.productCategory')">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('product.squareRate')">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('product.priceCell')" class-name="price-cell">
             {{ currentProduct.sellingPrice ? currentProduct.sellingPrice + ' ' + (currentProduct.currency || 'USD') : '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="价格区间" :span="2" class-name="price-cell">
+          <el-descriptions-item :label="$t('product.priceRangeCell')" :span="2" class-name="price-cell">
             {{ currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0 ? currentProduct.priceRangeMin : '-' }}
             {{ (currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0) && (currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0) ? ' - ' : '' }}
             {{ currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0 ? currentProduct.priceRangeMax + ' ' + (currentProduct.currency || 'USD') : '' }}
@@ -449,81 +449,81 @@
 
         <!-- 商品说明 -->
         <div v-if="currentProduct.productIntro || currentProduct.referenceVideo || currentProduct.sellingPoints" class="detail-section">
-          <div class="section-title">商品说明</div>
+          <div class="section-title">{{ $t('product.productDescription') }}</div>
           <el-descriptions :column="1" border>
-            <el-descriptions-item v-if="currentProduct.productIntro" label="简介">{{ currentProduct.productIntro }}</el-descriptions-item>
-            <el-descriptions-item v-if="currentProduct.referenceVideo" label="参考视频">
+            <el-descriptions-item v-if="currentProduct.productIntro" :label="$t('product.intro')">{{ currentProduct.productIntro }}</el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.referenceVideo" :label="$t('product.referenceVideoLink')">
               <a :href="currentProduct.referenceVideo" target="_blank" class="link-text">{{ currentProduct.referenceVideo }}</a>
             </el-descriptions-item>
-            <el-descriptions-item v-if="currentProduct.sellingPoints" label="卖点">{{ currentProduct.sellingPoints }}</el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.sellingPoints" :label="$t('product.sellingPointsCell')">{{ currentProduct.sellingPoints }}</el-descriptions-item>
           </el-descriptions>
         </div>
 
         <!-- 参与活动 -->
         <div v-if="currentProduct.activityConfigs && currentProduct.activityConfigs.length > 0" class="detail-section">
-          <div class="section-title">参与活动 <span class="section-count">({{ currentProduct.activityConfigs.length }})</span></div>
+          <div class="section-title">{{ $t('product.participatedActivities', { count: currentProduct.activityConfigs.length }) }}</div>
           <div v-for="(ac, index) in currentProduct.activityConfigs" :key="index" class="activity-block">
             <div class="activity-title">
               <span class="activity-tag">{{ ac.activityId?.tikTokActivityId || '-' }}</span>
               <span class="activity-name">{{ ac.activityId?.name || '-' }}</span>
             </div>
             <el-descriptions :column="3" border size="small">
-              <el-descriptions-item label="活动链接" :span="3">
+              <el-descriptions-item :label="$t('product.activityLink')" :span="3">
                 <a v-if="ac.activityLink" :href="ac.activityLink" target="_blank" class="link-text">{{ ac.activityLink }}</a>
                 <span v-else>-</span>
               </el-descriptions-item>
-              <el-descriptions-item label="GMV">{{ ac.requirementGmv ? ac.requirementGmv + ' ' + (ac.gmvCurrency || currentProduct.currency || 'USD') : '-' }}</el-descriptions-item>
-              <el-descriptions-item label="月销件数">{{ ac.requirementMonthlySales || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="粉丝数">{{ ac.requirementFollowers || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="月均播放">{{ ac.requirementAvgViews || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="寄样方式">{{ ac.sampleMethod || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="合作国家">{{ ac.cooperationCountry || '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('product.gmv')">{{ ac.requirementGmv ? ac.requirementGmv + ' ' + (ac.gmvCurrency || currentProduct.currency || 'USD') : '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('product.monthlySalesCell')">{{ ac.requirementMonthlySales || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('product.followers')">{{ ac.requirementFollowers || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('product.avgViewsCell')">{{ ac.requirementAvgViews || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('product.sampleMethodCell')">{{ ac.sampleMethod || '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('product.cooperationCountryCell')">{{ ac.cooperationCountry || '-' }}</el-descriptions-item>
             </el-descriptions>
             <div class="commission-row">
               <div class="commission-item">
-                <span class="commission-label">推广佣金</span>
+                <span class="commission-label">{{ $t('product.promotionCommissionCell') }}</span>
                 <div class="commission-rates">
-                  <span>达人 {{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>原本 {{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>公司 {{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('product.influencer') }} {{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('product.original') }} {{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('product.company') }} {{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
                 </div>
               </div>
               <div class="commission-item">
-                <span class="commission-label">广告佣金</span>
+                <span class="commission-label">{{ $t('product.adCommissionCell') }}</span>
                 <div class="commission-rates">
-                  <span>达人 {{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>原本 {{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>公司 {{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('product.influencer') }} {{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('product.original') }} {{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('product.company') }} {{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="empty-section">
-          <el-empty description="暂无参与活动" :image-size="60" />
+          <el-empty :description="$t('product.noActivities')" :image-size="60" />
         </div>
       </div>
       <template #footer>
-        <el-button @click="showDetailDialog = false">关闭</el-button>
+        <el-button @click="showDetailDialog = false">{{ $t('product.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 报表对话框 -->
-    <el-dialog v-model="showReportDialog" title="产品销售报表" width="1200px" :close-on-click-modal="false">
+    <el-dialog v-model="showReportDialog" :title="$t('product.salesReport')" width="1200px" :close-on-click-modal="false">
       <div v-if="reportProduct && reportData">
         <el-tabs v-model="reportPeriod" @tab-change="loadReportData">
-          <el-tab-pane label="过去7天" name="7days" />
-          <el-tab-pane label="过去14天" name="14days" />
-          <el-tab-pane label="本自然月" name="month" />
+          <el-tab-pane :label="$t('product.last7Days')" name="7days" />
+          <el-tab-pane :label="$t('product.last14Days')" name="14days" />
+          <el-tab-pane :label="$t('product.currentMonth')" name="month" />
         </el-tabs>
 
-        <div v-if="loadingReport" class="loading-tip">加载中...</div>
+        <div v-if="loadingReport" class="loading-tip">{{ $t('product.loading') }}</div>
         <div v-else>
           <el-row :gutter="16">
             <el-col :span="12">
               <el-card class="report-card">
                 <template #header>
-                  <span>销售量趋势</span>
+                  <span>{{ $t('product.salesTrend') }}</span>
                 </template>
                 <div ref="lineChartRef" style="height: 300px;"></div>
               </el-card>
@@ -531,7 +531,7 @@
             <el-col :span="12">
               <el-card class="report-card">
                 <template #header>
-                  <span>销售量分布</span>
+                  <span>{{ $t('product.salesDistribution') }}</span>
                 </template>
                 <div ref="pieChartRef" style="height: 300px;"></div>
               </el-card>
@@ -540,13 +540,13 @@
 
           <el-card class="report-card" style="margin-top: 16px;">
             <template #header>
-              <span>BD销售排行 (Top 5)</span>
+              <span>{{ $t('product.bdSalesRanking') }}</span>
             </template>
             <el-table :data="reportData.bdStats?.slice(0, 5)" stripe>
-              <el-table-column type="index" label="排名" width="80" />
-              <el-table-column prop="bdName" label="BD名称" />
-              <el-table-column prop="count" label="销售量" align="center" />
-              <el-table-column label="占比" align="center">
+              <el-table-column type="index" :label="$t('product.rank')" width="80" />
+              <el-table-column prop="bdName" :label="$t('product.bdName')" />
+              <el-table-column prop="count" :label="$t('product.salesVolume')" align="center" />
+              <el-table-column :label="$t('product.percentage')" align="center">
                 <template #default="{ row }">
                   {{ ((row.count / (reportData.totalOrders || 1)) * 100).toFixed(1) }}%
                 </template>
@@ -556,13 +556,13 @@
 
           <el-card class="report-card" style="margin-top: 16px;">
             <template #header>
-              <span>达人销售排行 (Top 10)</span>
+              <span>{{ $t('product.influencerSalesRanking') }}</span>
             </template>
             <el-table :data="reportData.influencerStats?.slice(0, 10)" stripe>
-              <el-table-column type="index" label="排名" width="80" />
-              <el-table-column prop="influencerName" label="达人名称" />
-              <el-table-column prop="count" label="销售量" align="center" />
-              <el-table-column label="占比" align="center">
+              <el-table-column type="index" :label="$t('product.rank')" width="80" />
+              <el-table-column prop="influencerName" :label="$t('product.influencerName')" />
+              <el-table-column prop="count" :label="$t('product.salesVolume')" align="center" />
+              <el-table-column :label="$t('product.percentage')" align="center">
                 <template #default="{ row }">
                   {{ ((row.count / (reportData.totalOrders || 1)) * 100).toFixed(1) }}%
                 </template>
@@ -572,7 +572,7 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="showReportDialog = false">关闭</el-button>
+        <el-button @click="showReportDialog = false">{{ $t('product.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -580,6 +580,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
@@ -588,6 +589,7 @@ import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 import * as echarts from 'echarts'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
@@ -832,7 +834,7 @@ const validateActivityDuplication = (currentIndex) => {
   )
 
   if (duplicateIndex !== -1) {
-    ElMessage.error('同一产品不能重复参与同一活动')
+    ElMessage.error(t('product.duplicateActivity'))
     form.activityConfigs[currentIndex].activityId = ''
     return
   }
@@ -944,16 +946,16 @@ const editProduct = (row) => {
 
 const deleteProduct = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除"${row.name || row.productName}"吗?`, '提示', {
+    await ElMessageBox.confirm(`${t('product.confirmDelete')} "${row.name || row.productName}"`, t('common.warning'), {
       type: 'warning'
     })
     await request.delete(`/products/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('product.deleteSuccess'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      console.error('Delete failed:', error)
+      ElMessage.error(t('product.deleteSuccess'))
     }
   }
 }
@@ -964,7 +966,7 @@ const handleSubmit = async () => {
     // 验证每个活动配置都有活动ID
     const hasEmptyActivity = form.activityConfigs.some(ac => !ac.activityId)
     if (hasEmptyActivity) {
-      ElMessage.error('请为每个活动配置选择活动')
+      ElMessage.error(t('product.selectActivityForConfig'))
       return
     }
 
@@ -972,7 +974,7 @@ const handleSubmit = async () => {
     const activityIds = form.activityConfigs.map(ac => ac.activityId)
     const uniqueIds = [...new Set(activityIds)]
     if (activityIds.length !== uniqueIds.length) {
-      ElMessage.error('同一产品不能重复参与同一活动')
+      ElMessage.error(t('product.duplicateActivity'))
       return
     }
   }
@@ -984,17 +986,17 @@ const handleSubmit = async () => {
     })
     if (editingProduct.value) {
       await request.put(`/products/${editingProduct.value._id}`, data)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('product.updateSuccess'))
     } else {
       await request.post('/products', data)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('product.createSuccess'))
     }
     showDialog.value = false
     resetForm()
     loadData()
   } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error(error.message || '提交失败')
+    console.error('Submit failed:', error)
+    ElMessage.error(error.message || t('product.submitFailed'))
   }
 }
 
@@ -1026,10 +1028,10 @@ const resetForm = () => {
 
 const getGradeText = (grade) => {
   const map = {
-    ordinary: '普通',
-    hot: '爆款',
-    main: '主推款',
-    new: '新品'
+    ordinary: t('product.ordinary'),
+    hot: t('product.hot'),
+    main: t('product.main'),
+    new: t('product.new')
   }
   return map[grade] || grade
 }

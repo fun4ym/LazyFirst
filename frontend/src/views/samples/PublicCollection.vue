@@ -4,11 +4,11 @@
     <div v-if="error" class="error-container">
       <el-result
         icon="error"
-        title="访问失败"
+        :title="$t('samplePublic.accessFailed')"
         :sub-title="error"
       >
         <template #extra>
-          <el-button type="primary" @click="retryLoad">重试</el-button>
+          <el-button type="primary" @click="retryLoad">{{ $t('samplePublic.retry') }}</el-button>
         </template>
       </el-result>
     </div>
@@ -22,7 +22,7 @@
           <div class="shop-info" v-if="shopInfo">
             <h2>{{ shopInfo.shopName }}</h2>
             <div class="shop-meta">
-              <span class="header-subtitle">for LazyFirst Co., Ltd. 申样列表</span>
+              <span class="header-subtitle">{{ $t('samplePublic.forLazyFirst') }}</span>
             </div>
           </div>
         </div>
@@ -34,39 +34,39 @@
       <!-- 搜索筛选 -->
       <el-card class="search-card">
         <el-form :model="searchForm" inline class="search-form">
-          <el-form-item label="寄样状态">
+          <el-form-item :label="$t('samplePublic.sampleStatus')">
             <el-select
               v-model="searchForm.sampleStatus"
-              placeholder="全部"
+              :placeholder="$t('samplePublic.selectAll')"
               clearable
               style="width: 120px"
               @change="loadSamples"
             >
-              <el-option label="待审核" value="pending" />
-              <el-option label="寄样中" value="shipping" />
-              <el-option label="已寄样" value="sent" />
-              <el-option label="不合作" value="refused" />
+              <el-option :label="$t('samplePublic.pending')" value="pending" />
+              <el-option :label="$t('samplePublic.shipping')" value="shipping" />
+              <el-option :label="$t('samplePublic.sent')" value="sent" />
+              <el-option :label="$t('samplePublic.refused')" value="refused" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="是否出单">
+          <el-form-item :label="$t('samplePublic.isOrderGenerated')">
             <el-select
               v-model="searchForm.isOrderGenerated"
-              placeholder="全部"
+              :placeholder="$t('samplePublic.selectAll')"
               clearable
               style="width: 100px"
               @change="loadSamples"
             >
-              <el-option label="是" :value="true" />
-              <el-option label="否" :value="false" />
+              <el-option :label="$t('samplePublic.yes')" :value="true" />
+              <el-option :label="$t('samplePublic.no')" :value="false" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="申请日期">
+          <el-form-item :label="$t('samplePublic.applyDate')">
             <el-date-picker
               v-model="searchForm.date"
               type="date"
-              placeholder="选择日期"
+              :placeholder="$t('samplePublic.selectDate')"
               clearable
               style="width: 150px"
               value-format="YYYY-MM-DD"
@@ -74,10 +74,10 @@
             />
           </el-form-item>
 
-          <el-form-item label="商品名称">
+          <el-form-item :label="$t('samplePublic.productName')">
             <el-input
               v-model="searchForm.productName"
-              placeholder="商品名称"
+              :placeholder="$t('samplePublic.productNamePlaceholder')"
               clearable
               style="width: 150px"
               @keyup.enter="loadSamples"
@@ -85,8 +85,8 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" @click="loadSamples">搜索</el-button>
-            <el-button @click="resetSearch">重置</el-button>
+            <el-button type="primary" @click="loadSamples">{{ $t('samplePublic.search') }}</el-button>
+            <el-button @click="resetSearch">{{ $t('samplePublic.reset') }}</el-button>
           </el-form-item>
         </el-form>
 
@@ -95,33 +95,33 @@
           <div class="batch-left">
             <span class="selected-count">
               <el-icon><Check /></el-icon>
-              已选择 {{ selectedSamples.length }} 项
+              {{ $t('samplePublic.selectedItems', { count: selectedSamples.length }) }}
             </span>
-            <el-button text type="danger" @click="selectedSamples = []">取消选择</el-button>
+            <el-button text type="danger" @click="selectedSamples = []">{{ $t('samplePublic.cancelSelection') }}</el-button>
           </div>
           <div class="batch-right">
-            <span class="batch-label">批量操作：</span>
+            <span class="batch-label">{{ $t('samplePublic.batchOperation') }}</span>
             <el-dropdown @command="handleBatchStatusCommand" trigger="click">
               <el-button type="primary" size="small">
-                修改状态 <el-icon><ArrowDown /></el-icon>
+                {{ $t('samplePublic.modifyStatus') }} <el-icon><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="pending">待审核</el-dropdown-item>
-                  <el-dropdown-item command="shipping">寄样中</el-dropdown-item>
-                  <el-dropdown-item command="sent">已寄样</el-dropdown-item>
-                  <el-dropdown-item command="refused">不合作</el-dropdown-item>
+                  <el-dropdown-item command="pending">{{ $t('samplePublic.pending') }}</el-dropdown-item>
+                  <el-dropdown-item command="shipping">{{ $t('samplePublic.shipping') }}</el-dropdown-item>
+                  <el-dropdown-item command="sent">{{ $t('samplePublic.sent') }}</el-dropdown-item>
+                  <el-dropdown-item command="refused">{{ $t('samplePublic.refused') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
             <el-dropdown @command="handleBatchAdCommand" trigger="click">
               <el-button type="success" size="small">
-                投流开关 <el-icon><ArrowDown /></el-icon>
+                {{ $t('samplePublic.adToggle') }} <el-icon><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item :command="true">开启投流</el-dropdown-item>
-                  <el-dropdown-item :command="false">关闭投流</el-dropdown-item>
+                  <el-dropdown-item :command="true">{{ $t('samplePublic.openAd') }}{{ $t('samplePublic.adPromotion') }}</el-dropdown-item>
+                  <el-dropdown-item :command="false">{{ $t('samplePublic.closeAd') }}{{ $t('samplePublic.adPromotion') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -141,7 +141,7 @@
           <el-table-column type="selection" width="50" />
 
           <!-- 寄样状态 -->
-          <el-table-column label="寄样状态" width="160">
+          <el-table-column :label="$t('samplePublic.shippingStatus')" width="160">
             <template #default="{ row }">
               <div class="sample-status" @click="openStatusEdit(row)">
                 <el-tag 
@@ -154,19 +154,19 @@
                 <el-icon class="edit-icon"><Edit /></el-icon>
               </div>
               <div v-if="row.sampleStatus === 'refused' && row.refusalReason" class="refusal-reason">
-                原因：{{ row.refusalReason }}
+                {{ $t('samplePublic.reason') }}{{ row.refusalReason }}
               </div>
               <div v-if="row.trackingNumber" class="tracking-no">
-                物流：{{ row.trackingNumber }}
+                {{ $t('samplePublic.logistics') }}{{ row.trackingNumber }}
               </div>
               <div v-if="row.shippingDate" class="shipping-date">
-                发货：{{ formatDate(row.shippingDate) }}
+                {{ $t('samplePublic.shipping') }}{{ formatDate(row.shippingDate) }}
               </div>
             </template>
           </el-table-column>
 
           <!-- 投流开关 -->
-          <el-table-column label="投流" width="100">
+          <el-table-column :label="$t('samplePublic.adPromotion')" width="100">
             <template #default="{ row }">
               <el-switch
                 v-model="row.isAdPromotion"
@@ -176,44 +176,44 @@
           </el-table-column>
 
           <!-- 投流码 -->
-          <el-table-column label="投流码" width="100">
+          <el-table-column :label="$t('samplePublic.streamCode')" width="100">
             <template #default="{ row }">
               <span class="stream-code">{{ row.videoStreamCode || '--' }}</span>
             </template>
           </el-table-column>
 
           <!-- 申请日期 -->
-          <el-table-column label="申请日期" width="120" prop="date" sortable>
+          <el-table-column :label="$t('samplePublic.applicationDate')" width="120" prop="date" sortable>
             <template #default="{ row }">
               {{ row.date ? formatDate(row.date) : '--' }}
             </template>
           </el-table-column>
 
           <!-- 商品信息 -->
-          <el-table-column label="商品信息" min-width="200">
+          <el-table-column :label="$t('samplePublic.productInfo')" min-width="200">
             <template #default="{ row }">
               <div class="product-info">
                 <div class="product-name">{{ row.productName || '--' }}</div>
-                <div class="product-id">ID: {{ row.productId || '--' }}</div>
+                <div class="product-id">{{ $t('samplePublic.productId') }}{{ row.productId || '--' }}</div>
               </div>
             </template>
           </el-table-column>
 
           <!-- 达人信息 -->
-          <el-table-column label="达人信息" min-width="240">
+          <el-table-column :label="$t('samplePublic.influencerInfo')" min-width="240">
             <template #default="{ row }">
               <div class="influencer-info">
                 <div class="influencer-account">
                   <span class="tiktok-id">{{ row.influencerAccount || '--' }}</span>
                 </div>
                 <div class="influencer-stats">
-                  <el-tooltip content="粉丝数" placement="top">
+                  <el-tooltip :content="$t('samplePublic.followers')" placement="top">
                     <span class="stat-item" v-if="row.followerCount">
                       <el-icon><User /></el-icon>
                       {{ row.followerCount }}
                     </span>
                   </el-tooltip>
-                  <el-tooltip content="GMV" placement="top">
+                  <el-tooltip :content="$t('samplePublic.gmv')" placement="top">
                     <span class="stat-item gmv" v-if="row.gmv">
                       <el-icon><Money /></el-icon>
                       ฿{{ formatNumber(row.gmv) }}
@@ -225,12 +225,12 @@
           </el-table-column>
 
           <!-- 视频信息 -->
-          <el-table-column label="视频" width="140">
+          <el-table-column :label="$t('samplePublic.video')" width="140">
             <template #default="{ row }">
               <div class="video-info" v-if="row.videoLink || row.sampleImage">
                 <a v-if="row.videoLink" :href="row.videoLink" target="_blank" class="video-link">
                   <el-icon><VideoCamera /></el-icon>
-                  查看视频
+                  {{ $t('samplePublic.viewVideo') }}
                 </a>
                 <el-image 
                   v-if="row.sampleImage" 
@@ -249,10 +249,10 @@
           </el-table-column>
 
           <!-- 是否出单 -->
-          <el-table-column label="是否出单" width="100">
+          <el-table-column :label="$t('samplePublic.orderGenerated')" width="100">
             <template #default="{ row }">
               <el-tag :type="row.isOrderGenerated ? 'success' : 'info'" size="small">
-                {{ row.isOrderGenerated ? '已出单' : '未出单' }}
+                {{ row.isOrderGenerated ? $t('samplePublic.yes') : $t('samplePublic.no') }}
               </el-tag>
             </template>
           </el-table-column>
@@ -275,33 +275,33 @@
     <!-- 单条记录编辑寄样状态弹窗 -->
     <el-dialog
       v-model="statusDialogVisible"
-      title="修改寄样状态"
+      :title="$t('samplePublic.modifyShippingStatus')"
       width="400px"
       :close-on-click-modal="false"
     >
       <div class="status-edit-form">
         <div class="edit-row">
-          <span class="label">达人：</span>
+          <span class="label">{{ $t('samplePublic.influencer') }}</span>
           <span class="value">{{ currentEditRow?.influencerAccount }}</span>
         </div>
         <div class="edit-row">
-          <span class="label">商品：</span>
+          <span class="label">{{ $t('samplePublic.product') }}</span>
           <span class="value">{{ currentEditRow?.productName }}</span>
         </div>
         <div class="edit-row">
-          <span class="label">寄样状态：</span>
+          <span class="label">{{ $t('samplePublic.shippingStatusLabel') }}</span>
           <el-select v-model="currentSampleStatus" style="width: 200px">
-            <el-option label="待审核" value="pending" />
-            <el-option label="寄样中" value="shipping" />
-            <el-option label="已寄样" value="sent" />
-            <el-option label="不合作" value="refused" />
+            <el-option :label="$t('samplePublic.pending')" value="pending" />
+            <el-option :label="$t('samplePublic.shipping')" value="shipping" />
+            <el-option :label="$t('samplePublic.sent')" value="sent" />
+            <el-option :label="$t('samplePublic.refused')" value="refused" />
           </el-select>
         </div>
       </div>
       <template #footer>
-        <el-button @click="statusDialogVisible = false">取消</el-button>
+        <el-button @click="statusDialogVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
         <el-button type="primary" @click="confirmStatusUpdate" :loading="statusUpdateLoading">
-          确定
+          {{ $t('samplePublic.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -311,10 +311,12 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money } from '@element-plus/icons-vue'
 import axios from 'axios'
 
+const { t } = useI18n()
 const route = useRoute()
 const API_BASE = '/api'
 
@@ -378,12 +380,12 @@ const getSampleStatusType = (status) => {
 
 const getSampleStatusText = (status) => {
   const textMap = {
-    pending: '待审核',
-    shipping: '寄样中',
-    sent: '已寄样',
-    refused: '不合作'
+    pending: t('samplePublic.pending'),
+    shipping: t('samplePublic.shipping'),
+    sent: t('samplePublic.sent'),
+    refused: t('samplePublic.refused')
   }
-  return textMap[status] || '待审核'
+  return textMap[status] || t('samplePublic.pending')
 }
 
 // 获取识别码
@@ -395,7 +397,7 @@ const getIdentificationCode = () => {
 const loadSamples = async () => {
   const identificationCode = getIdentificationCode()
   if (!identificationCode) {
-    error.value = '缺少识别码参数'
+    error.value = t('samplePublic.missingCode')
     return
   }
 
@@ -431,7 +433,7 @@ const loadSamples = async () => {
     }
   } catch (err) {
     console.error('Load samples error:', err)
-    error.value = err.response?.data?.message || '网络错误，请稍后重试'
+    error.value = err.response?.data?.message || t('samplePublic.networkError')
   } finally {
     loading.value = false
   }
@@ -481,7 +483,7 @@ const confirmStatusUpdate = async () => {
     })
 
     if (res.data.success) {
-      ElMessage.success('更新成功')
+      ElMessage.success(t('samplePublic.updateSuccess'))
       currentEditRow.value.sampleStatus = currentSampleStatus.value
       // 更新 isSampleSent
       currentEditRow.value.isSampleSent = currentSampleStatus.value === 'sent'
@@ -490,7 +492,7 @@ const confirmStatusUpdate = async () => {
       ElMessage.error(res.data.message)
     }
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '更新失败')
+    ElMessage.error(err.response?.data?.message || t('samplePublic.updateFailed'))
   } finally {
     statusUpdateLoading.value = false
   }
@@ -499,14 +501,14 @@ const confirmStatusUpdate = async () => {
 // 批量更新寄样状态
 const handleBatchStatusCommand = async (status) => {
   if (selectedSamples.value.length === 0) {
-    ElMessage.warning('请先选择要更新的记录')
+    ElMessage.warning(t('samplePublic.selectItemsFirst'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要将 ${selectedSamples.value.length} 条记录的寄样状态更新为"${getSampleStatusText(status)}"吗？`,
-      '批量更新',
+      t('samplePublic.confirmUpdate', { count: selectedSamples.value.length, status: getSampleStatusText(status) }),
+      t('samplePublic.batchUpdate'),
       { type: 'warning' }
     )
 
@@ -538,14 +540,14 @@ const handleBatchStatusCommand = async (status) => {
 // 批量更新投流开关
 const handleBatchAdCommand = async (isAdPromotion) => {
   if (selectedSamples.value.length === 0) {
-    ElMessage.warning('请先选择要更新的记录')
+    ElMessage.warning(t('samplePublic.selectItemsFirst'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要将 ${selectedSamples.value.length} 条记录的投流状态更新为"${isAdPromotion ? '开启' : '关闭'}"吗？`,
-      '批量更新',
+      t('samplePublic.confirmAdUpdate', { count: selectedSamples.value.length, status: isAdPromotion ? t('samplePublic.openAd') : t('samplePublic.closeAd') }),
+      t('samplePublic.batchUpdate'),
       { type: 'warning' }
     )
 
@@ -569,7 +571,7 @@ const handleBatchAdCommand = async (isAdPromotion) => {
     }
   } catch (err) {
     if (err !== 'cancel') {
-      ElMessage.error(err.response?.data?.message || '更新失败')
+      ElMessage.error(err.response?.data?.message || t('samplePublic.updateFailed'))
     }
   }
 }
@@ -588,14 +590,14 @@ const handleAdPromotionChange = async (row) => {
     })
 
     if (res.data.success) {
-      ElMessage.success('更新成功')
+      ElMessage.success(t('samplePublic.updateSuccess'))
     } else {
       ElMessage.error(res.data.message)
       // 回滚状态
       row.isAdPromotion = !row.isAdPromotion
     }
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || '更新失败')
+    ElMessage.error(err.response?.data?.message || t('samplePublic.updateFailed'))
     // 回滚状态
     row.isAdPromotion = !row.isAdPromotion
   }

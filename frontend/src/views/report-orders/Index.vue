@@ -23,8 +23,8 @@
 
       <!-- 页签 -->
       <el-tabs v-model="activeTab" class="order-tabs">
-        <el-tab-pane label="TikTok订单" name="orders"></el-tab-pane>
-        <el-tab-pane label="账单" name="bills"></el-tab-pane>
+        <el-tab-pane :label="$t('reportOrders.tiktokOrders')" name="orders"></el-tab-pane>
+        <el-tab-pane :label="$t('reportOrders.bills')" name="bills"></el-tab-pane>
       </el-tabs>
 
       <!-- TikTok订单搜索筛选 -->
@@ -46,10 +46,10 @@
               style="width: 140px"
             />
           </el-form-item>
-          <el-form-item label="归属BD">
+          <el-form-item :label="$t('reportOrders.belongingBD')">
             <el-input
               v-model="searchForm.bdName"
-              placeholder="归属BD"
+              :placeholder="$t('reportOrders.bdPlaceholder')"
               clearable
               style="width: 120px"
             />
@@ -62,24 +62,24 @@
               style="width: 140px"
             />
           </el-form-item>
-          <el-form-item label="商品ID">
+          <el-form-item :label="$t('reportOrders.product') + ' ID'">
             <el-input
               v-model="searchForm.productId"
-              placeholder="商品ID"
+              :placeholder="$t('reportOrders.productIdPlaceholder')"
               clearable
               style="width: 130px"
             />
           </el-form-item>
-          <el-form-item :label="$t('order.orderStatus')">
+          <el-form-item :label="$t('reportOrders.orderStatus')">
             <el-select
               v-model="searchForm.orderStatus"
-              :placeholder="$t('order.orderStatus')"
+              :placeholder="$t('reportOrders.orderStatus')"
               clearable
               style="width: 110px"
             >
               <el-option :label="$t('common.all')" value="" />
-              <el-option :label="$t('order.completed')" value="已完成" />
-              <el-option :label="$t('order.inProgress')" value="进行中" />
+              <el-option :label="$t('reportOrders.completed')" value="已完成" />
+              <el-option :label="$t('reportOrders.inProgress')" value="进行中" />
               <el-option :label="$t('status.cancelled')" value="已取消" />
             </el-select>
           </el-form-item>
@@ -118,42 +118,42 @@
       <!-- 账单搜索筛选 -->
       <div v-show="activeTab === 'bills'" class="search-section">
         <el-form :model="billSearchForm" inline class="search-form">
-          <el-form-item label="账单号">
+          <el-form-item :label="$t('reportOrders.billNo')">
             <el-input
               v-model="billSearchForm.billNo"
-              placeholder="账单号"
+              :placeholder="$t('reportOrders.billNoPlaceholder')"
               clearable
               style="width: 170px"
             />
           </el-form-item>
-          <el-form-item label="账单状态">
+          <el-form-item :label="$t('reportOrders.billStatus')">
             <el-select
               v-model="billSearchForm.isSettled"
-              placeholder="请选择"
+              :placeholder="$t('common.select')"
               clearable
               style="width: 110px"
             >
-              <el-option label="全部" value="" />
-              <el-option label="已结清" :value="true" />
-              <el-option label="未结清" :value="false" />
+              <el-option :label="$t('reportOrders.allStatus')" value="" />
+              <el-option :label="$t('reportOrders.settledStatus')" :value="true" />
+              <el-option :label="$t('reportOrders.unsettledStatus')" :value="false" />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间">
+          <el-form-item :label="$t('reportOrders.createTimeCol')">
             <el-date-picker
               v-model="billCreateTimeRange"
               type="daterange"
               range-separator="-"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :start-placeholder="$t('reportOrders.startDatePlaceholder')"
+              :end-placeholder="$t('reportOrders.endDatePlaceholder')"
               value-format="YYYY-MM-DD"
               style="width: 200px"
             />
           </el-form-item>
-          <el-form-item label="有效日期">
+          <el-form-item :label="$t('reportOrders.validDate')">
             <el-date-picker
               v-model="billSearchForm.validDate"
               type="date"
-              placeholder="选择日期"
+              :placeholder="$t('reportOrders.selectDate')"
               value-format="YYYY-MM-DD"
               style="width: 140px"
               clearable
@@ -172,7 +172,7 @@
         <el-table ref="orderTableRef" :data="orders" v-loading="loading" stripe border row-key="_id" @sort-change="handleSortChange" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" fixed="left" />
         <el-table-column
-          label="TikTok ID"
+          :label="$t('reportOrders.tiktokId')"
           width="160"
           fixed="left"
           prop="influencerUsername"
@@ -188,38 +188,38 @@
               <template #reference>
                 <div class="tiktok-id-wrapper">
                   <span class="tiktok-id-cell clickable" @click="viewDetail(row)">{{ row.influencerUsername || '--' }}</span>
-                  <el-tag v-if="row.isBlacklistedInfluencer" type="danger" size="small" style="margin-left: 4px">黑名单</el-tag>
+                  <el-tag v-if="row.isBlacklistedInfluencer" type="danger" size="small" style="margin-left: 4px">{{ $t('reportOrders.blacklist') }}</el-tag>
                 </div>
               </template>
               <div v-if="popoverLoading" class="popover-loading">
                 <el-icon class="is-loading"><Loading /></el-icon>
-                <span>加载中...</span>
+                <span>{{ $t('reportOrders.influencerPopover.loading') }}</span>
               </div>
               <div v-else-if="popoverInfluencer" class="influencer-popover">
                 <el-descriptions :column="1" size="small">
-                  <el-descriptions-item label="TikTok ID">
+                  <el-descriptions-item :label="$t('reportOrders.tiktokId')">
                     <span class="tiktok-id-text">{{ popoverInfluencer.tiktokId }}</span>
                   </el-descriptions-item>
-                  <el-descriptions-item label="名称">{{ popoverInfluencer.tiktokName || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="最新粉丝">{{ formatNumber(popoverInfluencer.latestFollowers) }}</el-descriptions-item>
-                  <el-descriptions-item label="最新GMV">{{ popoverInfluencer.latestGmv || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="状态">
+                  <el-descriptions-item :label="$t('influencer.tiktokName')">{{ popoverInfluencer.tiktokName || '-' }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('reportOrders.influencerPopover.latestFollowers')">{{ formatNumber(popoverInfluencer.latestFollowers) }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('reportOrders.influencerPopover.latestGmv')">{{ popoverInfluencer.latestGmv || '-' }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('reportOrders.status')">
                     <el-tag :type="popoverInfluencer.status === 'enabled' ? 'success' : 'info'" size="small">
-                      {{ popoverInfluencer.status === 'enabled' ? '启用' : '禁用' }}
+                      {{ popoverInfluencer.status === 'enabled' ? $t('reportOrders.enabledStatus') : $t('reportOrders.disabledStatus') }}
                     </el-tag>
-                    <el-tag v-if="popoverInfluencer.isBlacklisted" type="danger" size="small" style="margin-left: 4px">黑名单</el-tag>
+                    <el-tag v-if="popoverInfluencer.isBlacklisted" type="danger" size="small" style="margin-left: 4px">{{ $t('reportOrders.blacklist') }}</el-tag>
                   </el-descriptions-item>
                 </el-descriptions>
               </div>
               <div v-else class="popover-empty">
-                <span>未找到达人信息</span>
+                <span>{{ $t('reportOrders.influencerPopover.notFound') }}</span>
               </div>
             </el-popover>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="归属BD"
+          :label="$t('reportOrders.belongingBD')"
           width="120"
           prop="bdName"
           sortable
@@ -229,7 +229,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="佣金" width="150" fixed="left">
+        <el-table-column :label="$t('reportOrders.commission')" width="150" fixed="left">
           <template #default="{ row }">
             <div class="commission">
               <div>{{ formatMoney(row.actualAffiliatePartnerCommission || 0) }}</div>
@@ -240,7 +240,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="订单" width="200">
+        <el-table-column :label="$t('reportOrders.order')" width="200">
           <template #default="{ row }">
             <div class="order-no" style="font-size: 10px">{{ row.orderNo || '--' }}</div>
             <div class="sub-order-no" style="font-size: 8px">{{ row.subOrderNo || '--' }}</div>
@@ -248,7 +248,7 @@
         </el-table-column>
 
         <el-table-column
-          label="商品"
+          :label="$t('reportOrders.product')"
           width="280"
           prop="shopName"
           sortable
@@ -259,7 +259,7 @@
                 <span style="font-size: 10px">{{ row.productId || '--' }}</span>
                 <span v-if="row.sku" class="sku-tag">{{ row.sku }}</span>
               </div>
-              <el-tooltip :content="`${row.productName}\n店铺代码: ${row.shopCode || '--'}`" placement="top">
+              <el-tooltip :content="`${row.productName}\n${$t('reportOrders.shopCode')}: ${row.shopCode || '--'}`" placement="top">
                 <div class="product-name" style="font-size: 8px">
                   {{ truncateText(row.productName, 50) }}
                 </div>
@@ -268,11 +268,11 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="交易" width="180">
+        <el-table-column :label="$t('reportOrders.trade')" width="180">
           <template #default="{ row }">
             <div class="trade-info">
               <div>{{ formatMoney(row.productPrice || 0) }}</div>
-              <div>数量: {{ row.orderQuantity || 0 }}</div>
+              <div>{{ $t('reportOrders.quantity') }}: {{ row.orderQuantity || 0 }}</div>
               <div class="status-icon">
                 <el-icon v-if="row.orderStatus === '已完成'" color="#67C23A"><CircleCheck /></el-icon>
                 <el-icon v-else color="#409EFF"><Clock /></el-icon>
@@ -282,47 +282,47 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="佣金率" width="280">
+        <el-table-column :label="$t('reportOrders.commissionRate')" width="280">
           <template #default="{ row }">
             <div class="commission-rates">
               <span v-if="row.affiliatePartnerCommissionRate">
-                公司{{ (row.affiliatePartnerCommissionRate * 100).toFixed(0) }}%
+                {{ $t('reportOrders.company') }}{{ (row.affiliatePartnerCommissionRate * 100).toFixed(0) }}%
               </span>
               <span v-if="row.creatorCommissionRate">
-                达人{{ (row.creatorCommissionRate * 100).toFixed(0) }}%
+                {{ $t('reportOrders.creator') }}{{ (row.creatorCommissionRate * 100).toFixed(0) }}%
               </span>
               <span v-if="row.serviceProviderRewardCommissionRate">
-                服{{ (row.serviceProviderRewardCommissionRate * 100).toFixed(0) }}%
+                {{ $t('reportOrders.service') }}{{ (row.serviceProviderRewardCommissionRate * 100).toFixed(0) }}%
               </span>
               <span v-if="row.influencerRewardCommissionRate">
-                达人{{ (row.influencerRewardCommissionRate * 100).toFixed(0) }}%
+                {{ $t('reportOrders.influencer') }}{{ (row.influencerRewardCommissionRate * 100).toFixed(0) }}%
               </span>
               <span v-if="row.affiliateServiceProviderShopAdCommissionRate" class="ad-rate">
-                公司{{ (row.affiliateServiceProviderShopAdCommissionRate * 100).toFixed(0) }}%
+                {{ $t('reportOrders.company') }}{{ (row.affiliateServiceProviderShopAdCommissionRate * 100).toFixed(0) }}%
               </span>
               <span v-if="row.influencerShopAdCommissionRate" class="ad-rate">
-                达人{{ (row.influencerShopAdCommissionRate * 100).toFixed(0) }}%
+                {{ $t('reportOrders.influencer') }}{{ (row.influencerShopAdCommissionRate * 100).toFixed(0) }}%
               </span>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="时间"
+          :label="$t('reportOrders.time')"
           width="180"
           prop="createTime"
           sortable
         >
           <template #default="{ row }">
             <div class="time-info">
-              <div>创 {{ row.createTime ? formatDate(row.createTime) : '--' }}</div>
-              <div>达 {{ row.orderDeliveryTime ? formatDate(row.orderDeliveryTime) : '--' }}</div>
+              <div>{{ $t('reportOrders.createTimeCol') }} {{ row.createTime ? formatDate(row.createTime) : '--' }}</div>
+              <div>{{ $t('reportOrders.deliveryTime') }} {{ row.orderDeliveryTime ? formatDate(row.orderDeliveryTime) : '--' }}</div>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="打款"
+          :label="$t('reportOrders.payment')"
           width="180"
           prop="commissionSettlementTime"
           sortable
@@ -335,17 +335,17 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="结算" width="100" fixed="right">
+        <el-table-column :label="$t('reportOrders.settlement')" width="100" fixed="right">
           <template #default="{ row }">
             <el-tag :type="row.settlementStatus === '已结清' ? 'success' : 'warning'" size="small">
-              {{ row.settlementStatus || '未结清' }}
+              {{ row.settlementStatus === '已结清' ? $t('reportOrders.settled') : $t('reportOrders.unsettled') }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" fixed="right" width="120">
+        <el-table-column :label="$t('reportOrders.operation')" fixed="right" width="120">
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
+            <el-button link type="primary" @click="viewDetail(row)">{{ $t('reportOrders.detail') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
