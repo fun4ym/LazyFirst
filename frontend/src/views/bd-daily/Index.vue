@@ -39,7 +39,7 @@
               />
             </el-form-item>
 
-            <el-form-item label="BD">
+            <el-form-item :label="$t('bdDaily.bd')">
               <el-input
                 v-model="searchForm.salesman"
                 :placeholder="$t('bdDaily.bdName')"
@@ -86,7 +86,7 @@
           fixed
         >
           <template #header>
-            <div class="table-header-cell">BD</div>
+            <div class="table-header-cell">{{ $t('bdDaily.bd') }}</div>
           </template>
           <template #default="{ row }">
             <div class="column-text">{{ row.salesman || '--' }}</div>
@@ -177,13 +177,13 @@
         </el-table-column>
 
         <el-table-column
-          label="操作"
+          :label="$t('common.operation')"
           width="120"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="editRecord(row)" v-if="hasPermission('bd-daily:update')">编辑</el-button>
-            <el-button link type="danger" @click="deleteRecord(row)" v-if="hasPermission('bd-daily:delete')">删除</el-button>
+            <el-button link type="primary" @click="editRecord(row)" v-if="hasPermission('bd-daily:update')">{{ $t('common.edit') }}</el-button>
+            <el-button link type="danger" @click="deleteRecord(row)" v-if="hasPermission('bd-daily:delete')">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -216,7 +216,7 @@
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="loadMonthlyData" :loading="monthlyLoading">展示</el-button>
+              <el-button type="primary" @click="loadMonthlyData" :loading="monthlyLoading">{{ $t('bdDaily.showReport') || 'Show' }}</el-button>
             </el-form-item>
           </el-form>
 
@@ -228,9 +228,9 @@
             border
             class="bd-daily-table"
           >
-            <el-table-column label="BD" width="150" fixed>
+            <el-table-column :label="$t('bdDaily.bd')" width="150" fixed>
               <template #header>
-                <div class="table-header-cell">BD</div>
+                <div class="table-header-cell">{{ $t('bdDaily.bd') }}</div>
               </template>
               <template #default="{ row }">
                 <div class="column-text">{{ row.salesman || '--' }}</div>
@@ -353,7 +353,7 @@
           </el-alert>
         </el-form>
         <template #footer>
-          <el-button @click="generateDialogVisible = false">取消</el-button>
+          <el-button @click="generateDialogVisible = false">{{ $t('common.cancel') }}</el-button>
           <el-button type="primary" @click="handleGenerate" :loading="generating">
             生成统计
           </el-button>
@@ -377,7 +377,7 @@
           <div v-if="generateResult.details && generateResult.details.length > 0" style="margin-top: 20px">
             <h4>详细信息：</h4>
             <el-table :data="generateResult.details" max-height="300" border>
-              <el-table-column label="BD" prop="salesman" width="120" />
+              <el-table-column :label="$t('bdDaily.bd')" prop="salesman" width="120" />
               <el-table-column label="操作" prop="action" width="100">
                 <template #default="{ row }">
                   <el-tag :type="row.action === 'created' ? 'success' : 'warning'" size="small">
@@ -400,7 +400,7 @@
           </div>
         </div>
         <template #footer>
-          <el-button type="primary" @click="resultDialogVisible = false">确定</el-button>
+          <el-button type="primary" @click="resultDialogVisible = false">{{ $t('common.confirm') }}</el-button>
         </template>
       </el-dialog>
 
@@ -429,15 +429,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="BD" prop="salesman">
-              <el-input v-model="form.salesman" placeholder="BD姓名" />
+            <el-form-item :label="$t('bdDaily.bd')" prop="salesman">
+              <el-input v-model="form.salesman" :placeholder="$t('bdDaily.bdName')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="申样数">
+            <el-form-item :label="$t('bdDaily.items')">
               <el-input-number v-model="form.sampleCount" :min="0" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
@@ -500,8 +500,8 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>

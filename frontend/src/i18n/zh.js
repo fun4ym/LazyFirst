@@ -556,7 +556,147 @@ export default {
     common: {
       language: '语言',
       english: 'English',
-      chinese: '中文'
+      chinese: '中文',
+      thai: '泰文'
+    },
+    activities: {
+      title: 'TikTok活动',
+      create: '新建活动',
+      edit: '编辑活动',
+      detail: '活动详情',
+      productDetail: '商品详情',
+      importProducts: '导入商品',
+      importTitle: '导入TikTok商品',
+      importConfirm: '确定导入',
+      
+      // 搜索表单
+      activityName: '活动名称',
+      activityType: '活动类型',
+      placeholder: {
+        activityName: '活动名称',
+        all: '全部'
+      },
+      
+      // 表格列
+      tikTokActivityId: 'TikTok活动ID',
+      activityNameCol: '活动名称',
+      activityTypeCol: '活动类型',
+      startDate: '开始时间',
+      endDate: '结束时间',
+      status: '状态',
+      participationProducts: '参与商品',
+      creator: '创建人',
+      operations: '操作',
+      createdAt: '创建时间',
+      productId: '商品ID',
+      productName: '商品名称',
+      shop: '店铺',
+      noProducts: '暂无参与商品',
+      noActivities: '暂无参与活动',
+      
+      // 活动类型选项
+      selfInitiated: '自发起',
+      merchantInitiated: '商家发起',
+      
+      // 状态选项
+      pending: '待发布',
+      upcoming: '即将开始',
+      active: '进行中',
+      ended: '已结束',
+      
+      // 表单标签
+      tapLink: 'TAP专属链',
+      tapLinkPlaceholder: 'TAP专属链接',
+      sampleMethod: '寄样方式',
+      selectSampleMethod: '选择寄样方式',
+      cooperationCountry: '合作国家',
+      selectCooperationCountry: '选择合作国家',
+      gmv: 'GMV',
+      gmvPlaceholder: 'GMV',
+      currencyUnit: '货币单位',
+      selectCurrency: '请选择货币',
+      monthlySales: '月销售件数',
+      monthlySalesPlaceholder: '月销售件数',
+      followers: '粉丝数',
+      followersPlaceholder: '粉丝数',
+      avgViews: '月均播放量',
+      avgViewsPlaceholder: '月均播放量',
+      requirementRemark: '要求说明',
+      requirementRemarkPlaceholder: '达人要求说明',
+      
+      // 佣金配置
+      promotionCommission: '佣金配置 - 推广时',
+      adCommission: '佣金配置 - 投广告时',
+      influencerRate: '给达人(%)',
+      originalRate: '原本(%)',
+      companyRate: '公司自留(%)',
+      
+      // 其他
+      activityDescription: '活动描述',
+      activityDescriptionPlaceholder: '活动描述',
+      selectStartTime: '选择开始时间',
+      selectEndTime: '选择结束时间',
+      
+      // 详情页标签
+      sectionActivityInfo: '活动信息',
+      sectionRedundantInfo: '冗余信息',
+      sectionOtherInfo: '其他信息',
+      sectionActivityConfig: '活动配置',
+      sectionInfluencerRequirement: '达人要求',
+      sectionDataInfo: '数据信息',
+      sectionHistory: '变更历史',
+      
+      // 寄样方式选项
+      online: '线上',
+      offline: '线下',
+      
+      // 提示文本
+      loadingProducts: '加载中...',
+      importing: '正在导入，请稍候...',
+      importing: '正在导入，请稍候...',
+      
+      // 导入步骤
+      importSteps: '操作步骤',
+      importStep1: '进入 TikTok Shop Partner Center → 达人匹配 → 服务商合作',
+      importStep2: '点击「查看详情」进入合作详情页面',
+      importStep3: '在「已通过」页签中找到「导出链接」',
+      importStep4: '下载Excel文件并上传到此处',
+      
+      // 导入弹窗
+      uploadExcel: '上传Excel文件',
+      uploadTip: '支持 .xlsx, .xls 格式',
+      
+      // 商品详情
+      sku: 'SKU',
+      productCategory: '商品类目',
+      squareCommissionRate: '广场佣金率',
+      sellingPrice: '售价',
+      priceRange: '价格区间',
+      productIntro: '简介',
+      referenceVideo: '参考视频',
+      sellingPoints: '卖点',
+      participatedActivities: '参与活动',
+      activityLink: '活动链接',
+      monthlySalesCount: '月销件数',
+      monthlyAvgViews: '月均播放',
+      promotionCommissionRate: '推广佣金',
+      adCommissionRate: '广告佣金',
+      influencer: '达人',
+      original: '原本',
+      company: '公司',
+      enabled: '启用',
+      disabled: '禁用',
+      noParticipation: '暂无参与活动',
+      
+      // 操作
+      viewDetail: '详情',
+      editBtn: '编辑',
+      delete: '删除',
+      search: '搜索',
+      reset: '重置',
+      cancel: '取消',
+      confirm: '确定',
+      refresh: '刷新'
     }
   }
 }

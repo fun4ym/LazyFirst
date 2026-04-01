@@ -505,8 +505,6 @@ router.get('/product-counts', authenticate, authorize('activities:read'), async 
   }
 });
 
-module.exports = router;
-
 /**
  * @route   POST /api/activities/:id/import-products
  * @desc    导入TikTok商品（通过Excel文件）
@@ -554,6 +552,7 @@ router.post('/:id/import-products', authenticate, authorize('admin'), upload.sin
     
     // 验证列标题
     const headers = data[0];
+    console.log('[导入商品] headers数组:', JSON.stringify(headers));
     const expectedHeaders = ['活动 ID', '商品名称', '', '商品 ID', '售价', '店铺名称', '商品生效时间', '商品失效时间', '创作者佣金率', '联盟团长佣金率', '达人店铺广告佣金率', '联盟服务商店铺广告佣金率', '商品链接', '商品详情页'];
     
     // 检查关键列是否存在
@@ -567,6 +566,7 @@ router.post('/:id/import-products', authenticate, authorize('admin'), upload.sin
     const adStoreRateCol = headers.indexOf('达人店铺广告佣金率');
     const adAllianceRateCol = headers.indexOf('联盟服务商店铺广告佣金率');
     const productLinkCol = headers.indexOf('商品链接');
+    console.log('[导入商品] productLinkCol=', productLinkCol, 'headers长度=', headers.length);
     
     if (activityIdCol === -1 || productNameCol === -1 || productIdCol === -1 || priceCol === -1 || shopNameCol === -1) {
       return res.status(400).json({
@@ -749,3 +749,6 @@ router.post('/:id/import-products', authenticate, authorize('admin'), upload.sin
     });
   }
 });
+
+module.exports = router;
+

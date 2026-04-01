@@ -555,7 +555,146 @@ export default {
     common: {
       language: 'Language',
       english: 'English',
-      chinese: '中文'
+      chinese: '中文',
+      thai: 'ไทย'
+    },
+    activities: {
+      title: 'TikTok Activities',
+      create: 'Create Activity',
+      edit: 'Edit Activity',
+      detail: 'Activity Detail',
+      productDetail: 'Product Detail',
+      importProducts: 'Import Products',
+      importTitle: 'Import TikTok Products',
+      importConfirm: 'Confirm Import',
+      
+      // 搜索表单
+      activityName: 'Activity Name',
+      activityType: 'Activity Type',
+      placeholder: {
+        activityName: 'Activity Name',
+        all: 'All'
+      },
+      
+      // 表格列
+      tikTokActivityId: 'TikTok Activity ID',
+      activityNameCol: 'Activity Name',
+      activityTypeCol: 'Activity Type',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      status: 'Status',
+      participationProducts: 'Products',
+      creator: 'Creator',
+      operations: 'Action',
+      createdAt: 'Created At',
+      productId: 'Product ID',
+      productName: 'Product Name',
+      shop: 'Shop',
+      noProducts: 'No products',
+      noActivities: 'No activities',
+      
+      // 活动类型选项
+      selfInitiated: 'Self-initiated',
+      merchantInitiated: 'Merchant-initiated',
+      
+      // 状态选项
+      pending: 'Pending',
+      upcoming: 'Upcoming',
+      active: 'Active',
+      ended: 'Ended',
+      
+      // 表单标签
+      tapLink: 'TAP Link',
+      tapLinkPlaceholder: 'TAP Affiliate Link',
+      sampleMethod: 'Sample Method',
+      selectSampleMethod: 'Select Sample Method',
+      cooperationCountry: 'Country',
+      selectCooperationCountry: 'Select Country',
+      gmv: 'GMV',
+      gmvPlaceholder: 'GMV',
+      currencyUnit: 'Currency',
+      selectCurrency: 'Select Currency',
+      monthlySales: 'Monthly Sales',
+      monthlySalesPlaceholder: 'Monthly Sales',
+      followers: 'Followers',
+      followersPlaceholder: 'Followers',
+      avgViews: 'Avg Views',
+      avgViewsPlaceholder: 'Monthly Avg Views',
+      requirementRemark: 'Requirements',
+      requirementRemarkPlaceholder: 'Influencer requirements',
+      
+      // 佣金配置
+      promotionCommission: 'Commission - Promotion',
+      adCommission: 'Commission - Ads',
+      influencerRate: 'Influencer (%)',
+      originalRate: 'Original (%)',
+      companyRate: 'Company (%)',
+      
+      // 其他
+      activityDescription: 'Description',
+      activityDescriptionPlaceholder: 'Activity description',
+      selectStartTime: 'Select Start Time',
+      selectEndTime: 'Select End Time',
+      
+      // 详情页标签
+      sectionActivityInfo: 'Activity Info',
+      sectionRedundantInfo: 'Redundant Info',
+      sectionOtherInfo: 'Other Info',
+      sectionActivityConfig: 'Activity Config',
+      sectionInfluencerRequirement: 'Requirements',
+      sectionDataInfo: 'Data Info',
+      sectionHistory: 'History',
+      
+      // 寄样方式选项
+      online: 'Online',
+      offline: 'Offline',
+      
+      // 提示文本
+      loadingProducts: 'Loading...',
+      importing: 'Importing, please wait...',
+      
+      // 导入步骤
+      importSteps: 'Steps',
+      importStep1: 'Go to TikTok Shop Partner Center → Influencer Match → Partner Cooperation',
+      importStep2: 'Click "View Details" to enter cooperation details',
+      importStep3: 'Find "Export Link" in the "Approved" tab',
+      importStep4: 'Download Excel and upload here',
+      
+      // 导入弹窗
+      uploadExcel: 'Upload Excel',
+      uploadTip: 'Supports .xlsx, .xls format',
+      
+      // 商品详情
+      sku: 'SKU',
+      productCategory: 'Category',
+      squareCommissionRate: 'Commission Rate',
+      sellingPrice: 'Price',
+      priceRange: 'Price Range',
+      productIntro: 'Intro',
+      referenceVideo: 'Reference Video',
+      sellingPoints: 'Selling Points',
+      participatedActivities: 'Activities',
+      activityLink: 'Activity Link',
+      monthlySalesCount: 'Monthly Sales',
+      monthlyAvgViews: 'Avg Views',
+      promotionCommissionRate: 'Promotion Commission',
+      adCommissionRate: 'Ad Commission',
+      influencer: 'Influencer',
+      original: 'Original',
+      company: 'Company',
+      enabled: 'Enabled',
+      disabled: 'Disabled',
+      noParticipation: 'No activities',
+      
+      // 操作
+      viewDetail: 'Detail',
+      editBtn: 'Edit',
+      delete: 'Delete',
+      search: 'Search',
+      reset: 'Reset',
+      cancel: 'Cancel',
+      confirm: 'Confirm',
+      refresh: 'Refresh'
     }
   }
 }

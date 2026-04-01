@@ -5,73 +5,73 @@
         <div class="page-header">
           <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('activities:create')">
             <el-icon><Plus /></el-icon>
-            新建活动
+            {{ $t('activities.create') }}
           </el-button>
         </div>
       </template>
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="活动名称">
+        <el-form-item :label="$t('activities.activityName')">
           <el-input
             v-model="searchForm.name"
-            placeholder="活动名称"
+            :placeholder="$t('activities.placeholder.activityName')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
 
-        <el-form-item label="活动类型">
-          <el-select v-model="searchForm.type" placeholder="全部" clearable style="width: 150px">
-            <el-option label="自发起" value="self_initiated" />
-            <el-option label="商家发起" value="merchant_initiated" />
+        <el-form-item :label="$t('activities.activityType')">
+          <el-select v-model="searchForm.type" :placeholder="$t('activities.placeholder.all')" clearable style="width: 150px">
+            <el-option :label="$t('activities.selfInitiated')" value="self_initiated" />
+            <el-option :label="$t('activities.merchantInitiated')" value="merchant_initiated" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
-            <el-option label="待发布" value="pending" />
-            <el-option label="即将开始" value="upcoming" />
-            <el-option label="进行中" value="active" />
-            <el-option label="已结束" value="ended" />
+        <el-form-item :label="$t('activities.status')">
+          <el-select v-model="searchForm.status" :placeholder="$t('activities.placeholder.all')" clearable style="width: 120px">
+            <el-option :label="$t('activities.pending')" value="pending" />
+            <el-option :label="$t('activities.upcoming')" value="upcoming" />
+            <el-option :label="$t('activities.active')" value="active" />
+            <el-option :label="$t('activities.ended')" value="ended" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="loadActivities">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadActivities">{{ $t('activities.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('activities.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
       <!-- 表格 -->
       <el-table :data="activities" v-loading="loading" stripe>
-        <el-table-column prop="tikTokActivityId" label="TikTok活动ID" width="180" fixed="left" class-name="tiktok-id-label" />
-        <el-table-column prop="name" label="活动名称" width="200" fixed="left" />
-        <el-table-column prop="type" label="活动类型" width="120">
+        <el-table-column prop="tikTokActivityId" :label="$t('activities.tikTokActivityId')" width="180" fixed="left" class-name="tiktok-id-label" />
+        <el-table-column prop="name" :label="$t('activities.activityNameCol')" width="200" fixed="left" />
+        <el-table-column prop="type" :label="$t('activities.activityTypeCol')" width="120">
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">
               {{ getTypeText(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="startDate" label="开始时间" width="160">
+        <el-table-column prop="startDate" :label="$t('activities.startDate')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.startDate) }}
           </template>
         </el-table-column>
-        <el-table-column prop="endDate" label="结束时间" width="160">
+        <el-table-column prop="endDate" :label="$t('activities.endDate')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.endDate) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('activities.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="参与商品" width="120" align="center">
+        <el-table-column :label="$t('activities.participationProducts')" width="120" align="center">
           <template #default="{ row }">
             <el-popover
               placement="right"
@@ -84,18 +84,18 @@
                   {{ productCounts[row._id] || 0 }}
                 </el-button>
               </template>
-              <div v-if="loadingProducts[row._id]" class="loading-tip">加载中...</div>
+              <div v-if="loadingProducts[row._id]" class="loading-tip">{{ $t('activities.loadingProducts') }}</div>
               <div v-else-if="activityProducts[row._id]?.length > 0">
                 <el-table :data="getPaginatedProducts(row)" size="small" max-height="300">
-                  <el-table-column label="商品ID" width="180">
+                  <el-table-column :label="$t('activities.productId')" width="180">
                     <template #default="{ row: product }">
                       <el-button link type="primary" @click="viewProductDetail(product)">
                         {{ product.tiktokProductId || product.productId || product._id }}
                       </el-button>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="name" label="商品名称" min-width="150" show-overflow-tooltip />
-                  <el-table-column label="店铺" width="100" show-overflow-tooltip>
+                  <el-table-column prop="name" :label="$t('activities.productName')" min-width="150" show-overflow-tooltip />
+                  <el-table-column :label="$t('activities.shop')" width="100" show-overflow-tooltip>
                     <template #default="{ row: product }">
                       {{ product.shopId?.shopName || '-' }}
                     </template>
@@ -112,22 +112,22 @@
                   />
                 </div>
               </div>
-              <div v-else class="empty-tip">暂无参与商品</div>
+              <div v-else class="empty-tip">{{ $t('activities.noProducts') }}</div>
             </el-popover>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160">
+        <el-table-column prop="createdAt" :label="$t('activities.createdAt')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="creatorName" label="创建人" width="120" />
-        <el-table-column label="操作" fixed="right" width="260">
+        <el-table-column prop="creatorName" :label="$t('activities.creator')" width="120" />
+        <el-table-column :label="$t('activities.operations')" fixed="right" width="260">
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('activities:read')">详情</el-button>
-            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('activities:update')">编辑</el-button>
-            <el-button link type="success" @click="showImportDialog(row)" v-if="hasPermission('admin')">导入商品</el-button>
-            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('activities:delete')">删除</el-button>
+            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('activities:read')">{{ $t('activities.viewDetail') }}</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('activities:update')">{{ $t('activities.editBtn') }}</el-button>
+            <el-button link type="success" @click="showImportDialog(row)" v-if="hasPermission('admin')">{{ $t('activities.importProducts') }}</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('activities:delete')">{{ $t('activities.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -148,32 +148,32 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑活动' : '新建活动'"
+      :title="isEdit ? $t('activities.edit') : $t('activities.create')"
       width="700px"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="TikTok活动ID" class="tiktok-id-label">
-          <el-input v-model="form.tikTokActivityId" placeholder="TikTok活动ID" class="tiktok-id-input" />
+        <el-form-item :label="$t('activities.tikTokActivityId')" class="tiktok-id-label">
+          <el-input v-model="form.tikTokActivityId" :placeholder="$t('activities.tikTokActivityId')" class="tiktok-id-input" />
         </el-form-item>
 
-        <el-form-item label="活动名称" prop="name">
-          <el-input v-model="form.name" placeholder="活动名称" />
+        <el-form-item :label="$t('activities.activityName')" prop="name">
+          <el-input v-model="form.name" :placeholder="$t('activities.placeholder.activityName')" />
         </el-form-item>
 
-        <el-form-item label="活动类型" prop="type">
+        <el-form-item :label="$t('activities.activityType')" prop="type">
           <el-radio-group v-model="form.type">
-            <el-radio value="self_initiated">自发起</el-radio>
-            <el-radio value="merchant_initiated">商家发起</el-radio>
+            <el-radio value="self_initiated">{{ $t('activities.selfInitiated') }}</el-radio>
+            <el-radio value="merchant_initiated">{{ $t('activities.merchantInitiated') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="开始时间" prop="startDate">
+            <el-form-item :label="$t('activities.startDate')" prop="startDate">
               <el-date-picker
                 v-model="form.startDate"
                 type="datetime"
-                placeholder="选择开始时间"
+                :placeholder="$t('activities.selectStartTime')"
                 format="YYYY-MM-DD HH:mm:ss"
                 value-format="YYYY-MM-DD HH:mm:ss"
                 style="width: 100%"
@@ -181,11 +181,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="结束时间" prop="endDate">
+            <el-form-item :label="$t('activities.endDate')" prop="endDate">
               <el-date-picker
                 v-model="form.endDate"
                 type="datetime"
-                placeholder="选择结束时间"
+                :placeholder="$t('activities.selectEndTime')"
                 format="YYYY-MM-DD HH:mm:ss"
                 value-format="YYYY-MM-DD HH:mm:ss"
                 style="width: 100%"
@@ -195,24 +195,24 @@
         </el-row>
 
         <!-- 活动配置 -->
-        <el-divider content-position="left">活动配置</el-divider>
+        <el-divider content-position="left">{{ $t('activities.sectionActivityConfig') }}</el-divider>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="TAP专属链">
-              <el-input v-model="form.tapLink" placeholder="TAP专属链接" />
+            <el-form-item :label="$t('activities.tapLink')">
+              <el-input v-model="form.tapLink" :placeholder="$t('activities.tapLinkPlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="寄样方式">
-              <el-select v-model="form.sampleMethod" placeholder="选择寄样方式" clearable style="width: 100%">
-                <el-option label="线上" value="线上" />
-                <el-option label="线下" value="线下" />
+            <el-form-item :label="$t('activities.sampleMethod')">
+              <el-select v-model="form.sampleMethod" :placeholder="$t('activities.selectSampleMethod')" clearable style="width: 100%">
+                <el-option :label="$t('activities.online')" value="线上" />
+                <el-option :label="$t('activities.offline')" value="线下" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="合作国家">
-              <el-select v-model="form.cooperationCountry" placeholder="选择合作国家" clearable style="width: 100%">
+            <el-form-item :label="$t('activities.cooperationCountry')">
+              <el-select v-model="form.cooperationCountry" :placeholder="$t('activities.selectCooperationCountry')" clearable style="width: 100%">
                 <el-option
                   v-for="country in countryList"
                   :key="country._id"
@@ -225,16 +225,16 @@
         </el-row>
 
         <!-- 达人要求 -->
-        <el-divider content-position="left">达人要求</el-divider>
+        <el-divider content-position="left">{{ $t('activities.sectionInfluencerRequirement') }}</el-divider>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="GMV">
-              <el-input-number v-model="form.requirementGmv" :min="0" placeholder="GMV" :controls="false" style="width: 100%" />
+            <el-form-item :label="$t('activities.gmv')">
+              <el-input-number v-model="form.requirementGmv" :min="0" :placeholder="$t('activities.gmvPlaceholder')" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="货币单位">
-              <el-select v-model="form.gmvCurrency" placeholder="请选择货币" style="width: 100%">
+            <el-form-item :label="$t('activities.currencyUnit')">
+              <el-select v-model="form.gmvCurrency" :placeholder="$t('activities.selectCurrency')" style="width: 100%">
                 <el-option
                   v-for="item in currencyList"
                   :key="item._id"
@@ -245,214 +245,214 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="月销售件数">
-              <el-input-number v-model="form.requirementMonthlySales" :min="0" placeholder="月销售件数" :controls="false" style="width: 100%" />
+            <el-form-item :label="$t('activities.monthlySales')">
+              <el-input-number v-model="form.requirementMonthlySales" :min="0" :placeholder="$t('activities.monthlySalesPlaceholder')" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="粉丝数">
-              <el-input-number v-model="form.requirementFollowers" :min="0" placeholder="粉丝数" :controls="false" style="width: 100%" />
+            <el-form-item :label="$t('activities.followers')">
+              <el-input-number v-model="form.requirementFollowers" :min="0" :placeholder="$t('activities.followersPlaceholder')" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="月均播放量">
-              <el-input-number v-model="form.requirementAvgViews" :min="0" placeholder="月均播放量" :controls="false" style="width: 100%" />
+            <el-form-item :label="$t('activities.avgViews')">
+              <el-input-number v-model="form.requirementAvgViews" :min="0" :placeholder="$t('activities.avgViewsPlaceholder')" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="要求说明">
-          <el-input v-model="form.requirementRemark" type="textarea" :rows="2" placeholder="达人要求说明" />
+        <el-form-item :label="$t('activities.requirementRemark')">
+          <el-input v-model="form.requirementRemark" type="textarea" :rows="2" :placeholder="$t('activities.requirementRemarkPlaceholder')" />
         </el-form-item>
 
         <!-- 佣金配置 - 推广时 -->
-        <el-divider content-position="left">佣金配置 - 推广时</el-divider>
+        <el-divider content-position="left">{{ $t('activities.promotionCommission') }}</el-divider>
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="给达人(%)">
+            <el-form-item :label="$t('activities.influencerRate')">
               <el-input-number v-model="form.promotionInfluencerRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="原本(%)">
+            <el-form-item :label="$t('activities.originalRate')">
               <el-input-number v-model="form.promotionOriginalRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="公司自留(%)">
+            <el-form-item :label="$t('activities.companyRate')">
               <el-input-number v-model="form.promotionCompanyRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <!-- 佣金配置 - 投广告时 -->
-        <el-divider content-position="left">佣金配置 - 投广告时</el-divider>
+        <el-divider content-position="left">{{ $t('activities.adCommission') }}</el-divider>
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="给达人(%)">
+            <el-form-item :label="$t('activities.influencerRate')">
               <el-input-number v-model="form.adInfluencerRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="原本(%)">
+            <el-form-item :label="$t('activities.originalRate')">
               <el-input-number v-model="form.adOriginalRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="公司自留(%)">
+            <el-form-item :label="$t('activities.companyRate')">
               <el-input-number v-model="form.adCompanyRate" :min="0" :max="100" :precision="2" :controls="false" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="活动描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="活动描述" />
+        <el-form-item :label="$t('activities.activityDescription')">
+          <el-input v-model="form.description" type="textarea" :rows="3" :placeholder="$t('activities.activityDescriptionPlaceholder')" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('activities.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">{{ $t('activities.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" title="活动详情" width="1000px">
+    <el-dialog v-model="detailDialogVisible" :title="$t('activities.detail')" width="1000px">
       <div v-if="currentActivity">
         <!-- 活动信息 -->
-        <h4 class="section-title">活动信息</h4>
+        <h4 class="section-title">{{ $t('activities.sectionActivityInfo') }}</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="TikTok活动ID">
+          <el-descriptions-item :label="$t('activities.tikTokActivityId')">
             {{ currentActivity.tikTokActivityId || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="活动名称">
+          <el-descriptions-item :label="$t('activities.activityName')">
             {{ currentActivity.name }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 冗余信息 -->
-        <h4 class="section-title">冗余信息</h4>
+        <h4 class="section-title">{{ $t('activities.sectionRedundantInfo') }}</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="活动类型">
+          <el-descriptions-item :label="$t('activities.activityTypeCol')">
             <el-tag :type="getTypeTagType(currentActivity.type)">
               {{ getTypeText(currentActivity.type) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="状态">
+          <el-descriptions-item :label="$t('activities.status')">
             <el-tag :type="getStatusType(currentActivity.status)">
               {{ getStatusText(currentActivity.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="开始时间">
+          <el-descriptions-item :label="$t('activities.startDate')">
             {{ formatDate(currentActivity.startDate) }}
           </el-descriptions-item>
-          <el-descriptions-item label="结束时间">
+          <el-descriptions-item :label="$t('activities.endDate')">
             {{ formatDate(currentActivity.endDate) }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 其他信息 -->
-        <h4 class="section-title">其他信息</h4>
+        <h4 class="section-title">{{ $t('activities.sectionOtherInfo') }}</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="合作中心">
+          <el-descriptions-item label="Partner Center">
             {{ currentActivity.partnerCenter || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="预算">
+          <el-descriptions-item label="Budget">
             ฿{{ formatMoney(currentActivity.budget) }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 活动配置 -->
-        <h4 class="section-title">活动配置</h4>
+        <h4 class="section-title">{{ $t('activities.sectionActivityConfig') }}</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="TAP专属链">
+          <el-descriptions-item :label="$t('activities.tapLink')">
             {{ currentActivity.tapLink || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="寄样方式">
+          <el-descriptions-item :label="$t('activities.sampleMethod')">
             {{ currentActivity.sampleMethod || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="合作国家">
+          <el-descriptions-item :label="$t('activities.cooperationCountry')">
             {{ currentActivity.cooperationCountry || '-' }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 达人要求 -->
-        <h4 class="section-title">达人要求</h4>
+        <h4 class="section-title">{{ $t('activities.sectionInfluencerRequirement') }}</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="GMV">
+          <el-descriptions-item :label="$t('activities.gmv')">
             {{ currentActivity.requirementGmv || 0 }} {{ currentActivity.gmvCurrency || '' }}
           </el-descriptions-item>
-          <el-descriptions-item label="月销件数">
+          <el-descriptions-item :label="$t('activities.monthlySalesCount')">
             {{ currentActivity.requirementMonthlySales || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="粉丝数">
+          <el-descriptions-item :label="$t('activities.followers')">
             {{ currentActivity.requirementFollowers || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="月均播放量">
+          <el-descriptions-item :label="$t('activities.avgViews')">
             {{ currentActivity.requirementAvgViews || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="要求说明" :span="2">
+          <el-descriptions-item :label="$t('activities.requirementRemark')" :span="2">
             {{ currentActivity.requirementRemark || '-' }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 佣金配置 - 推广时 -->
-        <h4 class="section-title">佣金配置 - 推广时</h4>
+        <h4 class="section-title">{{ $t('activities.promotionCommission') }}</h4>
         <el-descriptions :column="3" border>
-          <el-descriptions-item label="给达人(%)">
+          <el-descriptions-item :label="$t('activities.influencerRate')">
             {{ currentActivity.promotionInfluencerRate || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="原本(%)">
+          <el-descriptions-item :label="$t('activities.originalRate')">
             {{ currentActivity.promotionOriginalRate || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="公司自留(%)">
+          <el-descriptions-item :label="$t('activities.companyRate')">
             {{ currentActivity.promotionCompanyRate || 0 }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 佣金配置 - 投广告时 -->
-        <h4 class="section-title">佣金配置 - 投广告时</h4>
+        <h4 class="section-title">{{ $t('activities.adCommission') }}</h4>
         <el-descriptions :column="3" border>
-          <el-descriptions-item label="给达人(%)">
+          <el-descriptions-item :label="$t('activities.influencerRate')">
             {{ currentActivity.adInfluencerRate || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="原本(%)">
+          <el-descriptions-item :label="$t('activities.originalRate')">
             {{ currentActivity.adOriginalRate || 0 }}
           </el-descriptions-item>
-          <el-descriptions-item label="公司自留(%)">
+          <el-descriptions-item :label="$t('activities.companyRate')">
             {{ currentActivity.adCompanyRate || 0 }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 数据信息 -->
-        <h4 class="section-title">数据信息</h4>
+        <h4 class="section-title">{{ $t('activities.sectionDataInfo') }}</h4>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="创建人">
+          <el-descriptions-item :label="$t('activities.creator')">
             {{ currentActivity.creatorName || currentActivity.creator?.realName || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="创建时间">
+          <el-descriptions-item :label="$t('activities.createdAt')">
             {{ formatDate(currentActivity.createdAt) }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 变更历史 -->
         <h4 class="section-title">
-          变更历史
+          {{ $t('activities.sectionHistory') }}
           <el-button link type="primary" @click="loadHistory" style="margin-left: 10px">
             <el-icon><Refresh /></el-icon>
-            刷新
+            {{ $t('activities.refresh') }}
           </el-button>
         </h4>
         <el-table :data="histories" stripe v-loading="historyLoading">
-          <el-table-column prop="action" label="操作类型" width="100">
+          <el-table-column prop="action" :label="$t('activities.status')" width="100">
             <template #default="{ row }">
               <el-tag :type="getActionType(row.action)">
                 {{ getActionText(row.action) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="changedByName" label="操作人" width="120" />
-          <el-table-column prop="changes" label="变更内容" min-width="200">
+          <el-table-column prop="changedByName" :label="$t('activities.creator')" width="120" />
+          <el-table-column prop="changes" :label="$t('activities.activityDescription')" min-width="200">
             <template #default="{ row }">
               <el-tag
                 v-for="(value, key) in row.changes"
@@ -464,7 +464,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createdAt" label="操作时间" width="180">
+          <el-table-column prop="createdAt" :label="$t('activities.startDate')" width="180">
             <template #default="{ row }">
               {{ formatDate(row.createdAt) }}
             </template>
@@ -474,7 +474,7 @@
     </el-dialog>
 
     <!-- 商品详情对话框 -->
-    <el-dialog v-model="productDetailVisible" title="商品详情" width="900px" :close-on-click-modal="false" class="product-detail-dialog">
+    <el-dialog v-model="productDetailVisible" :title="$t('activities.productDetail')" width="900px" :close-on-click-modal="false" class="product-detail-dialog">
       <div v-if="currentProduct" class="detail-wrapper">
         <!-- 商品头部 -->
         <div class="detail-head">
@@ -482,19 +482,19 @@
             <span class="head-id">{{ currentProduct.tiktokProductId || currentProduct.productId || '-' }}</span>
             <h3 class="head-title">{{ currentProduct.name || currentProduct.productName || '-' }}</h3>
           </div>
-          <el-tag :type="currentProduct.status === 'active' ? 'success' : 'info'">{{ currentProduct.status === 'active' ? '启用' : '禁用' }}</el-tag>
+          <el-tag :type="currentProduct.status === 'active' ? 'success' : 'info'">{{ currentProduct.status === 'active' ? $t('activities.enabled') : $t('activities.disabled') }}</el-tag>
         </div>
 
         <!-- 基本信息 -->
         <el-descriptions :column="3" border class="detail-desc">
-          <el-descriptions-item label="SKU">{{ currentProduct.sku || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="店铺">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="商品类目">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="广场佣金率">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-          <el-descriptions-item label="售价" class-name="price-cell">
+          <el-descriptions-item :label="$t('activities.sku')">{{ currentProduct.sku || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('activities.shop')">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('activities.productCategory')">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('activities.squareCommissionRate')">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('activities.sellingPrice')" class-name="price-cell">
             {{ currentProduct.sellingPrice ? currentProduct.sellingPrice + ' ' + (currentProduct.currency || 'USD') : '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="价格区间" :span="2" class-name="price-cell">
+          <el-descriptions-item :label="$t('activities.priceRange')" :span="2" class-name="price-cell">
             {{ currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0 ? currentProduct.priceRangeMin : '-' }}
             {{ (currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0) && (currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0) ? ' - ' : '' }}
             {{ currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0 ? currentProduct.priceRangeMax + ' ' + (currentProduct.currency || 'USD') : '' }}
@@ -503,10 +503,10 @@
 
         <!-- 商品说明 -->
         <div v-if="currentProduct.productIntro || currentProduct.referenceVideo || currentProduct.sellingPoints" class="detail-section">
-          <div class="section-title">商品说明</div>
+          <div class="section-title">{{ $t('activities.productIntro') || 'Product Info' }}</div>
           <el-descriptions :column="1" border>
-            <el-descriptions-item v-if="currentProduct.productIntro" label="简介">{{ currentProduct.productIntro }}</el-descriptions-item>
-            <el-descriptions-item v-if="currentProduct.referenceVideo" label="参考视频">
+            <el-descriptions-item v-if="currentProduct.productIntro" label="Intro">{{ currentProduct.productIntro }}</el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.referenceVideo" label="Video">
               <a :href="currentProduct.referenceVideo" target="_blank" class="link-text">{{ currentProduct.referenceVideo }}</a>
             </el-descriptions-item>
             <el-descriptions-item v-if="currentProduct.sellingPoints" label="卖点">{{ currentProduct.sellingPoints }}</el-descriptions-item>
@@ -515,46 +515,46 @@
 
         <!-- 参与活动 -->
         <div v-if="currentProduct.activityConfigs && currentProduct.activityConfigs.length > 0" class="detail-section">
-          <div class="section-title">参与活动 <span class="section-count">({{ currentProduct.activityConfigs.length }})</span></div>
+          <div class="section-title">{{ $t('activities.participatedActivities') }} <span class="section-count">({{ currentProduct.activityConfigs.length }})</span></div>
           <div v-for="(ac, index) in currentProduct.activityConfigs" :key="index" class="activity-block">
             <div class="activity-title">
               <span class="activity-tag">{{ ac.activityId?.tikTokActivityId || '-' }}</span>
               <span class="activity-name">{{ ac.activityId?.name || '-' }}</span>
             </div>
             <el-descriptions :column="3" border size="small">
-              <el-descriptions-item label="活动链接" :span="3">
+              <el-descriptions-item :label="$t('activities.activityLink')" :span="3">
                 <a v-if="ac.activityLink" :href="ac.activityLink" target="_blank" class="link-text">{{ ac.activityLink }}</a>
                 <span v-else>-</span>
               </el-descriptions-item>
-              <el-descriptions-item label="GMV">{{ ac.requirementGmv ? ac.requirementGmv + ' ' + (ac.gmvCurrency || currentProduct.currency || 'USD') : '-' }}</el-descriptions-item>
-              <el-descriptions-item label="月销件数">{{ ac.requirementMonthlySales || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="粉丝数">{{ ac.requirementFollowers || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="月均播放">{{ ac.requirementAvgViews || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="寄样方式">{{ ac.sampleMethod || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="合作国家">{{ ac.cooperationCountry || '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('activities.gmv')">{{ ac.requirementGmv ? ac.requirementGmv + ' ' + (ac.gmvCurrency || currentProduct.currency || 'USD') : '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('activities.monthlySalesCount')">{{ ac.requirementMonthlySales || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('activities.followers')">{{ ac.requirementFollowers || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('activities.monthlyAvgViews')">{{ ac.requirementAvgViews || 0 }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('activities.sampleMethod')">{{ ac.sampleMethod || '-' }}</el-descriptions-item>
+              <el-descriptions-item :label="$t('activities.cooperationCountry')">{{ ac.cooperationCountry || '-' }}</el-descriptions-item>
             </el-descriptions>
             <div class="commission-row">
               <div class="commission-item">
-                <span class="commission-label">推广佣金</span>
+                <span class="commission-label">{{ $t('activities.promotionCommissionRate') }}</span>
                 <div class="commission-rates">
-                  <span>达人 {{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>原本 {{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>公司 {{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('activities.influencer') }} {{ ac.promotionInfluencerRate ? (ac.promotionInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('activities.original') }} {{ ac.promotionOriginalRate ? (ac.promotionOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('activities.company') }} {{ ac.promotionCompanyRate ? (ac.promotionCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
                 </div>
               </div>
               <div class="commission-item">
-                <span class="commission-label">广告佣金</span>
+                <span class="commission-label">{{ $t('activities.adCommissionRate') }}</span>
                 <div class="commission-rates">
-                  <span>达人 {{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>原本 {{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
-                  <span>公司 {{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('activities.influencer') }} {{ ac.adInfluencerRate ? (ac.adInfluencerRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('activities.original') }} {{ ac.adOriginalRate ? (ac.adOriginalRate * 100).toFixed(2) + '%' : '-' }}</span>
+                  <span>{{ $t('activities.company') }} {{ ac.adCompanyRate ? (ac.adCompanyRate * 100).toFixed(2) + '%' : '-' }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="empty-section">
-          <el-empty description="暂无参与活动" :image-size="60" />
+          <el-empty :description="$t('activities.noParticipation')" :image-size="60" />
         </div>
       </div>
     </el-dialog>
@@ -562,16 +562,16 @@
     <!-- 导入商品对话框 -->
     <el-dialog
       v-model="importDialogVisible"
-      title="导入TikTok商品"
+      :title="$t('activities.importTitle')"
       width="600px"
     >
       <div class="import-tips">
-        <p><strong>操作步骤：</strong></p>
+        <p><strong>{{ $t('activities.importSteps') }}:</strong></p>
         <ol>
-          <li>进入 TikTok Shop Partner Center → 达人匹配 → 服务商合作</li>
-          <li>点击「查看详情」进入合作详情页面</li>
-          <li>在「已通过」页签中找到「导出链接」</li>
-          <li>下载Excel文件并上传到此处</li>
+          <li>{{ $t('activities.importStep1') }}</li>
+          <li>{{ $t('activities.importStep2') }}</li>
+          <li>{{ $t('activities.importStep3') }}</li>
+          <li>{{ $t('activities.importStep4') }}</li>
         </ol>
       </div>
 
@@ -586,21 +586,21 @@
       >
         <el-button type="primary">
           <el-icon><Upload /></el-icon>
-          上传Excel文件
+          {{ $t('activities.uploadExcel') }}
         </el-button>
         <template #tip>
-          <div class="upload-tip">支持 .xlsx, .xls 格式</div>
+          <div class="upload-tip">{{ $t('activities.uploadTip') }}</div>
         </template>
       </el-upload>
 
       <div v-if="importLoading" class="import-loading">
         <el-icon class="is-loading"><Loading /></el-icon>
-        正在导入，请稍候...
+        {{ $t('activities.importing') }}
       </div>
 
       <template #footer>
-        <el-button @click="importDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleImport" :loading="importLoading">确定导入</el-button>
+        <el-button @click="importDialogVisible = false">{{ $t('activities.cancel') }}</el-button>
+        <el-button type="primary" @click="handleImport" :loading="importLoading">{{ $t('activities.importConfirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
