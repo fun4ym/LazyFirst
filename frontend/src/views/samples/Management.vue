@@ -3,11 +3,11 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>样品申请</h3>
+          <h3>{{ $t('samples.title') }}</h3>
           <div class="header-actions">
             <el-button type="success" @click="showCreateDialog" v-if="hasPermission('samples:create')">
               <el-icon><Plus /></el-icon>
-              新增
+              {{ $t('samples.add') }}
             </el-button>
           </div>
         </div>
@@ -15,71 +15,71 @@
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="TikTok ID">
+        <el-form-item :label="$t('samples.tiktokId')">
           <el-input
             v-model="searchForm.influencerAccount"
-            placeholder="TikTok ID"
+            :placeholder="$t('samples.tiktokId')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
 
-        <el-form-item label="商品名称">
+        <el-form-item :label="$t('samples.productName')">
           <el-input
             v-model="searchForm.productName"
-            placeholder="商品名称"
+            :placeholder="$t('samples.productName')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
 
-        <el-form-item label="归属BD">
+        <el-form-item :label="$t('samples.bd')">
           <el-input
             v-model="searchForm.salesman"
-            placeholder="业务员"
+            :placeholder="$t('samples.bd')"
             clearable
             style="width: 120px"
           />
         </el-form-item>
 
-        <el-form-item label="申请日期">
+        <el-form-item :label="$t('samples.applyDate')">
           <el-date-picker
             v-model="searchForm.date"
             type="date"
-            placeholder="选择日期"
+            :placeholder="$t('samples.selectDate')"
             clearable
             style="width: 150px"
             value-format="YYYY-MM-DD"
           />
         </el-form-item>
 
-        <el-form-item label="是否寄样">
+        <el-form-item :label="$t('samples.isSampleSent')">
           <el-select
             v-model="searchForm.isSampleSent"
-            placeholder="全部"
+            :placeholder="$t('samples.all')"
             clearable
             style="width: 100px"
           >
-            <el-option label="是" :value="true" />
-            <el-option label="否" :value="false" />
+            <el-option :label="$t('samples.yes')" :value="true" />
+            <el-option :label="$t('samples.no')" :value="false" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="是否出单">
+        <el-form-item :label="$t('samples.isOrderGenerated')">
           <el-select
             v-model="searchForm.isOrderGenerated"
-            placeholder="全部"
+            :placeholder="$t('samples.all')"
             clearable
             style="width: 100px"
           >
-            <el-option label="是" :value="true" />
-            <el-option label="否" :value="false" />
+            <el-option :label="$t('samples.yes')" :value="true" />
+            <el-option :label="$t('samples.no')" :value="false" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="loadSamples">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadSamples">{{ $t('samples.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('samples.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
@@ -93,7 +93,7 @@
         :row-class-name="getSampleRowClassName"
       >
         <el-table-column
-          label="TikTok ID"
+          :label="$t('samples.tiktokId')"
           width="160"
           fixed="left"
           prop="influencerAccount"
@@ -109,31 +109,31 @@
               <template #reference>
                 <div class="tiktok-id-wrapper">
                   <span class="tiktok-id-cell clickable" @click="viewSampleDetail(row)">{{ row.influencerAccount || '--' }}</span>
-                  <el-tag v-if="row.isBlacklistedInfluencer" type="danger" size="small" style="margin-left: 4px">黑名单</el-tag>
+                  <el-tag v-if="row.isBlacklistedInfluencer" type="danger" size="small" style="margin-left: 4px">{{ $t('samples.blacklist') }}</el-tag>
                 </div>
               </template>
               <div v-if="popoverLoading" class="popover-loading">
                 <el-icon class="is-loading"><Loading /></el-icon>
-                <span>加载中...</span>
+                <span>{{ $t('samples.loading') }}</span>
               </div>
               <div v-else-if="popoverInfluencer" class="influencer-popover">
                 <el-descriptions :column="1" size="small">
-                  <el-descriptions-item label="TikTok ID">
+                  <el-descriptions-item :label="$t('samples.tiktokId')">
                     <span class="tiktok-id-text">{{ popoverInfluencer.tiktokId }}</span>
                   </el-descriptions-item>
-                  <el-descriptions-item label="名称">{{ popoverInfluencer.tiktokName || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="最新粉丝">{{ formatNumber(popoverInfluencer.latestFollowers) }}</el-descriptions-item>
-                  <el-descriptions-item label="最新GMV">{{ popoverInfluencer.latestGmv || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="状态">
+                  <el-descriptions-item :label="$t('samples.tiktokName')">{{ popoverInfluencer.tiktokName || '-' }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('samples.latestFollowers')">{{ formatNumber(popoverInfluencer.latestFollowers) }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('samples.latestGmv')">{{ popoverInfluencer.latestGmv || '-' }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('samples.status')">
                     <el-tag :type="popoverInfluencer.status === 'enabled' ? 'success' : 'info'" size="small">
-                      {{ popoverInfluencer.status === 'enabled' ? '启用' : '禁用' }}
+                      {{ popoverInfluencer.status === 'enabled' ? $t('samples.enabled') : $t('samples.disabled') }}
                     </el-tag>
-                    <el-tag v-if="popoverInfluencer.isBlacklisted" type="danger" size="small" style="margin-left: 4px">黑名单</el-tag>
+                    <el-tag v-if="popoverInfluencer.isBlacklisted" type="danger" size="small" style="margin-left: 4px">{{ $t('samples.blacklist') }}</el-tag>
                   </el-descriptions-item>
                 </el-descriptions>
               </div>
               <div v-else class="popover-empty">
-                <span>未找到达人信息</span>
+                <span>{{ $t('samples.influencerNotFound') }}</span>
               </div>
             </el-popover>
           </template>
@@ -141,7 +141,7 @@
 
         <!-- 寄样状态 - 锁定左边 -->
         <el-table-column
-          label="寄样状态"
+          :label="$t('samples.sampleStatus')"
           width="160"
           fixed="left"
         >
@@ -154,7 +154,7 @@
                 <el-icon class="edit-icon" @click.stop="openSampleStatusDialog(row)"><Edit /></el-icon>
               </div>
               <div v-if="row.sampleStatus === 'refused' && row.refusalReason" class="refusal-reason">
-                原因：{{ row.refusalReason }}
+                {{ $t('samples.refusalReason') }}：{{ row.refusalReason }}
               </div>
               <div v-if="row.trackingNumber" class="tracking-no">
                 {{ row.trackingNumber }}
@@ -168,7 +168,7 @@
 
         <!-- 履约情况 -->
         <el-table-column
-          label="履约情况"
+          :label="$t('samples.fulfillment')"
           width="240"
         >
           <template #default="{ row }">
@@ -183,7 +183,7 @@
                     :type="row.isOrderGenerated ? 'success' : 'warning'"
                     size="small"
                   >
-                    {{ row.isOrderGenerated ? '已出单' : '未出单' }}
+                    {{ row.isOrderGenerated ? $t('samples.orderGenerated') : $t('samples.noOrder') }}
                   </el-tag>
                   <span v-if="row.isOrderGenerated && row.orderCount" class="order-count-badge">
                     {{ row.orderCount > 99 ? '...' : row.orderCount }}
@@ -193,11 +193,11 @@
               </div>
               <div v-if="row.videoLink" class="video-link">
                 <el-link :href="row.videoLink" target="_blank" type="primary">
-                  视频链接
+                  {{ $t('samples.videoLink') }}
                 </el-link>
               </div>
               <div v-if="row.fulfillmentUpdatedAt" class="update-info">
-                {{ row.fulfillmentUpdatedBy?.realName || row.fulfillmentUpdatedBy?.username || '未知' }} {{ formatDateTime(row.fulfillmentUpdatedAt) }}
+                {{ row.fulfillmentUpdatedBy?.realName || row.fulfillmentUpdatedBy?.username || $t('samples.unknown') }} {{ formatDateTime(row.fulfillmentUpdatedAt) }}
               </div>
             </div>
           </template>
@@ -205,7 +205,7 @@
 
         <!-- 投流信息 - 带编辑功能 -->
         <el-table-column
-          label="投流信息"
+          :label="$t('samples.adPromotion')"
           width="240"
         >
           <template #default="{ row }">
@@ -216,12 +216,12 @@
               </div>
               <div class="promotion-status">
                 <el-tag :type="row.isAdPromotion ? 'success' : 'info'" size="small">
-                  {{ row.isAdPromotion ? '已投流' : '未投流' }}
+                  {{ row.isAdPromotion ? $t('samples.adPromoted') : $t('samples.notAdPromoted') }}
                 </el-tag>
                 <span v-if="row.adPromotionTime">{{ formatDate(row.adPromotionTime) }}</span>
               </div>
               <div v-if="row.adPromotionUpdatedAt" class="update-info">
-                {{ row.adPromotionUpdatedBy?.realName || row.adPromotionUpdatedBy?.username || '未知' }} {{ formatDateTime(row.adPromotionUpdatedAt) }}
+                {{ row.adPromotionUpdatedBy?.realName || row.adPromotionUpdatedBy?.username || $t('samples.unknown') }} {{ formatDateTime(row.adPromotionUpdatedAt) }}
               </div>
             </div>
           </template>
@@ -229,7 +229,7 @@
 
         <!-- 申请日期 - 不再锁定 -->
         <el-table-column
-          label="申请日期"
+          :label="$t('samples.applicationDate')"
           width="120"
           prop="date"
           sortable
@@ -240,7 +240,7 @@
         </el-table-column>
 
         <el-table-column
-          label="商品信息"
+          :label="$t('samples.productInfo')"
           width="300"
           prop="productName"
           sortable
@@ -258,21 +258,21 @@
         </el-table-column>
 
         <el-table-column
-          label="达人数据"
+          :label="$t('samples.influencerData')"
           width="200"
         >
           <template #default="{ row }">
             <div class="influencer-data">
               <div class="data-row">
-                <el-tag type="info" size="small">粉丝</el-tag>
+                <el-tag type="info" size="small">{{ $t('samples.followers') }}</el-tag>
                 <span class="follower-count">{{ formatNumber(row.followerCount) }}</span>
               </div>
               <div class="data-row">
-                <el-tag type="info" size="small">月销</el-tag>
+                <el-tag type="info" size="small">{{ $t('samples.monthlySales') }}</el-tag>
                 <span class="follower-count">{{ formatNumber(row.monthlySalesCount) }}</span>
               </div>
               <div class="data-row">
-                <el-tag type="info" size="small">均播</el-tag>
+                <el-tag type="info" size="small">{{ $t('samples.avgViews') }}</el-tag>
                 <span class="follower-count">{{ formatNumber(row.avgVideoViews) }}</span>
               </div>
             </div>
@@ -280,7 +280,7 @@
         </el-table-column>
 
         <el-table-column
-          label="归属BD"
+          :label="$t('samples.bd')"
           width="100"
           prop="salesman"
         >
@@ -290,7 +290,7 @@
         </el-table-column>
 
         <el-table-column
-          label="收货信息"
+          :label="$t('samples.addressInfo')"
           width="200"
         >
           <template #default="{ row }">
@@ -303,7 +303,7 @@
         </el-table-column>
 
         <el-table-column
-          label="收样日期"
+          :label="$t('samples.receiveDate')"
           width="120"
           prop="receivedDate"
           sortable
@@ -314,13 +314,13 @@
         </el-table-column>
 
         <el-table-column
-          label="操作"
+          :label="$t('samples.action')"
           width="120"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('samples:read')">详情</el-button>
-            <el-button link type="danger" @click="deleteSample(row)" v-if="hasPermission('samples:delete')">删除</el-button>
+            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('samples:read')">{{ $t('samples.detail') }}</el-button>
+            <el-button link type="danger" @click="deleteSample(row)" v-if="hasPermission('samples:delete')">{{ $t('samples.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -341,7 +341,7 @@
     <!-- 详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      :title="currentSample?.isBlacklistedInfluencer ? '样品申请详情（黑名单达人）' : '样品申请详情'"
+      :title="currentSample?.isBlacklistedInfluencer ? $t('samples.sampleDetail') + ' (' + $t('samples.blacklist') + ')' : $t('samples.sampleDetail')"
       width="900px"
       :class="currentSample?.isBlacklistedInfluencer ? 'detail-dialog-blacklist' : ''"
       class="business-detail-dialog"
@@ -350,7 +350,7 @@
         <!-- 黑名单警告 -->
         <el-alert
           v-if="currentSample.isBlacklistedInfluencer"
-          title="该样品申请关联的达人已被列入黑名单"
+          :title="$t('samples.blacklistWarning')"
           type="error"
           :closable="false"
           show-icon
@@ -362,62 +362,62 @@
           <template #header>
             <div class="card-header">
               <el-icon><InfoFilled /></el-icon>
-              <span>基础信息</span>
+              <span>{{ $t('samples.basicInfo') }}</span>
             </div>
           </template>
           <el-row :gutter="24">
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">TikTok ID</div>
+                <div class="info-label">{{ $t('samples.tiktokId') }}</div>
                 <div class="info-value tiktok-id-text">{{ currentSample.influencerAccount || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">申请日期</div>
+                <div class="info-label">{{ $t('samples.applyDate2') }}</div>
                 <div class="info-value">{{ currentSample.date ? formatDate(currentSample.date) : '-' }}</div>
               </div>
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">归属BD</div>
+                <div class="info-label">{{ $t('samples.bd') }}</div>
                 <div class="info-value">{{ currentSample.salesman || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="12">
               <div class="info-item">
-                <div class="info-label">商品名称</div>
+                <div class="info-label">{{ $t('samples.productName') }}</div>
                 <div class="info-value product-name">{{ currentSample.productName || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">商品ID</div>
+                <div class="info-label">{{ $t('samples.productId') }}</div>
                 <div class="info-value">{{ currentSample.productId || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">样品图片</div>
+                <div class="info-label">{{ $t('samples.sampleImage') || 'Sample Image' }}</div>
                 <el-image v-if="currentSample.sampleImage" :src="currentSample.sampleImage" style="width: 60px; height: 60px" fit="cover" :preview-src-list="[currentSample.sampleImage]" />
                 <span v-else class="info-value">-</span>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">粉丝数</div>
+                <div class="info-label">{{ $t('samples.followers') }}</div>
                 <div class="info-value highlight-value">{{ formatNumber(currentSample.followerCount) }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">月销件数</div>
+                <div class="info-label">{{ $t('samples.monthlySales') }}</div>
                 <div class="info-value highlight-value">{{ formatNumber(currentSample.monthlySalesCount) }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">视频均播</div>
+                <div class="info-label">{{ $t('samples.avgViews') }}</div>
                 <div class="info-value highlight-value">{{ formatNumber(currentSample.avgVideoViews) }}</div>
               </div>
             </el-col>
@@ -429,7 +429,7 @@
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">收货信息</div>
+                <div class="info-label">{{ $t('samples.addressInfo') }}</div>
                 <div class="info-value shipping-value">{{ currentSample.shippingInfo || '-' }}</div>
               </div>
             </el-col>
@@ -441,41 +441,41 @@
           <template #header>
             <div class="card-header">
               <el-icon><Box /></el-icon>
-              <span>寄样信息</span>
+              <span>{{ $t('samples.sampleStatus') }}</span>
             </div>
           </template>
           <el-row :gutter="24">
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">寄样状态</div>
+                <div class="info-label">{{ $t('samples.isSampleSent') }}</div>
                 <div class="info-value">
                   <el-tag :type="currentSample.isSampleSent ? 'success' : 'info'" size="large">
-                    {{ currentSample.isSampleSent ? '已寄样' : '未寄样' }}
+                    {{ currentSample.isSampleSent ? $t('samples.yes') : $t('samples.no') }}
                   </el-tag>
                 </div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">发货日期</div>
+                <div class="info-label">{{ $t('samples.shippingDate') }}</div>
                 <div class="info-value">{{ currentSample.shippingDate ? formatDate(currentSample.shippingDate) : '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">物流单号</div>
+                <div class="info-label">{{ $t('samples.trackingNo') }}</div>
                 <div class="info-value">{{ currentSample.trackingNumber || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">物流公司</div>
+                <div class="info-label">{{ $t('samples.logisticsCompany') || 'Logistics Company' }}</div>
                 <div class="info-value">{{ currentSample.logisticsCompany || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">收样日期</div>
+                <div class="info-label">{{ $t('samples.receiveDate') }}</div>
                 <div class="info-value">{{ currentSample.receivedDate ? formatDate(currentSample.receivedDate) : '-' }}</div>
               </div>
             </el-col>
@@ -487,32 +487,32 @@
           <template #header>
             <div class="card-header">
               <el-icon><TrendCharts /></el-icon>
-              <span>履约信息</span>
+              <span>{{ $t('samples.fulfillmentInfo') }}</span>
             </div>
           </template>
           <el-row :gutter="24">
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">出单状态</div>
+                <div class="info-label">{{ $t('samples.orderStatus') }}</div>
                 <div class="info-value">
                   <el-tag :type="currentSample.isOrderGenerated ? 'success' : 'warning'" size="large">
-                    {{ currentSample.isOrderGenerated ? '已出单' : '未出单' }}
+                    {{ currentSample.isOrderGenerated ? $t('samples.orderGenerated') : $t('samples.noOrder') }}
                   </el-tag>
                 </div>
               </div>
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">履约时间</div>
+                <div class="info-label">{{ $t('samples.fulfillmentTime') || 'Fulfillment Time' }}</div>
                 <div class="info-value">{{ currentSample.fulfillmentTime || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">视频链接</div>
+                <div class="info-label">{{ $t('samples.videoLink') }}</div>
                 <div class="info-value">
                   <el-link v-if="currentSample.videoLink" :href="currentSample.videoLink" target="_blank" type="primary">
-                    查看视频
+                    {{ $t('samples.viewVideo') || 'View Video' }}
                   </el-link>
                   <span v-else>-</span>
                 </div>
@@ -520,7 +520,7 @@
             </el-col>
             <el-col :span="8">
               <div class="info-item">
-                <div class="info-label">履约更新</div>
+                <div class="info-label">{{ $t('samples.lastUpdate') }}</div>
                 <div class="info-value update-info-detail">
                   {{ currentSample.fulfillmentUpdatedBy?.realName || currentSample.fulfillmentUpdatedBy?.username || '-' }}
                   <span v-if="currentSample.fulfillmentUpdatedAt">{{ formatDateTime(currentSample.fulfillmentUpdatedAt) }}</span>
@@ -529,7 +529,7 @@
             </el-col>
             <el-col :span="12">
               <div class="info-item">
-                <div class="info-label">投流信息</div>
+                <div class="info-label">{{ $t('samples.adPromotion') }}</div>
                 <div class="info-value">
                   <span class="stream-label">Stream Code: </span>
                   <span class="stream-value">{{ currentSample.videoStreamCode || '-' }}</span>
@@ -538,23 +538,23 @@
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">投流状态</div>
+                <div class="info-label">{{ $t('samples.adPromotionStatus') }}</div>
                 <div class="info-value">
                   <el-tag :type="currentSample.isAdPromotion ? 'success' : 'info'" size="large">
-                    {{ currentSample.isAdPromotion ? '已投流' : '未投流' }}
+                    {{ currentSample.isAdPromotion ? $t('samples.adPromoted') : $t('samples.notAdPromoted') }}
                   </el-tag>
                 </div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">投流时间</div>
+                <div class="info-label">{{ $t('samples.adPromotionTime') || 'Ad Time' }}</div>
                 <div class="info-value">{{ currentSample.adPromotionTime ? formatDate(currentSample.adPromotionTime) : '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="info-item">
-                <div class="info-label">投流更新</div>
+                <div class="info-label">{{ $t('samples.lastUpdate') }}</div>
                 <div class="info-value update-info-detail">
                   {{ currentSample.adPromotionUpdatedBy?.realName || currentSample.adPromotionUpdatedBy?.username || '-' }}
                   <span v-if="currentSample.adPromotionUpdatedAt">{{ formatDateTime(currentSample.adPromotionUpdatedAt) }}</span>
@@ -569,74 +569,74 @@
           <template #header>
             <div class="card-header">
               <el-icon><User /></el-icon>
-              <span>达人信息</span>
+              <span>{{ $t('samples.influencerInfo') }}</span>
             </div>
           </template>
           <div v-if="influencerDetail">
             <el-row :gutter="24">
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">TikTok ID</div>
+                  <div class="info-label">{{ $t('samples.tiktokId') }}</div>
                   <div class="info-value tiktok-id-text">{{ influencerDetail.tiktokId }}</div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">TikTok名称</div>
+                  <div class="info-label">{{ $t('samples.tiktokName') }}</div>
                   <div class="info-value">{{ influencerDetail.tiktokName || '-' }}</div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">真实姓名</div>
+                  <div class="info-label">{{ $t('samples.realName') || 'Real Name' }}</div>
                   <div class="info-value">{{ influencerDetail.realName || '-' }}</div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">常用昵称</div>
+                  <div class="info-label">{{ $t('samples.nickname') || 'Nickname' }}</div>
                   <div class="info-value">{{ influencerDetail.nickname || '-' }}</div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">最新粉丝</div>
+                  <div class="info-label">{{ $t('samples.latestFollowers') }}</div>
                   <div class="info-value highlight-value">{{ formatNumber(influencerDetail.latestFollowers) }}</div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">最新GMV</div>
+                  <div class="info-label">{{ $t('samples.latestGmv') }}</div>
                   <div class="info-value">{{ influencerDetail.latestGmv || '-' }}</div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">状态</div>
+                  <div class="info-label">{{ $t('samples.status') }}</div>
                   <div class="info-value">
                     <el-tag :type="influencerDetail.status === 'enabled' ? 'success' : 'info'" size="large">
-                      {{ influencerDetail.status === 'enabled' ? '启用' : '禁用' }}
+                      {{ influencerDetail.status === 'enabled' ? $t('samples.enabled') : $t('samples.disabled') }}
                     </el-tag>
                   </div>
                 </div>
               </el-col>
               <el-col :span="8">
                 <div class="info-item">
-                  <div class="info-label">黑名单状态</div>
+                  <div class="info-label">{{ $t('samples.blacklist') }}</div>
                   <div class="info-value">
-                    <el-tag v-if="influencerDetail.isBlacklisted" type="danger" size="large">黑名单</el-tag>
-                    <span v-else>正常</span>
+                    <el-tag v-if="influencerDetail.isBlacklisted" type="danger" size="large">{{ $t('samples.blacklist') }}</el-tag>
+                    <span v-else>{{ $t('samples.normal') || 'Normal' }}</span>
                   </div>
                 </div>
               </el-col>
             </el-row>
           </div>
-          <el-empty v-else description="未找到达人信息" :image-size="80" />
+          <el-empty v-else :description="$t('samples.influencerNotFound')" :image-size="80" />
         </el-card>
 
         <!-- 底部时间信息 -->
         <div class="bottom-info">
-          <span>创建时间：{{ currentSample.createdAt ? formatDate(currentSample.createdAt) : '-' }}</span>
+          <span>{{ $t('samples.createdAt') || 'Created At' }}：{{ currentSample.createdAt ? formatDate(currentSample.createdAt) : '-' }}</span>
         </div>
       </div>
     </el-dialog>
@@ -644,7 +644,7 @@
     <!-- 新增对话框 -->
     <el-dialog
       v-model="createDialogVisible"
-      title="新增样品申请"
+      :title="$t('samples.createSample')"
       width="700px"
     >
       <el-form
@@ -655,19 +655,19 @@
       >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="申请日期" prop="date">
+            <el-form-item :label="$t('samples.applyDate2')" prop="date">
               <el-date-picker
                 v-model="createForm.date"
                 type="date"
-                placeholder="选择日期"
+                :placeholder="$t('samples.selectDate')"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="归属BD" prop="salesman">
-              <el-select v-model="createForm.salesman" placeholder="选择归属BD" filterable style="width: 100%" :loading="bdLoading">
+            <el-form-item :label="$t('samples.bd')" prop="salesman">
+              <el-select v-model="createForm.salesman" :placeholder="$t('samples.selectBD') || 'Select BD'" filterable style="width: 100%" :loading="bdLoading">
                 <el-option
                   v-for="user in users"
                   :key="user._id"
@@ -679,12 +679,12 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="商品信息" required>
+        <el-form-item :label="$t('samples.productInfo')" required>
           <el-select
             v-model="createForm.productId"
             filterable
             remote
-            placeholder="搜索商品名称或ID"
+            :placeholder="$t('samples.searchProduct') || 'Search product'"
             :remote-method="searchProducts"
             :loading="productLoading"
             style="width: 100%"
@@ -703,20 +703,20 @@
           <el-input v-model="createForm.productName" type="hidden" />
         </el-form-item>
 
-        <el-form-item label="TikTok ID" prop="influencerAccount" class="tiktok-label">
-          <el-input v-model="createForm.influencerAccount" placeholder="TikTok ID" />
+        <el-form-item :label="$t('samples.tiktokId')" prop="influencerAccount" class="tiktok-label">
+          <el-input v-model="createForm.influencerAccount" :placeholder="$t('samples.tiktokId')" />
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="粉丝数" prop="followerCount">
-              <el-input-number v-model="createForm.followerCount" :min="0" :controls="false" placeholder="粉丝数" style="width: 100%" />
+            <el-form-item :label="$t('samples.followers')" prop="followerCount">
+              <el-input-number v-model="createForm.followerCount" :min="0" :controls="false" :placeholder="$t('samples.followers')" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="GMV" prop="gmv">
               <div style="display: flex; align-items: center; gap: 4px;">
-                <el-select v-model="createForm.currency" placeholder="币别" style="width: 70px">
+                <el-select v-model="createForm.currency" :placeholder="$t('samples.currency') || 'Currency'" style="width: 70px">
                   <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
                 </el-select>
                 <el-input-number v-model="createForm.gmv" :min="0" :precision="2" :controls="false" style="flex: 1" placeholder="GMV" />
@@ -727,133 +727,133 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="月销件数" prop="monthlySalesCount">
-              <el-input-number v-model="createForm.monthlySalesCount" :min="0" :controls="false" placeholder="月销件数" style="width: 100%" />
+            <el-form-item :label="$t('samples.monthlySales')" prop="monthlySalesCount">
+              <el-input-number v-model="createForm.monthlySalesCount" :min="0" :controls="false" :placeholder="$t('samples.monthlySales')" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="视频均播" prop="avgVideoViews">
-              <el-input-number v-model="createForm.avgVideoViews" :min="0" :controls="false" placeholder="视频均播" style="width: 100%" />
+            <el-form-item :label="$t('samples.avgViews')" prop="avgVideoViews">
+              <el-input-number v-model="createForm.avgVideoViews" :min="0" :controls="false" :placeholder="$t('samples.avgViews')" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="收货信息" prop="shippingInfo">
+        <el-form-item :label="$t('samples.addressInfo')" prop="shippingInfo">
           <el-input
             v-model="createForm.shippingInfo"
             type="textarea"
             :rows="2"
-            placeholder="请输入收货信息"
+            :placeholder="$t('samples.enterAddress') || 'Enter address'"
           />
         </el-form-item>
 
-        <el-form-item label="样品图片">
-          <el-input v-model="createForm.sampleImage" placeholder="图片URL" />
+        <el-form-item :label="$t('samples.sampleImage') || 'Sample Image'">
+          <el-input v-model="createForm.sampleImage" placeholder="Image URL" />
         </el-form-item>
 
-        <el-divider>寄样信息</el-divider>
+        <el-divider>{{ $t('samples.sampleStatus') }}</el-divider>
 
-        <el-form-item label="是否寄样">
+        <el-form-item :label="$t('samples.isSampleSent')">
           <el-switch v-model="createForm.isSampleSent" />
         </el-form-item>
 
         <template v-if="createForm.isSampleSent">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="发货单号">
-                <el-input v-model="createForm.trackingNumber" placeholder="发货单号" />
+              <el-form-item :label="$t('samples.trackingNo')">
+                <el-input v-model="createForm.trackingNumber" :placeholder="$t('samples.enterTrackingNo')" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="物流公司">
-                <el-input v-model="createForm.logisticsCompany" placeholder="物流公司" />
+              <el-form-item :label="$t('samples.logisticsCompany') || 'Logistics'">
+                <el-input v-model="createForm.logisticsCompany" :placeholder="$t('samples.enterLogistics') || 'Enter logistics company'" />
               </el-form-item>
             </el-col>
           </el-row>
 
-          <el-form-item label="发货日期">
+          <el-form-item :label="$t('samples.shippingDate')">
             <el-date-picker
               v-model="createForm.shippingDate"
               type="date"
-              placeholder="选择发货日期"
+              :placeholder="$t('samples.selectDate')"
               value-format="YYYY-MM-DD"
               style="width: 100%"
             />
           </el-form-item>
         </template>
 
-        <el-divider>履约信息</el-divider>
+        <el-divider>{{ $t('samples.fulfillment') }}</el-divider>
 
-        <el-form-item label="是否出单">
+        <el-form-item :label="$t('samples.isOrderGenerated')">
           <el-switch v-model="createForm.isOrderGenerated" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate" :loading="creating">确定</el-button>
+        <el-button @click="createDialogVisible = false">{{ $t('common.cancel') || 'Cancel' }}</el-button>
+        <el-button type="primary" @click="handleCreate" :loading="creating">{{ $t('common.confirm') || 'Confirm' }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 寄样状态编辑对话框 -->
     <el-dialog
       v-model="sampleStatusDialogVisible"
-      title="维护寄样状态"
+      :title="$t('samples.updateSampleStatus')"
       width="400px"
     >
       <el-form :model="sampleStatusForm" label-width="80px">
-        <el-form-item label="寄样状态">
-          <el-select v-model="sampleStatusForm.sampleStatus" placeholder="请选择状态" style="width: 100%">
-            <el-option label="待审核" value="pending" />
-            <el-option label="寄样中" value="shipping" />
-            <el-option label="已寄样" value="sent" />
-            <el-option label="不合作" value="refused" />
+        <el-form-item :label="$t('samples.sampleStatus')">
+          <el-select v-model="sampleStatusForm.sampleStatus" :placeholder="$t('samples.selectSampleStatus')" style="width: 100%">
+            <el-option :label="$t('samples.pending')" value="pending" />
+            <el-option :label="$t('samples.shipping') || 'Shipping'" value="shipping" />
+            <el-option :label="$t('samples.shipped')" value="sent" />
+            <el-option :label="$t('samples.refused')" value="refused" />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" label="不合作原因">
-          <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" placeholder="请输入不合作原因" />
+        <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samples.refusalReason')">
+          <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samples.enterRefusalReason')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="sampleStatusDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSampleStatusSave" :loading="sampleStatusLoading">保存</el-button>
+        <el-button @click="sampleStatusDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSampleStatusSave" :loading="sampleStatusLoading">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 投流信息编辑对话框 -->
     <el-dialog
       v-model="adPromotionDialogVisible"
-      title="维护投流信息"
+      :title="$t('samples.updateAdPromotion')"
       width="400px"
     >
       <el-form :model="adPromotionForm" label-width="80px">
-        <el-form-item label="投流">
+        <el-form-item :label="$t('samples.adPromotion')">
           <el-switch v-model="adPromotionForm.isAdPromotion" />
         </el-form-item>
-        <el-form-item label="投流码">
-          <el-input v-model="adPromotionForm.videoStreamCode" placeholder="请输入投流码" :disabled="!adPromotionForm.isAdPromotion" />
+        <el-form-item :label="$t('samples.streamCode') || 'Stream Code'">
+          <el-input v-model="adPromotionForm.videoStreamCode" :placeholder="$t('samples.enterStreamCode') || 'Enter stream code'" :disabled="!adPromotionForm.isAdPromotion" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="adPromotionDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAdPromotionSave" :loading="adPromotionLoading">保存</el-button>
+        <el-button @click="adPromotionDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleAdPromotionSave" :loading="adPromotionLoading">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 履约信息编辑对话框 -->
     <el-dialog
       v-model="fulfillmentDialogVisible"
-      title="维护履约信息"
+      :title="$t('samples.updateFulfillment')"
       width="400px"
     >
       <el-form :model="fulfillmentForm" label-width="80px">
-        <el-form-item label="视频地址">
-          <el-input v-model="fulfillmentForm.videoLink" placeholder="请输入视频链接" />
+        <el-form-item :label="$t('samples.videoLink')">
+          <el-input v-model="fulfillmentForm.videoLink" :placeholder="$t('samples.enterVideoLink')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="fulfillmentDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleFulfillmentSave" :loading="fulfillmentLoading">保存</el-button>
+        <el-button @click="fulfillmentDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleFulfillmentSave" :loading="fulfillmentLoading">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -861,9 +861,12 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import request from '@/utils/request'
+
+const { t } = useI18n()
 
 const router = useRouter()
 import { Upload, Plus, Loading, InfoFilled, Box, TrendCharts, User, Edit } from '@element-plus/icons-vue'
@@ -971,10 +974,10 @@ const loadCurrencies = async () => {
 }
 
 const createRules = {
-  date: [{ required: true, message: '请选择日期', trigger: 'change' }],
-  productId: [{ required: true, message: '请选择商品', trigger: 'change' }],
-  influencerAccount: [{ required: true, message: '请输入TikTok ID', trigger: 'blur' }],
-  salesman: [{ required: true, message: '请选择归属BD', trigger: 'change' }]
+  date: [{ required: true, message: 'Please select date', trigger: 'change' }],
+  productId: [{ required: true, message: 'Please select product', trigger: 'change' }],
+  influencerAccount: [{ required: true, message: 'Please enter TikTok ID', trigger: 'blur' }],
+  salesman: [{ required: true, message: 'Please select BD', trigger: 'change' }]
 }
 
 const formatDate = (date) => {
@@ -996,13 +999,14 @@ const getSampleStatusType = (status) => {
 
 // 获取寄样状态文本
 const getSampleStatusText = (status) => {
+  const { t } = useI18n()
   const textMap = {
-    pending: '待审核',
-    shipping: '寄样中',
-    sent: '已寄样',
-    refused: '不合作'
+    pending: t('samples.pending'),
+    shipping: t('samples.shipping') || 'Shipping',
+    sent: t('samples.shipped'),
+    refused: t('samples.refused')
   }
-  return textMap[status] || '待审核'
+  return textMap[status] || t('samples.pending')
 }
 
 const formatDateTime = (date) => {
@@ -1047,7 +1051,7 @@ const loadSamples = async () => {
     pagination.total = res.pagination.total
   } catch (error) {
     console.error('Load samples error:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(t('samples.loadError'))
   } finally {
     loading.value = false
   }
@@ -1165,7 +1169,7 @@ const handleCreate = async () => {
         params: { companyId: userStore.companyId }
       })
       if (blacklistRes.isBlacklisted) {
-        ElMessage.error('该达人被列为黑名单，减少接触！')
+        ElMessage.error(t('samples.blacklistInfluencerWarning') || 'This influencer is blacklisted, reduce contact!')
         return
       }
     } catch (blError) {
@@ -1201,12 +1205,12 @@ const handleCreate = async () => {
         console.error('检查达人或添加维护记录失败:', infError)
       }
 
-      ElMessage.success('创建成功')
+      ElMessage.success(t('samples.saveSuccess'))
       createDialogVisible.value = false
       loadSamples()
     } catch (error) {
       console.error('Create sample error:', error)
-      ElMessage.error(error.response?.data?.message || '创建失败')
+      ElMessage.error(error.response?.data?.message || t('samples.createError') || 'Failed to create')
     } finally {
       creating.value = false
     }
@@ -1291,12 +1295,12 @@ const handleAdPromotionSave = async () => {
       videoStreamCode: adPromotionForm.videoStreamCode,
       isAdPromotion: adPromotionForm.isAdPromotion
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('samples.saveSuccess'))
     adPromotionDialogVisible.value = false
     loadSamples()
   } catch (error) {
     console.error('Save ad promotion error:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('samples.saveError') || 'Failed to save')
   } finally {
     adPromotionLoading.value = false
   }
@@ -1329,12 +1333,12 @@ const handleSampleStatusSave = async () => {
       sampleStatus: sampleStatusForm.sampleStatus,
       refusalReason: sampleStatusForm.sampleStatus === 'refused' ? sampleStatusForm.refusalReason : ''
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('samples.saveSuccess'))
     sampleStatusDialogVisible.value = false
     loadSamples()
   } catch (error) {
     console.error('Save sample status error:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('samples.saveError') || 'Failed to save')
   } finally {
     sampleStatusLoading.value = false
   }
@@ -1347,12 +1351,12 @@ const handleFulfillmentSave = async () => {
     await request.put(`/samples/${fulfillmentForm._id}`, {
       videoLink: fulfillmentForm.videoLink
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('samples.saveSuccess'))
     fulfillmentDialogVisible.value = false
     loadSamples()
   } catch (error) {
     console.error('Save fulfillment error:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('samples.saveError') || 'Failed to save')
   } finally {
     fulfillmentLoading.value = false
   }
@@ -1373,23 +1377,23 @@ const goToOrders = async (sample) => {
 }
 
 const deleteSample = async (sample) => {
-  await ElMessageBox.confirm('确定要删除这条记录吗？', '提示', {
+  await ElMessageBox.confirm(t('samples.confirmDelete'), t('common.warning') || 'Warning', {
     type: 'warning'
   })
 
   try {
     await request.delete(`/samples/${sample._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('samples.deleteSuccess'))
     loadSamples()
   } catch (error) {
     console.error('Delete sample error:', error)
-    ElMessage.error('删除失败')
+    ElMessage.error(t('samples.deleteError'))
   }
 }
 
 const handleImportFile = async (file) => {
   importing.value = true
-  ElMessage.info('正在导入，请稍候...')
+  ElMessage.info(t('samples.importing') || 'Importing, please wait...')
   try {
     const formData = new FormData()
     formData.append('file', file.raw)
@@ -1400,16 +1404,16 @@ const handleImportFile = async (file) => {
       }
     })
 
-    ElMessage.success(res.message || '导入成功')
+    ElMessage.success(res.message || t('samples.importSuccess') || 'Import successful')
 
     if (res.data) {
-      const summary = `新增: ${res.data.added} 条\n更新: ${res.data.updated} 条`
+      const summary = `${t('samples.added') || 'Added'}: ${res.data.added}\n${t('samples.updated') || 'Updated'}: ${res.data.updated}`
 
       if (res.data.errors && res.data.errors.length > 0) {
-        const errorDetails = res.data.errors.map(e => `第${e.row}行: ${e.error}`).join('\n')
+        const errorDetails = res.data.errors.map(e => `Row ${e.row}: ${e.error}`).join('\n')
         ElMessageBox.alert(
-          `${summary}\n失败: ${res.data.failed} 条\n\n失败详情:\n${errorDetails}`,
-          '导入结果',
+          `${summary}\n${t('samples.failed') || 'Failed'}: ${res.data.failed}\n\nError Details:\n${errorDetails}`,
+          t('samples.importResult') || 'Import Result',
           { type: 'warning' }
         )
       } else {
@@ -1420,7 +1424,7 @@ const handleImportFile = async (file) => {
     loadSamples()
   } catch (error) {
     console.error('Import error:', error)
-    ElMessage.error('导入失败，请稍后重试')
+    ElMessage.error(t('samples.importError') || 'Import failed, please try again later')
   } finally {
     importing.value = false
   }

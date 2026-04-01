@@ -8,6 +8,7 @@
       <el-dropdown-menu>
         <el-dropdown-item command="zh">中文</el-dropdown-item>
         <el-dropdown-item command="en">English</el-dropdown-item>
+        <el-dropdown-item command="th">ภาษาไทย</el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -21,7 +22,8 @@ import { ArrowDown } from '@element-plus/icons-vue'
 const { locale } = useI18n()
 
 const currentLang = computed(() => {
-  return locale.value === 'zh' ? '中文' : 'English'
+  const langMap = { zh: '中文', en: 'English', th: 'ภาษาไทย' }
+  return langMap[locale.value] || 'English'
 })
 
 const handleCommand = (lang) => {
