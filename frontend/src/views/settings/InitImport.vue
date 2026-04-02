@@ -227,9 +227,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Upload, Delete } from '@element-plus/icons-vue'
 import axios from 'axios'
+
+const { t } = useI18n()
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL === '' ? '' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000')
 
@@ -268,7 +271,7 @@ const handleSuccess = (response) => {
 
 const handleError = (error) => {
   uploading.value = false
-  const msg = error.response?.data?.message || '上传失败'
+  const msg = error.response?.data?.message || t('common.uploadFailed')
   importResult.value = { success: false, message: msg }
   ElMessage.error(msg)
 }
@@ -284,7 +287,7 @@ const clearShops = async () => {
     clearResult.value = { success: true, message: res.data.message }
     ElMessage.success(res.data.message)
   } catch (error) {
-    const msg = error.response?.data?.message || '清除失败'
+    const msg = error.response?.data?.message || t('common.clearFailed')
     clearResult.value = { success: false, message: msg }
     ElMessage.error(msg)
   } finally {
@@ -303,7 +306,7 @@ const clearProducts = async () => {
     clearResult.value = { success: true, message: res.data.message }
     ElMessage.success(res.data.message)
   } catch (error) {
-    const msg = error.response?.data?.message || '清除失败'
+    const msg = error.response?.data?.message || t('common.clearFailed')
     clearResult.value = { success: false, message: msg }
     ElMessage.error(msg)
   } finally {
@@ -322,7 +325,7 @@ const clearInfluencers = async () => {
     clearResult.value = { success: true, message: res.data.message }
     ElMessage.success(res.data.message)
   } catch (error) {
-    const msg = error.response?.data?.message || '清除失败'
+    const msg = error.response?.data?.message || t('common.clearFailed')
     clearResult.value = { success: false, message: msg }
     ElMessage.error(msg)
   } finally {
@@ -341,7 +344,7 @@ const clearSamples = async () => {
     clearResult.value = { success: true, message: res.data.message }
     ElMessage.success(res.data.message)
   } catch (error) {
-    const msg = error.response?.data?.message || '清除失败'
+    const msg = error.response?.data?.message || t('common.clearFailed')
     clearResult.value = { success: false, message: msg }
     ElMessage.error(msg)
   } finally {

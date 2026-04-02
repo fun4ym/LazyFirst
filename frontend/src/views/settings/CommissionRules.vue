@@ -22,37 +22,37 @@
         </div>
 
         <el-table :data="dept.rules" border style="margin-top: 10px">
-          <el-table-column prop="rangeStart" label="抽成范围起始" width="130">
+          <el-table-column prop="rangeStart" :label="$t('commission.rangeStart')" width="130">
             <template #default="{ row }">
               ¥{{ formatMoney(row.rangeStart) }}
             </template>
           </el-table-column>
-          <el-table-column prop="rangeEnd" label="抽成范围结束" width="130">
+          <el-table-column prop="rangeEnd" :label="$t('commission.rangeEnd')" width="130">
             <template #default="{ row }">
-              {{ row.rangeEnd ? '฿' + formatMoney(row.rangeEnd) : '以上' }}
+              {{ row.rangeEnd ? '฿' + formatMoney(row.rangeEnd) : $t('commission.above') }}
             </template>
           </el-table-column>
-          <el-table-column prop="commissionRate" label="抽成点数" width="120">
+          <el-table-column prop="commissionRate" :label="$t('commission.commissionRate')" width="120">
             <template #default="{ row }">
               {{ (row.commissionRate * 100).toFixed(2) }}%
             </template>
           </el-table-column>
-          <el-table-column prop="commissionType" label="类型" width="100">
+          <el-table-column prop="commissionType" :label="$t('commission.type')" width="100">
             <template #default="{ row }">
               <el-tag :type="row.commissionType === 'fixed' ? 'primary' : 'success'">
-                {{ row.commissionType === 'fixed' ? '固定' : '阶梯' }}
+                {{ row.commissionType === 'fixed' ? $t('commission.fixed') : $t('commission.tiered') }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createdAt" label="创建时间" width="160">
+          <el-table-column prop="createdAt" :label="$t('common.createTime')" width="160">
             <template #default="{ row }">
               {{ formatDate(row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column :label="$t('common.actions')" width="100">
             <template #default="{ row }">
               <el-button link type="danger" @click="deleteRule(dept.deptId, row._id)" v-if="hasPermission('commission-rules:btn-delete-rule')">
-                删除
+                {{ $t('common.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -63,7 +63,7 @@
       <div class="save-actions" style="margin-top: 20px">
         <el-button type="primary" @click="saveAll" :loading="saving" v-if="hasPermission('commission-rules:btn-save')">
           <el-icon><Check /></el-icon>
-          保存配置
+          {{ $t('commission.saveConfig') }}
         </el-button>
       </div>
     </el-card>
@@ -180,10 +180,10 @@ const ruleForm = reactive({
 
 const ruleRules = {
   rangeStart: [
-    { required: true, message: '请输入抽成范围起始', trigger: 'blur' }
+    { required: true, message: t('commission.rangeStart') + t('common.required'), trigger: 'blur' }
   ],
   commissionRate: [
-    { required: true, message: '请输入抽成点数', trigger: 'blur' }
+    { required: true, message: t('commission.commissionRate') + t('common.required'), trigger: 'blur' }
   ]
 }
 
@@ -224,13 +224,13 @@ const showAddCategory = () => {
 
 const handleAddCategory = async () => {
   if (!categoryForm.deptId) {
-    ElMessage.warning('请选择部门')
+    ElMessage.warning(t('commission.selectDepartment'))
     return
   }
 
   const dept = departments.value.find(d => d._id === categoryForm.deptId)
   if (departmentRules.value.find(r => r.deptId === categoryForm.deptId)) {
-    ElMessage.warning('该部门已存在')
+    ElMessage.warning(t('commission.departmentExists'))
     return
   }
 
@@ -241,7 +241,7 @@ const handleAddCategory = async () => {
   })
 
   addCategoryDialogVisible.value = false
-  ElMessage.success('添加成功')
+  ElMessage.success(t('commission.addSuccess'))
 }
 
 const addRule = (deptId) => {
@@ -263,7 +263,7 @@ const handleAddRule = async () => {
 
     const deptIndex = departmentRules.value.findIndex(r => r.deptId === ruleForm.deptId)
     if (deptIndex === -1) {
-      ElMessage.error('部门不存在')
+      ElMessage.error(t('commission.departmentNotFound'))
       return
     }
 
@@ -277,13 +277,13 @@ const handleAddRule = async () => {
     })
 
     addRuleDialogVisible.value = false
-    ElMessage.success('添加成功')
+    ElMessage.success(t('commission.addSuccess'))
   })
 }
 
 const deleteRule = async (deptId, ruleId) => {
   try {
-    await ElMessageBox.confirm('确定要删除该规则吗？', '提示', {
+    await ElMessageBox.confirm(t('commission.confirmDeleteRule'), t('common.confirm'), {
       type: 'warning'
     })
 
@@ -292,7 +292,7 @@ const deleteRule = async (deptId, ruleId) => {
       const ruleIndex = departmentRules.value[deptIndex].rules.findIndex(r => r._id === ruleId)
       if (ruleIndex !== -1) {
         departmentRules.value[deptIndex].rules.splice(ruleIndex, 1)
-        ElMessage.success('删除成功')
+        ElMessage.success(t('common.deleteSuccess'))
       }
     }
   } catch (error) {
@@ -308,10 +308,10 @@ const saveAll = async () => {
     await request.post('/commission-rules/save', {
       rules: departmentRules.value
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('commission.saveSuccess'))
   } catch (error) {
     console.error('Save error:', error)
-    ElMessage.error('保存失败，请稍后重试')
+    ElMessage.error(t('commission.saveFailed'))
   } finally {
     saving.value = false
   }

@@ -3,11 +3,11 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>供应链管理</h3>
+          <h3>{{ $t('supplyChain.supplierMgmt') }}</h3>
           <div class="header-actions">
             <el-button type="success" @click="showCreateDialog">
               <el-icon><Plus /></el-icon>
-              新增供应商
+              {{ $t('supplyChain.addSupplier') }}
             </el-button>
           </div>
         </div>
@@ -114,7 +114,7 @@
         </el-table-column>
 
         <el-table-column
-          label="地址"
+          :label="$t('supplyChain.address')"
           width="250"
         >
           <template #default="{ row }">
@@ -125,7 +125,7 @@
         </el-table-column>
 
         <el-table-column
-          label="备注"
+          :label="$t('supplyChain.remarks')"
           width="200"
         >
           <template #default="{ row }">
@@ -136,7 +136,7 @@
         </el-table-column>
 
         <el-table-column
-          label="创建时间"
+          :label="$t('common.createTime')"
           width="140"
           prop="createdAt"
           sortable
@@ -147,13 +147,13 @@
         </el-table-column>
 
         <el-table-column
-          label="操作"
+          :label="$t('common.actions')"
           width="150"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="editSupplier(row)">编辑</el-button>
-            <el-button link type="danger" @click="deleteSupplier(row)">删除</el-button>
+            <el-button link type="primary" @click="editSupplier(row)">{{ $t('common.edit') }}</el-button>
+            <el-button link type="danger" @click="deleteSupplier(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -174,7 +174,7 @@
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑供应商' : '新增供应商'"
+      :title="isEdit ? $t('supplyChain.editSupplier') : $t('supplyChain.addSupplier')"
       width="600px"
     >
       <el-form
@@ -183,57 +183,57 @@
         ref="formRef"
         label-width="100px"
       >
-        <el-form-item label="供应商名称" prop="name">
-          <el-input v-model="form.name" placeholder="供应商名称" />
+        <el-form-item :label="$t('supplyChain.supplierName')" prop="name">
+          <el-input v-model="form.name" :placeholder="$t('supplyChain.supplierName')" />
         </el-form-item>
 
-        <el-form-item label="供应商类型" prop="type">
-          <el-select v-model="form.type" placeholder="请选择类型" style="width: 100%">
-            <el-option label="样品供应商" value="sample" />
-            <el-option label="产品供应商" value="product" />
-            <el-option label="物流商" value="logistics" />
+        <el-form-item :label="$t('supplyChain.supplierType')" prop="type">
+          <el-select v-model="form.type" :placeholder="$t('common.select')" style="width: 100%">
+            <el-option :label="$t('supplyChain.sampleSupplier')" value="sample" />
+            <el-option :label="$t('supplyChain.productSupplier')" value="product" />
+            <el-option :label="$t('supplyChain.logistics')" value="logistics" />
           </el-select>
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="联系人" prop="contact">
-              <el-input v-model="form.contact" placeholder="联系人" />
+            <el-form-item :label="$t('supplyChain.contact')" prop="contact">
+              <el-input v-model="form.contact" :placeholder="$t('supplyChain.contact')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="联系电话" prop="phone">
-              <el-input v-model="form.phone" placeholder="联系电话" />
+            <el-form-item :label="$t('supplyChain.phone')" prop="phone">
+              <el-input v-model="form.phone" :placeholder="$t('supplyChain.phone')" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="邮箱">
-          <el-input v-model="form.email" placeholder="邮箱" />
+        <el-form-item :label="$t('supplyChain.email')">
+          <el-input v-model="form.email" :placeholder="$t('supplyChain.email')" />
         </el-form-item>
 
-        <el-form-item label="地址">
+        <el-form-item :label="$t('supplyChain.address')">
           <el-input
             v-model="form.address"
             type="textarea"
             :rows="2"
-            placeholder="请输入地址"
+            :placeholder="$t('supplyChain.address')"
           />
         </el-form-item>
 
-        <el-form-item label="备注">
+        <el-form-item :label="$t('supplyChain.remarks')">
           <el-input
             v-model="form.remarks"
             type="textarea"
             :rows="3"
-            placeholder="备注信息"
+            :placeholder="$t('supplyChain.remarks')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -278,17 +278,17 @@ const form = reactive({
 })
 
 const rules = {
-  name: [{ required: true, message: '请输入供应商名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择供应商类型', trigger: 'change' }],
-  contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
+  name: [{ required: true, message: t('supplyChain.supplierName') + t('common.required'), trigger: 'blur' }],
+  type: [{ required: true, message: t('supplyChain.supplierType') + t('common.required'), trigger: 'change' }],
+  contact: [{ required: true, message: t('supplyChain.contact') + t('common.required'), trigger: 'blur' }],
+  phone: [{ required: true, message: t('supplyChain.phone') + t('common.required'), trigger: 'blur' }]
 }
 
 const getTypeLabel = (type) => {
   const typeMap = {
-    sample: '样品供应商',
-    product: '产品供应商',
-    logistics: '物流商'
+    sample: t('supplyChain.sampleSupplier'),
+    product: t('supplyChain.productSupplier'),
+    logistics: t('supplyChain.logistics')
   }
   return typeMap[type] || '--'
 }
@@ -366,12 +366,12 @@ const handleSubmit = async () => {
     submitting.value = true
     try {
       // TODO: 实际调用API
-      ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
+      ElMessage.success(isEdit.value ? t('common.updateSuccess') : t('common.addSuccess'))
       dialogVisible.value = false
       loadSuppliers()
     } catch (error) {
       console.error('Submit error:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('common.operateFailed'))
     } finally {
       submitting.value = false
     }
@@ -379,17 +379,17 @@ const handleSubmit = async () => {
 }
 
 const deleteSupplier = async (row) => {
-  await ElMessageBox.confirm('确定要删除这个供应商吗？', '提示', {
+  await ElMessageBox.confirm(t('supplyChain.confirmDelete'), t('supplyChain.deleteConfirm'), {
     type: 'warning'
   })
 
   try {
     // TODO: 实际调用API
-    ElMessage.success('删除成功')
+    ElMessage.success(t('common.deleteSuccess'))
     loadSuppliers()
   } catch (error) {
     console.error('Delete error:', error)
-    ElMessage.error('删除失败')
+    ElMessage.error(t('common.deleteFailed'))
   }
 }
 

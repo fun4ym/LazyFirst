@@ -274,7 +274,7 @@
               <div>{{ formatMoney(row.productPrice || 0) }}</div>
               <div>{{ $t('reportOrders.quantity') }}: {{ row.orderQuantity || 0 }}</div>
               <div class="status-icon">
-                <el-icon v-if="row.orderStatus === '已完成'" color="#67C23A"><CircleCheck /></el-icon>
+                <el-icon v-if="row.orderStatus === 'completed' || row.orderStatus === '已完成'" color="#67C23A"><CircleCheck /></el-icon>
                 <el-icon v-else color="#409EFF"><Clock /></el-icon>
                 <span>{{ row.orderStatus || '--' }}</span>
               </div>
