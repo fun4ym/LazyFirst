@@ -857,6 +857,14 @@ export default {
     sectionInfluencerRequirement: 'ความต้องการมีเดียร์',
     sectionDataInfo: 'ข้อมูล',
     sectionHistory: 'ประวัติ',
+    // ประเภทการดำเนินการ
+    actionCreate: 'สร้าง',
+    actionUpdate: 'อัปเดต',
+    actionDelete: 'ลบ',
+    actionStatusChange: 'เปลี่ยนสถานะ',
+    // ชื่อฟิลด์
+    budget: 'งบประมาณ',
+    partnerCenter: 'ศูนย์พาร์ทเนอร์',
     
     // 寄样方式选项
     online: 'ออนไลน์',

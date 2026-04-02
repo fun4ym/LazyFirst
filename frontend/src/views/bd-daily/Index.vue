@@ -15,7 +15,7 @@
             </el-button>
             <el-button type="warning" @click="handleExport" v-if="hasPermission('bd-daily:read')">
               <el-icon><Download /></el-icon>
-              导出
+              {{ $t('common.export') }}
             </el-button>
           </div>
         </div>
@@ -24,7 +24,7 @@
       <!-- 页签切换 -->
       <el-tabs v-model="activeTab" class="bd-daily-tabs">
         <!-- 按日统计页签 -->
-        <el-tab-pane label="按日统计" name="daily">
+        <el-tab-pane :label="$t('bdDaily.byDayStat')" name="daily">
           <!-- 搜索筛选 -->
           <el-form :model="searchForm" inline class="search-form">
             <el-form-item :label="$t('bdDaily.dateRange')">
@@ -202,7 +202,7 @@
         </el-tab-pane>
 
         <!-- 按月统计页签 -->
-        <el-tab-pane label="按月统计" name="monthly">
+        <el-tab-pane :label="$t('bdDaily.byMonthStat')" name="monthly">
           <!-- 月份选择 -->
           <el-form inline class="search-form">
             <el-form-item label="选择月份">
@@ -378,22 +378,22 @@
             <h4>详细信息：</h4>
             <el-table :data="generateResult.details" max-height="300" border>
               <el-table-column :label="$t('bdDaily.bd')" prop="salesman" width="120" />
-              <el-table-column label="操作" prop="action" width="100">
+              <el-table-column :label="$t('bdDaily.action')" prop="action" width="100">
                 <template #default="{ row }">
                   <el-tag :type="row.action === 'created' ? 'success' : 'warning'" size="small">
-                    {{ row.action === 'created' ? '新增' : '更新' }}
+                    {{ row.action === 'created' ? $t('bdDaily.created') : $t('bdDaily.updated') }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="申样数" prop="sampleCount" width="80" />
-              <el-table-column label="订单数" prop="orderCount" width="80" />
-              <el-table-column label="收入" prop="revenue" width="100">
+              <el-table-column :label="$t('bdDaily.sampleCount')" prop="sampleCount" width="80" />
+              <el-table-column :label="$t('bdDaily.orderCount')" prop="orderCount" width="80" />
+              <el-table-column :label="$t('bdDaily.revenue')" prop="revenue" width="100">
                 <template #default="{ row }">฿{{ formatMoney(row.revenue || 0) }}</template>
               </el-table-column>
-              <el-table-column label="预估服务费" prop="estimatedCommission" width="100">
+              <el-table-column :label="$t('bdDaily.estimatedCommission')" prop="estimatedCommission" width="100">
                 <template #default="{ row }">฿{{ formatMoney(row.estimatedCommission || 0) }}</template>
               </el-table-column>
-              <el-table-column label="结算佣金" prop="commission" width="100">
+              <el-table-column :label="$t('bdDaily.settlementCommission')" prop="commission" width="100">
                 <template #default="{ row }">฿{{ formatMoney(row.commission || 0) }}</template>
               </el-table-column>
             </el-table>
@@ -791,16 +791,16 @@ const handleSubmit = async () => {
     try {
       if (isEdit.value) {
         await request.put(`/bd-daily/${form._id}`, form)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('common.updateSuccess'))
       } else {
         await request.post('/bd-daily', form)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('common.addSuccess'))
       }
       dialogVisible.value = false
       loadData()
     } catch (error) {
       console.error('Submit error:', error)
-      ElMessage.error(error.response?.data?.message || '操作失败')
+      ElMessage.error(error.response?.data?.message || t('common.operateFailed'))
     } finally {
       submitting.value = false
     }
@@ -901,11 +901,11 @@ const deleteRecord = async (row) => {
 
   try {
     await request.delete(`/bd-daily/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('common.deleteSuccess'))
     loadData()
   } catch (error) {
     console.error('Delete error:', error)
-    ElMessage.error('删除失败')
+    ElMessage.error(t('common.deleteFailed'))
   }
 }
 

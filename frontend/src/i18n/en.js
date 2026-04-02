@@ -838,6 +838,14 @@ export default {
       sectionInfluencerRequirement: 'Requirements',
       sectionDataInfo: 'Data Info',
       sectionHistory: 'History',
+      // Action types
+      actionCreate: 'Create',
+      actionUpdate: 'Update',
+      actionDelete: 'Delete',
+      actionStatusChange: 'Status Change',
+      // Field names
+      budget: 'Budget',
+      partnerCenter: 'Partner Center',
       
       // 寄样方式选项
       online: 'Online',

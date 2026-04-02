@@ -1172,6 +1172,14 @@ export default {
       sectionInfluencerRequirement: '达人要求',
       sectionDataInfo: '数据信息',
       sectionHistory: '变更历史',
+      // 操作类型
+      actionCreate: '创建',
+      actionUpdate: '更新',
+      actionDelete: '删除',
+      actionStatusChange: '状态变更',
+      // 字段名称
+      budget: '预算',
+      partnerCenter: '合作中心',
       
       // 寄样方式选项
       online: '线上',

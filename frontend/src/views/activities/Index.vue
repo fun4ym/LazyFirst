@@ -748,8 +748,8 @@ const formatDate = (date) => {
 
 const getTypeText = (type) => {
   const texts = {
-    self_initiated: '自发起',
-    merchant_initiated: '商家发起'
+    self_initiated: t('activities.selfInitiated'),
+    merchant_initiated: t('activities.merchantInitiated')
   }
   return texts[type] || type
 }
@@ -764,10 +764,10 @@ const getTypeTagType = (type) => {
 
 const getStatusText = (status) => {
   const texts = {
-    pending: '待发布',
-    upcoming: '即将开始',
-    active: '进行中',
-    ended: '已结束'
+    pending: t('activities.pending'),
+    upcoming: t('activities.upcoming'),
+    active: t('activities.active'),
+    ended: t('activities.ended')
   }
   return texts[status] || status
 }
@@ -784,10 +784,10 @@ const getStatusType = (status) => {
 
 const getActionText = (action) => {
   const texts = {
-    create: '创建',
-    update: '更新',
-    delete: '删除',
-    status_change: '状态变更'
+    create: t('activities.actionCreate'),
+    update: t('activities.actionUpdate'),
+    delete: t('activities.actionDelete'),
+    status_change: t('activities.actionStatusChange')
   }
   return texts[action] || action
 }
@@ -804,15 +804,15 @@ const getActionType = (action) => {
 
 const getFieldName = (key) => {
   const names = {
-    tikTokActivityId: 'TikTok活动ID',
-    name: '活动名称',
-    type: '活动类型',
-    status: '状态',
-    startDate: '开始时间',
-    endDate: '结束时间',
-    budget: '预算',
-    description: '活动描述',
-    partnerCenter: '合作中心'
+    tikTokActivityId: t('activities.tikTokActivityId'),
+    name: t('activities.activityNameCol'),
+    type: t('activities.activityTypeCol'),
+    status: t('activities.status'),
+    startDate: t('activities.startDate'),
+    endDate: t('activities.endDate'),
+    budget: t('activities.budget'),
+    description: t('activities.activityDescription'),
+    partnerCenter: t('activities.partnerCenter')
   }
   return names[key] || key
 }
