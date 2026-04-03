@@ -28,23 +28,23 @@
         <el-tab-pane :label="$t('baseData.priceUnit')" name="priceUnit" />
         <el-tab-pane :label="$t('baseData.timeoutConfig')" name="timeoutConfig" />
         <el-tab-pane :label="$t('baseData.trackingUrl')" name="trackingUrl" />
-        <el-tab-pane label="达人归类标签" name="influencerCategory" />
+        <el-tab-pane :label="$t('baseData.influencerCategory')" name="influencerCategory" />
       </el-tabs>
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="名称">
+        <el-form-item :label="$t('baseData.name')">
           <el-input
             v-model="searchForm.search"
-            placeholder="请输入名称"
+            :placeholder="$t('baseData.searchPlaceholder')"
             clearable
             style="width: 200px"
             @keyup.enter="loadData"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadData">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadData">{{ $t('baseData.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('baseData.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
@@ -56,45 +56,45 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="名称" width="200" />
-        <el-table-column prop="code" label="代码" width="150">
+        <el-table-column prop="name" :label="$t('baseData.name')" width="200" />
+        <el-table-column prop="code" :label="$t('baseData.code')" width="150">
           <template #default="{ row }">
             {{ row.code || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="value" label="数值/配置" width="200">
+        <el-table-column prop="value" :label="$t('baseData.value')" width="200">
           <template #default="{ row }">
             {{ row.value || row.description || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="creatorId.realName" label="创建人" width="100">
+        <el-table-column prop="creatorId.realName" :label="$t('baseData.creator')" width="100">
           <template #default="{ row }">
             {{ row.creatorId?.realName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
+        <el-table-column prop="status" :label="$t('baseData.status')" width="90">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-              {{ row.status === 'active' ? '正常' : '禁用' }}
+              {{ row.status === 'active' ? $t('baseData.active') : $t('baseData.inactive') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="isDefault" label="默认" width="80" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
+        <el-table-column prop="isDefault" :label="$t('baseData.isDefault')" width="80" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
           <template #default="{ row }">
             <el-tag :type="row.isDefault ? 'warning' : 'info'">
-              {{ row.isDefault ? '是' : '否' }}
+              {{ row.isDefault ? $t('baseData.yes') : $t('baseData.no') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160">
+        <el-table-column prop="createdAt" :label="$t('baseData.createdAt')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="150">
+        <el-table-column :label="$t('baseData.operation')" fixed="right" width="150">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('base-data:update')">修改</el-button>
-            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('base-data:delete')">删除</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('base-data:update')">{{ $t('baseData.edit') }}</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('base-data:delete')">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -115,7 +115,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑' : '新增'"
+      :title="isEdit ? $t('baseData.editTitle') : $t('baseData.createTitle')"
       width="600px"
     >
       <el-form
@@ -124,52 +124,52 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="名称" prop="name">
+        <el-form-item :label="$t('baseData.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
 
-        <el-form-item label="代码" prop="code" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
-          <el-input v-model="form.code" :placeholder="activeTab === 'country' ? '如 TH, MY, SG 等' : '如 USD, CNY, EUR 等'" />
+        <el-form-item :label="$t('baseData.code')" prop="code" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
+          <el-input v-model="form.code" :placeholder="activeTab === 'country' ? $t('baseData.codePlaceholderCountry') : $t('baseData.codePlaceholderCurrency')" />
         </el-form-item>
 
-        <el-form-item label="英文名称" prop="englishName" v-if="activeTab === 'country'">
-          <el-input v-model="form.englishName" placeholder="如 Thailand, Malaysia" />
+        <el-form-item :label="$t('baseData.englishName')" prop="englishName" v-if="activeTab === 'country'">
+          <el-input v-model="form.englishName" :placeholder="$t('baseData.englishNamePlaceholder')" />
         </el-form-item>
 
-        <el-form-item label="汇率" prop="value" v-if="activeTab === 'priceUnit'">
+        <el-form-item :label="$t('baseData.exchangeRate')" prop="value" v-if="activeTab === 'priceUnit'">
           <el-input-number v-model="form.value" :min="0" :precision="4" style="width: 100%" />
-          <span style="margin-left: 10px; color: #999;">(相对于基准货币的汇率)</span>
+          <span style="margin-left: 10px; color: #999;">{{ $t('baseData.exchangeRateTip') }}</span>
         </el-form-item>
 
-        <el-form-item label="数值/配置" prop="value" v-if="activeTab === 'timeoutConfig'">
+        <el-form-item :label="$t('baseData.value')" prop="value" v-if="activeTab === 'timeoutConfig'">
           <el-input-number v-model="form.value" :min="0" :precision="0" style="width: 100%" />
-          <span style="margin-left: 10px; color: #999;">(小时)</span>
+          <span style="margin-left: 10px; color: #999;">{{ $t('baseData.timeoutTip') }}</span>
         </el-form-item>
 
-        <el-form-item label="配置值" prop="value" v-if="activeTab === 'trackingUrl'">
-          <el-input v-model="form.value" type="textarea" :rows="3" placeholder="物流查询链接模板" />
+        <el-form-item :label="$t('baseData.trackingUrl')" prop="value" v-if="activeTab === 'trackingUrl'">
+          <el-input v-model="form.value" type="textarea" :rows="3" :placeholder="$t('baseData.trackingUrlPlaceholder')" />
         </el-form-item>
 
-        <el-form-item label="描述" prop="description" v-if="activeTab === 'category' || activeTab === 'grade'">
+        <el-form-item :label="$t('baseData.description')" prop="description" v-if="activeTab === 'category' || activeTab === 'grade'">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
 
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$t('baseData.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">正常</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
+            <el-radio label="active">{{ $t('baseData.active') }}</el-radio>
+            <el-radio label="inactive">{{ $t('baseData.inactive') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="默认" prop="isDefault" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
+        <el-form-item :label="$t('baseData.isDefault')" prop="isDefault" v-if="activeTab === 'country' || activeTab === 'priceUnit'">
           <el-switch v-model="form.isDefault" />
-          <span style="margin-left: 10px; color: #999;">(每个类型只能有一个默认)</span>
+          <span style="margin-left: 10px; color: #999;">{{ $t('baseData.defaultTip') }}</span>
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('baseData.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">{{ $t('baseData.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -217,26 +217,26 @@ const form = reactive({
   isDefault: false
 })
 
-const rules = {
+const rules = computed(() => ({
   name: [
-    { required: true, message: '请输入名称', trigger: 'blur' }
+    { required: true, message: t('common.input') + t('baseData.name'), trigger: 'blur' }
   ],
   code: [
-    { required: false, message: '请输入代码', trigger: 'blur' }
+    { required: false, message: t('common.input') + t('baseData.code'), trigger: 'blur' }
   ]
-}
+}))
 
 const hasSelected = computed(() => selectedRows.value.length > 0)
 
-const tabLabels = {
-  country: '国家',
-  category: '产品类目',
-  grade: '商品等级',
-  priceUnit: '货币单位',
-  timeoutConfig: '超时配置',
-  trackingUrl: '物流查询链接',
-  influencerCategory: '达人归类标签'
-}
+const tabLabels = computed(() => ({
+  country: t('baseData.country'),
+  category: t('baseData.category'),
+  grade: t('baseData.grade'),
+  priceUnit: t('baseData.priceUnit'),
+  timeoutConfig: t('baseData.timeoutConfig'),
+  trackingUrl: t('baseData.trackingUrl'),
+  influencerCategory: t('baseData.influencerCategory')
+}))
 
 const formatDate = (date) => {
   if (!date) return '-'
@@ -319,10 +319,10 @@ const handleSubmit = async () => {
 
       if (isEdit.value) {
         await request.put(`/base-data/${data._id}`, data)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('baseData.updateSuccess'))
       } else {
         await request.post('/base-data', data)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('baseData.createSuccess'))
       }
 
       dialogVisible.value = false
@@ -337,12 +337,12 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除${tabLabels[activeTab.value]}"${row.name}"吗？`, '提示', {
+    await ElMessageBox.confirm(t('baseData.confirmDelete', { name: row.name }), t('common.warning'), {
       type: 'warning'
     })
 
     await request.delete(`/base-data/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('baseData.deleteSuccess'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
@@ -354,12 +354,12 @@ const handleDelete = async (row) => {
 const handleBatchDelete = async () => {
   const ids = selectedRows.value.map(row => row._id)
   try {
-    await ElMessageBox.confirm(`确定要删除选中的 ${ids.length} 条数据吗？`, '提示', {
+    await ElMessageBox.confirm(t('baseData.confirmDeleteSelected', { count: ids.length }), t('common.warning'), {
       type: 'warning'
     })
 
     await request.delete('/base-data/batch', { data: { ids } })
-    ElMessage.success('删除成功')
+    ElMessage.success(t('baseData.deleteSuccess'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
@@ -393,15 +393,15 @@ const exportData = async () => {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `${tabLabels[activeTab.value]}数据_${new Date().toLocaleDateString('zh-CN')}.csv`)
+    link.setAttribute('download', `${tabLabels.value[activeTab.value]}_${new Date().toLocaleDateString()}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    ElMessage.success('导出成功')
+    ElMessage.success(t('baseData.exportSuccess'))
   } catch (error) {
     console.error('Export error:', error)
-    ElMessage.error('导出失败，请稍后重试')
+    ElMessage.error(t('baseData.exportFailed'))
   } finally {
     exporting.value = false
   }

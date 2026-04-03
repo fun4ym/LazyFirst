@@ -3,10 +3,12 @@ import zh from './zh'
 import en from './en'
 import th from './th'
 
-// 默认使用英文，可切换中文/泰文
+// 从localStorage读取保存的语言设置，默认英文
+const savedLocale = localStorage.getItem('locale') || 'en'
+
 const i18n = createI18n({
   legacy: false,
-  locale: 'en',
+  locale: savedLocale,
   fallbackLocale: 'en',
   messages: {
     zh,

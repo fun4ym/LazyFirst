@@ -45,7 +45,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="BD">
+        <el-form-item :label="$t('commission.bd')">
           <el-select v-model="searchForm.bdId" :placeholder="$t('commission.allBD')" clearable filterable>
             <el-option
               v-for="user in users"
@@ -82,12 +82,12 @@
             ฿{{ formatMoney(row.commissionAmount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="calculatedDate" label="计算日期" width="120">
+        <el-table-column prop="calculatedDate" :label="$t('commission.calculatedDate')" width="120">
           <template #default="{ row }">
             {{ formatDate(row.calculatedDate) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('commission.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
@@ -151,9 +151,9 @@ const getStatusType = (status) => {
 
 const getStatusText = (status) => {
   const texts = {
-    pending: '待结算',
-    paid: '已支付',
-    settled: '已结算'
+    pending: t('commission.statusPending'),
+    paid: t('commission.statusPaid'),
+    settled: t('commission.statusSettled')
   }
   return texts[status] || status
 }

@@ -29,8 +29,8 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="角色">
-          <el-select v-model="searchForm.roleId" placeholder="全部角色" clearable>
+        <el-form-item :label="$t('user.role')">
+          <el-select v-model="searchForm.roleId" :placeholder="$t('user.allRoles')" clearable>
             <el-option
               v-for="role in roles"
               :key="role._id"
@@ -52,53 +52,53 @@
           <template #default="{ row }">
             <div>{{ row.username }}</div>
             <div v-if="row.employmentStatus !== 'nocommission'" style="font-size: 11px; color: #909399">
-              <span v-if="row.settlementType === 'monthly'">每月{{ row.settlementDay }}日结算</span>
-              <span v-else-if="row.settlementType === 'weekly'">每周{{ getWeekName(row.settlementDay) }}结算</span>
+              <span v-if="row.settlementType === 'monthly'">{{ $t('user.monthlySettlement') }}{{ row.settlementDay }}{{ $t('user.settlementDay') }}</span>
+              <span v-else-if="row.settlementType === 'weekly'">{{ $t('user.weeklySettlement') }}{{ getWeekName(row.settlementDay) }}</span>
             </div>
-            <div v-else style="font-size: 11px; color: #E6A23C">无底薪</div>
+            <div v-else style="font-size: 11px; color: #E6A23C">{{ $t('user.nocommission') }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="realName" label="真实姓名" width="120" />
-        <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column prop="email" label="邮箱" width="180" />
-        <el-table-column label="角色" width="120">
+        <el-table-column prop="realName" :label="$t('user.realName')" width="120" />
+        <el-table-column prop="phone" :label="$t('user.phone')" width="130" />
+        <el-table-column prop="email" :label="$t('user.email')" width="180" />
+        <el-table-column :label="$t('user.role')" width="120">
           <template #default="{ row }">
             {{ row.roleId?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="部门" width="120">
+        <el-table-column :label="$t('user.department')" width="120">
           <template #default="{ row }">
             {{ row.deptId?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="$t('common.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-              {{ row.status === 'active' ? '启用' : '禁用' }}
+              {{ row.status === 'active' ? $t('role.enabled') : $t('role.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160">
+        <el-table-column prop="createdAt" :label="$t('user.createTime')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column :label="$t('user.operation')" width="240" fixed="right">
           <template #default="{ row }">
             <!-- 超级管理员用户：只有超级管理员可编辑/删除 -->
             <template v-if="isSuperAdminUser(row)">
-              <el-tag type="danger" size="small">超级管理员</el-tag>
+              <el-tag type="danger" size="small">{{ $t('user.superAdmin') }}</el-tag>
               <template v-if="isCurrentUserSuperAdmin()">
-                <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">编辑</el-button>
-                <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">删除</el-button>
+                <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">{{ $t('common.edit') }}</el-button>
+                <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">{{ $t('common.delete') }}</el-button>
               </template>
             </template>
             <!-- 普通用户：可编辑/删除 -->
             <template v-else>
-              <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">编辑</el-button>
-              <el-button link type="warning" @click="showPasswordResetDialog(row)" v-if="hasPermission('users:btn-reset-pwd')">重置密码</el-button>
-              <el-button link type="success" @click="showPaymentRecordsDialog(row)" v-if="hasPermission('users:btn-payment-records') || hasPermission('users:read')">打款记录</el-button>
-              <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">删除</el-button>
+              <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('users:update')">{{ $t('common.edit') }}</el-button>
+              <el-button link type="warning" @click="showPasswordResetDialog(row)" v-if="hasPermission('users:btn-reset-pwd')">{{ $t('user.resetPassword') }}</el-button>
+              <el-button link type="success" @click="showPaymentRecordsDialog(row)" v-if="hasPermission('users:btn-payment-records') || hasPermission('users:read')">{{ $t('user.paymentRecords') }}</el-button>
+              <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('users:delete')">{{ $t('common.delete') }}</el-button>
             </template>
           </template>
         </el-table-column>
@@ -119,7 +119,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑用户' : '新建用户'"
+      :title="isEdit ? $t('user.editUserTitle') : $t('user.createUserTitle')"
       width="600px"
     >
       <el-form
@@ -128,28 +128,28 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="用户名" prop="username">
+        <el-form-item :label="$t('user.username')" prop="username">
           <el-input v-model="form.username" :disabled="isEdit" />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password" v-if="!isEdit">
+        <el-form-item :label="$t('user.password')" prop="password" v-if="!isEdit">
           <el-input v-model="form.password" type="password" show-password />
         </el-form-item>
 
-        <el-form-item label="真实姓名" prop="realName">
+        <el-form-item :label="$t('user.realName')" prop="realName">
           <el-input v-model="form.realName" />
         </el-form-item>
 
-        <el-form-item label="手机号" prop="phone">
+        <el-form-item :label="$t('user.phone')" prop="phone">
           <el-input v-model="form.phone" />
         </el-form-item>
 
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item :label="$t('user.email')" prop="email">
           <el-input v-model="form.email" />
         </el-form-item>
 
-        <el-form-item label="角色" prop="roleId">
-          <el-select v-model="form.roleId" placeholder="选择角色" style="width: 100%" :disabled="isEdit && users.value && isSuperAdminUser(users.value.find(u => u._id === form._id))">
+        <el-form-item :label="$t('user.role')" prop="roleId">
+          <el-select v-model="form.roleId" :placeholder="$t('user.selectRole')" style="width: 100%" :disabled="isEdit && users.value && isSuperAdminUser(users.value.find(u => u._id === form._id))">
             <el-option
               v-for="role in availableRoles"
               :key="role._id"
@@ -159,8 +159,8 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="部门" prop="deptId">
-          <el-select v-model="form.deptId" placeholder="选择部门" style="width: 100%">
+        <el-form-item :label="$t('user.department')" prop="deptId">
+          <el-select v-model="form.deptId" :placeholder="$t('user.selectDepartment')" style="width: 100%">
             <el-option
               v-for="dept in departments"
               :key="dept._id"
@@ -170,32 +170,32 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="银行账号">
-          <el-input v-model="form.bankAccount" placeholder="请输入银行账号（非必填）" />
+        <el-form-item :label="$t('user.bankAccount')">
+          <el-input v-model="form.bankAccount" :placeholder="$t('user.bankAccountOptional')" />
         </el-form-item>
 
-        <el-form-item label="任职状态">
+        <el-form-item :label="$t('user.employmentStatus')">
           <el-radio-group v-model="form.employmentStatus" @change="onEmploymentStatusChange">
-            <el-radio label="fulltime">全职</el-radio>
-            <el-radio label="parttime">兼职</el-radio>
-            <el-radio label="nocommission">无底薪</el-radio>
+            <el-radio label="fulltime">{{ $t('user.fulltime') }}</el-radio>
+            <el-radio label="parttime">{{ $t('user.parttime') }}</el-radio>
+            <el-radio label="nocommission">{{ $t('user.nocommission') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="结算方式" v-if="form.employmentStatus !== 'nocommission'">
+        <el-form-item :label="$t('user.settlementMethod')" v-if="form.employmentStatus !== 'nocommission'">
           <el-radio-group v-model="form.settlementType" @change="onSettlementTypeChange">
-            <el-radio label="monthly">月结</el-radio>
-            <el-radio label="weekly">周结</el-radio>
+            <el-radio label="monthly">{{ $t('user.monthlySettlement') }}</el-radio>
+            <el-radio label="weekly">{{ $t('user.weeklySettlement') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="结算日" v-if="form.employmentStatus !== 'nocommission'">
-          <el-select v-model="form.settlementDay" style="width: 100%" :placeholder="form.settlementType === 'monthly' ? '选择日期' : '选择星期'">
+        <el-form-item :label="$t('user.settlementDay')" v-if="form.employmentStatus !== 'nocommission'">
+          <el-select v-model="form.settlementDay" style="width: 100%" :placeholder="form.settlementType === 'monthly' ? $t('user.selectDate') : $t('user.selectWeek')">
             <el-option
               v-if="form.settlementType === 'monthly'"
               v-for="day in 31"
               :key="day"
-              :label="`每月${day}日`"
+              :label="$t('user.monthlyDay', { day })"
               :value="day"
             />
             <el-option
@@ -208,18 +208,18 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$t('common.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">启用</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
+            <el-radio label="active">{{ $t('role.enabled') }}</el-radio>
+            <el-radio label="inactive">{{ $t('role.disabled') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
+          {{ $t('common.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -227,116 +227,116 @@
     <!-- 重置密码对话框 -->
     <el-dialog
       v-model="passwordResetDialogVisible"
-      title="重置密码"
+      :title="$t('user.resetPasswordTitle')"
       width="400px"
     >
       <el-alert
-        :title="`为用户 ${passwordResetForm.username} 重置密码`"
+        :title="$t('user.resetPasswordTitle') + ' - ' + passwordResetForm.username"
         type="info"
         :closable="false"
         style="margin-bottom: 20px"
       />
       <el-form :model="passwordResetForm" label-width="100px">
-        <el-form-item label="新密码">
+        <el-form-item :label="$t('user.newPassword')">
           <el-input v-model="passwordResetForm.newPassword" type="password" show-password />
         </el-form-item>
-        <el-form-item label="确认密码">
+        <el-form-item :label="$t('user.confirmPwd')">
           <el-input v-model="passwordResetForm.confirmPassword" type="password" show-password />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="passwordResetDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handlePasswordReset">确定</el-button>
+        <el-button @click="passwordResetDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handlePasswordReset">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 打款记录对话框 -->
     <el-dialog
       v-model="paymentRecordsDialogVisible"
-      :title="`${paymentRecordsUser.realName || ''} - 打款记录`"
+      :title="(paymentRecordsUser.realName || '') + ' - ' + $t('user.paymentRecordsTitle')"
       width="800px"
     >
       <div class="payment-records-header">
         <el-button type="primary" size="small" @click="showAddPaymentRecordDialog">
           <el-icon><Plus /></el-icon>
-          新增打款记录
+          {{ $t('user.addPaymentRecord') }}
         </el-button>
       </div>
       
       <el-table :data="paymentRecords" v-loading="paymentRecordsLoading" border stripe style="margin-top: 12px">
-        <el-table-column prop="type" label="类型" width="80">
+        <el-table-column prop="type" :label="$t('user.type')" width="80">
           <template #default="{ row }">
             <el-tag :type="row.type === 'salary' ? 'warning' : 'success'" size="small">
-              {{ row.type === 'salary' ? '薪水' : '提成' }}
+              {{ row.type === 'salary' ? $t('user.salary') : $t('user.commission') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="billNo" label="账单" width="120">
+        <el-table-column prop="billNo" :label="$t('user.bill')" width="120">
           <template #default="{ row }">
             {{ row.billNo || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="paymentTime" label="打款时间" width="160">
+        <el-table-column prop="paymentTime" :label="$t('user.paymentTime')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.paymentTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="bdName" label="BD" width="100" />
-        <el-table-column prop="bankAccount" label="银行账号" width="180" />
-        <el-table-column prop="bankFlowNo" label="银行流水号" width="150" />
-        <el-table-column prop="amount" label="金额" width="100">
+        <el-table-column prop="bdName" :label="$t('user.bdName')" width="100" />
+        <el-table-column prop="bankAccount" :label="$t('user.bankAccount')" width="180" />
+        <el-table-column prop="bankFlowNo" :label="$t('user.bankFlowNo')" width="150" />
+        <el-table-column prop="amount" :label="$t('user.amount')" width="100">
           <template #default="{ row }">
             ¥{{ (row.amount || 0).toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="note" label="备注" min-width="120" />
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column prop="note" :label="$t('user.remark')" min-width="120" />
+        <el-table-column :label="$t('user.operation')" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button link type="danger" size="small" @click="handleDeletePaymentRecord(row)">删除</el-button>
+            <el-button link type="danger" size="small" @click="handleDeletePaymentRecord(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <template #footer>
-        <el-button @click="paymentRecordsDialogVisible = false">关闭</el-button>
+        <el-button @click="paymentRecordsDialogVisible = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 新增打款记录对话框 -->
     <el-dialog
       v-model="addPaymentRecordDialogVisible"
-      title="新增打款记录"
+      :title="$t('user.addPaymentRecord')"
       width="500px"
     >
       <el-form :model="paymentRecordForm" label-width="100px">
-        <el-form-item label="BD名称">
+        <el-form-item :label="$t('user.bdName')">
           <el-input v-model="paymentRecordForm.bdName" disabled />
         </el-form-item>
-        <el-form-item label="银行账号">
-          <el-input v-model="paymentRecordForm.bankAccount" placeholder="请输入银行账号" />
+        <el-form-item :label="$t('user.bankAccount')">
+          <el-input v-model="paymentRecordForm.bankAccount" :placeholder="$t('user.bankAccountOptional')" />
         </el-form-item>
-        <el-form-item label="银行流水号">
-          <el-input v-model="paymentRecordForm.bankFlowNo" placeholder="请输入银行流水号" />
+        <el-form-item :label="$t('user.bankFlowNo')">
+          <el-input v-model="paymentRecordForm.bankFlowNo" :placeholder="$t('user.bankFlowNo')" />
         </el-form-item>
-        <el-form-item label="打款金额">
+        <el-form-item :label="$t('user.amount')">
           <el-input-number v-model="paymentRecordForm.amount" :min="0" :precision="2" :controls="false" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="打款时间">
+        <el-form-item :label="$t('user.paymentTime')">
           <el-date-picker
             v-model="paymentRecordForm.paymentTime"
             type="datetime"
-            placeholder="选择打款时间"
+            :placeholder="$t('user.selectDate')"
             style="width: 100%"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="paymentRecordForm.note" type="textarea" :rows="2" placeholder="请输入备注" />
+        <el-form-item :label="$t('user.remark')">
+          <el-input v-model="paymentRecordForm.note" type="textarea" :rows="2" :placeholder="$t('user.remark')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="addPaymentRecordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAddPaymentRecord" :loading="addingPaymentRecord">确定</el-button>
+        <el-button @click="addPaymentRecordDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleAddPaymentRecord" :loading="addingPaymentRecord">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -456,15 +456,15 @@ const onSettlementTypeChange = () => {
 }
 
 // 周选项
-const weekOptions = [
-  { value: 1, label: '周一' },
-  { value: 2, label: '周二' },
-  { value: 3, label: '周三' },
-  { value: 4, label: '周四' },
-  { value: 5, label: '周五' },
-  { value: 6, label: '周六' },
-  { value: 7, label: '周日' }
-]
+const weekOptions = computed(() => [
+  { value: 1, label: t('user.monday') },
+  { value: 2, label: t('user.tuesday') },
+  { value: 3, label: t('user.wednesday') },
+  { value: 4, label: t('user.thursday') },
+  { value: 5, label: t('user.friday') },
+  { value: 6, label: t('user.saturday') },
+  { value: 7, label: t('user.sunday') }
+])
 
 // 获取周几名称
 const getWeekName = (day) => {
@@ -474,20 +474,20 @@ const getWeekName = (day) => {
 
 const rules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: t('user.inputUsername') || t('common.input') + t('user.username'), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' }
+    { required: true, message: t('user.inputPassword') || t('common.input') + t('user.password'), trigger: 'blur' },
+    { min: 6, message: t('user.pwdMinLength'), trigger: 'blur' }
   ],
   realName: [
-    { required: true, message: '请输入真实姓名', trigger: 'blur' }
+    { required: true, message: t('user.inputRealName') || t('common.input') + t('user.realName'), trigger: 'blur' }
   ],
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' }
+    { required: true, message: t('user.inputPhone') || t('common.input') + t('user.phone'), trigger: 'blur' }
   ],
   roleId: [
-    { required: true, message: '请选择角色', trigger: 'change' }
+    { required: true, message: t('user.selectRole'), trigger: 'change' }
   ]
 }
 
@@ -548,7 +548,7 @@ const loadPaymentRecords = async (bdName) => {
     paymentRecords.value = res.records || []
   } catch (error) {
     console.error('Load payment records error:', error)
-    ElMessage.error('加载打款记录失败')
+    ElMessage.error(t('user.loadFailed'))
   } finally {
     paymentRecordsLoading.value = false
   }
@@ -575,7 +575,7 @@ const showAddPaymentRecordDialog = () => {
 // 新增打款记录（薪水类型）
 const handleAddPaymentRecord = async () => {
   if (!paymentRecordForm.bdName) {
-    ElMessage.warning('请填写BD名称')
+    ElMessage.warning(t('user.inputBdName') || t('common.input') + t('user.bdName'))
     return
   }
   
@@ -586,12 +586,12 @@ const handleAddPaymentRecord = async () => {
       ...paymentRecordForm,
       type: 'salary'
     })
-    ElMessage.success('添加成功')
+    ElMessage.success(t('user.addSuccess'))
     addPaymentRecordDialogVisible.value = false
     await loadPaymentRecords(paymentRecordForm.bdName)
   } catch (error) {
     console.error('Add payment record error:', error)
-    ElMessage.error(error.response?.data?.message || '添加失败')
+    ElMessage.error(error.response?.data?.message || t('user.addFailed'))
   } finally {
     addingPaymentRecord.value = false
   }
@@ -600,22 +600,22 @@ const handleAddPaymentRecord = async () => {
 // 删除打款记录
 const handleDeletePaymentRecord = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要删除这条打款记录吗？', '提示', {
+    await ElMessageBox.confirm(t('user.deleteConfirm'), t('user.confirmTitle'), {
       type: 'warning'
     })
     // 找到该记录在数组中的索引
     const idx = paymentRecords.value.findIndex(r => r.billId === row.billId && r.createdAt === row.createdAt)
     if (idx === -1) {
-      ElMessage.error('记录不存在')
+      ElMessage.error(t('user.deleteRecordNotFound'))
       return
     }
     await request.delete(`/report-orders/bd-payment-records/${row.billId}/${idx}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('user.deleteSuccess'))
     await loadPaymentRecords(row.bdName)
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Delete payment record error:', error)
-      ElMessage.error(error.response?.data?.message || '删除失败')
+      ElMessage.error(error.response?.data?.message || t('user.deleteFailed'))
     }
   }
 }
@@ -657,12 +657,12 @@ const showPasswordResetDialog = (row) => {
 
 const handlePasswordReset = async () => {
   if (passwordResetForm.value.newPassword !== passwordResetForm.value.confirmPassword) {
-    ElMessage.error('两次输入的新密码不一致')
+    ElMessage.error(t('user.pwdMismatch'))
     return
   }
 
   if (passwordResetForm.value.newPassword.length < 6) {
-    ElMessage.error('密码至少6位')
+    ElMessage.error(t('user.pwdMinLength'))
     return
   }
 
@@ -680,13 +680,13 @@ const handlePasswordReset = async () => {
 
     const result = await response.json()
     if (result.success) {
-      ElMessage.success('密码重置成功')
+      ElMessage.success(t('user.resetSuccess'))
       passwordResetDialogVisible.value = false
     } else {
-      ElMessage.error(result.message || '密码重置失败')
+      ElMessage.error(result.message || t('user.resetFailed'))
     }
   } catch (error) {
-    ElMessage.error('密码重置失败')
+    ElMessage.error(t('user.resetFailed'))
   }
 }
 
@@ -726,10 +726,10 @@ const handleSubmit = async () => {
       const data = { ...form }
       if (isEdit.value) {
         await request.put(`/users/${data._id}`, data)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('user.updateSuccess'))
       } else {
         await request.post('/users', data)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('user.createSuccess'))
       }
       dialogVisible.value = false
       loadUsers()
@@ -743,11 +743,11 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除用户 ${row.realName} 吗？`, '提示', {
+    await ElMessageBox.confirm(t('user.confirmDeleteUser', { name: row.realName }), t('user.confirmTitle'), {
       type: 'warning'
     })
     await request.delete(`/users/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('user.deleteSuccess'))
     loadUsers()
   } catch (error) {
     if (error !== 'cancel') {

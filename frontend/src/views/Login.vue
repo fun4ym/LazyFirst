@@ -1,6 +1,22 @@
 <template>
   <div class="login-container">
     <img src="https://cdn.jsdelivr.net/gh/fun4ym/LazyFirst@main/frontend/public/logo.png" alt="LazyFirst" class="page-logo" />
+    <!-- 语言选择 -->
+    <div class="language-selector">
+      <el-dropdown @command="handleLanguageChange" trigger="click">
+        <el-button text>
+          <span class="lang-text">{{ currentLangText }}</span>
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="zh">中文</el-dropdown-item>
+            <el-dropdown-item command="en">English</el-dropdown-item>
+            <el-dropdown-item command="th">ภาษาไทย</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
     <div class="login-box">
       <div class="login-header">
         <h1>{{ $t('login.title') }}</h1>
@@ -159,10 +175,10 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Iphone, Monitor, WarningFilled } from '@element-plus/icons-vue'
+import { User, Lock, Iphone, Monitor, WarningFilled, ArrowDown } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 
 const formRef = ref(null)
@@ -185,10 +201,22 @@ const isLocked = computed(() => {
   return Date.now() < lockEndTime.value
 })
 
+// 当前语言文本
+const currentLangText = computed(() => {
+  const langMap = { zh: '中文', en: 'English', th: 'ภาษาไทย' }
+  return langMap[locale.value] || 'English'
+})
+
+// 切换语言
+const handleLanguageChange = (lang) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
+
 const form = reactive({
   username: '',
   password: '',
-  agreedToTerms: false
+  agreedToTerms: true
 })
 
 const rules = {
@@ -335,6 +363,18 @@ const handleTikTokLogin = async () => {
   width: 150px;
   height: auto;
   z-index: 10;
+}
+
+.language-selector {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 10;
+}
+
+.language-selector .lang-text {
+  color: white;
+  font-size: 14px;
 }
 
 .login-box {

@@ -3,30 +3,30 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>初始化</h3>
-          <span class="header-tip">本模块仅限GoodMe系统切换时导入原始数据</span>
+          <h3>{{ $t('baseData.initialization') }}</h3>
+          <span class="header-tip">{{ $t('baseData.initializationTip') }}</span>
         </div>
       </template>
 
       <el-tabs v-model="activeTab" class="init-tabs">
         <!-- 导入店铺 -->
-        <el-tab-pane label="导入店铺" name="shop">
+        <el-tab-pane :label="$t('baseData.shopImport')" name="shop">
           <div class="import-section">
             <div class="section-header">
-              <span class="section-title">店铺数据导入</span>
+              <span class="section-title">{{ $t('baseData.shopDataImport') }}</span>
               <el-button type="danger" size="small" @click="clearShops" :loading="clearingShops">
-                清除
+                {{ $t('baseData.clear') }}
               </el-button>
             </div>
             <el-alert
-              title="导入说明"
+              :title="$t('baseData.importInstruction')"
               type="info"
               :closable="false"
               show-icon
               style="margin-bottom: 16px"
             >
               <template #default>
-                上传Excel文件( gm-shop.xls )进行店铺数据导入
+                {{ $t('baseData.uploadExcelFile') }} ( {{ $t('baseData.shopFile') }} )
               </template>
             </el-alert>
             <el-upload
@@ -42,16 +42,16 @@
               :limit="1"
               accept=".xls,.xlsx"
             >
-              <el-button type="primary" size="small">选择文件</el-button>
+              <el-button type="primary" size="small">{{ $t('baseData.selectFile') }}</el-button>
               <template #tip>
-                <div class="upload-tip">只能上传xls/xlsx文件</div>
+                <div class="upload-tip">{{ $t('baseData.fileTypeTip') }}</div>
               </template>
             </el-upload>
             <div class="upload-actions" v-if="shopFile">
               <el-button type="success" @click="submitUpload('shop')" :loading="uploadingShop">
-                导入
+                {{ $t('baseData.import') }}
               </el-button>
-              <el-button @click="resetUpload('shop')">重置</el-button>
+              <el-button @click="resetUpload('shop')">{{ $t('baseData.reset') }}</el-button>
             </div>
             <div v-if="shopResult" class="result-info" :class="shopResult.success ? 'success' : 'error'">
               {{ shopResult.message }}
@@ -60,23 +60,23 @@
         </el-tab-pane>
 
         <!-- 导入商品 -->
-        <el-tab-pane label="导入商品" name="product">
+        <el-tab-pane :label="$t('baseData.productImport')" name="product">
           <div class="import-section">
             <div class="section-header">
-              <span class="section-title">商品数据导入</span>
+              <span class="section-title">{{ $t('baseData.productDataImport') }}</span>
               <el-button type="danger" size="small" @click="clearProducts" :loading="clearingProducts">
-                清除
+                {{ $t('baseData.clear') }}
               </el-button>
             </div>
             <el-alert
-              title="导入说明"
+              :title="$t('baseData.importInstruction')"
               type="info"
               :closable="false"
               show-icon
               style="margin-bottom: 16px"
             >
               <template #default>
-                上传Excel文件( gm-goods.xls )进行商品数据导入
+                {{ $t('baseData.uploadExcelFile') }} ( {{ $t('baseData.productFile') }} )
               </template>
             </el-alert>
             <el-upload
@@ -91,16 +91,16 @@
               :limit="1"
               accept=".xls,.xlsx"
             >
-              <el-button type="primary" size="small">选择文件</el-button>
+              <el-button type="primary" size="small">{{ $t('baseData.selectFile') }}</el-button>
               <template #tip>
-                <div class="upload-tip">只能上传xls/xlsx文件</div>
+                <div class="upload-tip">{{ $t('baseData.fileTypeTip') }}</div>
               </template>
             </el-upload>
             <div class="upload-actions" v-if="productFile">
               <el-button type="success" @click="submitUpload('product')" :loading="uploadingProduct">
-                导入
+                {{ $t('baseData.import') }}
               </el-button>
-              <el-button @click="resetUpload('product')">重置</el-button>
+              <el-button @click="resetUpload('product')">{{ $t('baseData.reset') }}</el-button>
             </div>
             <div v-if="productResult" class="result-info" :class="productResult.success ? 'success' : 'error'">
               {{ productResult.message }}
@@ -109,23 +109,23 @@
         </el-tab-pane>
 
         <!-- 导入达人 -->
-        <el-tab-pane label="导入达人" name="influencer">
+        <el-tab-pane :label="$t('baseData.influencerImport')" name="influencer">
           <div class="import-section">
             <div class="section-header">
-              <span class="section-title">达人数据导入</span>
+              <span class="section-title">{{ $t('baseData.influencerDataImport') }}</span>
               <el-button type="danger" size="small" @click="clearInfluencers" :loading="clearingInfluencers">
-                清除
+                {{ $t('baseData.clear') }}
               </el-button>
             </div>
             <el-alert
-              title="导入说明"
+              :title="$t('baseData.importInstruction')"
               type="info"
               :closable="false"
               show-icon
               style="margin-bottom: 16px"
             >
               <template #default>
-                上传Excel文件( gm-tk_expert.xls )进行达人数据导入
+                {{ $t('baseData.uploadExcelFile') }} ( {{ $t('baseData.influencerFile') }} )
               </template>
             </el-alert>
             <el-upload
@@ -140,16 +140,16 @@
               :limit="1"
               accept=".xls,.xlsx"
             >
-              <el-button type="primary" size="small">选择文件</el-button>
+              <el-button type="primary" size="small">{{ $t('baseData.selectFile') }}</el-button>
               <template #tip>
-                <div class="upload-tip">只能上传xls/xlsx文件</div>
+                <div class="upload-tip">{{ $t('baseData.fileTypeTip') }}</div>
               </template>
             </el-upload>
             <div class="upload-actions" v-if="influencerFile">
               <el-button type="success" @click="submitUpload('influencer')" :loading="uploadingInfluencer">
-                导入
+                {{ $t('baseData.import') }}
               </el-button>
-              <el-button @click="resetUpload('influencer')">重置</el-button>
+              <el-button @click="resetUpload('influencer')">{{ $t('baseData.reset') }}</el-button>
             </div>
             <div v-if="influencerResult" class="result-info" :class="influencerResult.success ? 'success' : 'error'">
               {{ influencerResult.message }}
@@ -220,7 +220,7 @@ function handleFileChange(file, type) {
   const expected = expectedFileNames[type].toLowerCase()
 
   if (fileName !== expected && !fileName.includes(expected.replace('.xls', ''))) {
-    ElMessage.error(`文件名必须为 ${expectedFileNames[type]}，当前文件：${rawFile.name}`)
+    ElMessage.error(t('baseData.fileNameRequired', { expected: expectedFileNames[type], actual: rawFile.name }))
     if (type === 'shop') {
       shopFile.value = null
       shopUploadRef.value?.clearFiles()
@@ -263,7 +263,7 @@ function submitUpload(type) {
   }
 
   if (!file.value) {
-    ElMessage.warning('请先选择文件')
+    ElMessage.warning(t('baseData.pleaseSelectFile'))
     return
   }
 
@@ -283,26 +283,26 @@ function submitUpload(type) {
     .then(res => {
       if (res.data.success) {
         if (type === 'shop') {
-          shopResult.value = { success: true, message: res.data.message || '店铺导入成功' }
+          shopResult.value = { success: true, message: res.data.message || t('baseData.shopCleared') }
         } else if (type === 'product') {
-          productResult.value = { success: true, message: res.data.message || '商品导入成功' }
+          productResult.value = { success: true, message: res.data.message || t('baseData.productCleared') }
         } else if (type === 'influencer') {
-          influencerResult.value = { success: true, message: res.data.message || '达人导入成功' }
+          influencerResult.value = { success: true, message: res.data.message || t('baseData.influencerCleared') }
         }
-        ElMessage.success(res.data.message || '导入成功')
+        ElMessage.success(res.data.message || t('baseData.imported'))
       } else {
         if (type === 'shop') {
-          shopResult.value = { success: false, message: res.data.message || '店铺导入失败' }
+          shopResult.value = { success: false, message: res.data.message || t('baseData.importFailed') }
         } else if (type === 'product') {
-          productResult.value = { success: false, message: res.data.message || '商品导入失败' }
+          productResult.value = { success: false, message: res.data.message || t('baseData.importFailed') }
         } else if (type === 'influencer') {
-          influencerResult.value = { success: false, message: res.data.message || '达人导入失败' }
+          influencerResult.value = { success: false, message: res.data.message || t('baseData.importFailed') }
         }
-        ElMessage.error(res.data.message || '导入失败')
+        ElMessage.error(res.data.message || t('baseData.importFailed'))
       }
     })
     .catch(err => {
-      const msg = err.response?.data?.message || '上传失败，请重试'
+      const msg = err.response?.data?.message || t('baseData.uploadFailed')
       if (type === 'shop') {
         shopResult.value = { success: false, message: msg }
       } else if (type === 'product') {
@@ -345,16 +345,16 @@ function handleUploadSuccess(response, type) {
 
 function handleUploadError(err) {
   console.error('upload error', err)
-  ElMessage.error('上传失败，请重试')
+  ElMessage.error(t('baseData.uploadFailed'))
 }
 
 // 清除数据
 async function clearShops() {
   try {
-    await ElMessageBox.confirm('确定要删除所有店铺数据吗？此操作不可恢复！', '警告', {
+    await ElMessageBox.confirm(t('baseData.confirmClearShop'), t('baseData.warning'), {
       type: 'warning',
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel')
     })
     clearingShops.value = true
     const token = localStorage.getItem('token')
@@ -362,14 +362,14 @@ async function clearShops() {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (res.data.success) {
-      ElMessage.success('店铺数据已清空')
-      shopResult.value = { success: true, message: '店铺数据已清空' }
+      ElMessage.success(t('baseData.shopCleared'))
+      shopResult.value = { success: true, message: t('baseData.shopCleared') }
     } else {
-      ElMessage.error(res.data.message || '清除失败')
+      ElMessage.error(res.data.message || t('baseData.clearFailed'))
     }
   } catch (e) {
     if (e !== 'cancel') {
-      ElMessage.error('清除失败')
+      ElMessage.error(t('baseData.clearFailed'))
     }
   } finally {
     clearingShops.value = false
@@ -378,10 +378,10 @@ async function clearShops() {
 
 async function clearProducts() {
   try {
-    await ElMessageBox.confirm('确定要删除所有商品数据吗？此操作不可恢复！', '警告', {
+    await ElMessageBox.confirm(t('baseData.confirmClearProduct'), t('baseData.warning'), {
       type: 'warning',
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel')
     })
     clearingProducts.value = true
     const token = localStorage.getItem('token')
@@ -389,14 +389,14 @@ async function clearProducts() {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (res.data.success) {
-      ElMessage.success('商品数据已清空')
-      productResult.value = { success: true, message: '商品数据已清空' }
+      ElMessage.success(t('baseData.productCleared'))
+      productResult.value = { success: true, message: t('baseData.productCleared') }
     } else {
-      ElMessage.error(res.data.message || '清除失败')
+      ElMessage.error(res.data.message || t('baseData.clearFailed'))
     }
   } catch (e) {
     if (e !== 'cancel') {
-      ElMessage.error('清除失败')
+      ElMessage.error(t('baseData.clearFailed'))
     }
   } finally {
     clearingProducts.value = false
@@ -405,10 +405,10 @@ async function clearProducts() {
 
 async function clearInfluencers() {
   try {
-    await ElMessageBox.confirm('确定要删除所有达人数据吗？此操作不可恢复！', '警告', {
+    await ElMessageBox.confirm(t('baseData.confirmClearInfluencer'), t('baseData.warning'), {
       type: 'warning',
-      confirmButtonText: '确定',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel')
     })
     clearingInfluencers.value = true
     const token = localStorage.getItem('token')
@@ -416,14 +416,14 @@ async function clearInfluencers() {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (res.data.success) {
-      ElMessage.success('达人数据已清空')
-      influencerResult.value = { success: true, message: '达人数据已清空' }
+      ElMessage.success(t('baseData.influencerCleared'))
+      influencerResult.value = { success: true, message: t('baseData.influencerCleared') }
     } else {
-      ElMessage.error(res.data.message || '清除失败')
+      ElMessage.error(res.data.message || t('baseData.clearFailed'))
     }
   } catch (e) {
     if (e !== 'cancel') {
-      ElMessage.error('清除失败')
+      ElMessage.error(t('baseData.clearFailed'))
     }
   } finally {
     clearingInfluencers.value = false

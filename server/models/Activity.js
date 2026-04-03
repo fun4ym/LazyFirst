@@ -109,12 +109,6 @@ const activitySchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  // 寄样方式
-  sampleMethod: {
-    type: String,
-    enum: ['线上', '线下', ''],
-    default: ''
-  },
   description: {
     type: String,
     trim: true

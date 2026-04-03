@@ -28,10 +28,10 @@
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column :label="$t('department.operation')" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('departments:update')">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('departments:delete')">删除</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('departments:update')">{{ $t('common.edit') }}</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('departments:delete')">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -40,7 +40,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑部门' : '新建部门'"
+      :title="isEdit ? $t('department.editDepartmentTitle') : $t('department.createDepartmentTitle')"
       width="600px"
     >
       <el-form
@@ -49,28 +49,28 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="上级部门" prop="parentId">
+        <el-form-item :label="$t('department.parentDepartment')" prop="parentId">
           <el-tree-select
             v-model="form.parentId"
             :data="departmentTree"
             :props="{ label: 'name', value: '_id' }"
-            placeholder="选择上级部门（不选则为顶级部门）"
+            :placeholder="$t('department.selectParent')"
             clearable
             check-strictly
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="部门名称" prop="name">
+        <el-form-item :label="$t('department.departmentName')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
 
-        <el-form-item label="部门描述" prop="description">
+        <el-form-item :label="$t('role.description')" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
 
-        <el-form-item label="部门负责人" prop="managerId">
-          <el-select v-model="form.managerId" placeholder="选择负责人" style="width: 100%" clearable filterable>
+        <el-form-item :label="$t('department.manager')" prop="managerId">
+          <el-select v-model="form.managerId" :placeholder="$t('department.selectManager')" style="width: 100%" clearable filterable>
             <el-option
               v-for="user in users"
               :key="user._id"
@@ -80,18 +80,18 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$t('common.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">启用</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
+            <el-radio label="active">{{ $t('role.enabled') }}</el-radio>
+            <el-radio label="inactive">{{ $t('role.disabled') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
+          {{ $t('common.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -129,10 +129,10 @@ const form = reactive({
 
 const rules = {
   name: [
-    { required: true, message: '请输入部门名称', trigger: 'blur' }
+    { required: true, message: t('department.inputDeptName'), trigger: 'blur' }
   ],
   description: [
-    { required: true, message: '请输入部门描述', trigger: 'blur' }
+    { required: true, message: t('department.inputDeptDesc'), trigger: 'blur' }
   ]
 }
 
@@ -220,10 +220,10 @@ const handleSubmit = async () => {
       const data = { ...form }
       if (isEdit.value) {
         await request.put(`/departments/${data._id}`, data)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('department.updateSuccess'))
       } else {
         await request.post('/departments', data)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('department.createSuccess'))
       }
       dialogVisible.value = false
       loadDepartments()
@@ -237,11 +237,11 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除部门 ${row.name} 吗？`, '提示', {
+    await ElMessageBox.confirm(t('department.deleteConfirm', { name: row.name }), t('department.confirmTitle'), {
       type: 'warning'
     })
     await request.delete(`/departments/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('department.deleteSuccess'))
     loadDepartments()
   } catch (error) {
     if (error !== 'cancel') {

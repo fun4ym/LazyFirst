@@ -3,54 +3,54 @@
     <el-card>
       <template #header>
         <div class="page-header">
-          <h3>角色管理</h3>
+          <h3>{{ $t('role.title') }}</h3>
           <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('roles:create')">
             <el-icon><Plus /></el-icon>
-            新建角色
+            {{ $t('role.createRole') }}
           </el-button>
         </div>
       </template>
 
       <!-- 表格 -->
       <el-table :data="roles" v-loading="loading" border>
-        <el-table-column prop="name" label="角色名称" width="200" />
-        <el-table-column prop="description" label="角色描述" />
-        <el-table-column label="权限数量" width="120">
+        <el-table-column prop="name" :label="$t('role.roleName')" width="200" />
+        <el-table-column prop="description" :label="$t('role.description')" />
+        <el-table-column :label="$t('role.permissionCount')" width="120">
           <template #default="{ row }">
             {{ row.permissions?.length || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="数据权限" width="300">
+        <el-table-column :label="$t('role.dataPermission')" width="300">
           <template #default="{ row }">
-            <el-tag v-if="row.name === '超级管理员'" type="success" size="small">全部权限</el-tag>
+            <el-tag v-if="row.name === '超级管理员'" type="success" size="small">{{ $t('role.allPermissions') }}</el-tag>
             <div v-else-if="row.moduleDataScopes && Object.keys(row.moduleDataScopes).length > 0" style="font-size: 12px">
               <el-tag v-for="(scope, module) in row.moduleDataScopes" :key="module" size="small" style="margin-right: 4px; margin-bottom: 2px">
                 {{ getModuleName(module) }}: {{ getScopeName(scope) }}
               </el-tag>
             </div>
-            <span v-else style="color: #999">未配置</span>
+            <span v-else style="color: #999">{{ $t('role.notConfigured') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="$t('common.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-              {{ row.status === 'active' ? '启用' : '禁用' }}
+              {{ row.status === 'active' ? $t('role.enabled') : $t('role.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160">
+        <el-table-column prop="createdAt" :label="$t('role.createTime')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column :label="$t('role.operation')" width="180" fixed="right">
           <template #default="{ row }">
             <template v-if="row.name === '超级管理员'">
-              <el-tag type="danger" size="small">超级管理员</el-tag>
+              <el-tag type="danger" size="small">{{ $t('role.superAdmin') }}</el-tag>
             </template>
             <template v-else>
-              <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('roles:update')">编辑</el-button>
-              <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('roles:delete')">删除</el-button>
+              <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('roles:update')">{{ $t('common.edit') }}</el-button>
+              <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('roles:delete')">{{ $t('common.delete') }}</el-button>
             </template>
           </template>
         </el-table-column>
@@ -60,7 +60,7 @@
     <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑角色' : '新建角色'"
+      :title="isEdit ? $t('role.editRole') : $t('role.createRole')"
       width="1100px"
       top="5vh"
     >
@@ -70,29 +70,29 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="角色名称" prop="name">
+        <el-form-item :label="$t('role.roleName')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
 
-        <el-form-item label="角色描述" prop="description">
+        <el-form-item :label="$t('role.description')" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="2" />
         </el-form-item>
 
         <!-- 权限配置 - 新布局：左侧菜单树 + 中间控件 + 右侧数据 -->
-        <el-form-item label="权限配置" prop="permissions">
+        <el-form-item :label="$t('role.permissionConfig')" prop="permissions">
           <div v-if="isSuperAdminRole" class="super-admin-tip">
             <el-alert type="success" :closable="false">
               <template #title>
-                超级管理员拥有系统全部权限，无需配置
+                {{ $t('role.superAdminTip') }}
               </template>
             </el-alert>
           </div>
           <div v-else class="permission-panel">
             <!-- 左侧：菜单树 -->
             <div class="menu-tree-panel">
-              <div class="panel-title">菜单列表</div>
+              <div class="panel-title">{{ $t('role.menuList') }}</div>
               <el-tree
-                :data="menuTree"
+                :data="translatedMenuTree"
                 :props="treeProps"
                 node-key="code"
                 :expand-on-click-node="false"
@@ -123,14 +123,14 @@
             <!-- 中间：控件权限 -->
             <div class="control-panel">
               <div class="panel-title">
-                控件权限
-                <span class="selected-menu">{{ selectedMenu?.name || '请选择菜单' }}</span>
+                {{ $t('role.controlPermission') }}
+                <span class="selected-menu">{{ selectedMenu?.name || $t('role.selectMenu') }}</span>
               </div>
               <div v-if="selectedMenu && availableControls.length > 0" class="control-list">
                 <div class="controls-table">
-                  <el-table :data="availableControls" border size="small">
-                    <el-table-column prop="name" label="控件" />
-                    <el-table-column label="可用" width="100" align="center">
+                  <el-table :data="translatedAvailableControls" border size="small">
+                    <el-table-column prop="name" :label="$t('common.name')" />
+                    <el-table-column :label="$t('role.enabled')" width="100" align="center">
                       <template #default="{ row }">
                         <el-switch
                           :model-value="isControlEnabled(row.code)"
@@ -142,54 +142,54 @@
                 </div>
               </div>
               <div v-else-if="selectedMenu" class="no-selection">
-                该菜单无可配置控件
+                {{ $t('role.noControls') }}
               </div>
               <div v-else class="no-selection">
-                请在左侧选择菜单
+                {{ $t('role.selectMenuLeft') }}
               </div>
             </div>
 
             <!-- 右侧：数据权限 -->
             <div class="data-scope-panel">
-              <div class="panel-title">数据权限</div>
+              <div class="panel-title">{{ $t('role.dataScope') }}</div>
               <div v-if="selectedMenu && selectedMenu.code" class="data-scope-config">
                 <div class="data-scope-item">
                   <span class="data-scope-label">{{ selectedMenu.name }}</span>
                   <el-radio-group v-model="dataScopeConfig[selectedMenu.code]" size="small">
-                    <el-radio-button label="self">自己</el-radio-button>
-                    <el-radio-button label="dept">部门</el-radio-button>
-                    <el-radio-button label="all">全部</el-radio-button>
+                    <el-radio-button label="self">{{ $t('role.self') }}</el-radio-button>
+                    <el-radio-button label="dept">{{ $t('role.dept') }}</el-radio-button>
+                    <el-radio-button label="all">{{ $t('role.all') }}</el-radio-button>
                   </el-radio-group>
                 </div>
                 <div class="data-scope-tips">
                   <el-alert type="info" :closable="false">
                     <template #title>
-                      <span v-if="dataScopeConfig[selectedMenu.code] === 'self'">只能查看自己创建的数据</span>
-                      <span v-else-if="dataScopeConfig[selectedMenu.code] === 'dept'">可以查看本部门的所有数据</span>
-                      <span v-else>可以查看全部数据</span>
+                      <span v-if="dataScopeConfig[selectedMenu.code] === 'self'">{{ $t('role.scopeSelfTip') }}</span>
+                      <span v-else-if="dataScopeConfig[selectedMenu.code] === 'dept'">{{ $t('role.scopeDeptTip') }}</span>
+                      <span v-else>{{ $t('role.scopeAllTip') }}</span>
                     </template>
                   </el-alert>
                 </div>
               </div>
               <div v-else class="no-selection">
-                选择菜单后配置数据权限
+                {{ $t('role.selectMenuConfig') }}
               </div>
             </div>
           </div>
         </el-form-item>
 
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$t('common.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">启用</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
+            <el-radio label="active">{{ $t('role.enabled') }}</el-radio>
+            <el-radio label="inactive">{{ $t('role.disabled') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
+          {{ $t('common.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -198,12 +198,99 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
+const { t } = useI18n()
 const hasPermission = (perm) => AuthManager.hasPermission(perm)
+
+// 菜单名称翻译映射
+const menuNameMap = computed(() => ({
+  dashboard: t('menu.dashboard'),
+  'bd-workspace': t('menu.bdWorkspace'),
+  influencers: t('menu.influencerList'),
+  'samples-bd': t('samples.title'),
+  'supply-chain': t('menu.supplyChain'),
+  products: t('menu.products'),
+  activities: t('menu.activities'),
+  shops: t('menu.shops'),
+  'data-collection': t('menu.dataCollection'),
+  samples: t('menu.samples'),
+  orders: t('menu.orders'),
+  reports: t('menu.reports'),
+  'bd-dashboard': t('menu.bdDashboard'),
+  'bd-daily': t('menu.bdDaily'),
+  performance: t('menu.performance'),
+  settings: t('menu.settings'),
+  users: t('menu.users'),
+  roles: t('menu.roles'),
+  departments: t('menu.departments'),
+  commissions: t('menu.commissionRules'),
+  baseData: t('menu.baseData'),
+  systemModels: t('menu.systemModels')
+}))
+
+// 控件名称翻译映射
+const controlNameMap = computed(() => ({
+  'btn-view': t('common.viewDetail'),
+  'btn-add': t('common.add'),
+  'btn-edit': t('common.edit'),
+  'btn-delete': t('common.delete'),
+  'btn-batch-claim': t('influencer.batchClaim'),
+  'btn-batch-release': t('influencer.batchRelease'),
+  'btn-view-orders': t('influencer.viewOrders'),
+  'btn-claim': t('influencer.claim'),
+  'btn-release': t('influencer.release'),
+  'btn-add-blacklist': t('influencer.blacklist'),
+  'btn-remove-blacklist': t('influencer.releaseBlacklistSuccess'),
+  'btn-view-report': t('product.report'),
+  'btn-copy-link': t('shop.copy'),
+  'btn-shop-add': t('shop.addShop'),
+  'btn-shop-view': t('shop.detail'),
+  'btn-shop-edit': t('shop.edit'),
+  'btn-shop-delete': t('shop.delete'),
+  'btn-refresh-code': t('common.refresh'),
+  'btn-match-bd': t('reportOrders.bdMatch'),
+  'btn-import': t('common.import'),
+  'btn-view-influencer': t('influencer.viewOrders'),
+  'btn-view-detail': t('common.detail'),
+  'btn-edit-status': t('common.edit'),
+  'btn-edit-fulfillment': t('common.edit'),
+  'btn-edit-promo': t('common.edit'),
+  'btn-generate': t('bdDaily.generateStats'),
+  'btn-batch-delete': t('common.delete'),
+  'btn-export': t('common.export'),
+  'btn-reset-pwd': t('common.edit'),
+  'btn-add-category': t('commission.addCategory'),
+  'btn-add-rule': t('commission.addRule'),
+  'btn-save': t('common.save'),
+  // 操作权限
+  'read': t('common.viewDetail'),
+  'create': t('common.add'),
+  'update': t('common.edit'),
+  'delete': t('common.delete')
+}))
+
+// 翻译后的菜单树
+const translatedMenuTree = computed(() => {
+  const translate = (items) => items.map(item => ({
+    ...item,
+    name: menuNameMap.value[item.code] || item.name,
+    children: item.children ? translate(item.children) : undefined,
+    controls: item.controls ? item.controls.map(ctrl => ({
+      ...ctrl,
+      name: controlNameMap.value[ctrl.code] || ctrl.name
+    })) : undefined,
+    operations: item.operations ? item.operations.map(op => ({
+      code: op,
+      name: controlNameMap.value[op] || op
+    })) : undefined
+  }))
+  return translate(menuTree.value)
+})
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -458,6 +545,16 @@ const availableControls = computed(() => {
   return selectedMenu.value.controls || []
 })
 
+// 翻译后的可用控件列表
+const translatedAvailableControls = computed(() => {
+  if (!selectedMenu.value) return []
+  const controls = selectedMenu.value.controls || []
+  return controls.map(ctrl => ({
+    ...ctrl,
+    name: controlNameMap.value[ctrl.code] || ctrl.name
+  }))
+})
+
 // 控件权限映射
 const controlPermissionsMap = ref({})
 
@@ -600,10 +697,10 @@ const form = reactive({
 
 const rules = {
   name: [
-    { required: true, message: '请输入角色名称', trigger: 'blur' }
+    { required: true, message: t('role.inputRoleName'), trigger: 'blur' }
   ],
   description: [
-    { required: true, message: '请输入角色描述', trigger: 'blur' }
+    { required: true, message: t('role.inputRoleDesc'), trigger: 'blur' }
   ]
 }
 
@@ -804,17 +901,17 @@ const handleSubmit = async () => {
 
       if (isEdit.value) {
         await request.put(`/roles/${form._id}`, data)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('role.updateSuccess'))
       } else {
         await request.post('/roles', data)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('role.createSuccess'))
       }
 
       dialogVisible.value = false
       loadRoles()
     } catch (error) {
       console.error('Submit error:', error)
-      ElMessage.error(error.response?.data?.message || '操作失败')
+      ElMessage.error(error.response?.data?.message || t('role.operateFailed'))
     } finally {
       submitting.value = false
     }
@@ -823,12 +920,12 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个角色吗？', '提示', {
+    await ElMessageBox.confirm(t('role.confirmDelete'), t('role.confirmTitle'), {
       type: 'warning'
     })
 
     await request.delete(`/roles/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('role.deleteSuccess'))
     loadRoles()
   } catch (error) {
     if (error !== 'cancel') {

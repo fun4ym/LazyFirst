@@ -47,10 +47,70 @@
       <el-table :data="activities" v-loading="loading" stripe>
         <el-table-column prop="tikTokActivityId" :label="$t('activities.tikTokActivityId')" width="180" fixed="left" class-name="tiktok-id-label" />
         <el-table-column prop="name" :label="$t('activities.activityNameCol')" width="200" fixed="left" />
+        <el-table-column :label="$t('activities.participationProducts')" width="120" align="center">
+          <template #default="{ row }">
+            <el-popover
+              placement="right"
+              :width="500"
+              trigger="hover"
+              @show="loadActivityProducts(row)"
+            >
+              <template #reference>
+                <el-tag
+                  :type="(productCounts[row._id] || 0) > 0 ? 'success' : 'info'"
+                  class="product-count-tag"
+                  @click="goToProductPage(row)"
+                  style="cursor: pointer"
+                >
+                  <el-icon><Goods /></el-icon>
+                  {{ productCounts[row._id] || 0 }}
+                </el-tag>
+              </template>
+              <div class="product-popover">
+                <div class="popover-header">
+                  <span>{{ $t('activities.participationProducts') }}</span>
+                  <el-button link type="primary" @click="goToProductPage(row)">
+                    {{ $t('activities.viewDetail') }} <el-icon><ArrowRight /></el-icon>
+                  </el-button>
+                </div>
+                <div v-if="loadingProducts[row._id]" class="loading-tip">{{ $t('activities.loadingProducts') }}</div>
+                <div v-else-if="activityProducts[row._id]?.length > 0" class="product-list">
+                  <div
+                    v-for="product in getPaginatedProducts(row)"
+                    :key="product._id"
+                    class="product-item"
+                    @click="viewProductDetail(product)"
+                  >
+                    <span class="product-id">{{ product.tiktokProductId || product.productId || '-' }}</span>
+                    <span class="product-name">{{ product.name || product.productName || '-' }}</span>
+                  </div>
+                  <div class="pagination-container" v-if="productCounts[row._id] > 5">
+                    <el-pagination
+                      small
+                      :current-page="productPagination[row._id]?.page || 1"
+                      :page-size="5"
+                      :total="productCounts[row._id] || 0"
+                      layout="prev, pager, next"
+                      @current-change="(page) => handleProductPageChange(row, page)"
+                    />
+                  </div>
+                </div>
+                <div v-else class="empty-tip">{{ $t('activities.noProducts') }}</div>
+              </div>
+            </el-popover>
+          </template>
+        </el-table-column>
         <el-table-column prop="type" :label="$t('activities.activityTypeCol')" width="120">
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">
               {{ getTypeText(row.type) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('activities.status')" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.isDeleted ? 'danger' : 'success'">
+              {{ row.isDeleted ? $t('activities.deleted') : $t('activities.normal') }}
             </el-tag>
           </template>
         </el-table-column>
@@ -62,58 +122,6 @@
         <el-table-column prop="endDate" :label="$t('activities.endDate')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.endDate) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" :label="$t('activities.status')" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusText(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('activities.participationProducts')" width="120" align="center">
-          <template #default="{ row }">
-            <el-popover
-              placement="right"
-              :width="600"
-              trigger="hover"
-              @show="loadActivityProducts(row)"
-            >
-              <template #reference>
-                <el-button link type="primary" @click="goToProductPage(row)">
-                  {{ productCounts[row._id] || 0 }}
-                </el-button>
-              </template>
-              <div v-if="loadingProducts[row._id]" class="loading-tip">{{ $t('activities.loadingProducts') }}</div>
-              <div v-else-if="activityProducts[row._id]?.length > 0">
-                <el-table :data="getPaginatedProducts(row)" size="small" max-height="300">
-                  <el-table-column :label="$t('activities.productId')" width="180">
-                    <template #default="{ row: product }">
-                      <el-button link type="primary" @click="viewProductDetail(product)">
-                        {{ product.tiktokProductId || product.productId || product._id }}
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="name" :label="$t('activities.productName')" min-width="150" show-overflow-tooltip />
-                  <el-table-column :label="$t('activities.shop')" width="100" show-overflow-tooltip>
-                    <template #default="{ row: product }">
-                      {{ product.shopId?.shopName || '-' }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-                <div class="pagination-container">
-                  <el-pagination
-                    small
-                    :current-page="productPagination[row._id]?.page || 1"
-                    :page-size="10"
-                    :total="productCounts[row._id] || 0"
-                    layout="prev, pager, next, total"
-                    @current-change="(page) => handleProductPageChange(row, page)"
-                  />
-                </div>
-              </div>
-              <div v-else class="empty-tip">{{ $t('activities.noProducts') }}</div>
-            </el-popover>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('activities.createdAt')" width="160">
@@ -196,15 +204,13 @@
 
         <!-- 活动配置 -->
         <el-divider content-position="left">{{ $t('activities.sectionActivityConfig') }}</el-divider>
+        <el-form-item :label="$t('activities.tapLink')">
+          <el-input v-model="form.tapLink" :placeholder="$t('activities.tapLinkPlaceholder')" />
+        </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item :label="$t('activities.tapLink')">
-              <el-input v-model="form.tapLink" :placeholder="$t('activities.tapLinkPlaceholder')" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
             <el-form-item :label="$t('activities.sampleMethod')">
-              <el-select v-model="form.sampleMethod" :placeholder="$t('activities.selectSampleMethod')" clearable style="width: 100%">
+              <el-select v-model="form.sampleMethod" :placeholder="$t('activities.selectSampleMethod')" style="width: 100%">
                 <el-option :label="$t('activities.online')" value="线上" />
                 <el-option :label="$t('activities.offline')" value="线下" />
               </el-select>
@@ -224,8 +230,11 @@
           </el-col>
         </el-row>
 
-        <!-- 达人要求 -->
-        <el-divider content-position="left">{{ $t('activities.sectionInfluencerRequirement') }}</el-divider>
+        <!-- 达人要求（预配置） -->
+        <el-divider content-position="left">
+          <span class="pre-config-label">{{ $t('activities.sectionInfluencerRequirement') }}</span>
+          <el-tag type="warning" size="small" style="margin-left: 8px">{{ $t('activities.preConfig') }}</el-tag>
+        </el-divider>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('activities.gmv')">
@@ -265,8 +274,11 @@
           <el-input v-model="form.requirementRemark" type="textarea" :rows="2" :placeholder="$t('activities.requirementRemarkPlaceholder')" />
         </el-form-item>
 
-        <!-- 佣金配置 - 推广时 -->
-        <el-divider content-position="left">{{ $t('activities.promotionCommission') }}</el-divider>
+        <!-- 佣金配置 - 推广时（预配置） -->
+        <el-divider content-position="left">
+          <span class="pre-config-label">{{ $t('activities.promotionCommission') }}</span>
+          <el-tag type="warning" size="small" style="margin-left: 8px">{{ $t('activities.preConfig') }}</el-tag>
+        </el-divider>
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item :label="$t('activities.influencerRate')">
@@ -285,8 +297,11 @@
           </el-col>
         </el-row>
 
-        <!-- 佣金配置 - 投广告时 -->
-        <el-divider content-position="left">{{ $t('activities.adCommission') }}</el-divider>
+        <!-- 佣金配置 - 投广告时（预配置） -->
+        <el-divider content-position="left">
+          <span class="pre-config-label">{{ $t('activities.adCommission') }}</span>
+          <el-tag type="warning" size="small" style="margin-left: 8px">{{ $t('activities.preConfig') }}</el-tag>
+        </el-divider>
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item :label="$t('activities.influencerRate')">
@@ -317,160 +332,146 @@
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" :title="$t('activities.detail')" width="1000px">
-      <div v-if="currentActivity">
-        <!-- 活动信息 -->
-        <h4 class="section-title">{{ $t('activities.sectionActivityInfo') }}</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item :label="$t('activities.tikTokActivityId')">
-            {{ currentActivity.tikTokActivityId || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.activityName')">
-            {{ currentActivity.name }}
-          </el-descriptions-item>
-        </el-descriptions>
+    <el-dialog v-model="detailDialogVisible" :title="$t('activities.detail')" width="700px">
+      <el-descriptions :column="2" border v-if="currentActivity">
+        <el-descriptions-item :label="$t('activities.tikTokActivityId')" class-name="tiktok-id-label">
+          {{ currentActivity.tikTokActivityId || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.activityName')">
+          {{ currentActivity.name }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.activityTypeCol')">
+          <el-tag :type="getTypeTagType(currentActivity.type)">
+            {{ getTypeText(currentActivity.type) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.status')">
+          <el-tag :type="getStatusType(currentActivity.status)">
+            {{ getStatusText(currentActivity.status) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.startDate')">
+          {{ formatDate(currentActivity.startDate) }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.endDate')">
+          {{ formatDate(currentActivity.endDate) }}
+        </el-descriptions-item>
+      </el-descriptions>
 
-        <!-- 冗余信息 -->
-        <h4 class="section-title">{{ $t('activities.sectionRedundantInfo') }}</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item :label="$t('activities.activityTypeCol')">
-            <el-tag :type="getTypeTagType(currentActivity.type)">
-              {{ getTypeText(currentActivity.type) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.status')">
-            <el-tag :type="getStatusType(currentActivity.status)">
-              {{ getStatusText(currentActivity.status) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.startDate')">
-            {{ formatDate(currentActivity.startDate) }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.endDate')">
-            {{ formatDate(currentActivity.endDate) }}
-          </el-descriptions-item>
-        </el-descriptions>
+      <!-- 活动配置 -->
+      <el-divider content-position="left">{{ $t('activities.sectionActivityConfig') }}</el-divider>
+      <el-descriptions :column="2" border v-if="currentActivity">
+        <el-descriptions-item :label="$t('activities.tapLink')" :span="2">
+          {{ currentActivity.tapLink || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.sampleMethod')">
+          {{ currentActivity.sampleMethod || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.cooperationCountry')">
+          {{ currentActivity.cooperationCountry || '-' }}
+        </el-descriptions-item>
+      </el-descriptions>
 
-        <!-- 其他信息 -->
-        <h4 class="section-title">{{ $t('activities.sectionOtherInfo') }}</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="Partner Center">
-            {{ currentActivity.partnerCenter || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="Budget">
-            ฿{{ formatMoney(currentActivity.budget) }}
-          </el-descriptions-item>
-        </el-descriptions>
+      <!-- 达人要求（预配置） -->
+      <el-divider content-position="left">
+        <span class="pre-config-label">{{ $t('activities.sectionInfluencerRequirement') }}</span>
+        <el-tag type="warning" size="small" style="margin-left: 8px">{{ $t('activities.preConfig') }}</el-tag>
+      </el-divider>
+      <el-descriptions :column="2" border v-if="currentActivity">
+        <el-descriptions-item :label="$t('activities.gmv')">
+          {{ currentActivity.requirementGmv || 0 }} {{ currentActivity.gmvCurrency || '' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.currencyUnit')">
+          {{ currentActivity.gmvCurrency || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.monthlySales')">
+          {{ currentActivity.requirementMonthlySales || 0 }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.followers')">
+          {{ currentActivity.requirementFollowers || 0 }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.avgViews')">
+          {{ currentActivity.requirementAvgViews || 0 }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.requirementRemark')" :span="2">
+          {{ currentActivity.requirementRemark || '-' }}
+        </el-descriptions-item>
+      </el-descriptions>
 
-        <!-- 活动配置 -->
-        <h4 class="section-title">{{ $t('activities.sectionActivityConfig') }}</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item :label="$t('activities.tapLink')">
-            {{ currentActivity.tapLink || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.sampleMethod')">
-            {{ currentActivity.sampleMethod || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.cooperationCountry')">
-            {{ currentActivity.cooperationCountry || '-' }}
-          </el-descriptions-item>
-        </el-descriptions>
+      <!-- 佣金配置 - 推广时（预配置） -->
+      <el-divider content-position="left">
+        <span class="pre-config-label">{{ $t('activities.promotionCommission') }}</span>
+        <el-tag type="warning" size="small" style="margin-left: 8px">{{ $t('activities.preConfig') }}</el-tag>
+      </el-divider>
+      <el-descriptions :column="3" border v-if="currentActivity">
+        <el-descriptions-item :label="$t('activities.influencerRate')">
+          {{ currentActivity.promotionInfluencerRate || 0 }}%
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.originalRate')">
+          {{ currentActivity.promotionOriginalRate || 0 }}%
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.companyRate')">
+          {{ currentActivity.promotionCompanyRate || 0 }}%
+        </el-descriptions-item>
+      </el-descriptions>
 
-        <!-- 达人要求 -->
-        <h4 class="section-title">{{ $t('activities.sectionInfluencerRequirement') }}</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item :label="$t('activities.gmv')">
-            {{ currentActivity.requirementGmv || 0 }} {{ currentActivity.gmvCurrency || '' }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.monthlySalesCount')">
-            {{ currentActivity.requirementMonthlySales || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.followers')">
-            {{ currentActivity.requirementFollowers || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.avgViews')">
-            {{ currentActivity.requirementAvgViews || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.requirementRemark')" :span="2">
-            {{ currentActivity.requirementRemark || '-' }}
-          </el-descriptions-item>
-        </el-descriptions>
+      <!-- 佣金配置 - 投广告时（预配置） -->
+      <el-divider content-position="left">
+        <span class="pre-config-label">{{ $t('activities.adCommission') }}</span>
+        <el-tag type="warning" size="small" style="margin-left: 8px">{{ $t('activities.preConfig') }}</el-tag>
+      </el-divider>
+      <el-descriptions :column="3" border v-if="currentActivity">
+        <el-descriptions-item :label="$t('activities.influencerRate')">
+          {{ currentActivity.adInfluencerRate || 0 }}%
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.originalRate')">
+          {{ currentActivity.adOriginalRate || 0 }}%
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('activities.companyRate')">
+          {{ currentActivity.adCompanyRate || 0 }}%
+        </el-descriptions-item>
+      </el-descriptions>
 
-        <!-- 佣金配置 - 推广时 -->
-        <h4 class="section-title">{{ $t('activities.promotionCommission') }}</h4>
-        <el-descriptions :column="3" border>
-          <el-descriptions-item :label="$t('activities.influencerRate')">
-            {{ currentActivity.promotionInfluencerRate || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.originalRate')">
-            {{ currentActivity.promotionOriginalRate || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.companyRate')">
-            {{ currentActivity.promotionCompanyRate || 0 }}
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 佣金配置 - 投广告时 -->
-        <h4 class="section-title">{{ $t('activities.adCommission') }}</h4>
-        <el-descriptions :column="3" border>
-          <el-descriptions-item :label="$t('activities.influencerRate')">
-            {{ currentActivity.adInfluencerRate || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.originalRate')">
-            {{ currentActivity.adOriginalRate || 0 }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.companyRate')">
-            {{ currentActivity.adCompanyRate || 0 }}
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 数据信息 -->
-        <h4 class="section-title">{{ $t('activities.sectionDataInfo') }}</h4>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item :label="$t('activities.creator')">
-            {{ currentActivity.creatorName || currentActivity.creator?.realName || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('activities.createdAt')">
-            {{ formatDate(currentActivity.createdAt) }}
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 变更历史 -->
-        <h4 class="section-title">
-          {{ $t('activities.sectionHistory') }}
-          <el-button link type="primary" @click="loadHistory" style="margin-left: 10px">
-            <el-icon><Refresh /></el-icon>
-            {{ $t('activities.refresh') }}
-          </el-button>
-        </h4>
-        <el-table :data="histories" stripe v-loading="historyLoading">
-          <el-table-column prop="action" :label="$t('activities.status')" width="100">
-            <template #default="{ row }">
-              <el-tag :type="getActionType(row.action)">
-                {{ getActionText(row.action) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="changedByName" :label="$t('activities.creator')" width="120" />
-          <el-table-column prop="changes" :label="$t('activities.activityDescription')" min-width="200">
-            <template #default="{ row }">
-              <el-tag
-                v-for="(value, key) in row.changes"
-                :key="key"
-                style="margin-right: 5px; margin-bottom: 5px"
-                size="small"
-              >
-                {{ getFieldName(key) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdAt" :label="$t('activities.startDate')" width="180">
-            <template #default="{ row }">
-              {{ formatDate(row.createdAt) }}
-            </template>
-          </el-table-column>
-        </el-table>
+      <!-- 活动描述 -->
+      <el-divider content-position="left">{{ $t('activities.activityDescription') }}</el-divider>
+      <div class="detail-description" v-if="currentActivity">
+        {{ currentActivity.description || '-' }}
       </div>
+
+      <!-- 变更历史 -->
+      <el-divider content-position="left">
+        {{ $t('activities.sectionHistory') }}
+        <el-button link type="primary" @click="loadHistory" style="margin-left: 10px">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </el-divider>
+      <el-table :data="histories" stripe v-loading="historyLoading" size="small">
+        <el-table-column prop="action" :label="$t('activities.status')" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getActionType(row.action)">
+              {{ getActionText(row.action) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="changedByName" :label="$t('activities.creator')" width="120" />
+        <el-table-column prop="changes" :label="$t('activities.activityDescription')" min-width="150">
+          <template #default="{ row }">
+            <el-tag
+              v-for="(value, key) in row.changes"
+              :key="key"
+              style="margin-right: 4px; margin-bottom: 4px"
+              size="small"
+            >
+              {{ getFieldName(key) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" :label="$t('activities.startDate')" width="160">
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
+      </el-table>
     </el-dialog>
 
     <!-- 商品详情对话框 -->
@@ -503,13 +504,13 @@
 
         <!-- 商品说明 -->
         <div v-if="currentProduct.productIntro || currentProduct.referenceVideo || currentProduct.sellingPoints" class="detail-section">
-          <div class="section-title">{{ $t('activities.productIntro') || 'Product Info' }}</div>
+          <div class="section-title">{{ $t('activities.productIntro') }}</div>
           <el-descriptions :column="1" border>
-            <el-descriptions-item v-if="currentProduct.productIntro" label="Intro">{{ currentProduct.productIntro }}</el-descriptions-item>
-            <el-descriptions-item v-if="currentProduct.referenceVideo" label="Video">
+            <el-descriptions-item v-if="currentProduct.productIntro" :label="$t('activities.intro')">{{ currentProduct.productIntro }}</el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.referenceVideo" :label="$t('activities.video')">
               <a :href="currentProduct.referenceVideo" target="_blank" class="link-text">{{ currentProduct.referenceVideo }}</a>
             </el-descriptions-item>
-            <el-descriptions-item v-if="currentProduct.sellingPoints" label="卖点">{{ currentProduct.sellingPoints }}</el-descriptions-item>
+            <el-descriptions-item v-if="currentProduct.sellingPoints" :label="$t('activities.sellingPoints')">{{ currentProduct.sellingPoints }}</el-descriptions-item>
           </el-descriptions>
         </div>
 
@@ -614,7 +615,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Plus, Refresh, Upload, Loading } from '@element-plus/icons-vue'
+import { Plus, Refresh, Upload, Loading, Goods, ArrowRight } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
 // 权限检查
@@ -724,18 +725,18 @@ const loadCurrencies = async () => {
 
 const rules = {
   name: [
-    { required: true, message: '请输入活动名称', trigger: 'blur' }
+    { required: true, message: () => t('activities.validateNameRequired'), trigger: 'blur' }
   ],
   startDate: [
-    { required: true, message: '请选择开始时间', trigger: 'change' }
+    { required: true, message: () => t('activities.validateStartDateRequired'), trigger: 'change' }
   ],
   endDate: [
-    { required: true, message: '请选择结束时间', trigger: 'change' }
+    { required: true, message: () => t('activities.validateEndDateRequired'), trigger: 'change' }
   ]
 }
 
 const formatMoney = (value) => {
-  return value.toLocaleString('zh-CN', {
+  return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
@@ -743,7 +744,7 @@ const formatMoney = (value) => {
 
 const formatDate = (date) => {
   if (!date) return '-'
-  return new Date(date).toLocaleString('zh-CN')
+  return new Date(date).toLocaleString()
 }
 
 const getTypeText = (type) => {
@@ -911,12 +912,12 @@ const handleFileRemove = () => {
 
 const handleImport = async () => {
   if (!importFile.value) {
-    ElMessage.warning('请先选择Excel文件')
+    ElMessage.warning(t('activities.importSelectFile'))
     return
   }
 
   if (!currentImportActivity.value?.tikTokActivityId) {
-    ElMessage.warning('该活动未设置TikTok活动ID，无法导入')
+    ElMessage.warning(t('activities.importNoActivityId'))
     return
   }
 
@@ -935,13 +936,13 @@ const handleImport = async () => {
       }
     )
 
-    ElMessage.success(res.message || '导入成功')
+    ElMessage.success(res.message || t('activities.importSuccess'))
     importDialogVisible.value = false
     // 刷新商品数量
     loadProductCounts()
   } catch (error) {
     console.error('Import error:', error)
-    ElMessage.error(error.response?.data?.message || '导入失败')
+    ElMessage.error(error.response?.data?.message || t('activities.importFailed'))
   } finally {
     importLoading.value = false
   }
@@ -955,7 +956,7 @@ const resetForm = () => {
     name: '',
     type: 'self_initiated',
     tapLink: '',
-    sampleMethod: '',
+    sampleMethod: '线上',
     cooperationCountry: defaultCountry?.name || '',
     startDate: '',
     endDate: '',
@@ -991,10 +992,10 @@ const handleSubmit = async () => {
       const data = { ...form }
       if (isEdit.value) {
         await request.put(`/activities/${data._id}`, data)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('activities.updateSuccess'))
       } else {
         await request.post('/activities', data)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('activities.createSuccess'))
       }
       dialogVisible.value = false
       loadActivities()
@@ -1008,11 +1009,11 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除活动"${row.name}"吗？`, '提示', {
+    await ElMessageBox.confirm(t('activities.confirmDeleteActivity', { name: row.name }), t('activities.confirmDelete'), {
       type: 'warning'
     })
     await request.delete(`/activities/${row._id}`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('activities.deleteSuccess'))
     loadActivities()
   } catch (error) {
     if (error !== 'cancel') {
@@ -1029,7 +1030,7 @@ const loadProductCounts = async () => {
     const res = await request.get('/activities/product-counts', { params: { ids } })
     productCounts.value = res.data || res || {}
   } catch (error) {
-    console.error('加载活动商品数量失败:', error)
+    console.error(t('activities.loadProductCountFailed'), error)
   }
 }
 
@@ -1051,7 +1052,7 @@ const loadActivityProducts = async (activity) => {
       [activity._id]: { page: 1, total: res.data?.pagination?.total || res.total || 0 }
     }
   } catch (error) {
-    console.error('加载活动商品失败:', error)
+    console.error(t('activities.loadProductFailed'), error)
   } finally {
     loadingProducts.value = { ...loadingProducts.value, [activity._id]: false }
   }
@@ -1100,8 +1101,8 @@ const viewProductDetail = async (product) => {
     }
     productDetailVisible.value = true
   } catch (error) {
-    console.error('获取商品详情失败:', error)
-    ElMessage.error('获取商品详情失败')
+    console.error(t('activities.loadProductDetailFailed'), error)
+    ElMessage.error(t('activities.loadProductDetailFailed'))
   }
 }
 
@@ -1159,6 +1160,19 @@ onMounted(() => {
 
 .section-title:first-child {
   margin-top: 0;
+}
+
+.pre-config-label {
+  font-weight: 600;
+}
+
+.detail-description {
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  color: #606266;
+  line-height: 1.6;
+  margin-bottom: 16px;
 }
 
 /* TikTok活动ID特殊样式 */
@@ -1377,5 +1391,65 @@ onMounted(() => {
   gap: 16px;
   font-size: 13px;
   color: #303133;
+}
+
+.product-count-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.product-popover {
+  min-width: 400px;
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ebeef5;
+  font-weight: 600;
+  color: #303133;
+}
+
+.product-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.product-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.product-item:hover {
+  background: #f5f7fa;
+}
+
+.product-id {
+  color: #775999;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.product-name {
+  color: #606266;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pagination-container {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
 }
 </style>

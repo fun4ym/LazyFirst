@@ -579,7 +579,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -628,15 +628,15 @@ const countries = ref([])
 const productCategories = ref([])
 
 // 货币选项 - 从基础数据获取
-const currencyOptions = ref([
-  { code: 'USD', name: '美元 (USD)' },
-  { code: 'CNY', name: '人民币 (CNY)' },
-  { code: 'THB', name: '泰铢 (THB)' },
-  { code: 'VND', name: '越南盾 (VND)' },
-  { code: 'MYR', name: '马来西亚林吉特 (MYR)' },
-  { code: 'SGD', name: '新加坡元 (SGD)' },
-  { code: 'PHP', name: '菲律宾比索 (PHP)' },
-  { code: 'IDR', name: '印尼盾 (IDR)' }
+const currencyOptions = computed(() => [
+  { code: 'USD', name: t('product.currencyUSD') },
+  { code: 'CNY', name: t('product.currencyCNY') },
+  { code: 'THB', name: t('product.currencyTHB') },
+  { code: 'VND', name: t('product.currencyVND') },
+  { code: 'MYR', name: t('product.currencyMYR') },
+  { code: 'SGD', name: t('product.currencySGD') },
+  { code: 'PHP', name: t('product.currencyPHP') },
+  { code: 'IDR', name: t('product.currencyIDR') }
 ])
 
 // 订单统计缓存

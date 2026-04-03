@@ -237,7 +237,9 @@ router.post('/', authenticate, authorize('activities:create'), [
       creatorId: req.user._id
     };
 
+    console.log('[Activities] Creating activity with data:', JSON.stringify(activityData, null, 2));
     const activity = await Activity.create(activityData);
+    console.log('[Activities] Activity created:', activity._id);
 
     // 记录创建历史
     await recordHistory(
@@ -257,10 +259,11 @@ router.post('/', authenticate, authorize('activities:create'), [
       data: { activity }
     });
   } catch (error) {
-    console.error('Create activity error:', error);
+    console.error('[Activities] Create activity error:', error.message);
+    console.error('[Activities] Error details:', error.stack);
     res.status(500).json({
       success: false,
-      message: '创建活动失败'
+      message: '创建活动失败: ' + error.message
     });
   }
 });

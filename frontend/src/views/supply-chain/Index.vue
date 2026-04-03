@@ -15,40 +15,40 @@
 
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="供应商名称">
+        <el-form-item :label="$t('supplyChain.supplierName')">
           <el-input
             v-model="searchForm.name"
-            placeholder="供应商名称"
+            :placeholder="$t('supplyChain.supplierNamePlaceholder')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
 
-        <el-form-item label="联系人">
+        <el-form-item :label="$t('supplyChain.contact')">
           <el-input
             v-model="searchForm.contact"
-            placeholder="联系人"
+            :placeholder="$t('supplyChain.contactPlaceholder')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
 
-        <el-form-item label="供应商类型">
+        <el-form-item :label="$t('supplyChain.supplierType')">
           <el-select
             v-model="searchForm.type"
-            placeholder="全部"
+            :placeholder="$t('supplyChain.all')"
             clearable
             style="width: 150px"
           >
-            <el-option label="样品供应商" value="sample" />
-            <el-option label="产品供应商" value="product" />
-            <el-option label="物流商" value="logistics" />
+            <el-option :label="$t('supplyChain.sampleSupplier')" value="sample" />
+            <el-option :label="$t('supplyChain.productSupplier')" value="product" />
+            <el-option :label="$t('supplyChain.logistics')" value="logistics" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="loadSuppliers">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+          <el-button type="primary" @click="loadSuppliers">{{ $t('supplyChain.search') }}</el-button>
+          <el-button @click="resetSearch">{{ $t('supplyChain.reset') }}</el-button>
         </el-form-item>
       </el-form>
 
@@ -61,7 +61,7 @@
         class="supply-table"
       >
         <el-table-column
-          label="供应商名称"
+          :label="$t('supplyChain.supplierName')"
           width="200"
           fixed="left"
           prop="name"
@@ -73,7 +73,7 @@
         </el-table-column>
 
         <el-table-column
-          label="类型"
+          :label="$t('supplyChain.type')"
           width="120"
         >
           <template #default="{ row }">
@@ -87,7 +87,7 @@
         </el-table-column>
 
         <el-table-column
-          label="联系人"
+          :label="$t('supplyChain.contact')"
           width="120"
         >
           <template #default="{ row }">
@@ -96,7 +96,7 @@
         </el-table-column>
 
         <el-table-column
-          label="联系电话"
+          :label="$t('supplyChain.phone')"
           width="140"
         >
           <template #default="{ row }">
@@ -105,7 +105,7 @@
         </el-table-column>
 
         <el-table-column
-          label="邮箱"
+          :label="$t('supplyChain.email')"
           width="180"
         >
           <template #default="{ row }">
@@ -184,7 +184,7 @@
         label-width="100px"
       >
         <el-form-item :label="$t('supplyChain.supplierName')" prop="name">
-          <el-input v-model="form.name" :placeholder="$t('supplyChain.supplierName')" />
+          <el-input v-model="form.name" :placeholder="$t('supplyChain.supplierNamePlaceholder')" />
         </el-form-item>
 
         <el-form-item :label="$t('supplyChain.supplierType')" prop="type">
@@ -198,18 +198,18 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('supplyChain.contact')" prop="contact">
-              <el-input v-model="form.contact" :placeholder="$t('supplyChain.contact')" />
+              <el-input v-model="form.contact" :placeholder="$t('supplyChain.contactPlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('supplyChain.phone')" prop="phone">
-              <el-input v-model="form.phone" :placeholder="$t('supplyChain.phone')" />
+              <el-input v-model="form.phone" :placeholder="$t('supplyChain.phonePlaceholder')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item :label="$t('supplyChain.email')">
-          <el-input v-model="form.email" :placeholder="$t('supplyChain.email')" />
+          <el-input v-model="form.email" :placeholder="$t('supplyChain.emailPlaceholder')" />
         </el-form-item>
 
         <el-form-item :label="$t('supplyChain.address')">
@@ -217,7 +217,7 @@
             v-model="form.address"
             type="textarea"
             :rows="2"
-            :placeholder="$t('supplyChain.address')"
+            :placeholder="$t('supplyChain.addressPlaceholder')"
           />
         </el-form-item>
 
@@ -226,7 +226,7 @@
             v-model="form.remarks"
             type="textarea"
             :rows="3"
-            :placeholder="$t('supplyChain.remarks')"
+            :placeholder="$t('supplyChain.remarksPlaceholder')"
           />
         </el-form-item>
       </el-form>
