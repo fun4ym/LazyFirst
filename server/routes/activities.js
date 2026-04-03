@@ -441,6 +441,7 @@ router.get('/:id/products', authenticate, authorize('activities:read'), async (r
 
     const products = await Product.find(query)
       .populate('shopId', 'shopName')
+      .populate('activityConfigs.activityId', 'name tikTokActivityId')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ createdAt: -1 });

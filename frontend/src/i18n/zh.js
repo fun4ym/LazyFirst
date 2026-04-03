@@ -1348,6 +1348,7 @@ export default {
     
     // 表格列
     tikTokActivityId: 'TikTok活动ID',
+    tikTokActivity: 'TikTok活动',
     activityNameCol: '活动名称',
     activityTypeCol: '活动类型',
     startDate: '开始时间',
@@ -1362,6 +1363,11 @@ export default {
     shop: '店铺',
     noProducts: '暂无参与商品',
     noActivities: '暂无参与活动',
+    view: '查看',
+    copyLink: '复制链接',
+    copySuccess: '复制成功',
+    copyFailed: '复制失败',
+    promotionLink: '推广链接',
     
     // 活动类型选项
     selfInitiated: '自发起',

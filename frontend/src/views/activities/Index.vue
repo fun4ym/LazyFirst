@@ -45,8 +45,22 @@
 
       <!-- 表格 -->
       <el-table :data="activities" v-loading="loading" stripe>
-        <el-table-column prop="tikTokActivityId" :label="$t('activities.tikTokActivityId')" width="180" fixed="left" class-name="tiktok-id-label" />
-        <el-table-column prop="name" :label="$t('activities.activityNameCol')" width="200" fixed="left" />
+        <el-table-column :label="$t('activities.tikTokActivity')" width="320" fixed="left">
+          <template #default="{ row }">
+            <div class="tiktok-activity-cell">
+              <a 
+                v-if="row.tikTokActivityId"
+                :href="'https://partner.tiktokshop.com/affiliate-campaign/partner-collabs/agency/detail?campaign_id=' + row.tikTokActivityId"
+                target="_blank"
+                class="tiktok-link"
+              >
+                {{ row.tikTokActivityId }}
+              </a>
+              <span v-else>-</span>
+              <span class="activity-name-cell">{{ row.name }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('activities.participationProducts')" width="120" align="center">
           <template #default="{ row }">
             <el-popover
@@ -75,14 +89,39 @@
                 </div>
                 <div v-if="loadingProducts[row._id]" class="loading-tip">{{ $t('activities.loadingProducts') }}</div>
                 <div v-else-if="activityProducts[row._id]?.length > 0" class="product-list">
+                  <div class="product-list-header">
+                    <span class="product-col-title">{{ $t('activities.participationProducts') }}</span>
+                    <span class="link-col-title">{{ $t('activities.promotionLink') }}</span>
+                  </div>
                   <div
                     v-for="product in getPaginatedProducts(row)"
                     :key="product._id"
                     class="product-item"
                     @click="viewProductDetail(product)"
                   >
-                    <span class="product-id">{{ product.tiktokProductId || product.productId || '-' }}</span>
-                    <span class="product-name">{{ product.name || product.productName || '-' }}</span>
+                    <span class="product-info">
+                      <span class="product-id">{{ product.tiktokProductId || product.productId || '-' }}</span>
+                      <span class="product-name">{{ product.name || product.productName || '-' }}</span>
+                    </span>
+                    <span class="product-link">
+                      <a 
+                        v-if="product._cachedLink"
+                        :href="product._cachedLink" 
+                        target="_blank" 
+                        class="product-link-a"
+                        @click.stop
+                      >
+                        {{ $t('activities.view') }}
+                      </a>
+                      <el-icon 
+                        v-if="product._cachedLink"
+                        class="copy-icon" 
+                        @click.stop="copyActivityLink(product)"
+                        :title="`${$t('activities.copyLink')}: ${product._cachedLink}`"
+                      >
+                        <DocumentCopy />
+                      </el-icon>
+                    </span>
                   </div>
                   <div class="pagination-container" v-if="productCounts[row._id] > 5">
                     <el-pagination
@@ -615,7 +654,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Plus, Refresh, Upload, Loading, Goods, ArrowRight } from '@element-plus/icons-vue'
+import { Plus, Refresh, Upload, Loading, Goods, ArrowRight, DocumentCopy } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
 // 权限检查
@@ -801,6 +840,52 @@ const getActionType = (action) => {
     status_change: 'warning'
   }
   return types[action] || 'info'
+}
+
+// 复制商品链接
+const copyProductLink = async (product) => {
+  const link = product.productLink
+  if (!link) return
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessage.success(t('activities.copySuccess'))
+  } catch (error) {
+    ElMessage.error(t('activities.copyFailed'))
+  }
+}
+
+// 获取商品在指定活动中的链接
+const getActivityLink = (product, activityId) => {
+  if (!product.activityConfigs) return ''
+  const targetId = typeof activityId === 'string' ? activityId : activityId._id || activityId.toString()
+  const config = product.activityConfigs.find(ac => {
+    // ac.activityId可能是ObjectId、字符串、或者被populate后的对象
+    const configId = ac.activityId?._id || ac.activityId
+    const configIdStr = configId?.toString()
+    return configIdStr === targetId
+  })
+  // 调试日志
+  if (config) {
+    console.log(`[getActivityLink] target=${targetId}, found link=${config.activityLink}`)
+  } else {
+    console.log(`[getActivityLink] target=${targetId}, NOT FOUND. activityConfigs=`, JSON.stringify(product.activityConfigs.map(ac => ({
+      activityId: ac.activityId?._id || ac.activityId,
+      activityLink: ac.activityLink
+    }))))
+  }
+  return config?.activityLink || ''
+}
+
+// 复制活动链接
+const copyActivityLink = async (product) => {
+  const link = product._cachedLink
+  if (!link) return
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessage.success(t('activities.copySuccess'))
+  } catch (error) {
+    ElMessage.error(t('activities.copyFailed'))
+  }
 }
 
 const getFieldName = (key) => {
@@ -1043,13 +1128,20 @@ const loadActivityProducts = async (activity) => {
     const res = await request.get(`/activities/${activity._id}/products`, {
       params: { page: 1, limit: 100 } // 先加载足够多的商品用于展示
     })
+    // 拦截器返回的是 { products, pagination } 或 { data: { products, pagination } }
+    const products = res.products || res.data?.products || []
+    // 预先计算每个商品的链接并缓存
+    const productsWithLinks = products.map(p => ({
+      ...p,
+      _cachedLink: getActivityLink(p, activity._id)
+    }))
     activityProducts.value = {
       ...activityProducts.value,
-      [activity._id]: res.data?.products || res.products || []
+      [activity._id]: productsWithLinks
     }
     productPagination.value = {
       ...productPagination.value,
-      [activity._id]: { page: 1, total: res.data?.pagination?.total || res.total || 0 }
+      [activity._id]: { page: 1, total: res.pagination?.total || res.data?.pagination?.total || 0 }
     }
   } catch (error) {
     console.error(t('activities.loadProductFailed'), error)
@@ -1419,6 +1511,29 @@ onMounted(() => {
   overflow-y: auto;
 }
 
+.product-list-header {
+  display: flex;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+  font-weight: 600;
+  font-size: 12px;
+  color: #606266;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.product-col-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.link-col-title {
+  width: 120px;
+  text-align: right;
+}
+
 .product-item {
   display: flex;
   gap: 12px;
@@ -1432,16 +1547,79 @@ onMounted(() => {
   background: #f5f7fa;
 }
 
+.product-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .product-id {
   color: #775999;
   font-weight: 600;
   font-size: 13px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-name {
   color: #606266;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-link {
+  width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.product-link-a {
+  color: #409eff;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.product-link-a:hover {
+  text-decoration: underline;
+}
+
+.copy-icon {
+  cursor: pointer;
+  color: #909399;
+  font-size: 14px;
+}
+
+.copy-icon:hover {
+  color: #409eff;
+}
+
+.tiktok-activity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tiktok-link {
+  color: #6DAD19;
+  font-weight: 600;
   font-size: 13px;
+  text-decoration: none;
+}
+
+.tiktok-link:hover {
+  text-decoration: underline;
+}
+
+.activity-name-cell {
+  color: #606266;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

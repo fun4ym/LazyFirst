@@ -1029,6 +1029,11 @@ export default {
     shop: 'Shop',
     noProducts: 'No products',
     noActivities: 'No activities',
+    view: 'View',
+    copyLink: 'Copy Link',
+    copySuccess: 'Copied!',
+    copyFailed: 'Copy failed',
+    promotionLink: 'Link',
     
     // 活动类型选项
     selfInitiated: 'Self-initiated',

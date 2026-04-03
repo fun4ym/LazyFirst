@@ -1102,6 +1102,7 @@ export default {
     
     // 表格列
     tikTokActivityId: 'รหัสกิจกรรม TikTok',
+    tikTokActivity: 'กิจกรรม TikTok',
     activityNameCol: 'ชื่อกิจกรรม',
     activityTypeCol: 'ประเภท',
     startDate: 'วันเริ่มต้น',
@@ -1116,6 +1117,11 @@ export default {
     shop: 'ร้านค้า',
     noProducts: 'ไม่มีสินค้า',
     noActivities: 'ไม่มีกิจกรรม',
+    view: 'ดู',
+    copyLink: 'คัดลอกลิงก์',
+    copySuccess: 'คัดลอกแล้ว',
+    copyFailed: 'คัดลอกไม่สำเร็จ',
+    promotionLink: 'ลิงก์',
     
     // 活动类型选项
     selfInitiated: 'เริ่มเอง',
