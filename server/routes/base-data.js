@@ -10,7 +10,7 @@ const router = express.Router();
  * @desc    获取基础数据列表
  * @access  Private
  */
-router.get('/', authenticate, authorize('influencers:read'), async (req, res) => {
+router.get('/', authenticate, authorize('baseData:read'), async (req, res) => {
   try {
     const {
       page = 1,

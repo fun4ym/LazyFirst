@@ -386,7 +386,7 @@ const exportData = async () => {
       ...searchForm,
       isExport: true
     }
-    const res = await request.get('/base-data/export', { params })
+    const res = await request.get('/base-data', { params })
 
     const csvContent = res.data
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })

@@ -768,11 +768,12 @@ const showEditDialog = (row) => {
     initAllPermissions()
   } else {
     // 读取权限：直接使用（现在是驼峰格式）
+    // 同时读取控件权限（btn-开头）和操作权限
     if (row.permissions && row.permissions.length > 0) {
       row.permissions.forEach(perm => {
         if (perm.includes(':')) {
           const [menuCode, action] = perm.split(':')
-          if (menuCode && action && action.startsWith('btn-')) {
+          if (menuCode && action) {
             if (!controlPermissionsMap.value[menuCode]) {
               controlPermissionsMap.value[menuCode] = {}
             }
