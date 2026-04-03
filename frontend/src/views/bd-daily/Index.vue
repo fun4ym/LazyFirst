@@ -5,15 +5,15 @@
         <div class="page-header">
           <h3>{{ $t('bdDaily.title') }}</h3>
           <div class="header-actions">
-            <el-button type="success" @click="showGenerateDialog" v-if="hasPermission('bd-daily:create')">
+            <el-button type="success" @click="showGenerateDialog" v-if="hasPermission('bdDaily:create')">
               <el-icon><MagicStick /></el-icon>
               {{ $t('bdDaily.generateStats') }}
             </el-button>
-            <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('bd-daily:create')">
+            <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('bdDaily:create')">
               <el-icon><Plus /></el-icon>
               {{ $t('bdDaily.addRecord') }}
             </el-button>
-            <el-button type="warning" @click="handleExport" v-if="hasPermission('bd-daily:read')">
+            <el-button type="warning" @click="handleExport" v-if="hasPermission('bdDaily:read')">
               <el-icon><Download /></el-icon>
               {{ $t('common.export') }}
             </el-button>
@@ -182,8 +182,8 @@
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="editRecord(row)" v-if="hasPermission('bd-daily:update')">{{ $t('common.edit') }}</el-button>
-            <el-button link type="danger" @click="deleteRecord(row)" v-if="hasPermission('bd-daily:delete')">{{ $t('common.delete') }}</el-button>
+            <el-button link type="primary" @click="editRecord(row)" v-if="hasPermission('bdDaily:update')">{{ $t('common.edit') }}</el-button>
+            <el-button link type="danger" @click="deleteRecord(row)" v-if="hasPermission('bdDaily:delete')">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>

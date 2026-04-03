@@ -176,16 +176,16 @@
 
         <el-form-item :label="$t('user.employmentStatus')">
           <el-radio-group v-model="form.employmentStatus" @change="onEmploymentStatusChange">
-            <el-radio label="fulltime">{{ $t('user.fulltime') }}</el-radio>
-            <el-radio label="parttime">{{ $t('user.parttime') }}</el-radio>
-            <el-radio label="nocommission">{{ $t('user.nocommission') }}</el-radio>
+            <el-radio value="fulltime">{{ $t('user.fulltime') }}</el-radio>
+            <el-radio value="parttime">{{ $t('user.parttime') }}</el-radio>
+            <el-radio value="nocommission">{{ $t('user.nocommission') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <el-form-item :label="$t('user.settlementMethod')" v-if="form.employmentStatus !== 'nocommission'">
           <el-radio-group v-model="form.settlementType" @change="onSettlementTypeChange">
-            <el-radio label="monthly">{{ $t('user.monthlySettlement') }}</el-radio>
-            <el-radio label="weekly">{{ $t('user.weeklySettlement') }}</el-radio>
+            <el-radio value="monthly">{{ $t('user.monthlySettlement') }}</el-radio>
+            <el-radio value="weekly">{{ $t('user.weeklySettlement') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -210,8 +210,8 @@
 
         <el-form-item :label="$t('common.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">{{ $t('role.enabled') }}</el-radio>
-            <el-radio label="inactive">{{ $t('role.disabled') }}</el-radio>
+            <el-radio value="active">{{ $t('role.enabled') }}</el-radio>
+            <el-radio value="inactive">{{ $t('role.disabled') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>

@@ -180,8 +180,8 @@
 
         <el-form-item :label="$t('common.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">{{ $t('role.enabled') }}</el-radio>
-            <el-radio label="inactive">{{ $t('role.disabled') }}</el-radio>
+            <el-radio value="active">{{ $t('role.enabled') }}</el-radio>
+            <el-radio value="inactive">{{ $t('role.disabled') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -210,19 +210,19 @@ const hasPermission = (perm) => AuthManager.hasPermission(perm)
 // 菜单名称翻译映射
 const menuNameMap = computed(() => ({
   dashboard: t('menu.dashboard'),
-  'bd-workspace': t('menu.bdWorkspace'),
+  bdWorkspace: t('menu.bdWorkspace'),
   influencers: t('menu.influencerList'),
-  'samples-bd': t('samples.title'),
-  'supply-chain': t('menu.supplyChain'),
+  samplesBd: '样品申请(BD)',
+  supplyChain: t('menu.supplyChain'),
   products: t('menu.products'),
   activities: t('menu.activities'),
   shops: t('menu.shops'),
-  'data-collection': t('menu.dataCollection'),
+  dataCollection: t('menu.dataCollection'),
   samples: t('menu.samples'),
   orders: t('menu.orders'),
   reports: t('menu.reports'),
-  'bd-dashboard': t('menu.bdDashboard'),
-  'bd-daily': t('menu.bdDaily'),
+  bdDashboard: t('menu.bdDashboard'),
+  bdDaily: t('menu.bdDaily'),
   performance: t('menu.performance'),
   settings: t('menu.settings'),
   users: t('menu.users'),
@@ -253,7 +253,7 @@ const controlNameMap = computed(() => ({
   'btn-shop-edit': t('shop.edit'),
   'btn-shop-delete': t('shop.delete'),
   'btn-refresh-code': t('common.refresh'),
-  'btn-match-bd': t('reportOrders.bdMatch'),
+  'btn-match-bd': 'BD匹配',
   'btn-import': t('common.import'),
   'btn-view-influencer': t('influencer.viewOrders'),
   'btn-view-detail': t('common.detail'),
@@ -311,7 +311,7 @@ const menuTree = ref([
   },
   {
     name: 'BD工作台',
-    code: 'bd-workspace',
+    code: 'bdWorkspace',
     children: [
       {
         name: '建联达人',
@@ -333,7 +333,7 @@ const menuTree = ref([
       },
       {
         name: '样品申请(BD)',
-        code: 'samples-bd',
+        code: 'samplesBd',
         operations: ['read', 'create', 'update', 'delete'],
         controls: [
           { code: 'btn-view', name: '查看详情' },
@@ -346,7 +346,7 @@ const menuTree = ref([
   },
   {
     name: '供应链',
-    code: 'supply-chain',
+    code: 'supplyChain',
     children: [
       {
         name: '产品管理',
@@ -393,7 +393,7 @@ const menuTree = ref([
   },
   {
     name: '数据采集',
-    code: 'data-collection',
+    code: 'dataCollection',
     children: [
       {
         name: '样品管理',
@@ -414,7 +414,7 @@ const menuTree = ref([
       {
         name: '订单管理',
         code: 'orders',
-        operations: ['read', 'create', 'update', 'delete'],
+        operations: ['read', 'create', 'update', 'delete', 'view'],
         controls: [
           { code: 'btn-match-bd', name: '匹配BD' },
           { code: 'btn-import', name: '导入订单' },
@@ -430,13 +430,13 @@ const menuTree = ref([
     children: [
       {
         name: 'BD仪表盘',
-        code: 'bd-dashboard',
+        code: 'bdDashboard',
         operations: ['read'],
         controls: []
       },
       {
         name: 'BD日报',
-        code: 'bd-daily',
+        code: 'bdDaily',
         operations: ['read', 'create', 'update', 'delete'],
         controls: [
           { code: 'btn-view', name: '查看' },
@@ -496,12 +496,13 @@ const menuTree = ref([
       {
         name: '分润规则',
         code: 'commissions',
-        operations: ['read', 'create', 'update', 'delete'],
+        operations: ['read', 'create', 'update', 'delete', 'calculate'],
         controls: [
           { code: 'btn-add-category', name: '新增分类' },
           { code: 'btn-add-rule', name: '新增规则' },
           { code: 'btn-delete', name: '删除规则' },
-          { code: 'btn-save', name: '保存全部' }
+          { code: 'btn-save', name: '保存全部' },
+          { code: 'btn-calculate', name: '计算佣金' }
         ]
       },
       {
@@ -555,11 +556,11 @@ const translatedAvailableControls = computed(() => {
   }))
 })
 
-// 控件权限映射
-const controlPermissionsMap = ref({})
-
 // 数据权限配置
 const dataScopeConfig = ref({})
+
+// 控件权限映射
+const controlPermissionsMap = ref({})
 
 // 判断控件是否启用
 const isControlEnabled = (controlCode) => {
@@ -766,7 +767,7 @@ const showEditDialog = (row) => {
   if (isSuperAdminRole.value && !isEdit.value) {
     initAllPermissions()
   } else {
-    // 读取权限：只读取控件权限，不做映射
+    // 读取权限：直接使用（现在是驼峰格式）
     if (row.permissions && row.permissions.length > 0) {
       row.permissions.forEach(perm => {
         if (perm.includes(':')) {
@@ -850,13 +851,16 @@ const handleSubmit = async () => {
         'btn-refresh-code': 'update',
         'btn-match-bd': 'update',
         'btn-import': 'create',
+        'btn-view-detail': 'read',
         'btn-generate': 'create',
         'btn-batch-delete': 'delete',
         'btn-export': 'read',
         'btn-reset-pwd': 'update',
+        'btn-payment-records': 'read',
         'btn-add-category': 'create',
         'btn-add-rule': 'create',
-        'btn-save': 'update'
+        'btn-save': 'update',
+        'btn-calculate': 'calculate'
       }
 
       // 保存用户实际勾选的所有权限
@@ -866,7 +870,7 @@ const handleSubmit = async () => {
 
         Object.keys(controls).forEach(action => {
           if (controls[action] === true && action !== '_enabled') {
-            // 保存用户勾选的内容
+            // 保存用户勾选的内容（使用驼峰格式）
             permissionsSet.add(`${menuCode}:${action}`)
 
             // 如果是控件权限，映射到操作权限并保存

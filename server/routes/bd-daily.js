@@ -10,7 +10,7 @@ const router = express.Router();
  * @desc    获取BD每日统计列表
  * @access  Private
  */
-router.get('/', authenticate, authorize('bd-daily:read'), filterByDataScope({ module: 'bd-daily', ownerField: 'userId', deptField: 'deptId' }), async (req, res) => {
+router.get('/', authenticate, authorize('bdDaily:read'), filterByDataScope({ module: 'bdDaily', ownerField: 'userId', deptField: 'deptId' }), async (req, res) => {
   try {
     const { page = 1, limit = 1000, startDate, endDate, salesman, date } = req.query;
 
@@ -92,7 +92,7 @@ router.get('/', authenticate, authorize('bd-daily:read'), filterByDataScope({ mo
  * @desc    获取BD每日统计详情
  * @access  Private
  */
-router.get('/:id', authenticate, authorize('bd-daily:read'), async (req, res) => {
+router.get('/:id', authenticate, authorize('bdDaily:read'), async (req, res) => {
   try {
     const bdDaily = await BdDaily.findOne({
       _id: req.params.id,
@@ -125,7 +125,7 @@ router.get('/:id', authenticate, authorize('bd-daily:read'), async (req, res) =>
  * @desc    创建BD每日统计
  * @access  Private
  */
-router.post('/', authenticate, authorize('bd-daily:create'), [
+router.post('/', authenticate, authorize('bdDaily:create'), [
   body('date').notEmpty().withMessage('日期不能为空'),
   body('salesman').notEmpty().withMessage('BD不能为空'),
 ], async (req, res) => {
@@ -205,7 +205,7 @@ router.post('/', authenticate, authorize('bd-daily:create'), [
  * @desc    更新BD每日统计
  * @access  Private
  */
-router.put('/:id', authenticate, authorize('bd-daily:update'), async (req, res) => {
+router.put('/:id', authenticate, authorize('bdDaily:update'), async (req, res) => {
   try {
     const {
       sampleCount,
@@ -267,7 +267,7 @@ router.put('/:id', authenticate, authorize('bd-daily:update'), async (req, res) 
  * @desc    删除BD每日统计
  * @access  Private
  */
-router.delete('/:id', authenticate, authorize('bd-daily:delete'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('bdDaily:delete'), async (req, res) => {
   try {
     const bdDaily = await BdDaily.findOneAndDelete({
       _id: req.params.id,
@@ -300,7 +300,7 @@ router.delete('/:id', authenticate, authorize('bd-daily:delete'), async (req, re
  * @desc    生成BD每日统计数据（自动统计）
  * @access  Private
  */
-router.post('/generate', authenticate, authorize('bd-daily:create'), [], async (req, res) => {
+router.post('/generate', authenticate, authorize('bdDaily:create'), [], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -537,7 +537,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
  * @desc    获取BD统计汇总
  * @access  Private
  */
-router.get('/summary/range', authenticate, authorize('bd-daily:read'), async (req, res) => {
+router.get('/summary/range', authenticate, authorize('bdDaily:read'), async (req, res) => {
   try {
     const { startDate, endDate, salesman } = req.query;
 
@@ -603,7 +603,7 @@ router.get('/summary/range', authenticate, authorize('bd-daily:read'), async (re
  * @desc    重新计算所有记录的预估服务费
  * @access  Private
  */
-router.post('/recalculate-commission', authenticate, authorize('bd-daily:update'), async (req, res) => {
+router.post('/recalculate-commission', authenticate, authorize('bdDaily:update'), async (req, res) => {
   try {
     const ReportOrder = require('../models/ReportOrder');
     const companyId = req.companyId;

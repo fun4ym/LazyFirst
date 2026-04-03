@@ -9,24 +9,24 @@ export const MODULES = {
   DASHBOARD: { code: 'dashboard', name: '仪表盘', dataScope: false },
 
   // BD工作台
-  BD_WORKSPACE: { code: 'bd-workspace', name: 'BD工作台', dataScope: false },
-  INFLUENCERS: { code: 'influencers', name: '达人列表', parent: 'bd-workspace' },
-  SAMPLES_BD: { code: 'samples-bd', name: '样品申请(B D)', parent: 'bd-workspace' },
+  BD_WORKSPACE: { code: 'bdWorkspace', name: 'BD工作台', dataScope: false },
+  INFLUENCERS: { code: 'influencers', name: '达人列表', parent: 'bdWorkspace' },
+  SAMPLES_BD: { code: 'samplesBd', name: '样品申请(BD)', parent: 'bdWorkspace' },
 
   // 供应链
-  SUPPLY_CHAIN: { code: 'supply-chain', name: '供应链', dataScope: false },
-  PRODUCTS: { code: 'products', name: '产品管理', parent: 'supply-chain' },
-  ACTIVITIES: { code: 'activities', name: '活动管理', parent: 'supply-chain' },
+  SUPPLY_CHAIN: { code: 'supplyChain', name: '供应链', dataScope: false },
+  PRODUCTS: { code: 'products', name: '产品管理', parent: 'supplyChain' },
+  ACTIVITIES: { code: 'activities', name: '活动管理', parent: 'supplyChain' },
 
   // 数据采集
-  DATA_COLLECTION: { code: 'data-collection', name: '数据采集', dataScope: false },
-  SAMPLES: { code: 'samples', name: '样品管理', parent: 'data-collection' },
-  ORDERS: { code: 'orders', name: '订单管理', parent: 'data-collection' },
+  DATA_COLLECTION: { code: 'dataCollection', name: '数据采集', dataScope: false },
+  SAMPLES: { code: 'samples', name: '样品管理', parent: 'dataCollection' },
+  ORDERS: { code: 'orders', name: '订单管理', parent: 'dataCollection' },
 
   // 报表管理
   REPORTS: { code: 'reports', name: '报表管理', dataScope: false },
-  BD_DASHBOARD: { code: 'bd-dashboard', name: 'BD仪表盘', parent: 'reports' },
-  BD_DAILY: { code: 'bd-daily', name: 'BD日报', parent: 'reports' },
+  BD_DASHBOARD: { code: 'bdDashboard', name: 'BD仪表盘', parent: 'reports' },
+  BD_DAILY: { code: 'bdDaily', name: 'BD日报', parent: 'reports' },
   PERFORMANCE: { code: 'performance', name: '业绩报表', parent: 'reports' },
 
   // 系统设置
@@ -34,9 +34,9 @@ export const MODULES = {
   USERS: { code: 'users', name: '用户管理', parent: 'settings' },
   ROLES: { code: 'roles', name: '角色管理', parent: 'settings' },
   DEPARTMENTS: { code: 'departments', name: '部门管理', parent: 'settings' },
-  COMMISSION_RULES: { code: 'commission-rules', name: '分润规则', parent: 'settings' },
-  BASE_DATA: { code: 'base-data', name: '基础数据', parent: 'settings' },
-  SYSTEM_MODELS: { code: 'system-models', name: '系统模型', parent: 'settings' },
+  COMMISSION_RULES: { code: 'commissions', name: '分润规则', parent: 'settings' },
+  BASE_DATA: { code: 'baseData', name: '基础数据', parent: 'settings' },
+  SYSTEM_MODELS: { code: 'systemModels', name: '系统模型', parent: 'settings' },
 }
 
 // 操作权限 - 对应按钮/控件
@@ -50,6 +50,7 @@ export const OPERATIONS = {
   IMPORT: { code: 'import', name: '导入' },
   APPROVE: { code: 'approve', name: '审批' },
   CALCULATE: { code: 'calculate', name: '计算' },
+  VIEW: { code: 'view', name: '查看详情' },
 }
 
 // 控件权限 - 对应字段
@@ -105,7 +106,7 @@ export const PERMISSION_MAP = {
 
   // BD工作台
   '/influencer-managements': [makePermission('influencers', 'read')],
-  '/samples-bd': [makePermission('samples-bd', 'read'), makePermission('samples-bd', 'create')],
+  '/samples-bd': [makePermission('samplesBd', 'read'), makePermission('samplesBd', 'create')],
 
   // 供应链
   '/products': [makePermission('products', 'read')],
@@ -116,17 +117,17 @@ export const PERMISSION_MAP = {
   '/orders': [makePermission('orders', 'read')],
 
   // 报表
-  '/bd-dashboard': [makePermission('bd-dashboard', 'read')],
-  '/bd-daily': [makePermission('bd-daily', 'read')],
+  '/bd-dashboard': [makePermission('bdDashboard', 'read')],
+  '/bd-daily': [makePermission('bdDaily', 'read')],
   '/performance': [makePermission('performance', 'read')],
 
   // 系统设置
   '/settings/users': [makePermission('users', 'read')],
   '/settings/roles': [makePermission('roles', 'read')],
   '/settings/departments': [makePermission('departments', 'read')],
-  '/settings/commission-rules': [makePermission('commission-rules', 'read')],
-  '/settings/base-data': [makePermission('base-data', 'read')],
-  '/settings/system-models': [makePermission('system-models', 'read')],
+  '/settings/commission-rules': [makePermission('commissions', 'read')],
+  '/settings/base-data': [makePermission('baseData', 'read')],
+  '/settings/system-models': [makePermission('systemModels', 'read')],
 }
 
 /**
@@ -135,11 +136,11 @@ export const PERMISSION_MAP = {
  */
 export const MODULE_DATA_SCOPE = {
   influencers: { ownerField: 'assignedTo', label: '达人' },
-  'samples-bd': { ownerField: 'salesmanId', label: '样品' },
+  samplesBd: { ownerField: 'salesmanId', label: '样品' },
   samples: { ownerField: 'salesmanId', label: '样品' },
   orders: { ownerField: 'salesmanId', label: '订单' },
   products: { ownerField: 'userId', label: '产品' },
   activities: { ownerField: 'userId', label: '活动' },
-  'bd-daily': { ownerField: 'userId', label: '日报' },
+  bdDaily: { ownerField: 'userId', label: '日报' },
   performance: { ownerField: 'userId', label: '业绩' },
 }

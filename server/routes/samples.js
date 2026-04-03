@@ -31,7 +31,7 @@ const upload = multer({
  * @access  Private
  * @notes   支持 samples:read (管理员) 和 samples-bd:read (BD) 两种权限
  */
-router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesman', deptField: 'deptId', ownerValue: (req) => req.user.username }), async (req, res) => {
+router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesman', deptField: 'deptId', ownerValue: (req) => req.user.username }), async (req, res) => {
   try {
     const {
       page = 1,
@@ -167,7 +167,7 @@ router.get('/', authenticate, authorize('samples:read', 'samples-bd:read'), filt
  * @access  Private
  * @notes   支持 samples:create (管理员) 和 samples-bd:create (BD) 两种权限
  */
-router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'), [
+router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), [
   body('date').notEmpty().withMessage('日期不能为空'),
   body('productId').notEmpty().withMessage('商品ID不能为空'),
   body('influencerAccount').notEmpty().withMessage('达人账号不能为空')
@@ -338,7 +338,7 @@ router.post('/', authenticate, authorize('samples:create', 'samples-bd:create'),
  * @access  Private
  * @notes   支持 samples:update (管理员) 和 samples-bd:update (BD) 两种权限
  */
-router.put('/:id', authenticate, authorize('samples:update', 'samples-bd:update'), async (req, res) => {
+router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update'), async (req, res) => {
   try {
     const { videoLink, videoStreamCode, sampleStatus, refusalReason, ...restBody } = req.body;
     const updateData = { ...restBody };
@@ -410,7 +410,7 @@ router.put('/:id', authenticate, authorize('samples:update', 'samples-bd:update'
  * @access  Private
  * @notes   支持 samples:delete (管理员) 和 samples-bd:delete (BD) 两种权限
  */
-router.delete('/:id', authenticate, authorize('samples:delete', 'samples-bd:delete'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('samples:delete', 'samplesBd:delete'), async (req, res) => {
   try {
     const sample = await SampleManagement.findOneAndDelete({
       _id: req.params.id,
@@ -465,7 +465,7 @@ router.delete('/clear', authenticate, authorize('admin'), async (req, res) => {
  * @access  Private
  * @notes   支持 samples:create (管理员) 和 samples-bd:create (BD) 两种权限
  */
-router.post('/import', authenticate, authorize('samples:create', 'samples-bd:create'), upload.single('file'), async (req, res) => {
+router.post('/import', authenticate, authorize('samples:create', 'samplesBd:create'), upload.single('file'), async (req, res) => {
   try {
     console.log('[Sample Import] 导入请求接收');
 

@@ -211,9 +211,9 @@ const menuPermissions = {
   dashboard: () => true,
 
   // BD工作台 - 需要达人或样品申请(BD)权限
-  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samples-bd:read', 'samples-bd:create']),
+  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samplesBd:read', 'samplesBd:create']),
   influencerList: () => hasPermission('influencers:read'),
-  samplesBd: () => hasAnyPermission(['samples-bd:read', 'samples-bd:create']),
+  samplesBd: () => hasAnyPermission(['samplesBd:read', 'samplesBd:create']),
 
   // 供应链 - 需要产品或活动或店铺权限
   supplyChain: () => hasAnyPermission(['products:read', 'products:create', 'activities:read', 'activities:create', 'shops:read', 'shops:create']),
@@ -228,13 +228,13 @@ const menuPermissions = {
   orders: () => hasPermission('orders:read'),
 
   // 报表管理 - 需要BD日报或业绩或产品统计权限
-  reports: () => hasAnyPermission(['bd-daily:read', 'performance:read', 'productStats:read']),
-  bdDashboard: () => hasAnyPermission(['bd-dashboard:read', 'performance:read']),
-  bdDaily: () => hasPermission('bd-daily:read'),
+  reports: () => hasAnyPermission(['bdDaily:read', 'performance:read', 'productStats:read']),
+  bdDashboard: () => hasAnyPermission(['bdDashboard:read', 'performance:read']),
+  bdDaily: () => hasPermission('bdDaily:read'),
   performance: () => hasPermission('performance:read'),
 
   // 系统设置 - 需要对应模块的读取权限
-  settings: () => hasAnyPermission(['users:read', 'roles:read', 'departments:read', 'baseData:read', 'systemModels:read', 'initImport:read']) || isSuperAdmin(),
+  settings: () => hasAnyPermission(['users:read', 'roles:read', 'departments:read', 'commissions:read', 'baseData:read', 'systemModels:read', 'initImport:read']) || isSuperAdmin(),
   users: () => hasPermission('users:read'),
   roles: () => hasPermission('roles:read'),
   departments: () => hasPermission('departments:read'),

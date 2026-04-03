@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <h3>{{ $t('menu.commissionRules') }}</h3>
-          <el-button type="primary" @click="showAddCategory" v-if="hasPermission('commission-rules:btn-add-category')">
+          <el-button type="primary" @click="showAddCategory" v-if="hasPermission('commissions:btn-add-category')">
             <el-icon><Plus /></el-icon>
             {{ $t('commission.addCategory') }}
           </el-button>
@@ -15,7 +15,7 @@
       <div v-for="dept in departmentRules" :key="dept.deptId" class="dept-section">
         <div class="dept-header">
           <h4>{{ dept.deptName }}</h4>
-          <el-button link type="primary" @click="addRule(dept.deptId)" v-if="hasPermission('commission-rules:btn-add-rule')">
+          <el-button link type="primary" @click="addRule(dept.deptId)" v-if="hasPermission('commissions:btn-add-rule')">
             <el-icon><Plus /></el-icon>
             {{ $t('commission.addRule') }}
           </el-button>
@@ -51,7 +51,7 @@
           </el-table-column>
           <el-table-column :label="$t('common.actions')" width="100">
             <template #default="{ row }">
-              <el-button link type="danger" @click="deleteRule(dept.deptId, row._id)" v-if="hasPermission('commission-rules:btn-delete-rule')">
+              <el-button link type="danger" @click="deleteRule(dept.deptId, row._id)" v-if="hasPermission('commissions:btn-delete')">
                 {{ $t('common.delete') }}
               </el-button>
             </template>
@@ -61,7 +61,7 @@
 
       <!-- 保存按钮 -->
       <div class="save-actions" style="margin-top: 20px">
-        <el-button type="primary" @click="saveAll" :loading="saving" v-if="hasPermission('commission-rules:btn-save')">
+        <el-button type="primary" @click="saveAll" :loading="saving" v-if="hasPermission('commissions:btn-save')">
           <el-icon><Check /></el-icon>
           {{ $t('commission.saveConfig') }}
         </el-button>
@@ -134,8 +134,8 @@
 
         <el-form-item label="抽点类型" prop="commissionType">
           <el-radio-group v-model="ruleForm.commissionType">
-            <el-radio label="fixed">固定比例</el-radio>
-            <el-radio label="tiered">阶梯比例</el-radio>
+            <el-radio value="fixed">固定比例</el-radio>
+            <el-radio value="tiered">阶梯比例</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>

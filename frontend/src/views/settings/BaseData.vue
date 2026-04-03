@@ -5,14 +5,14 @@
         <div class="page-header">
           <h3>{{ $t('menu.baseData') }}</h3>
           <div>
-            <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('base-data:create')">
+            <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('baseData:create')">
               <el-icon><Plus /></el-icon>
               {{ $t('common.add') }}
             </el-button>
-            <el-button type="danger" @click="handleBatchDelete" :disabled="!hasSelected" v-if="hasPermission('base-data:btn-batch-delete')">
+            <el-button type="danger" @click="handleBatchDelete" :disabled="!hasSelected" v-if="hasPermission('baseData:btn-batch-delete')">
               {{ $t('common.delete') }}
             </el-button>
-            <el-button type="success" @click="exportData" :loading="exporting" v-if="hasPermission('base-data:btn-export')">
+            <el-button type="success" @click="exportData" :loading="exporting" v-if="hasPermission('baseData:btn-export')">
               <el-icon><Download /></el-icon>
               {{ $t('common.export') }}
             </el-button>
@@ -93,8 +93,8 @@
         </el-table-column>
         <el-table-column :label="$t('baseData.operation')" fixed="right" width="150">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('base-data:update')">{{ $t('baseData.edit') }}</el-button>
-            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('base-data:delete')">{{ $t('common.delete') }}</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('baseData:update')">{{ $t('baseData.edit') }}</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('baseData:delete')">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -156,8 +156,8 @@
 
         <el-form-item :label="$t('baseData.status')" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">{{ $t('baseData.active') }}</el-radio>
-            <el-radio label="inactive">{{ $t('baseData.inactive') }}</el-radio>
+            <el-radio value="active">{{ $t('baseData.active') }}</el-radio>
+            <el-radio value="inactive">{{ $t('baseData.inactive') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 

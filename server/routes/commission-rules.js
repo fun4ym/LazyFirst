@@ -10,7 +10,7 @@ const router = express.Router();
  * @desc    获取抽点规则列表
  * @access  Private
  */
-router.get('/', authenticate, authorize('commissionRules:read'), async (req, res) => {
+router.get('/', authenticate, authorize('commissions:read'), async (req, res) => {
   try {
     const rules = await CommissionRule.find({ companyId: req.companyId })
       .populate('deptId', 'name')
@@ -47,7 +47,7 @@ router.get('/', authenticate, authorize('commissionRules:read'), async (req, res
  * @desc    保存抽点规则
  * @access  Private
  */
-router.post('/save', authenticate, authorize('commissionRules:update'), [
+router.post('/save', authenticate, authorize('commissions:update'), [
   body('rules').isArray().withMessage('rules必须是数组')
 ], async (req, res) => {
   try {

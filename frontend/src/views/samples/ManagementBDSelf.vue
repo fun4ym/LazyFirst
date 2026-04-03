@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <div class="header-actions">
-            <el-button type="success" @click="showCreateDialog" v-if="hasPermission('samples-bd:create')">
+            <el-button type="success" @click="showCreateDialog" v-if="hasPermission('samplesBd:create')">
               <el-icon><Plus /></el-icon>
               {{ $t('sampleBD.addNew') }}
             </el-button>
