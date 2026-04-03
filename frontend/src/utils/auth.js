@@ -40,17 +40,25 @@ const AuthManager = {
   // 获取用户权限列表
   getPermissions() {
     const user = this.getUser()
-    if (!user) return []
+    if (!user) {
+      console.log('[AuthManager] getPermissions: user为空')
+      return []
+    }
     // 用户权限可能在 role.permissions 中
     const role = user.role
     console.log('[AuthManager] getPermissions role:', role)
-    if (!role) return []
+    if (!role) {
+      console.log('[AuthManager] getPermissions: role为空')
+      return []
+    }
     // 如果是超级管理员（role.name === '超级管理员' 或 'admin' 或权限包含 *）
     if (role.name === '超级管理员' || role.name === 'admin' || role.permissions?.includes('*')) {
       console.log('[AuthManager] 检测到超级管理员，返回*权限')
       return ['*']
     }
-    return role.permissions || []
+    const perms = role.permissions || []
+    console.log('[AuthManager] getPermissions 返回权限数量:', perms.length, '包含baseData:create?', perms.includes('baseData:create'))
+    return perms
   },
 
   // 检查用户是否有指定权限
