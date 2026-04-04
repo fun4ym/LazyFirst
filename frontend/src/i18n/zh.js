@@ -177,7 +177,15 @@ export default {
     shipped: '已发货',
     received: '已收货',
     returned: '已退货',
-    sampleProduct: '样品商品'
+    sampleProduct: '样品商品',
+    // 样品申请页面
+    influencerAccount: '达人账号',
+    productId: '商品ID',
+    refusalReason: '拒收原因',
+    videoLink: '视频链接',
+    videoStreamCode: '视频Stream码',
+    isAdPromotion: '是否投流',
+    isOrderGenerated: '是否出单'
   },
   order: {
     orderNo: '订单号',

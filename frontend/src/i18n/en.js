@@ -176,7 +176,15 @@ export default {
     shipped: 'Shipped',
     received: 'Received',
     returned: 'Returned',
-    sampleProduct: 'Sample Product'
+    sampleProduct: 'Sample Product',
+    // 样品申请页面
+    influencerAccount: 'Influencer Account',
+    productId: 'Product ID',
+    refusalReason: 'Refusal Reason',
+    videoLink: 'Video Link',
+    videoStreamCode: 'Video Stream Code',
+    isAdPromotion: 'Ad Promotion',
+    isOrderGenerated: 'Order Generated'
   },
   order: {
     orderNo: 'Order No.',
