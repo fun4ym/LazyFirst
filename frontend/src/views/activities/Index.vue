@@ -173,7 +173,7 @@
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('activities:read')">{{ $t('activities.viewDetail') }}</el-button>
             <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('activities:update')">{{ $t('activities.editBtn') }}</el-button>
-            <el-button link type="success" @click="showImportDialog(row)" v-if="hasPermission('admin')">{{ $t('activities.importProducts') }}</el-button>
+            <el-button link type="success" @click="showImportDialog(row)" v-if="hasPermission('activities:btn-import-products')">{{ $t('activities.importProducts') }}</el-button>
             <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('activities:delete')">{{ $t('activities.delete') }}</el-button>
           </template>
         </el-table-column>

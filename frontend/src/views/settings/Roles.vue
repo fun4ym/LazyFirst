@@ -374,7 +374,8 @@ const menuTree = ref([
           { code: 'btn-add', name: '新增活动' },
           { code: 'btn-view', name: '查看详情' },
           { code: 'btn-edit', name: '编辑活动' },
-          { code: 'btn-delete', name: '删除活动' }
+          { code: 'btn-delete', name: '删除活动' },
+          { code: 'btn-import-products', name: '导入商品' }
         ]
       },
       {

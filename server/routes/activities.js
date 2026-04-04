@@ -512,9 +512,9 @@ router.get('/product-counts', authenticate, authorize('activities:read'), async 
 /**
  * @route   POST /api/activities/:id/import-products
  * @desc    导入TikTok商品（通过Excel文件）
- * @access  Private (Admin)
+ * @access  Private
  */
-router.post('/:id/import-products', authenticate, authorize('admin'), upload.single('file'), async (req, res) => {
+router.post('/:id/import-products', authenticate, authorize('activities:btn-import-products'), upload.single('file'), async (req, res) => {
   try {
     const activityId = req.params.id;
     const companyId = req.companyId;
