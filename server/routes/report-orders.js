@@ -472,9 +472,13 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
     });
 
     // 建立样品索引：productId + influencerAccount -> BD名字
+    // 注意：sample.productId可能是ObjectId，需要转成字符串
     const sampleIndex = new Map();
     samples.forEach(sample => {
-      const key = `${sample.productId}_${sample.influencerAccount}`;
+      const productIdStr = typeof sample.productId === 'object' 
+        ? sample.productId.toString() 
+        : String(sample.productId || '');
+      const key = `${productIdStr}_${sample.influencerAccount || ''}`;
       if (sample.salesman) {
         // 将salesman ID转换为名字
         const salesmanId = typeof sample.salesman === 'object' ? sample.salesman.toString() : sample.salesman;
@@ -485,7 +489,7 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
 
     // 匹配订单
     for (const order of orders) {
-      const key = `${order.productId}_${order.influencerUsername}`;
+      const key = `${order.productId}_${order.influencerUsername || ''}`;
 
       if (sampleIndex.has(key)) {
         const bdName = sampleIndex.get(key);
