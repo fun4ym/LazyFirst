@@ -1111,33 +1111,6 @@ export default {
     exportFailed: '导出失败',
     noDataToExport: '没有数据可导出'
   },
-  reportOrders: {
-    title: 'TikTok订单',
-    importOrders: '导入订单',
-    orderList: '订单列表',
-    orderId: '订单ID',
-    subOrderId: '子订单号',
-    influencer: '达人',
-    product: '商品',
-    shop: '店铺',
-    amount: '金额',
-    quantity: '数量',
-    status: '状态',
-    createTime: '创建时间',
-    paymentTime: '打款时间',
-    search: '搜索',
-    reset: '重置',
-    export: '导出',
-    orderStatus: '交易状态',
-    paid: '已打款',
-    unpaid: '未打款',
-    showPaidOnly: '只显示已打款',
-    confirmImport: '确认导入',
-    importTip: '导入的订单数据将合并到现有数据中',
-    importSuccess: '导入成功',
-    importFailed: '导入失败',
-    noPermission: '只有管理员和BD角色可以导入订单'
-  },
   mobile: {
     profile: {
       title: '我的',
