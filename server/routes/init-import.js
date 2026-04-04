@@ -695,16 +695,22 @@ router.post('/influencers', authenticate, verifyAdmin, upload.single('file'), as
 
     console.log('[导入达人] 有效达人数量:', influencers.length);
 
-    // 批量插入达人
+    // 批量插入达人（使用upsert避免重复）
     let insertedCount = 0;
+    let updatedCount = 0;
     if (influencers.length > 0) {
-      try {
-        const result = await Influencer.insertMany(influencers.map(i => i.influencer), { ordered: false });
-        insertedCount = result.length;
-        console.log('[导入达人] 插入成功数量:', insertedCount);
-      } catch (e) {
-        console.log('[导入达人] 达人插入失败:', e.message);
-      }
+      const bulkOps = influencers.map(item => ({
+        updateOne: {
+          filter: { companyId, tiktokId: item.influencer.tiktokId },
+          update: { $set: item.influencer },
+          upsert: true
+        }
+      }));
+      
+      const result = await Influencer.bulkWrite(bulkOps);
+      insertedCount = result.upsertedCount;
+      updatedCount = result.modifiedCount;
+      console.log('[导入达人] 新增:', insertedCount, '更新:', updatedCount);
     }
 
     // 插入维护记录
