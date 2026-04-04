@@ -450,6 +450,7 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
   try {
     const ReportOrder = require('../models/ReportOrder');
     const SampleManagement = require('../models/SampleManagement');
+    const User = require('../models/User');
 
     // 获取所有订单记录
     const orders = await ReportOrder.find({ companyId: req.companyId });
@@ -463,12 +464,22 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
     const samples = await SampleManagement.find({ companyId: req.companyId });
     console.log(`找到 ${samples.length} 条样品记录`);
 
-    // 建立样品索引：productId + influencerAccount -> salesman
+    // 获取用户ID到名字的映射
+    const users = await User.find({ companyId: req.companyId });
+    const userIdToName = {};
+    users.forEach(u => {
+      userIdToName[u._id.toString()] = u.realName || u.username || u._id.toString();
+    });
+
+    // 建立样品索引：productId + influencerAccount -> BD名字
     const sampleIndex = new Map();
     samples.forEach(sample => {
       const key = `${sample.productId}_${sample.influencerAccount}`;
       if (sample.salesman) {
-        sampleIndex.set(key, sample.salesman);
+        // 将salesman ID转换为名字
+        const salesmanId = typeof sample.salesman === 'object' ? sample.salesman.toString() : sample.salesman;
+        const bdName = userIdToName[salesmanId] || sample.salesman;
+        sampleIndex.set(key, bdName);
       }
     });
 

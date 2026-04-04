@@ -108,6 +108,13 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ date: -1 });
 
+    // 获取用户ID到名字的映射
+    const users = await User.find({ companyId: req.companyId }).select('_id realName username');
+    const userIdToName = {};
+    users.forEach(u => {
+      userIdToName[u._id.toString()] = u.realName || u.username || u._id.toString();
+    });
+
     // 获取每个样品的达人黑名单状态
     const influencerAccounts = [...new Set(samples.map(s => s.influencerAccount).filter(Boolean))];
     const blacklistedInfluencers = await Influencer.find({
@@ -129,9 +136,19 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
     const samplesWithBlacklist = samples.map(sample => {
       const blacklistInfo = blacklistMap[sample.influencerAccount] || { isBlacklisted: false };
       const sampleObj = sample.toObject();
+      // 将salesman ID转换为名字
+      let salesmanName = sampleObj.salesman;
+      if (sampleObj.salesman) {
+        const salesmanIdStr = typeof sampleObj.salesman === 'object' ? sampleObj.salesman.toString() : sampleObj.salesman;
+        const user = users.find(u => u._id.toString() === salesmanIdStr);
+        if (user) {
+          salesmanName = user.realName || user.username;
+        }
+      }
       return {
         ...sampleObj,
         productId: sampleObj.productId ? sampleObj.productId.toString() : '',
+        salesman: salesmanName,
         isBlacklistedInfluencer: blacklistInfo.isBlacklisted,
         influencerBlacklistInfo: blacklistInfo.isBlacklisted ? blacklistInfo : null
       };

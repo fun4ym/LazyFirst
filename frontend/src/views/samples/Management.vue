@@ -672,7 +672,7 @@
                   v-for="user in users"
                   :key="user._id"
                   :label="user.realName || user.username"
-                  :value="user._id"
+                  :value="user.realName || user.username"
                 />
               </el-select>
             </el-form-item>
