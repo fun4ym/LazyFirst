@@ -382,6 +382,14 @@ async function generateSingleDate(targetDate, companyId, userId) {
     // 查找样品管理中的所有BD
     const SampleManagement = require('../models/SampleManagement');
     const ReportOrder = require('../models/ReportOrder');
+    const User = require('../models/User');
+
+    // 获取用户ID到名字的映射
+    const users = await User.find({ companyId: companyId });
+    const userMap = {};
+    users.forEach(u => {
+      userMap[u._id.toString()] = u.name || u.username || u._id.toString();
+    });
 
     // 获取所有样品记录
     const samples = await SampleManagement.find({
@@ -392,7 +400,9 @@ async function generateSingleDate(targetDate, companyId, userId) {
     // 按BD分组统计样品
     const bdStats = {};
     samples.forEach(sample => {
-      const salesman = sample.salesman || '未分配';
+      const salesmanId = sample.salesman || '未分配';
+      // 将ID转换为名字
+      const salesman = userMap[salesmanId] || salesmanId;
       if (!bdStats[salesman]) {
         bdStats[salesman] = {
           sampleCount: 0,
@@ -446,10 +456,13 @@ async function generateSingleDate(targetDate, companyId, userId) {
     const samplePaymentMap = new Map();
     sampleWithPayment.forEach(sample => {
       const key = `${sample.productId}_${sample.influencerAccount}`;
+      // 将ID转换为名字
+      const salesmanId = sample.salesman || '未分配';
+      const salesman = userMap[salesmanId] || salesmanId;
       samplePaymentMap.set(key, {
         productId: sample.productId,
         influencerAccount: sample.influencerAccount,
-        salesman: sample.salesman || '未分配'
+        salesman: salesman
       });
     });
     // 获取该日期commissionSettlementTime的订单

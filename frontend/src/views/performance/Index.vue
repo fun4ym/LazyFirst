@@ -252,9 +252,6 @@ const loadChartData = async () => {
       showPie.value = true
 
       nextTick(() => {
-        if (pieChartRef.value && !pieChartInstance.value) {
-          pieChartInstance.value = echarts.init(pieChartRef.value)
-        }
         updatePieChart(latestDayData)
       })
     }
@@ -263,14 +260,42 @@ const loadChartData = async () => {
   }
 }
 
+const initCharts = () => {
+  if (lineChartRef.value && !lineChartInstance.value) {
+    lineChartInstance.value = echarts.init(lineChartRef.value)
+  }
+  if (pieChartRef.value && !pieChartInstance.value) {
+    pieChartInstance.value = echarts.init(pieChartRef.value)
+  }
+}
+
 const updateLineChart = (dates, sampleData, orderData, dailyStats) => {
-  if (!lineChartInstance.value) return
+  // 确保图表实例已创建
+  initCharts()
+  if (!lineChartInstance.value) {
+    console.log('图表实例未创建，延迟重试')
+    setTimeout(() => updateLineChart(dates, sampleData, orderData, dailyStats), 100)
+    return
+  }
 
   const option = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
         type: 'cross'
+      },
+      formatter: (params) => {
+        const date = params[0].name
+        let result = `<strong>${date}</strong><br/>`
+        params.forEach(p => {
+          result += `${p.marker} ${p.seriesName}: <strong>${p.value}</strong><br/>`
+        })
+        // 显示该日期的详细统计
+        if (dailyStats[date]) {
+          const dayData = dailyStats[date]
+          result += `<br/><span style="color:#666">申样: ${dayData.totalSamples} | 成单: ${dayData.totalOrders}</span>`
+        }
+        return result
       }
     },
     legend: {
@@ -365,9 +390,6 @@ const updateLineChart = (dates, sampleData, orderData, dailyStats) => {
           showPie.value = true
 
           nextTick(() => {
-            if (pieChartRef.value && !pieChartInstance.value) {
-              pieChartInstance.value = echarts.init(pieChartRef.value)
-            }
             updatePieChart(dailyStats[date])
           })
 
@@ -381,8 +403,16 @@ const updateLineChart = (dates, sampleData, orderData, dailyStats) => {
 const updatePieChart = (dayData) => {
   console.log('updatePieChart调用，dayData:', dayData, 'pieChartInstance.value:', pieChartInstance.value)
 
-  if (!pieChartInstance.value || !dayData) {
-    console.log('updatePieChart退出：缺少实例或数据')
+  if (!dayData) {
+    console.log('updatePieChart退出：缺少数据')
+    return
+  }
+
+  // 确保图表实例已创建
+  initCharts()
+  if (!pieChartInstance.value) {
+    console.log('饼图实例未创建，延迟重试')
+    setTimeout(() => updatePieChart(dayData), 100)
     return
   }
 
@@ -415,47 +445,70 @@ const updatePieChart = (dayData) => {
   console.log('成单数饼图数据:', orderTop3)
 
   const option = {
-    title: {
-      text: '申样数分布',
-      left: '25%',
-      top: 10
-    },
     tooltip: {
       trigger: 'item',
       formatter: '{b}: {c} ({d}%)'
     },
     legend: {
-      orient: 'vertical',
-      left: 'left',
-      top: 40
+      orient: 'horizontal',
+      bottom: 0,
+      left: 'center',
+      itemWidth: 14,
+      itemHeight: 10,
+      textStyle: {
+        fontSize: 12
+      }
     },
-    series: [
+    title: [
       {
-        type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['30%', '60%'],
-        data: sampleTop3,
-        label: {
-          formatter: '{b}: {c}'
+        text: '申样分布',
+        left: '18%',
+        top: 5,
+        textAlign: 'center',
+        textStyle: {
+          fontSize: 14,
+          fontWeight: 600,
+          color: '#4a148c'
         }
       },
       {
+        text: '成单分布',
+        left: '72%',
+        top: 5,
+        textAlign: 'center',
+        textStyle: {
+          fontSize: 14,
+          fontWeight: 600,
+          color: '#4a148c'
+        }
+      }
+    ],
+    series: [
+      {
+        name: '申样分布',
         type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['75%', '60%'],
+        radius: ['35%', '60%'],
+        center: ['25%', '50%'],
+        data: sampleTop3,
+        label: {
+          show: true,
+          formatter: '{b}: {c}',
+          fontSize: 11
+        }
+      },
+      {
+        name: '成单分布',
+        type: 'pie',
+        radius: ['35%', '60%'],
+        center: ['75%', '50%'],
         data: orderTop3,
         label: {
-          formatter: '{b}: {c}'
+          show: true,
+          formatter: '{b}: {c}',
+          fontSize: 11
         }
       }
     ]
-  }
-
-  // 修改第二个系列的标题
-  option.series[1].title = {
-    text: '成单数分布',
-    left: '75%',
-    top: 10
   }
 
   pieChartInstance.value.setOption(option)
@@ -516,21 +569,19 @@ const getCountClass = (count, isTop) => {
 }
 
 onMounted(() => {
+  // 先初始化图表
   nextTick(() => {
-    if (lineChartRef.value) {
-      lineChartInstance.value = echarts.init(lineChartRef.value)
-    }
-    if (pieChartRef.value) {
-      pieChartInstance.value = echarts.init(pieChartRef.value)
-    }
-    loadChartData()
-    loadRankingData()
-
+    initCharts()
     window.addEventListener('resize', () => {
       lineChartInstance.value?.resize()
       pieChartInstance.value?.resize()
     })
   })
+  // 再加载数据（延迟一点确保DOM渲染完成）
+  setTimeout(() => {
+    loadChartData()
+    loadRankingData()
+  }, 100)
 })
 </script>
 
