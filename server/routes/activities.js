@@ -718,6 +718,7 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
             currency,
             priceRangeMin,
             priceRangeMax,
+            squareCommissionRate: 0,  // 新增商品设为0
             productImages: [],
             activityConfigs: [{
               activityId: activity._id,
