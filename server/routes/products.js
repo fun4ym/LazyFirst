@@ -24,10 +24,7 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
     if (keyword) {
       // 先查找匹配的店铺ID
       const matchingShops = await Shop.find({
-        $or: [
-          { shopName: { $regex: keyword, $options: 'i' } },
-          { name: { $regex: keyword, $options: 'i' } }
-        ]
+        shopName: { $regex: keyword, $options: 'i' }
       }).select('_id').lean();
       const shopIds = matchingShops.map(s => s._id);
 
