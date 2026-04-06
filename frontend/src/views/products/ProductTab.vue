@@ -544,9 +544,6 @@
           <el-descriptions-item :label="$t('product.shop')">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('product.productCategory')">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('product.squareRate')">{{ currentProduct.squareCommissionRate ? (currentProduct.squareCommissionRate * 100).toFixed(2) + '%' : '-' }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('product.priceCell')" class-name="price-cell">
-            {{ currentProduct.sellingPrice ? currentProduct.sellingPrice + ' ' + (currentProduct.currency || 'USD') : '-' }}
-          </el-descriptions-item>
           <el-descriptions-item :label="$t('product.priceRangeCell')" :span="2" class-name="price-cell">
             {{ currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0 ? currentProduct.priceRangeMin : '-' }}
             {{ (currentProduct.priceRangeMin || currentProduct.priceRangeMin === 0) && (currentProduct.priceRangeMax || currentProduct.priceRangeMax === 0) ? ' - ' : '' }}
@@ -573,6 +570,7 @@
             <div class="activity-title">
               <span class="activity-tag">{{ ac.activityId?.tikTokActivityId || '-' }}</span>
               <span class="activity-name">{{ ac.activityId?.name || '-' }}</span>
+              <el-tag v-if="ac.isDefault" type="success" size="small">{{ $t('product.default') || '默认' }}</el-tag>
             </div>
             <el-descriptions :column="3" border size="small">
               <el-descriptions-item :label="$t('product.activityLink')" :span="3">
