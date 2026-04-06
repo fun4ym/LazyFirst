@@ -19,11 +19,13 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
     console.log('[商品管理] 数据权限过滤 - req.dataScope:', JSON.stringify(req.dataScope));
     console.log('[商品管理] 数据权限过滤 - query:', JSON.stringify(query));
 
-    if (search) {
+    // 搜索关键词（支持商品名称、TikTok商品ID、SKU搜索）
+    const keyword = search || req.query.keyword;
+    if (keyword) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { tiktokSku: { $regex: search, $options: 'i' } },
-        { tiktokProductId: { $regex: search, $options: 'i' } }
+        { name: { $regex: keyword, $options: 'i' } },
+        { tiktokSku: { $regex: keyword, $options: 'i' } },
+        { tiktokProductId: { $regex: keyword, $options: 'i' } }
       ];
     }
 
@@ -34,15 +36,6 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
     // 按活动筛选
     if (activityId) {
       query['activityConfigs.activityId'] = activityId;
-    }
-
-    // 关键词搜索（兼容合作产品）
-    if (keyword) {
-      query.$or = query.$or || [];
-      query.$or.push(
-        { name: { $regex: keyword, $options: 'i' } },
-        { tiktokProductId: { $regex: keyword, $options: 'i' } }
-      );
     }
 
     const products = await Product.find(query)
