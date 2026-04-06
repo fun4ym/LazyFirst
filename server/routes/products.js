@@ -19,13 +19,23 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
     console.log('[商品管理] 数据权限过滤 - req.dataScope:', JSON.stringify(req.dataScope));
     console.log('[商品管理] 数据权限过滤 - query:', JSON.stringify(query));
 
-    // 搜索关键词（支持商品名称、TikTok商品ID、SKU搜索）
+    // 搜索关键词（支持商品名称、TikTok商品ID、SKU、店铺名称搜索）
     const keyword = search || req.query.keyword;
     if (keyword) {
+      // 先查找匹配的店铺ID
+      const matchingShops = await Shop.find({
+        $or: [
+          { shopName: { $regex: keyword, $options: 'i' } },
+          { name: { $regex: keyword, $options: 'i' } }
+        ]
+      }).select('_id').lean();
+      const shopIds = matchingShops.map(s => s._id);
+
       query.$or = [
         { name: { $regex: keyword, $options: 'i' } },
         { tiktokSku: { $regex: keyword, $options: 'i' } },
-        { tiktokProductId: { $regex: keyword, $options: 'i' } }
+        { tiktokProductId: { $regex: keyword, $options: 'i' } },
+        ...(shopIds.length > 0 ? [{ shopId: { $in: shopIds } }] : [])
       ];
     }
 
