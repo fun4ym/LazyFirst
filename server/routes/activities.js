@@ -617,25 +617,29 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
         const tiktokProductId = String(row[productIdCol]);
         const shopName = row[shopNameCol];
         const priceStr = row[priceCol] || '';
-        const productLink = row[productLinkCol] || '';
+        const activityLink = row[productLinkCol] || '';  // 商品链接 -> activityLink
         
         // 调试：打印原始数据和解析结果
-        console.log(`[导入商品] 第${rowIndex + 1}行: productName=${productName}, productLink=${productLink}, shopName=${shopName}`);
+        console.log(`[导入商品] 第${rowIndex + 1}行: productName=${productName}, activityLink=${activityLink}, shopName=${shopName}`);
         console.log(`[导入商品] row数据:`, JSON.stringify(row));
         
-        // 解析价格
-        const { min: priceRangeMin, max: priceRangeMax, currency } = parsePriceRange(priceStr);
+        // 解析价格（如 ฿147.83-฿327.61）-> currency, priceRangeMin, priceRangeMax
+        const { currency, min, max } = parsePriceRange(priceStr);
+        // 如果只有一个价格，两个都用同一个
+        const priceRangeMin = min;
+        const priceRangeMax = max === min ? min : max;
+        
+        // 佣金率：创作者佣金率 -> promotionInfluencerRate（百分数->小数）
+        const promotionInfluencerRate = parsePercentage(row[creatorRateCol]);
+        // 联盟团长佣金率 -> promotionCompanyRate（百分数->小数）
+        const promotionCompanyRate = parsePercentage(row[allianceRateCol]);
+        // 达人店铺广告佣金率 -> adInfluencerRate（百分数->小数）
+        const adInfluencerRate = parsePercentage(row[adStoreRateCol]);
+        // 联盟服务商店铺广告佣金率 -> adCompanyRate（百分数->小数）
+        const adCompanyRate = parsePercentage(row[adAllianceRateCol]);
         
         // 获取店铺
         const shop = await getOrCreateShop(companyId, shopName);
-        
-        // 解析佣金率
-        const promotionInfluencerRate = parsePercentage(row[creatorRateCol]);      // 创作者佣金率
-        const promotionOriginalRate = parsePercentage(row[allianceRateCol]);       // 联盟团长佣金率
-        const promotionCompanyRate = 0;                                            // 公司留成（从其他计算）
-        const adInfluencerRate = parsePercentage(row[adStoreRateCol]);             // 达人店铺广告佣金率
-        const adOriginalRate = parsePercentage(row[adAllianceRateCol]);           // 联盟服务商店铺广告佣金率
-        const adCompanyRate = 0;
         
         // 查找现有商品
         let product = await Product.findOne({
@@ -644,55 +648,60 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
         });
         
         if (product) {
-          // 检查商品名称是否一致
-          if (product.name !== productName) {
-            // 名称不一致，需要用户确认（这里先用Excel名称覆盖）
-            product.name = productName;
+          // 商品已存在：修改有传参的字段
+          if (productName) product.name = productName;
+          if (shop._id) product.shopId = shop._id;
+          if (priceStr) {
+            product.currency = currency;
+            product.priceRangeMin = priceRangeMin;
+            product.priceRangeMax = priceRangeMax;
           }
           
-          // 更新店铺
-          product.shopId = shop._id;
-          
-          // 更新或添加活动配置
+          // 检查该商品是否已有当前活动的配置
           const existingConfigIndex = product.activityConfigs.findIndex(
             ac => ac.activityId.toString() === activityId
           );
           
-          const activityConfig = {
-            activityId: activity._id,
-            activityLink: productLink,
-            requirementGmv: defaultRequirements.requirementGmv,
-            requirementMonthlySales: defaultRequirements.requirementMonthlySales,
-            requirementFollowers: defaultRequirements.requirementFollowers,
-            requirementAvgViews: defaultRequirements.requirementAvgViews,
-            sampleMethod: defaultRequirements.sampleMethod,
-            cooperationCountry: defaultRequirements.cooperationCountry,
-            promotionInfluencerRate,
-            promotionOriginalRate,
-            promotionCompanyRate,
-            adInfluencerRate,
-            adOriginalRate,
-            adCompanyRate
-          };
-          
           if (existingConfigIndex >= 0) {
-            // 更新现有活动配置
-            product.activityConfigs[existingConfigIndex] = activityConfig;
+            // 已有该活动配置 -> 修改该配置
+            product.activityConfigs[existingConfigIndex].isDefault = true;
+            if (activityLink) product.activityConfigs[existingConfigIndex].activityLink = activityLink;
+            product.activityConfigs[existingConfigIndex].promotionInfluencerRate = promotionInfluencerRate;
+            product.activityConfigs[existingConfigIndex].promotionCompanyRate = promotionCompanyRate;
+            product.activityConfigs[existingConfigIndex].adInfluencerRate = adInfluencerRate;
+            product.activityConfigs[existingConfigIndex].adCompanyRate = adCompanyRate;
+            // 更新已有商品时，promotionOriginalRate 使用商品的 squareCommissionRate
+            product.activityConfigs[existingConfigIndex].promotionOriginalRate = product.squareCommissionRate || 0;
+            // 将其他配置的 isDefault 设为 false
+            product.activityConfigs.forEach((ac, idx) => {
+              if (idx !== existingConfigIndex) ac.isDefault = false;
+            });
           } else {
-            // 添加新活动配置
-            product.activityConfigs.push(activityConfig);
+            // 没有该活动配置 -> 新增并设为默认
+            product.activityConfigs.push({
+              activityId: activity._id,
+              isDefault: true,
+              activityLink: activityLink,
+              requirementGmv: defaultRequirements.requirementGmv,
+              requirementMonthlySales: defaultRequirements.requirementMonthlySales,
+              requirementFollowers: defaultRequirements.requirementFollowers,
+              requirementAvgViews: defaultRequirements.requirementAvgViews,
+              requirementRemark: '',
+              sampleMethod: defaultRequirements.sampleMethod,
+              cooperationCountry: defaultRequirements.cooperationCountry,
+              promotionInfluencerRate,
+              promotionCompanyRate,
+              adInfluencerRate,
+              adCompanyRate,
+              promotionOriginalRate: 0,
+              adOriginalRate: 0
+            });
+            // 将其他配置的 isDefault 设为 false
+            product.activityConfigs.forEach((ac, idx) => {
+              if (idx !== product.activityConfigs.length - 1) ac.isDefault = false;
+            });
           }
           
-          // 如果没有图片，尝试使用第一张图片（如果有的话）
-          // 注意：当前Excel没有图片列，这里预留
-          // if (!product.productImages || product.productImages.length === 0) {
-          //   // 可选：下载或使用图片URL
-          // }
-          
-          // 更新其他字段
-          product.currency = currency;
-          product.priceRangeMin = priceRangeMin;
-          product.priceRangeMax = priceRangeMax;
           await product.save();
           results.updated.push({ name: productName, tiktokProductId });
         } else {
@@ -705,28 +714,28 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
             name: productName,
             sku,
             tiktokProductId,
-            tiktokSku: tiktokProductId,
-            price: priceRangeMin,
+            tiktokSku: '',  // 置空
             currency,
-            sellingPrice: priceRangeMin,
             priceRangeMin,
             priceRangeMax,
-            productImages: [],  // Excel暂无图片
+            productImages: [],
             activityConfigs: [{
               activityId: activity._id,
-              activityLink: productLink,
+              isDefault: true,
+              activityLink: activityLink,
               requirementGmv: defaultRequirements.requirementGmv,
               requirementMonthlySales: defaultRequirements.requirementMonthlySales,
               requirementFollowers: defaultRequirements.requirementFollowers,
               requirementAvgViews: defaultRequirements.requirementAvgViews,
+              requirementRemark: '',
               sampleMethod: defaultRequirements.sampleMethod,
               cooperationCountry: defaultRequirements.cooperationCountry,
               promotionInfluencerRate,
-              promotionOriginalRate,
               promotionCompanyRate,
               adInfluencerRate,
-              adOriginalRate,
-              adCompanyRate
+              adCompanyRate,
+              promotionOriginalRate: 0,
+              adOriginalRate: 0
             }],
             status: 'active'
           });

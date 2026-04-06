@@ -34,44 +34,64 @@
 
     <!-- 产品列表 -->
     <el-table :data="products" stripe v-loading="loading" :scroll-x="true">
+      <!-- 列1：TikTok商品 + 店铺 -->
       <el-table-column :label="$t('product.tiktokProduct')" width="320" fixed class-name="tiktok-green-label">
         <template #default="{ row }">
           <div class="tiktok-product-cell">
             <div class="tiktok-id-row">
               <el-button link type="primary" @click="viewProduct(row)" class="tiktok-id-btn">
-                {{ row.tiktokProductId || row.productId || '-' }}
+                {{ row.tiktokProductId || '-' }}
               </el-button>
             </div>
-            <div class="product-name-row">{{ row.name || row.productName || '-' }}</div>
+            <div class="product-name-row">{{ row.name || '-' }}</div>
+            <div class="shop-row">
+              <el-icon class="shop-icon"><Shop /></el-icon>
+              <el-popover
+                placement="right"
+                :width="300"
+                trigger="hover"
+                v-if="row.shopId?.shopName || row.shopId?.name"
+              >
+                <template #reference>
+                  <span class="shop-link" @click="goToShop(row.shopId)">
+                    {{ row.shopId?.shopName || row.shopId?.name || '-' }}
+                  </span>
+                </template>
+                <div class="shop-info-popover">
+                  <div class="shop-info-item"><strong>{{ $t('product.shop') }}：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
+                  <div class="shop-info-item"><strong>{{ $t('product.shopCode') }}：</strong>{{ row.shopId?.shopNumber || '-' }}</div>
+                  <div class="shop-info-item" v-if="row.shopId?.contactId?.name"><strong>{{ $t('influencer.realName') }}：</strong>{{ row.shopId.contactId.name }}</div>
+                  <div class="shop-info-item" v-if="row.shopId?.contactId?.phone"><strong>{{ $t('influencer.phone') }}：</strong>{{ row.shopId.contactId.phone }}</div>
+                  <div class="shop-info-item" v-if="row.shopId?.contactId?.email"><strong>Email：</strong>{{ row.shopId.contactId.email }}</div>
+                  <div class="shop-info-item" v-if="row.shopId?.contactId?.address"><strong>{{ $t('influencer.address') }}：</strong>{{ row.shopId.contactId.address }}</div>
+                </div>
+              </el-popover>
+              <span v-else>-</span>
+            </div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('product.shop')" width="150">
+      <!-- 列2：商品类目 + tiktokSku -->
+      <el-table-column :label="$t('product.productCategory')" :width="180" show-overflow-tooltip>
         <template #default="{ row }">
-          <el-popover
-            placement="right"
-            :width="300"
-            trigger="hover"
-            v-if="row.shopId?.shopName || row.shopId?.name"
-          >
-            <template #reference>
-              <span class="shop-link" @click="goToShop(row.shopId)">
-                {{ row.shopId?.shopName || row.shopId?.name || '-' }}
-              </span>
-            </template>
-            <div class="shop-info-popover">
-              <div class="shop-info-item"><strong>{{ $t('product.shop') }}：</strong>{{ row.shopId?.shopName || row.shopId?.name || '-' }}</div>
-              <div class="shop-info-item"><strong>{{ $t('product.shopCode') }}：</strong>{{ row.shopId?.shopNumber || '-' }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.name"><strong>{{ $t('influencer.realName') }}：</strong>{{ row.shopId.contactId.name }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.phone"><strong>{{ $t('influencer.phone') }}：</strong>{{ row.shopId.contactId.phone }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.email"><strong>Email：</strong>{{ row.shopId.contactId.email }}</div>
-              <div class="shop-info-item" v-if="row.shopId?.contactId?.address"><strong>{{ $t('influencer.address') }}：</strong>{{ row.shopId.contactId.address }}</div>
+          <div class="category-cell">
+            <div class="category-name">{{ row.productCategory || '-' }}</div>
+            <div class="sku-row" v-if="row.tiktokSku">
+              <el-icon class="sku-icon"><Box /></el-icon>
+              <span class="sku-text">{{ row.tiktokSku }}</span>
             </div>
-          </el-popover>
-          <span v-else>-</span>
+          </div>
         </template>
       </el-table-column>
-      <el-table-column prop="productCategory" :label="$t('product.productCategory')" :width="128" show-overflow-tooltip />
+      <!-- 列3：售价 -->
+      <el-table-column :label="$t('product.priceRange')" width="150" align="center">
+        <template #default="{ row }">
+          <span class="price-display">
+            {{ row.currency || 'USD' }} {{ row.priceRangeMin || 0 }} - {{ row.priceRangeMax || 0 }}
+          </span>
+        </template>
+      </el-table-column>
+      <!-- 列4：商品等级 -->
       <el-table-column prop="productGrade" :label="$t('product.productGrade')" width="100">
         <template #default="{ row }">
           <el-tag :type="getGradeType(row.productGrade)">
@@ -79,6 +99,7 @@
           </el-tag>
         </template>
       </el-table-column>
+      <!-- 列5：过去7天成单 -->
       <el-table-column :label="$t('product.orders7Days')" width="120" align="center">
         <template #default="{ row }">
           <el-popover
@@ -168,6 +189,97 @@
           </el-tag>
         </template>
       </el-table-column>
+      <!-- 列8：达人要求 -->
+      <el-table-column :label="$t('product.influencerRequirement')" width="280">
+        <template #default="{ row }">
+          <div class="requirement-cell" v-if="getDefaultActivityConfig(row)">
+            <div class="req-link-row">
+              <a v-if="getDefaultActivityConfig(row).activityLink" :href="getDefaultActivityConfig(row).activityLink" target="_blank" class="req-link">
+                {{ $t('product.viewActivity') }}
+              </a>
+              <el-icon class="copy-icon" @click="copyActivityLink(row)" :title="$t('product.copyLink')"><CopyDocument /></el-icon>
+            </div>
+            <div class="req-summary">
+              <span v-if="getDefaultActivityConfig(row).requirementGmv">GMV {{ getDefaultActivityConfig(row).requirementGmv }}</span>
+              <span v-if="getDefaultActivityConfig(row).requirementMonthlySales"> 月销 {{ getDefaultActivityConfig(row).requirementMonthlySales }}</span>
+              <span v-if="getDefaultActivityConfig(row).requirementFollowers"> 粉丝 {{ getDefaultActivityConfig(row).requirementFollowers }}</span>
+              <span v-if="getDefaultActivityConfig(row).requirementAvgViews"> 均播 {{ getDefaultActivityConfig(row).requirementAvgViews }}</span>
+            </div>
+            <el-popover
+              placement="bottom"
+              :width="300"
+              trigger="hover"
+              v-if="hasMoreRequirements(row)"
+            >
+              <template #reference>
+                <span class="more-requirements">{{ $t('product.moreRequirements') }}</span>
+              </template>
+              <div class="requirements-detail">
+                <div class="req-item" v-if="getDefaultActivityConfig(row).requirementGmv">
+                  <strong>GMV：</strong>{{ getDefaultActivityConfig(row).requirementGmv }}
+                </div>
+                <div class="req-item" v-if="getDefaultActivityConfig(row).requirementMonthlySales">
+                  <strong>月销件数：</strong>{{ getDefaultActivityConfig(row).requirementMonthlySales }}
+                </div>
+                <div class="req-item" v-if="getDefaultActivityConfig(row).requirementFollowers">
+                  <strong>粉丝数：</strong>{{ getDefaultActivityConfig(row).requirementFollowers }}
+                </div>
+                <div class="req-item" v-if="getDefaultActivityConfig(row).requirementAvgViews">
+                  <strong>视频均播：</strong>{{ getDefaultActivityConfig(row).requirementAvgViews }}
+                </div>
+                <div class="req-item" v-if="getDefaultActivityConfig(row).requirementRemark">
+                  <strong>备注：</strong>{{ getDefaultActivityConfig(row).requirementRemark }}
+                </div>
+              </div>
+            </el-popover>
+            <div class="req-find-influencer">
+              <el-button link type="primary" @click="findMatchingInfluencers(row)">
+                {{ $t('product.findMatchingInfluencers') || '满足条件达人' }}
+              </el-button>
+            </div>
+          </div>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <!-- 列9：达人收益 -->
+      <el-table-column :label="$t('product.influencerEarnings')" width="320">
+        <template #default="{ row }">
+          <div class="influencer-earnings-cell" v-if="getDefaultActivityConfig(row)">
+            <div class="activity-name">{{ getDefaultActivityConfig(row).activityId?.name || '-' }}</div>
+            <div class="earnings-line">
+              <span class="earnings-label">{{ $t('product.promotionIncome') }}：</span>
+              <span class="earnings-value">{{ formatRate(getDefaultActivityConfig(row).promotionInfluencerRate) }}</span>
+              <span class="earnings-diff" v-if="getDefaultActivityConfig(row).promotionOriginalRate > 0">
+                {{ $t('product.higherThanSquare') }}{{ formatRate(getDefaultActivityConfig(row).promotionInfluencerRate - getDefaultActivityConfig(row).promotionOriginalRate) }}
+              </span>
+            </div>
+            <div class="earnings-line">
+              <span class="earnings-label">{{ $t('product.adIncome') }}：</span>
+              <span class="earnings-value">{{ formatRate(getDefaultActivityConfig(row).adInfluencerRate) }}</span>
+              <span class="earnings-diff" v-if="getDefaultActivityConfig(row).adOriginalRate > 0">
+                {{ $t('product.higherThanSquare') }}{{ formatRate(getDefaultActivityConfig(row).adInfluencerRate - getDefaultActivityConfig(row).adOriginalRate) }}
+              </span>
+            </div>
+          </div>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <!-- 列10：公司收益 -->
+      <el-table-column :label="$t('product.companyEarnings')" width="180">
+        <template #default="{ row }">
+          <div class="company-earnings-cell" v-if="getDefaultActivityConfig(row)">
+            <div class="earnings-line">
+              <span class="earnings-label">{{ $t('product.promotion') }}：</span>
+              <span class="earnings-value">{{ formatRate(getDefaultActivityConfig(row).promotionCompanyRate) }}</span>
+            </div>
+            <div class="earnings-line">
+              <span class="earnings-label">{{ $t('product.ad') }}：</span>
+              <span class="earnings-value">{{ formatRate(getDefaultActivityConfig(row).adCompanyRate) }}</span>
+            </div>
+          </div>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('product.operation')" width="280" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="viewProduct(row)" v-if="hasPermission('products:read')">{{ $t('product.detail') }}</el-button>
@@ -191,7 +303,7 @@
       />
     </div>
 
-    <!-- 新建/编辑对话框 -->
+      <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="showDialog"
       :title="editingProduct ? $t('product.editProduct') : $t('product.addProduct')"
@@ -207,13 +319,13 @@
             </div>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item :label="$t('product.productIdRequired')" prop="productId" required class="tiktok-green-label">
-                  <el-input v-model="form.productId" :placeholder="$t('product.productIdRequiredTip')" class="tiktok-green-input" />
+                <el-form-item :label="$t('product.tiktokProductId')" prop="tiktokProductId" required class="tiktok-green-label">
+                  <el-input v-model="form.tiktokProductId" :placeholder="$t('product.tiktokProductIdPlaceholder')" class="tiktok-green-input" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item :label="$t('product.productName')">
-                  <el-input v-model="form.productName" :placeholder="$t('product.productNameInput')" />
+                <el-form-item :label="$t('product.name')" prop="name" required>
+                  <el-input v-model="form.name" :placeholder="$t('product.namePlaceholder')" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -235,31 +347,26 @@
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item :label="$t('product.squareCommissionRate')">
+                <el-form-item :label="$t('product.tiktokSku')">
+                  <el-input v-model="form.tiktokSku" :placeholder="$t('product.tiktokSkuPlaceholder')" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item :label="$t('product.squareCommissionRate')" prop="squareCommissionRate" required>
                   <el-input-number v-model="form.squareCommissionRate" :min="0" :max="100" :precision="2" :step="0.5" :controls="false" style="width: 100%" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="16">
-              <el-col :span="10">
-                <el-form-item :label="$t('product.sellingPrice')">
-                  <div style="display: flex; align-items: center; gap: 4px;">
-                    <el-select v-model="form.currency" :placeholder="$t('product.currency')" style="width: 80px">
+              <el-col :span="24">
+                <el-form-item :label="$t('product.priceRange')" prop="currency" required>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <el-select v-model="form.currency" :placeholder="$t('product.currency')" style="width: 100px" @change="onCurrencyChange">
                       <el-option v-for="c in currencyOptions" :key="c.code" :label="c.name" :value="c.code" />
                     </el-select>
-                    <el-input-number v-model="form.sellingPrice" :min="0" :precision="2" :step="0.1" :controls="false" style="flex: 1" :placeholder="$t('product.sellingPrice')" />
-                  </div>
-                </el-form-item>
-              </el-col>
-              <el-col :span="14">
-                <el-form-item :label="$t('product.priceRange')">
-                  <div style="display: flex; align-items: center; gap: 4px;">
-                    <el-select v-model="form.currency" :placeholder="$t('product.currency')" style="width: 80px">
-                      <el-option v-for="c in currencyOptions" :key="c.code" :label="c.name" :value="c.code" />
-                    </el-select>
-                    <el-input-number v-model="form.priceRangeMin" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" :placeholder="$t('product.minPrice')" />
+                    <el-input-number v-model="form.priceRangeMin" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 100px" :placeholder="$t('product.minPrice')" />
                     <span>-</span>
-                    <el-input-number v-model="form.priceRangeMax" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 80px" :placeholder="$t('product.maxPrice')" />
+                    <el-input-number v-model="form.priceRangeMax" :min="0" :precision="2" :step="0.1" :controls="false" style="width: 100px" :placeholder="$t('product.maxPrice')" />
                   </div>
                 </el-form-item>
               </el-col>
@@ -583,7 +690,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus } from '@element-plus/icons-vue'
+import { Search, Plus, Shop, Box, CopyDocument } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
@@ -628,16 +735,121 @@ const countries = ref([])
 const productCategories = ref([])
 
 // 货币选项 - 从基础数据获取
-const currencyOptions = computed(() => [
-  { code: 'USD', name: t('product.currencyUSD') },
-  { code: 'CNY', name: t('product.currencyCNY') },
-  { code: 'THB', name: t('product.currencyTHB') },
-  { code: 'VND', name: t('product.currencyVND') },
-  { code: 'MYR', name: t('product.currencyMYR') },
-  { code: 'SGD', name: t('product.currencySGD') },
-  { code: 'PHP', name: t('product.currencyPHP') },
-  { code: 'IDR', name: t('product.currencyIDR') }
-])
+const currencyOptions = ref([])
+const defaultCurrency = ref('USD')
+
+const loadBaseData = async () => {
+  try {
+    // 加载货币单位数据
+    const currencyRes = await request.get('/base-data', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    const currencyData = currencyRes.data || []
+    currencyOptions.value = currencyData.map(item => ({
+      code: item.code || item.name,
+      name: item.name || item.code
+    }))
+    // 设置默认货币
+    const defaultCurrencyItem = currencyData.find(c => c.isDefault)
+    if (defaultCurrencyItem) {
+      defaultCurrency.value = defaultCurrencyItem.code || defaultCurrencyItem.name || 'USD'
+    }
+
+    // 加载国家数据
+    const countryRes = await request.get('/base-data', {
+      params: { type: 'country', limit: 100 }
+    })
+    const countryData = countryRes.data || []
+    countries.value = countryData.map(item => item.name || item.value || item)
+
+    // 加载商品类目数据
+    const categoryRes = await request.get('/base-data', {
+      params: { type: 'category', limit: 100 }
+    })
+    const categoryData = categoryRes.data || []
+    productCategories.value = categoryData.map(item => item.name || item.value || item)
+  } catch (error) {
+    console.error('加载基础数据失败:', error)
+    // 使用默认值
+    currencyOptions.value = [
+      { code: 'USD', name: 'USD - 美元' },
+      { code: 'CNY', name: 'CNY - 人民币' },
+      { code: 'THB', name: 'THB - 泰铢' },
+      { code: 'VND', name: 'VND - 越南盾' },
+      { code: 'MYR', name: 'MYR - 马来西亚林吉特' },
+      { code: 'SGD', name: 'SGD - 新加坡元' },
+      { code: 'PHP', name: 'PHP - 菲律宾比索' },
+      { code: 'IDR', name: 'IDR - 印尼盾' }
+    ]
+  }
+}
+
+// 找到默认活动索引
+const findDefaultActivityIndex = (configs) => {
+  if (!configs || configs.length === 0) return -1
+  const defaultIndex = configs.findIndex(c => c.isDefault)
+  if (defaultIndex !== -1) return defaultIndex
+  // 如果没有标记默认，返回最新的（最后一个）
+  return configs.length - 1
+}
+
+// 获取默认活动配置
+const getDefaultActivityConfig = (row) => {
+  if (!row.activityConfigs || row.activityConfigs.length === 0) return null
+  // 优先找标记为默认的
+  const defaultConfig = row.activityConfigs.find(c => c.isDefault)
+  if (defaultConfig) return defaultConfig
+  // 否则返回最后一个（最新添加的）
+  return row.activityConfigs[row.activityConfigs.length - 1]
+}
+
+// 是否有更多要求需要显示
+const hasMoreRequirements = (row) => {
+  const config = getDefaultActivityConfig(row)
+  if (!config) return false
+  return config.requirementRemark || config.requirementRemark?.length > 0
+}
+
+// 格式化佣金率（返回百分比字符串）
+const formatRate = (rate) => {
+  if (rate === null || rate === undefined || rate === 0) return '-'
+  const percent = typeof rate === 'number' ? rate * 100 : parseFloat(rate) * 100
+  return percent.toFixed(2) + '%'
+}
+
+// 复制活动链接
+const copyActivityLink = async (row) => {
+  const config = getDefaultActivityConfig(row)
+  if (!config || !config.activityLink) return
+  try {
+    await navigator.clipboard.writeText(config.activityLink)
+    ElMessage.success(t('product.copySuccess'))
+  } catch (error) {
+    ElMessage.error(t('product.copyFailed'))
+  }
+}
+
+// 查找满足条件的达人
+const findMatchingInfluencers = (row) => {
+  const config = getDefaultActivityConfig(row)
+  if (!config) return
+  // 构建查询参数
+  const query = new URLSearchParams()
+  if (config.requirementGmv) query.set('gmvFrom', config.requirementGmv)
+  if (config.requirementMonthlySales) query.set('monthlySalesFrom', config.requirementMonthlySales)
+  if (config.requirementFollowers) query.set('followersFrom', config.requirementFollowers)
+  if (config.requirementAvgViews) query.set('avgViewsFrom', config.requirementAvgViews)
+  // 跳转到达人管理页面
+  const queryString = query.toString()
+  window.location.href = `/influencer-managements${queryString ? '?' + queryString : ''}`
+}
+
+// 货币变化时重置价格区间
+const onCurrencyChange = () => {
+  // 重置价格区间
+  form.priceRangeMin = 0
+  form.priceRangeMax = 0
+}
 
 // 订单统计缓存
 const orderStatsCache = ref({})
@@ -672,8 +884,8 @@ const pagination = reactive({
 })
 
 const form = reactive({
-  productId: '',
-  productName: '',
+  tiktokProductId: '',
+  name: '',
   shopId: '',
   productCategory: '',
   productGrade: 'ordinary',
@@ -682,12 +894,13 @@ const form = reactive({
   referenceVideo: '',
   sellingPoints: '',
   squareCommissionRate: 0,
-  // 售价、币别、价格区间
-  sellingPrice: 0,
+  tiktokSku: '',
+  // 币别、价格区间
   currency: 'USD',
   priceRangeMin: 0,
   priceRangeMax: 0,
-  activityConfigs: []
+  activityConfigs: [],
+  defaultActivityIndex: -1 // 默认活动的索引
 })
 
 const loadActivities = async () => {
@@ -712,39 +925,8 @@ const loadShops = async () => {
   }
 }
 
-const loadBaseData = async () => {
-  try {
-    // 加载国家数据
-    const countryRes = await request.get('/base-data', {
-      params: { type: 'country', limit: 100 }
-    })
-    console.log('国家数据完整响应:', JSON.stringify(countryRes, null, 2))
-    const countryData = countryRes.data || []
-    console.log('国家数据数组:', countryData)
-    countries.value = countryData.map(item => item.name || item.value || item)
-    console.log('国家列表:', countries.value)
-
-    // 设置默认国家
-    if (countries.value.length > 0 && !form.cooperationCountry) {
-      form.cooperationCountry = countries.value[0]
-      console.log('设置默认合作国家:', form.cooperationCountry)
-    }
-
-    // 加载商品类目数据
-    const categoryRes = await request.get('/base-data', {
-      params: { type: 'category', limit: 100 }
-    })
-    console.log('商品类目数据完整响应:', JSON.stringify(categoryRes, null, 2))
-    const categoryData = categoryRes.data || []
-    console.log('商品类目数据数组:', categoryData)
-    productCategories.value = categoryData.map(item => item.name || item.value || item)
-    console.log('商品类目列表:', productCategories.value)
-  } catch (error) {
-    console.error('加载基础数据失败:', error)
-  }
-}
-
 const addActivityConfig = () => {
+  const newIndex = form.activityConfigs.length
   form.activityConfigs.push({
     activityId: '',
     // 活动专属链接
@@ -767,6 +949,8 @@ const addActivityConfig = () => {
     adOriginalRate: 0,
     adCompanyRate: 0
   })
+  // 最新新增的活动设为默认活动
+  form.defaultActivityIndex = newIndex
 }
 
 // 提交前转换佣金率为小数
@@ -777,7 +961,7 @@ const convertCommissionRates = (data) => {
   }
   // 转换活动配置佣金率
   if (data.activityConfigs && Array.isArray(data.activityConfigs)) {
-    data.activityConfigs = data.activityConfigs.map(ac => ({
+    data.activityConfigs = data.activityConfigs.map((ac, index) => ({
       ...ac,
       // 推广时
       promotionInfluencerRate: ac.promotionInfluencerRate / 100,
@@ -786,18 +970,10 @@ const convertCommissionRates = (data) => {
       // 投广告时
       adInfluencerRate: ac.adInfluencerRate / 100,
       adOriginalRate: ac.adOriginalRate / 100,
-      adCompanyRate: ac.adCompanyRate / 100
+      adCompanyRate: ac.adCompanyRate / 100,
+      // 设置是否为默认活动
+      isDefault: index === data.defaultActivityIndex
     }))
-  }
-  // 字段映射：兼容 CooperationProduct 和 Product 字段
-  data.tiktokProductId = data.productId
-  data.name = data.productName || data.name
-  // 确保 Product 必需字段有值
-  if (!data.sku && data.productId) {
-    data.sku = data.productId
-  }
-  if (!data.price) {
-    data.price = 0
   }
   return data
 }
@@ -914,33 +1090,27 @@ const viewProduct = async (row) => {
 const editProduct = (row) => {
   editingProduct.value = row
   const formData = {
-    // 兼容 Product 和 CooperationProduct 字段
-    productId: row.tiktokProductId || row.productId || '',
-    productName: row.name || row.productName || '',
-    shopId: row.storeId?._id || row.shopId?._id || row.storeId || row.shopId || '',
-    productCategory: row.productCategory,
-    productGrade: row.productGrade,
+    tiktokProductId: row.tiktokProductId || '',
+    name: row.name || '',
+    shopId: row.shopId?._id || row.shopId || '',
+    productCategory: row.productCategory || '',
+    productGrade: row.productGrade || 'ordinary',
     productImages: row.productImages || [],
-    productIntro: row.productIntro,
-    referenceVideo: row.referenceVideo,
-    sellingPoints: row.sellingPoints,
+    productIntro: row.productIntro || '',
+    referenceVideo: row.referenceVideo || '',
+    sellingPoints: row.sellingPoints || '',
     squareCommissionRate: row.squareCommissionRate ? row.squareCommissionRate * 100 : 0,
-    // 售价、币别、价格区间
-    sellingPrice: row.sellingPrice || 0,
-    currency: row.currency || 'USD',
+    tiktokSku: row.tiktokSku || '',
+    currency: row.currency || defaultCurrency.value,
     priceRangeMin: row.priceRangeMin || 0,
     priceRangeMax: row.priceRangeMax || 0,
-    // 兼容 Product 的 sku/name 字段（用于内部标识）
-    sku: row.sku || row.tiktokProductId || '',
-    name: row.name || row.productName || '',
-    price: row.price || 0,
     activityConfigs: row.activityConfigs && row.activityConfigs.length > 0
       ? JSON.parse(JSON.stringify(row.activityConfigs))
-      : []
+      : [],
+    defaultActivityIndex: findDefaultActivityIndex(row.activityConfigs)
   }
   convertCommissionRatesToPercent(formData)
   Object.assign(form, formData)
-  // 活动配置是可选的，不再自动添加
   showDialog.value = true
 }
 
@@ -1002,28 +1172,23 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
   Object.assign(form, {
-    // 合作产品字段
-    productId: '',
-    productName: '',
+    tiktokProductId: '',
+    name: '',
     shopId: '',
     productCategory: '',
     productGrade: 'ordinary',
-    sampleMethod: '线上',
-    cooperationCountry: countries.value.length > 0 ? countries.value[0] : '',
-    sampleTarget: '',
-    influencerRequirement: '',
     productImages: [],
     productIntro: '',
     referenceVideo: '',
     sellingPoints: '',
     squareCommissionRate: 0,
-    // Product 必需字段
-    sku: '',
-    name: '',
-    price: 0,
-    activityConfigs: []
+    tiktokSku: '',
+    currency: defaultCurrency.value,
+    priceRangeMin: 0,
+    priceRangeMax: 0,
+    activityConfigs: [],
+    defaultActivityIndex: -1
   })
-  // 不再自动添加活动配置，让它变为可选
 }
 
 const getGradeText = (grade) => {
@@ -1511,6 +1676,203 @@ defineExpose({
 
 .shop-info-item {
   margin-bottom: 4px;
+}
+
+/* TikTok商品列样式 */
+.tiktok-product-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shop-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #606266;
+}
+
+.shop-icon {
+  color: #409eff;
+  font-size: 12px;
+}
+
+/* 商品类目列样式 */
+.category-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category-name {
+  font-size: 12px;
+  color: #303133;
+}
+
+.sku-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #909399;
+}
+
+.sku-icon {
+  font-size: 12px;
+}
+
+.sku-text {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 售价列样式 */
+.price-display {
+  font-size: 12px;
+  color: #775999;
+  font-weight: 500;
+}
+
+/* 达人要求列样式 */
+.requirement-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.req-link-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.req-link {
+  color: #409eff;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.req-link:hover {
+  text-decoration: underline;
+}
+
+.copy-icon {
+  color: #909399;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.copy-icon:hover {
+  color: #409eff;
+}
+
+.req-summary {
+  font-size: 11px;
+  color: #606266;
+  line-height: 1.4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.more-requirements {
+  font-size: 11px;
+  color: #409eff;
+  cursor: pointer;
+}
+
+.more-requirements:hover {
+  text-decoration: underline;
+}
+
+.requirements-detail {
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.req-item {
+  padding: 2px 0;
+}
+
+/* 参与活动列样式 */
+.activity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-cell .activity-name {
+  font-size: 12px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.commission-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.commission-section .commission-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 11px;
+  align-items: center;
+}
+
+.commission-section .commission-label {
+  color: #909399;
+  min-width: 32px;
+}
+
+.commission-section .commission-rate {
+  color: #606266;
+}
+
+/* 达人收益和公司收益列样式 */
+.influencer-earnings-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.influencer-earnings-cell .activity-name {
+  font-size: 12px;
+  color: #303133;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.earnings-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.earnings-label {
+  color: #909399;
+  min-width: 50px;
+}
+
+.earnings-value {
+  color: #606266;
+}
+
+.earnings-diff {
+  color: #67c23a;
+  font-weight: 500;
+}
+
+.company-earnings-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .loading-tip {

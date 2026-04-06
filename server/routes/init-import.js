@@ -483,20 +483,48 @@ router.post('/products', authenticate, verifyAdmin, upload.single('file'), async
         // 解析失败，保持原值
       }
 
+      // 解析Excel新字段
+      const priceLower = parseFloat(row.price_lower) || 0;
+      const priceUpper = parseFloat(row.price_upper) || 0;
+      // 如果 price_upper=0，则两个都用 price_lower
+      const priceRangeMin = priceUpper === 0 ? priceLower : priceLower;
+      const priceRangeMax = priceUpper === 0 ? priceLower : priceUpper;
+      // 佣金率：Excel中是百分数(如15表示15%)，转为小数(如0.15)
+      const promotionInfluencerRate = (parseFloat(row.commission_person) || 0) * 0.01;
+      const promotionCompanyRate = (parseFloat(row.commission_company) || 0) * 0.01;
+      const tkExpertRequire = String(row.tk_expert_require || '');
+      // send_sample_method: 2=线上, 1=线下
+      const sendSampleMethodVal = row.send_sample_method;
+      const sampleMethod = (sendSampleMethodVal === 2 || sendSampleMethodVal === '2' || sendSampleMethodVal === '线上') ? '线上' : '线下';
+      // 广场佣金率：Excel中存储的是百分数(如8表示8%)，导入时转为小数(如0.08)
+      const squareCommissionRate = (parseFloat(row.commission_market) || 0) * 0.01;
+      // 推广原始佣金率（达人）使用相同的值
+      const promotionOriginalRate = squareCommissionRate;
+
       const product = {
         companyId: companyId,
         shopId: shopId,
         name: String(row.goods_name || row.productName || ''),
         sku: String(row.goods_no || originalId),
         tiktokProductId: String(row.goods_no || ''),
-        tiktokSku: String(row.goods_no || ''),
-        price: parseFloat(row.price) || 0,
+        tiktokSku: '',  // 置空
         productCategory: matchedCategory,
-        // 广场佣金率：Excel中存储的是百分数(如8表示8%)，导入时转为小数(如0.08)
-        squareCommissionRate: (parseFloat(row.commission_market) || 0) * 0.01,
-        // TAP专属链：如果是被JSON数组格式包装的，提取链接
-        tapExclusiveLink: tapLinkValue,
-        influencerRequirement: String(row.tk_expert_require || ''),
+        // 价格区间
+        priceRangeMin,
+        priceRangeMax,
+        currency: 'THB',
+        squareCommissionRate,
+        // 活动配置
+        activityConfigs: [{
+          activityId: new mongoose.Types.ObjectId(),  // 必填字段
+          isDefault: true,
+          activityLink: tapLinkValue,
+          promotionInfluencerRate,
+          promotionCompanyRate,
+          promotionOriginalRate,
+          requirementRemark: tkExpertRequire,
+          sampleMethod: sampleMethod
+        }],
         status: 'active',
         createdAt: new Date(),
         updatedAt: new Date()

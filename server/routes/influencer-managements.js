@@ -8,7 +8,7 @@ const { authenticate, authorize, filterByDataScope } = require('../middleware/au
 // 获取达人列表
 router.get('/', authenticate, authorize('influencers:read'), filterByDataScope({ module: 'influencers', ownerField: 'assignedTo', deptField: 'deptId' }), async (req, res) => {
   try {
-    const { companyId, poolType, status, categoryTag, keyword, page = 1, limit = 20 } = req.query;
+    const { companyId, poolType, status, categoryTag, keyword, page = 1, limit = 20, gmvFrom, monthlySalesFrom, followersFrom, avgViewsFrom } = req.query;
     const userId = req.user._id;
 
     // 公海达人：无论权限都能看到（不受数据权限限制）
@@ -71,6 +71,26 @@ router.get('/', authenticate, authorize('influencers:read'), filterByDataScope({
       } else {
         query.$or = keywordCondition.$or;
       }
+    }
+
+    // GMV筛选
+    if (gmvFrom) {
+      query.latestGmv = { $gte: parseFloat(gmvFrom) };
+    }
+
+    // 月销件数筛选
+    if (monthlySalesFrom) {
+      query.monthlySalesCount = { $gte: parseInt(monthlySalesFrom) };
+    }
+
+    // 粉丝数筛选
+    if (followersFrom) {
+      query.latestFollowers = { $gte: parseInt(followersFrom) };
+    }
+
+    // 均播筛选
+    if (avgViewsFrom) {
+      query.avgVideoViews = { $gte: parseFloat(avgViewsFrom) };
     }
 
     const skip = (page - 1) * limit;

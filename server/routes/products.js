@@ -22,7 +22,7 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { sku: { $regex: search, $options: 'i' } },
+        { tiktokSku: { $regex: search, $options: 'i' } },
         { tiktokProductId: { $regex: search, $options: 'i' } }
       ];
     }

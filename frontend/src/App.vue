@@ -3,6 +3,18 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
+import { useGlobalIdleTimeout } from '@/composables/useIdleTimeout'
+
+const { start, stop } = useGlobalIdleTimeout()
+
+onMounted(() => {
+  start()
+})
+
+onUnmounted(() => {
+  stop()
+})
 </script>
 
 <style>

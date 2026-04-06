@@ -34,12 +34,21 @@
               <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
             </el-select>
           </el-col>
-          <el-col :span="6">
-            <el-input v-model="filters.keyword" :placeholder="$t('common.search') + '...'" clearable @change="loadData">
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
+          <el-col :span="4">
+            <el-input-number v-model="filters.gmvFrom" :min="0" :placeholder="'GMV'" clearable @change="loadData" style="width: 100%" />
+            <div class="filter-label">GMV ≥</div>
+          </el-col>
+          <el-col :span="4">
+            <el-input-number v-model="filters.followersFrom" :min="0" :placeholder="$t('influencer.followers')" clearable @change="loadData" style="width: 100%" />
+            <div class="filter-label">{{ $t('influencer.followers') }} ≥</div>
+          </el-col>
+          <el-col :span="4">
+            <el-input-number v-model="filters.monthlySalesFrom" :min="0" :placeholder="$t('influencer.monthlySalesCount')" clearable @change="loadData" style="width: 100%" />
+            <div class="filter-label">{{ $t('influencer.monthlySalesCount') }} ≥</div>
+          </el-col>
+          <el-col :span="4">
+            <el-input-number v-model="filters.avgViewsFrom" :min="0" :placeholder="$t('influencer.avgVideoViews')" clearable @change="loadData" style="width: 100%" />
+            <div class="filter-label">{{ $t('influencer.avgVideoViews') }} ≥</div>
           </el-col>
           <el-col :span="6">
             <div class="batch-actions">
@@ -512,7 +521,11 @@ const filters = reactive({
   poolType: '',
   status: '',
   categoryTag: '',
-  keyword: ''
+  keyword: '',
+  gmvFrom: '',
+  monthlySalesFrom: '',
+  followersFrom: '',
+  avgViewsFrom: ''
 })
 
 const pagination = reactive({
@@ -637,6 +650,10 @@ const loadData = async () => {
       page: pagination.page,
       limit: pagination.limit
     }
+    // 过滤掉空字符串的筛选条件
+    Object.keys(params).forEach(key => {
+      if (params[key] === '') delete params[key]
+    })
     const res = await request.get('/influencer-managements', { params })
     influencers.value = res.influencers || []
     pagination.total = res.total || 0
@@ -1019,6 +1036,19 @@ const resetForm = () => {
 onMounted(() => {
   loadCategoryTags()
   loadSuitableCategories()
+  
+  // 从 URL 读取筛选参数
+  const urlParams = new URLSearchParams(window.location.search)
+  const gmvFrom = urlParams.get('gmvFrom')
+  const monthlySalesFrom = urlParams.get('monthlySalesFrom')
+  const followersFrom = urlParams.get('followersFrom')
+  const avgViewsFrom = urlParams.get('avgViewsFrom')
+  
+  filters.gmvFrom = gmvFrom ? parseFloat(gmvFrom) : null
+  filters.monthlySalesFrom = monthlySalesFrom ? parseInt(monthlySalesFrom) : null
+  filters.followersFrom = followersFrom ? parseInt(followersFrom) : null
+  filters.avgViewsFrom = avgViewsFrom ? parseFloat(avgViewsFrom) : null
+  
   loadData()
   loadCurrencies()
 })
@@ -1044,6 +1074,13 @@ onMounted(() => {
 
 .filter-section {
   margin-bottom: 20px;
+}
+
+.filter-label {
+  font-size: 11px;
+  color: #909399;
+  margin-top: 2px;
+  text-align: center;
 }
 
 .batch-actions {

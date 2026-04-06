@@ -7,6 +7,11 @@ const activityConfigSchema = new mongoose.Schema({
     ref: 'Activity',
     required: true
   },
+  // 是否为默认活动
+  isDefault: {
+    type: Boolean,
+    default: false
+  },
   // 活动专属链接
   activityLink: {
     type: String,
@@ -109,8 +114,7 @@ const productSchema = new mongoose.Schema({
     default: ''
   },
   price: {
-    type: Number,
-    required: true
+    type: Number
   },
   currency: {
     type: String,
