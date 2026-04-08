@@ -35,9 +35,12 @@
     <!-- 产品列表 -->
     <el-table :data="products" stripe v-loading="loading" :scroll-x="true">
       <!-- 列1：TikTok商品 + 店铺 -->
-      <el-table-column :label="$t('product.tiktokProduct')" width="320" fixed class-name="tiktok-green-label">
+      <el-table-column :label="$t('product.tiktokProduct')" width="280" fixed class-name="tiktok-green-label">
         <template #default="{ row }">
           <div class="tiktok-product-cell">
+            <div class="product-image-cell" v-if="row.images">
+              <el-image :src="row.images" fit="cover" class="product-thumbnail" :preview-src-list="[row.images]" />
+            </div>
             <div class="tiktok-id-row">
               <el-button link type="primary" @click="viewProduct(row)" class="tiktok-id-btn">
                 {{ row.tiktokProductId || '-' }}
@@ -378,13 +381,41 @@
             <div class="section-header">
               <span class="section-title">{{ $t('product.productInfo') }}</span>
             </div>
-            <el-form-item :label="$t('product.productGrade')">
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item :label="$t('product.headImage')">
+                  <el-input v-model="form.images" :placeholder="$t('product.headImagePlaceholder')" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item :label="$t('product.productGrade')">
               <el-select v-model="form.productGrade" :placeholder="$t('product.gradeSelect')">
                 <el-option :label="$t('product.ordinaryGrade')" value="ordinary" />
                 <el-option :label="$t('product.hotGrade')" value="hot" />
                 <el-option :label="$t('product.mainGrade')" value="main" />
                 <el-option :label="$t('product.newGrade')" value="new" />
               </el-select>
+            </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item :label="$t('product.imageGallery')">
+              <div class="image-gallery-input">
+                <el-input
+                  v-model="imageGalleryInput"
+                  :placeholder="$t('product.imageGalleryPlaceholder')"
+                  @keydown.enter.prevent="addImageToGallery"
+                >
+                  <template #append>
+                    <el-button @click="addImageToGallery">{{ $t('product.add') }}</el-button>
+                  </template>
+                </el-input>
+                <div v-if="form.productImages.length > 0" class="image-gallery-preview">
+                  <div v-for="(img, idx) in form.productImages" :key="idx" class="gallery-item">
+                    <el-image :src="img" fit="cover" class="gallery-image" />
+                    <el-icon class="gallery-remove" @click="removeImageFromGallery(idx)"><Close /></el-icon>
+                  </div>
+                </div>
+              </div>
             </el-form-item>
             <el-form-item :label="$t('product.productIntro')">
               <el-input v-model="form.productIntro" type="textarea" :rows="3" :placeholder="$t('product.productIntroPlaceholder')" />
@@ -540,6 +571,22 @@
 
         <!-- 基本信息 -->
         <el-descriptions :column="3" border class="detail-desc">
+          <!-- 图片集 -->
+          <el-descriptions-item :label="$t('product.imageGallery')" :span="3" v-if="currentProduct.productImages?.length > 0">
+            <div class="detail-image-gallery">
+              <el-image
+                v-for="(img, idx) in currentProduct.productImages"
+                :key="idx"
+                :src="img"
+                fit="cover"
+                class="gallery-image-item"
+                :preview-src-list="currentProduct.productImages"
+              />
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions :column="3" border class="detail-desc">
           <el-descriptions-item :label="$t('product.sku')">{{ currentProduct.sku || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('product.shop')">{{ currentProduct.shopId?.shopName || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="$t('product.productCategory')">{{ currentProduct.productCategory || '-' }}</el-descriptions-item>
@@ -688,7 +735,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Shop, Box, CopyDocument } from '@element-plus/icons-vue'
+import { Search, Plus, Shop, Box, CopyDocument, Close } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
@@ -887,6 +934,7 @@ const form = reactive({
   shopId: '',
   productCategory: '',
   productGrade: 'ordinary',
+  images: '',
   productImages: [],
   productIntro: '',
   referenceVideo: '',
@@ -900,6 +948,21 @@ const form = reactive({
   activityConfigs: [],
   defaultActivityIndex: -1 // 默认活动的索引
 })
+
+// 图片集输入
+const imageGalleryInput = ref('')
+
+const addImageToGallery = () => {
+  const url = imageGalleryInput.value.trim()
+  if (url && !form.productImages.includes(url)) {
+    form.productImages.push(url)
+    imageGalleryInput.value = ''
+  }
+}
+
+const removeImageFromGallery = (index) => {
+  form.productImages.splice(index, 1)
+}
 
 const loadActivities = async () => {
   try {
@@ -1093,6 +1156,7 @@ const editProduct = (row) => {
     shopId: row.shopId?._id || row.shopId || '',
     productCategory: row.productCategory || '',
     productGrade: row.productGrade || 'ordinary',
+    images: row.images || '',
     productImages: row.productImages || [],
     productIntro: row.productIntro || '',
     referenceVideo: row.referenceVideo || '',
@@ -1175,6 +1239,7 @@ const resetForm = () => {
     shopId: '',
     productCategory: '',
     productGrade: 'ordinary',
+    images: '',
     productImages: [],
     productIntro: '',
     referenceVideo: '',
@@ -2108,5 +2173,78 @@ defineExpose({
   gap: 16px;
   font-size: 13px;
   color: #303133;
+}
+
+/* 图片集输入样式 */
+.image-gallery-input {
+  width: 100%;
+}
+
+.image-gallery-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.gallery-item {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #ebeef5;
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.gallery-remove:hover {
+  background: rgba(255, 0, 0, 0.7);
+}
+
+/* 列表头图样式 */
+.product-image-cell {
+  margin-bottom: 6px;
+}
+
+.product-thumbnail {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+}
+
+/* 详情图片集样式 */
+.detail-image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gallery-image-item {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+  cursor: pointer;
 }
 </style>

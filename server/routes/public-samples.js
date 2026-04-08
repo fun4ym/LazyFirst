@@ -130,32 +130,61 @@ router.get('/', async (req, res) => {
       };
     });
 
+    // 获取商品tiktokProductId和图片
+    const productIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
+    const validObjectIds = productIds.filter(id => /^[0-9a-fA-F]{24}$/.test(id));
+    const objectIdList = [];
+    for (const id of validObjectIds) {
+      try {
+        objectIdList.push(mongoose.Types.ObjectId.createFromHexString(id));
+      } catch (e) { }
+    }
+    const productList = await Product.find({
+      $or: [
+        { _id: { $in: productIds } },
+        ...(objectIdList.length > 0 ? [{ _id: { $in: objectIdList } }] : [])
+      ]
+    }).select('_id tiktokProductId images productImages').lean();
+    const productMap = {};
+    productList.forEach(p => {
+      const pid = p._id.toString();
+      productMap[pid] = {
+        tiktokProductId: p.tiktokProductId || '',
+        productImage: p.images?.[0] || p.productImages?.[0] || ''
+      };
+    });
+
     // 整理返回数据
-    const samplesData = samples.map(sample => ({
-      _id: sample._id,
-      date: sample.date,
-      influencerAccount: sample.influencerAccount,
-      productName: sample.productName,
-      productId: sample.productId ? sample.productId.toString() : '',
-      followerCount: sample.followerCount,
-      gmv: influencerMap[sample.influencerAccount]?.latestGmv || 0,
-      salesman: sample.salesman,
-      shippingInfo: sample.shippingInfo,
-      isSampleSent: sample.isSampleSent,
-      sampleStatus: sample.sampleStatus,
-      trackingNumber: sample.trackingNumber,
-      shippingDate: sample.shippingDate,
-      receivedDate: sample.receivedDate,
-      isOrderGenerated: sample.isOrderGenerated,
-      orderCount: sample.orderCount,
-      videoLink: sample.videoLink,
-      videoStreamCode: sample.videoStreamCode,
-      isAdPromotion: sample.isAdPromotion,
-      adPromotionTime: sample.adPromotionTime,
-      sampleImage: sample.sampleImage,
-      createdAt: sample.createdAt,
-      updatedAt: sample.updatedAt
-    }));
+    const samplesData = samples.map(sample => {
+      const productIdStr = sample.productId ? sample.productId.toString() : '';
+      const productInfo = productMap[productIdStr] || {};
+      return {
+        _id: sample._id,
+        date: sample.date,
+        influencerAccount: sample.influencerAccount,
+        productName: sample.productName,
+        productId: productInfo.tiktokProductId || sample.productId?.toString() || '',
+        productImage: productInfo.productImage || '',
+        followerCount: sample.followerCount,
+        gmv: influencerMap[sample.influencerAccount]?.latestGmv || 0,
+        salesman: sample.salesman,
+        shippingInfo: sample.shippingInfo,
+        isSampleSent: sample.isSampleSent,
+        sampleStatus: sample.sampleStatus,
+        trackingNumber: sample.trackingNumber,
+        shippingDate: sample.shippingDate,
+        receivedDate: sample.receivedDate,
+        isOrderGenerated: sample.isOrderGenerated,
+        orderCount: sample.orderCount,
+        videoLink: sample.videoLink,
+        videoStreamCode: sample.videoStreamCode,
+        isAdPromotion: sample.isAdPromotion,
+        adPromotionTime: sample.adPromotionTime,
+        sampleImage: sample.sampleImage,
+        createdAt: sample.createdAt,
+        updatedAt: sample.updatedAt
+      };
+    });
 
     res.json({
       success: true,

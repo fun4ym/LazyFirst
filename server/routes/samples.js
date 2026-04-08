@@ -1,8 +1,10 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const { authenticate, authorize, filterByDataScope } = require('../middleware/auth');
 const SampleManagement = require('../models/SampleManagement');
 const Product = require('../models/Product');
+const Shop = require('../models/Shop');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const User = require('../models/User');
@@ -115,6 +117,38 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       userIdToName[u._id.toString()] = u.realName || u.username || u._id.toString();
     });
 
+    // 获取商品对应的店铺信息（过滤无效的ObjectId格式）
+    const productIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
+    const validObjectIds = productIds.filter(id => /^[0-9a-fA-F]{24}$/.test(id));
+    const objectIdList = [];
+    for (const id of validObjectIds) {
+      try {
+        objectIdList.push(mongoose.Types.ObjectId.createFromHexString(id));
+      } catch (e) {
+        // 跳过无效ID
+      }
+    }
+    const productsWithShop = await Product.find({
+      $or: [
+        { _id: { $in: productIds } },
+        ...(objectIdList.length > 0 ? [{ _id: { $in: objectIdList } }] : [])
+      ]
+    }).select('_id shopId').lean();
+
+    const productShopMap = {};
+    productsWithShop.forEach(p => {
+      const pid = typeof p._id === 'string' ? p._id : p._id.toString();
+      productShopMap[pid] = p.shopId;
+    });
+
+    // 获取店铺信息
+    const shopIds = [...new Set(Object.values(productShopMap).filter(Boolean))];
+    const shops = await Shop.find({ _id: { $in: shopIds } }).select('_id shopName').lean();
+    const shopMap = {};
+    shops.forEach(s => {
+      shopMap[s._id.toString()] = s.shopName;
+    });
+
     // 获取每个样品的达人黑名单状态
     const influencerAccounts = [...new Set(samples.map(s => s.influencerAccount).filter(Boolean))];
     const blacklistedInfluencers = await Influencer.find({
@@ -132,7 +166,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       };
     });
 
-    // 为每个样品添加黑名单信息
+    // 为每个样品添加黑名单信息和店铺信息
     const samplesWithBlacklist = samples.map(sample => {
       const blacklistInfo = blacklistMap[sample.influencerAccount] || { isBlacklisted: false };
       const sampleObj = sample.toObject();
@@ -145,10 +179,15 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
           salesmanName = user.realName || user.username;
         }
       }
+      // 获取店铺信息
+      const productIdStr = sampleObj.productId ? sampleObj.productId.toString() : '';
+      const shopId = productShopMap[productIdStr];
+      const shopName = shopId ? (shopMap[shopId.toString()] || '') : '';
       return {
         ...sampleObj,
-        productId: sampleObj.productId ? sampleObj.productId.toString() : '',
+        productId: productIdStr,
         salesman: salesmanName,
+        shopName: shopName,
         isBlacklistedInfluencer: blacklistInfo.isBlacklisted,
         influencerBlacklistInfo: blacklistInfo.isBlacklisted ? blacklistInfo : null
       };

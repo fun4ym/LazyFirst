@@ -189,6 +189,19 @@
             </template>
           </el-table-column>
 
+          <!-- 商品图片 -->
+          <el-table-column :label="$t('samplePublic.productImage')" width="60" align="center">
+            <template #default="{ row }">
+              <img 
+                v-if="row.productImage" 
+                :src="row.productImage" 
+                class="product-thumb"
+                @error="(e) => e.target.style.display = 'none'"
+              />
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
+
           <!-- 商品信息 -->
           <el-table-column :label="$t('samplePublic.productInfo')" min-width="200">
             <template #default="{ row }">
@@ -815,6 +828,12 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+.product-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .product-name {

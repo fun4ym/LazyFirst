@@ -1,0 +1,24 @@
+{
+  _id: ObjectId('69c366c18311fe51195aa018'),
+  companyId: ObjectId('69a7aad8da66cd5145a5f06f'),
+  parentId: null,
+  name: '市场部',
+  description: '市场部',
+  managerId: ObjectId('69a7e2a21cc5e353d382588c'),
+  status: 'active',
+  createdAt: ISODate('2026-03-25T04:38:25.128Z'),
+  updatedAt: ISODate('2026-03-25T04:38:25.128Z'),
+  __v: 0
+}
+{
+  _id: ObjectId('69c366de8311fe51195aa025'),
+  companyId: ObjectId('69a7aad8da66cd5145a5f06f'),
+  parentId: null,
+  name: '招商部',
+  description: '招商部',
+  managerId: ObjectId('69c3616c8311fe51195a9fbf'),
+  status: 'active',
+  createdAt: ISODate('2026-03-25T04:38:54.030Z'),
+  updatedAt: ISODate('2026-03-25T04:38:54.030Z'),
+  __v: 0
+}

@@ -1,0 +1,20 @@
+{
+  _id: ObjectId('69a7aad8da66cd5145a5f06f'),
+  name: 'TAP System',
+  contact: 'System Admin',
+  phone: '13800138000',
+  email: 'admin@tap.com',
+  status: 'active',
+  settings: {
+    flowRules: {
+      publicPoolReturnDays: 30,
+      privatePoolMaxDays: 90
+    },
+    defaultCurrency: 'USD',
+    defaultCountry: 'US',
+    sampleTimeout: 7
+  },
+  createdAt: ISODate('2026-03-04T03:45:28.477Z'),
+  updatedAt: ISODate('2026-03-04T03:45:28.477Z'),
+  __v: 0
+}

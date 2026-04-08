@@ -1,0 +1,123 @@
+{
+  _id: ObjectId('69d205362ec0d4d608c49641'),
+  companyId: ObjectId('69a7aad8da66cd5145a5f06f'),
+  billNo: 'BILL202604050001',
+  validStartDate: ISODate('2026-01-12T05:35:28.000Z'),
+  validEndDate: ISODate('2026-03-19T02:45:13.000Z'),
+  totalCommission: 2118.0700000000006,
+  isSettled: true,
+  orderCount: 291,
+  bdList: [
+    {
+      bdName: '未分配',
+      commission: 1306.8000000000004,
+      orderCount: 132,
+      _id: ObjectId('69d205362ec0d4d608c49642')
+    },
+    {
+      bdName: 'film',
+      commission: 92.72999999999999,
+      orderCount: 17,
+      _id: ObjectId('69d205362ec0d4d608c49643')
+    },
+    {
+      bdName: 'nam',
+      commission: 71.69999999999999,
+      orderCount: 15,
+      _id: ObjectId('69d205362ec0d4d608c49644')
+    },
+    {
+      bdName: 'ice',
+      commission: 30.779999999999998,
+      orderCount: 7,
+      _id: ObjectId('69d205362ec0d4d608c49645')
+    },
+    {
+      bdName: 'cin',
+      commission: 27.599999999999998,
+      orderCount: 3,
+      _id: ObjectId('69d205362ec0d4d608c49646')
+    },
+    {
+      bdName: 'eye',
+      commission: 100.7,
+      orderCount: 16,
+      _id: ObjectId('69d205362ec0d4d608c49647')
+    },
+    {
+      bdName: 'dingyan',
+      commission: 131.45999999999998,
+      orderCount: 15,
+      _id: ObjectId('69d205362ec0d4d608c49648')
+    },
+    {
+      bdName: 'sa',
+      commission: 298.73,
+      orderCount: 81,
+      _id: ObjectId('69d205362ec0d4d608c49649')
+    },
+    {
+      bdName: 'tee',
+      commission: 57.57000000000001,
+      orderCount: 5,
+      _id: ObjectId('69d205362ec0d4d608c4964a')
+    }
+  ],
+  creatorId: ObjectId('69a7aad8da66cd5145a5f09b'),
+  settlementNotes: [
+    {
+      type: 'commission',
+      bdName: 'film',
+      bankAccount: '',
+      bankFlowNo: 'TRBS260407464615128',
+      note: '',
+      _id: ObjectId('69d4d0d4aea0097764b1da55'),
+      createdAt: ISODate('2026-04-07T09:39:32.282Z'),
+      history: []
+    },
+    {
+      type: 'commission',
+      bdName: 'nam',
+      bankAccount: '',
+      bankFlowNo: 'TRBS260407464630575',
+      note: '',
+      _id: ObjectId('69d4d0d4aea0097764b1da56'),
+      createdAt: ISODate('2026-04-07T09:39:32.283Z'),
+      history: []
+    },
+    {
+      type: 'commission',
+      bdName: 'cin',
+      bankAccount: '',
+      bankFlowNo: 'TRBS260407464646369',
+      note: '',
+      _id: ObjectId('69d4d0d4aea0097764b1da57'),
+      createdAt: ISODate('2026-04-07T09:39:32.283Z'),
+      history: []
+    },
+    {
+      type: 'commission',
+      bdName: 'eye',
+      bankAccount: '',
+      bankFlowNo: 'TRTS260407464661858',
+      note: '',
+      _id: ObjectId('69d4d0d4aea0097764b1da58'),
+      createdAt: ISODate('2026-04-07T09:39:32.283Z'),
+      history: []
+    },
+    {
+      type: 'commission',
+      bdName: 'sa',
+      bankAccount: '',
+      bankFlowNo: 'TRTS260407464672973',
+      note: '',
+      _id: ObjectId('69d4d0d4aea0097764b1da59'),
+      createdAt: ISODate('2026-04-07T09:39:32.283Z'),
+      history: []
+    }
+  ],
+  createdAt: ISODate('2026-04-05T06:46:14.051Z'),
+  updatedAt: ISODate('2026-04-07T09:39:32.285Z'),
+  __v: 1,
+  settlementTime: ISODate('2026-04-07T09:39:32.281Z')
+}

@@ -68,7 +68,7 @@
         <div class="card-footer">
           <div class="data-stats">
             <div class="stat-item">
-              <span class="stat-value">¥{{ formatNumber(item.latestGmv) }}</span>
+              <span class="stat-value" :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">¥{{ formatNumber(item.latestGmv) }}</span>
               <span class="stat-label">{{ isEnglish ? 'Month GMV' : '月GMV' }}</span>
             </div>
             <div class="stat-divider"></div>
@@ -146,8 +146,8 @@
               <span class="value">{{ formatNumber(currentInfluencer.latestFollowers) }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">{{ isEnglish ? 'Month GMV:' : '月GMV:' }}</span>
-              <span class="value">¥{{ formatNumber(currentInfluencer.latestGmv) }}</span>
+              <span class="label">{{ isEnglish ? 'Month GMV:' : '月销金额:' }}</span>
+              <span class="value" :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">¥{{ formatNumber(currentInfluencer.latestGmv) }}</span>
             </div>
             <div class="detail-row">
               <span class="label">{{ isEnglish ? 'Monthly Sales:' : '月销件数:' }}</span>
@@ -183,7 +183,7 @@
                 </div>
                 <div class="m-stats">
                   <span>{{ isEnglish ? 'Followers: ' : '粉丝: ' }}{{ formatNumber(m.followers) }}</span>
-                  <span>GMV: ¥{{ formatNumber(m.gmv) }}</span>
+                  <span :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">GMV: ¥{{ formatNumber(m.gmv) }}</span>
                 </div>
                 <div class="m-remark" v-if="m.remark">{{ m.remark }}</div>
               </div>
@@ -206,8 +206,8 @@
             <input v-model="maintenanceForm.followers" type="number" :placeholder="isEnglish ? 'Enter followers' : '请输入粉丝数'" />
           </div>
           <div class="form-item">
-            <label>{{ isEnglish ? 'Month GMV (฿)' : '月GMV(฿)' }}</label>
-            <input v-model="maintenanceForm.gmv" type="number" :placeholder="isEnglish ? 'Enter GMV' : '请输入月GMV'" />
+            <label>{{ isEnglish ? 'Month GMV (月销金额)' : '月销金额(฿)' }}</label>
+            <input v-model="maintenanceForm.gmv" type="number" :placeholder="isEnglish ? 'Enter GMV' : '请输入月销金额'" />
           </div>
           <div class="form-item">
             <label>{{ isEnglish ? 'Remark' : '备注' }}</label>

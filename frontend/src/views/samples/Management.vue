@@ -258,6 +258,16 @@
         </el-table-column>
 
         <el-table-column
+          :label="$t('samples.shop')"
+          width="150"
+          prop="shopName"
+        >
+          <template #default="{ row }">
+            <div class="column-text">{{ row.shopName || '--' }}</div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
           :label="$t('samples.influencerData')"
           width="200"
         >

@@ -14,9 +14,10 @@
 
           <!-- 搜索筛选 -->
       <div class="filter-section">
-        <el-row :gutter="16">
-          <el-col :span="4">
-            <el-select v-model="filters.poolType" :placeholder="$t('common.select')" clearable @change="loadData">
+        <!-- 第一行：基本筛选 -->
+        <el-row :gutter="16" class="filter-row">
+          <el-col :span="5">
+            <el-select v-model="filters.poolType" :placeholder="$t('influencer.poolType')" clearable @change="loadData">
               <el-option :label="$t('common.all')" value="" />
               <el-option :label="$t('influencer.publicSea')" value="public" />
               <el-option :label="$t('influencer.privateSea')" value="private" />
@@ -29,18 +30,22 @@
               <el-option :label="$t('common.disable')" value="disabled" />
             </el-select>
           </el-col>
-          <el-col :span="4">
+          <el-col :span="5">
             <el-select v-model="filters.categoryTag" :placeholder="$t('influencer.categoryTag')" clearable @change="loadData">
               <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
             </el-select>
           </el-col>
-          <el-col :span="4">
-            <el-input-number v-model="filters.gmvFrom" :min="0" :placeholder="'GMV'" clearable @change="loadData" style="width: 100%" />
-            <div class="filter-label">GMV ≥</div>
-          </el-col>
+        </el-row>
+
+        <!-- 第二行：数据筛选 -->
+        <el-row :gutter="16" class="filter-row">
           <el-col :span="4">
             <el-input-number v-model="filters.followersFrom" :min="0" :placeholder="$t('influencer.followers')" clearable @change="loadData" style="width: 100%" />
             <div class="filter-label">{{ $t('influencer.followers') }} ≥</div>
+          </el-col>
+          <el-col :span="4">
+            <el-input-number v-model="filters.gmvFrom" :min="0" :placeholder="$t('influencer.latestGmv')" clearable @change="loadData" style="width: 100%" />
+            <div class="filter-label">{{ $t('influencer.latestGmv') }} ≥</div>
           </el-col>
           <el-col :span="4">
             <el-input-number v-model="filters.monthlySalesFrom" :min="0" :placeholder="$t('influencer.monthlySalesCount')" clearable @change="loadData" style="width: 100%" />
@@ -50,13 +55,14 @@
             <el-input-number v-model="filters.avgViewsFrom" :min="0" :placeholder="$t('influencer.avgVideoViews')" clearable @change="loadData" style="width: 100%" />
             <div class="filter-label">{{ $t('influencer.avgVideoViews') }} ≥</div>
           </el-col>
-          <el-col :span="6">
-            <div class="batch-actions">
-              <el-button type="warning" :disabled="selectedIds.length === 0" @click="batchClaim" v-if="hasPermission('influencers:update')">{{ $t('influencer.batchClaim') }}</el-button>
-              <el-button type="danger" :disabled="selectedIds.length === 0" @click="batchRelease" v-if="hasPermission('influencers:update')">{{ $t('influencer.batchRelease') }}</el-button>
-            </div>
-          </el-col>
         </el-row>
+      </div>
+
+      <!-- 批量操作 -->
+      <div class="batch-actions-bar" v-if="hasPermission('influencers:update')">
+        <el-button type="warning" :disabled="selectedIds.length === 0" @click="batchClaim">{{ $t('influencer.batchClaim') }}</el-button>
+        <el-button type="danger" :disabled="selectedIds.length === 0" @click="batchRelease">{{ $t('influencer.batchRelease') }}</el-button>
+        <span class="selected-count" v-if="selectedIds.length > 0">已选择 {{ selectedIds.length }} 条</span>
       </div>
 
       <!-- 达人列表 -->
@@ -90,7 +96,11 @@
         <el-table-column :label="$t('influencer.influencerParams')" width="200">
           <template #default="{ row }">
             <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers || 0 }}</div>
-            <div>GMV: {{ row.latestGmv || 0 }}</div>
+            <div>
+              <el-tooltip content="月销金额" placement="top">
+                <span>GMV: {{ row.latestGmv || 0 }}</span>
+              </el-tooltip>
+            </div>
             <div>{{ $t('influencer.monthlySalesCount') }}: {{ row.monthlySalesCount || 0 }}</div>
             <div>{{ $t('influencer.avgVideoViews') }}: {{ row.avgVideoViews || 0 }}</div>
           </template>
@@ -187,7 +197,11 @@
             <el-table-column :label="$t('influencer.latestGmv')" width="150">
               <template #default="{ row }">
                 <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers }}</div>
-                <div>GMV: {{ row.latestGmv }}</div>
+                <div>
+                  <el-tooltip content="月销金额" placement="top">
+                    <span>GMV: {{ row.latestGmv }}</span>
+                  </el-tooltip>
+                </div>
               </template>
             </el-table-column>
             <el-table-column :label="$t('influencer.blacklistInfo')" width="200">
@@ -428,7 +442,13 @@
             <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
           </el-table-column>
           <el-table-column prop="followers" :label="$t('influencer.followers')" width="100" />
-          <el-table-column prop="gmv" label="GMV" width="100" />
+          <el-table-column prop="gmv" :label="$t('influencer.latestGmv')" width="100">
+            <template #default="{ row }">
+              <el-tooltip content="月销金额" placement="top">
+                <span>{{ row.gmv || 0 }}</span>
+              </el-tooltip>
+            </template>
+          </el-table-column>
           <el-table-column prop="monthlySalesCount" :label="$t('influencer.monthlySalesCount')" width="100" />
           <el-table-column prop="avgVideoViews" :label="$t('influencer.avgVideoViews')" width="100" />
           <el-table-column prop="maintainerName" :label="$t('influencer.maintainer')" width="120" />
@@ -446,8 +466,11 @@
                 </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item label="GMV">
+                <el-form-item :label="$t('influencer.latestGmv')">
                   <div style="display: flex; align-items: center; gap: 4px;">
+                    <el-tooltip content="月销金额" placement="top">
+                      <span style="font-size: 12px; color: #909399;">(?)</span>
+                    </el-tooltip>
                     <el-select v-model="maintenanceForm.currency" placeholder="币别" style="width: 70px">
                       <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
                     </el-select>
@@ -1087,6 +1110,26 @@ onMounted(() => {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+
+.filter-row {
+  margin-bottom: 12px;
+}
+
+.batch-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.selected-count {
+  font-size: 13px;
+  color: #606266;
+  margin-left: auto;
 }
 
 .pagination-wrapper {
