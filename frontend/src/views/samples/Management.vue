@@ -1038,9 +1038,8 @@ const getSampleStatusType = (status) => {
   return typeMap[status] || 'info'
 }
 
-// 获取寄样状态文本
+// 获取寄样状态文本（使用顶层已定义的 t 函数）
 const getSampleStatusText = (status) => {
-  const { t } = useI18n()
   const textMap = {
     pending: t('samples.pending'),
     shipping: t('samples.shipping') || 'Shipping',
