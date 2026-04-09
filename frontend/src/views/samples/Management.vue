@@ -896,7 +896,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
@@ -1038,15 +1038,16 @@ const getSampleStatusType = (status) => {
   return typeMap[status] || 'info'
 }
 
-// 获取寄样状态文本（使用顶层已定义的 t 函数）
+// 获取寄样状态文本（使用 computed 确保响应式更新）
+const sampleStatusTextMap = computed(() => ({
+  pending: t('samples.pending'),
+  shipping: t('samples.shipping') || 'Shipping',
+  sent: t('samples.shipped'),
+  refused: t('samples.refused')
+}))
+
 const getSampleStatusText = (status) => {
-  const textMap = {
-    pending: t('samples.pending'),
-    shipping: t('samples.shipping') || 'Shipping',
-    sent: t('samples.shipped'),
-    refused: t('samples.refused')
-  }
-  return textMap[status] || t('samples.pending')
+  return sampleStatusTextMap.value[status] || t('samples.pending')
 }
 
 const formatDateTime = (date) => {
