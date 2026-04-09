@@ -236,7 +236,7 @@
           </el-table-column>
 
           <!-- 达人信息 -->
-          <el-table-column :label="$t('samplePublic.influencerInfo')" min-width="240">
+          <el-table-column :label="$t('samplePublic.influencerInfo')" min-width="260">
             <template #default="{ row }">
               <div class="influencer-info">
                 <div class="influencer-account">
@@ -255,6 +255,11 @@
                       ฿{{ formatNumber(row.gmv) }}
                     </span>
                   </el-tooltip>
+                </div>
+                <!-- 收货信息 -->
+                <div class="influencer-address" v-if="row.shippingInfo">
+                  <el-icon><Location /></el-icon>
+                  <span class="address-text">{{ row.shippingInfo }}</span>
                 </div>
               </div>
             </template>
@@ -372,7 +377,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money } from '@element-plus/icons-vue'
+import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 const { t } = useI18n()
@@ -984,6 +989,26 @@ onMounted(() => {
 .stat-item.gmv {
   color: #e6a23c;
   font-weight: 500;
+}
+
+.influencer-address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #909399;
+}
+
+.influencer-address .el-icon {
+  color: #67c23a;
+}
+
+.address-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
 }
 
 .video-info {
