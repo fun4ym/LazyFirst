@@ -84,6 +84,26 @@
             />
           </el-form-item>
 
+          <el-form-item label="达人ID">
+            <el-input
+              v-model="searchForm.influencerAccount"
+              placeholder="达人ID"
+              clearable
+              style="width: 150px"
+              @keyup.enter="loadSamples"
+            />
+          </el-form-item>
+
+          <el-form-item label="商品ID">
+            <el-input
+              v-model="searchForm.productId"
+              placeholder="商品ID"
+              clearable
+              style="width: 150px"
+              @keyup.enter="loadSamples"
+            />
+          </el-form-item>
+
           <el-form-item>
             <el-button type="primary" @click="loadSamples">{{ $t('samplePublic.search') }}</el-button>
             <el-button @click="resetSearch">{{ $t('samplePublic.reset') }}</el-button>
@@ -347,7 +367,9 @@ const searchForm = reactive({
   sampleStatus: 'pending', // 默认待审核
   isOrderGenerated: null,
   date: '',
-  productName: ''
+  productName: '',
+  influencerAccount: '',  // 达人ID
+  productId: ''           // 商品ID
 })
 
 // 分页
@@ -423,7 +445,9 @@ const loadSamples = async () => {
       sampleStatus: searchForm.sampleStatus || undefined,
       isOrderGenerated: searchForm.isOrderGenerated ?? undefined,
       date: searchForm.date || undefined,
-      productName: searchForm.productName || undefined
+      productName: searchForm.productName || undefined,
+      influencerAccount: searchForm.influencerAccount || undefined,
+      productId: searchForm.productId || undefined
     }
 
     // 移除空值参数
@@ -458,6 +482,8 @@ const resetSearch = () => {
   searchForm.isOrderGenerated = null
   searchForm.date = ''
   searchForm.productName = ''
+  searchForm.influencerAccount = ''
+  searchForm.productId = ''
   pagination.page = 1
   loadSamples()
 }

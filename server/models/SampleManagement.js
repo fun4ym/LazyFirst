@@ -18,10 +18,9 @@ const sampleManagementSchema = new mongoose.Schema({
     comment: '商品名称'
   },
   productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
+    type: String,  // 存 TikTok 商品 ID（String），用于展示
     required: true,
-    comment: '商品ID (关联Product._id)'
+    comment: 'TikTok商品ID'
   },
   influencerAccount: {
     type: String,

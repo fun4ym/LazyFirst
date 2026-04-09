@@ -19,12 +19,35 @@
 sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 "命令"
 ```
 
-### 部署流程
-1. 本地构建: `cd frontend && npm run build`
-2. rsync同步: `rsync -avz --exclude 'node_modules' --exclude '.git' 本地路径/ ubuntu@150.109.183.29:/home/ubuntu/tap-system/`
-3. 服务器构建: `sudo docker compose build --no-cache`
-4. 重启服务: `sudo docker compose up -d`
-5. 数据库同步: mongosh导出 → docker cp复制 → mongorestore导入
+### 部署流程（GitHub拉取→同步→重启）
+```bash
+# 1. 本地GitHub拉取最新代码
+git pull origin main
+
+# 2. 本地构建前端
+cd frontend && npm run build
+
+# 3. 同步到服务器（使用sshpass）
+sshpass -p 'tokzit-hejwig-6vapwA' rsync -avz \
+  --exclude 'node_modules' --exclude '.git' \
+  /Users/mor/CodeBuddy/LazyFirst/ \
+  ubuntu@150.109.183.29:/home/ubuntu/tap-system/
+
+# 4. 服务器重启Docker
+sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 \
+  "sudo docker stop tap-mongodb tap-backend tap-frontend 2>/dev/null; \
+   sudo docker rm tap-mongodb tap-backend tap-frontend 2>/dev/null; \
+   cd /home/ubuntu/tap-system && sudo docker compose up -d"
+
+# 5. 验证服务状态
+sshpass -p 'tokzit-hejwig-6vapwA' ssh ubuntu@150.109.183.29 "sudo docker ps --format 'table {{.Names}}\t{{.Status}}'"
+
+# 6. 验证网站可访问
+curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
+```
+
+### 数据库同步流程
+mongosh导出 → docker cp复制 → mongorestore导入
 
 ### 本地服务端口
 - 后端: `http://localhost:3000`
@@ -121,3 +144,56 @@ node -e "db.collection('users').findOne()"
 ## 5. 项目主色
 - 主色: `#775999`（紫色）
 - Element Plus默认蓝: `#409EFF`
+
+---
+
+## 6. 今日教训（2026-04-08）
+
+### 今天犯的错误
+1. **没先读memory就开始操作** → 被骂后才读
+2. **rsync用了 `--exclude 'dist'`** → 前端构建文件没同步，网站UI没更新
+3. **没加 `--no-cache`** → Docker用旧镜像，后端代码没更新
+4. **混淆数据和UI** → 问"没数据是不是没这一列"，傻逼问题
+
+### 正确部署流程（修正版）
+```bash
+# 1. GitHub拉取
+git pull origin main
+
+# 2. 本地构建
+cd frontend && npm run build
+
+# 3. 同步代码（dist不需要exclude，因为frontend/dist是空的源文件）
+sshpass -p 'tokzit-hejwig-6vapwA' rsync -avz \
+  --exclude 'node_modules' --exclude '.git' \
+  /Users/mor/CodeBuddy/LazyFirst/ \
+  ubuntu@150.109.183.29:/home/ubuntu/tap-system/
+
+# 4. 单独同步dist（确保最新前端构建）
+sshpass -p 'tokzit-hejwig-6vapwA' rsync -avz \
+  /Users/mor/CodeBuddy/LazyFirst/frontend/dist/ \
+  ubuntu@150.109.183.29:/home/ubuntu/tap-system/frontend/dist/
+
+# 5. 重建并重启（必须加--no-cache）
+sshpass -p 'tokzit-hejwig-6vapwA' ssh ubuntu@150.109.183.29 \
+  "cd /home/ubuntu/tap-system && \
+   sudo docker compose build --no-cache && \
+   sudo docker compose up -d"
+
+# 6. 验证
+curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
+```
+
+### 怎么才能不忘记
+
+**每次部署前自问**：
+1. ✅ 读memory了吗？
+2. ✅ rsync有没有exclude错东西？（dist不能exclude）
+3. ✅ docker build有没有加--no-cache？
+4. ✅ 改的是前端还是后端？还是两个都要重建？
+
+**操作原则**：
+- 前端改了 → 必须同步dist + docker build
+- 后端改了 → docker build --no-cache
+- 都改了 → 两个都做
+- **任何部署操作前，必须先读memory！**

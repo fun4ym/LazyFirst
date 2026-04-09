@@ -33,6 +33,15 @@
           />
         </el-form-item>
 
+        <el-form-item :label="'商品ID'">
+          <el-input
+            v-model="searchForm.productId"
+            placeholder="商品ID"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+
         <el-form-item :label="$t('samples.bd')">
           <el-input
             v-model="searchForm.salesman"
@@ -935,7 +944,8 @@ const searchForm = reactive({
   influencerAccount: '',
   salesman: '',
   isSampleSent: null,
-  isOrderGenerated: null
+  isOrderGenerated: null,
+  productId: ''  // 商品ID搜索
 })
 
 const pagination = reactive({
@@ -948,6 +958,7 @@ const createForm = reactive({
   date: '',
   productName: '',
   productId: '',
+  tiktokProductId: '',  // 新增
   influencerAccount: '',
   followerCount: 0,
   monthlySalesCount: 0,
@@ -1074,7 +1085,8 @@ const resetSearch = () => {
     influencerAccount: '',
     salesman: '',
     isSampleSent: null,
-    isOrderGenerated: null
+    isOrderGenerated: null,
+    productId: ''
   })
   pagination.page = 1
   loadSamples()
@@ -1136,7 +1148,7 @@ const handleProductSelect = (productId) => {
   const product = cooperationProducts.value.find(p => p._id === productId)
   if (product) {
     createForm.productName = product.name || product.productName || ''
-    createForm.productId = product._id  // 使用MongoDB _id作为关联
+    createForm.productId = product._id  // 存 MongoDB _id 用于后端查询
   }
 }
 
@@ -1147,6 +1159,7 @@ const showCreateDialog = () => {
     date: getTodayDate(),
     productName: '',
     productId: '',
+    tiktokProductId: '',
     influencerAccount: '',
     followerCount: 0,
     monthlySalesCount: 0,

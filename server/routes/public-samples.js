@@ -65,8 +65,8 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // 3. 获取商品ID列表（直接使用 Product._id ObjectId）
-    const productIdList = products.map(p => p._id);
+    // 3. 获取 TikTok 商品 ID 列表（productId 存的是 TikTok 商品 ID）
+    const tiktokProductIdList = products.map(p => p.tiktokProductId).filter(Boolean);
 
     // 4. 查询样品申请
     const { 
@@ -75,11 +75,14 @@ router.get('/', async (req, res) => {
       sampleStatus,
       isOrderGenerated,
       date,
-      productName
+      productName,
+      influencerAccount,
+      productId
     } = req.query;
 
+    // 用 tiktokProductId 查样品申请
     const query = {
-      productId: { $in: productIdList }
+      productId: { $in: tiktokProductIdList }
     };
 
     // 筛选：寄样状态
@@ -103,6 +106,16 @@ router.get('/', async (req, res) => {
     // 筛选：商品名称
     if (productName) {
       query.productName = { $regex: productName, $options: 'i' };
+    }
+
+    // 筛选：达人ID（模糊搜索）
+    if (influencerAccount) {
+      query.influencerAccount = { $regex: influencerAccount, $options: 'i' };
+    }
+
+    // 筛选：商品ID（模糊搜索）
+    if (productId) {
+      query.productId = { $regex: productId, $options: 'i' };
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -130,41 +143,26 @@ router.get('/', async (req, res) => {
       };
     });
 
-    // 获取商品tiktokProductId和图片
-    const productIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
-    const validObjectIds = productIds.filter(id => /^[0-9a-fA-F]{24}$/.test(id));
-    const objectIdList = [];
-    for (const id of validObjectIds) {
-      try {
-        objectIdList.push(mongoose.Types.ObjectId.createFromHexString(id));
-      } catch (e) { }
-    }
+    // 获取商品图片（productId 存的就是 TikTok 商品 ID）
+    const tiktokProductIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
     const productList = await Product.find({
-      $or: [
-        { _id: { $in: productIds } },
-        ...(objectIdList.length > 0 ? [{ _id: { $in: objectIdList } }] : [])
-      ]
-    }).select('_id tiktokProductId images productImages').lean();
-    const productMap = {};
+      tiktokProductId: { $in: tiktokProductIds }
+    }).select('tiktokProductId images productImages').lean();
+    const productImageMap = {};
     productList.forEach(p => {
-      const pid = p._id.toString();
-      productMap[pid] = {
-        tiktokProductId: p.tiktokProductId || '',
-        productImage: p.images?.[0] || p.productImages?.[0] || ''
-      };
+      productImageMap[p.tiktokProductId] = p.images?.[0] || p.productImages?.[0] || '';
     });
 
     // 整理返回数据
     const samplesData = samples.map(sample => {
-      const productIdStr = sample.productId ? sample.productId.toString() : '';
-      const productInfo = productMap[productIdStr] || {};
+      const productIdStr = sample.productId || '';
       return {
         _id: sample._id,
         date: sample.date,
         influencerAccount: sample.influencerAccount,
         productName: sample.productName,
-        productId: productInfo.tiktokProductId || sample.productId?.toString() || '',
-        productImage: productInfo.productImage || '',
+        productId: productIdStr,  // 已是 TikTok 商品 ID
+        productImage: productImageMap[productIdStr] || '',
         followerCount: sample.followerCount,
         gmv: influencerMap[sample.influencerAccount]?.latestGmv || 0,
         salesman: sample.salesman,
@@ -253,14 +251,14 @@ router.put('/batch', async (req, res) => {
       });
     }
 
-    // 获取该店铺的商品ID列表（使用 Product._id）
-    const products = await Product.find({ shopId: shop._id }).select('_id');
-    const productIdList = products.map(p => p._id);
+    // 获取该店铺的 TikTok 商品 ID 列表
+    const products = await Product.find({ shopId: shop._id }).select('tiktokProductId');
+    const tiktokProductIdList = products.map(p => p.tiktokProductId).filter(Boolean);
 
     // 构建查询条件：必须是该店铺的商品
     const query = {
       _id: { $in: idsArray },
-      productId: { $in: productIdList }
+      productId: { $in: tiktokProductIdList }
     };
 
     const updateData = {};

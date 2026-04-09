@@ -44,7 +44,8 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       salesman,
       salesmanId,
       isSampleSent,
-      isOrderGenerated
+      isOrderGenerated,
+      productId  // 商品ID搜索
     } = req.query;
 
     // 使用数据权限过滤条件
@@ -101,6 +102,11 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       query.isOrderGenerated = isOrderGenerated === 'true';
     }
 
+    // TikTok商品ID筛选（模糊搜索）- productId字段存的就是TikTok商品ID
+    if (productId) {
+      query.productId = { $regex: productId, $options: 'i' };
+    }
+
     const samples = await SampleManagement.find(query)
       .populate('creatorId', 'realName')
       .populate('fulfillmentUpdatedBy', 'realName')
@@ -128,17 +134,21 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
         // 跳过无效ID
       }
     }
+    
+    // 查询 Product 表获取店铺信息
     const productsWithShop = await Product.find({
       $or: [
-        { _id: { $in: productIds } },
+        { tiktokProductId: { $in: productIds } },
         ...(objectIdList.length > 0 ? [{ _id: { $in: objectIdList } }] : [])
       ]
-    }).select('_id shopId').lean();
+    }).select('_id shopId tiktokProductId name').lean();
 
     const productShopMap = {};
+    const productNameMap = {};
     productsWithShop.forEach(p => {
-      const pid = typeof p._id === 'string' ? p._id : p._id.toString();
+      const pid = p.tiktokProductId || (typeof p._id === 'string' ? p._id : p._id.toString());
       productShopMap[pid] = p.shopId;
+      productNameMap[pid] = p.name;
     });
 
     // 获取店铺信息
@@ -180,12 +190,15 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
         }
       }
       // 获取店铺信息
-      const productIdStr = sampleObj.productId ? sampleObj.productId.toString() : '';
+      const productIdStr = sampleObj.productId || '';
       const shopId = productShopMap[productIdStr];
       const shopName = shopId ? (shopMap[shopId.toString()] || '') : '';
+      // productName：优先用Product表数据
+      const productName = productNameMap[productIdStr] || sampleObj.productName || '';
       return {
         ...sampleObj,
-        productId: productIdStr,
+        productId: productIdStr,  // 已是TikTok商品ID，直接返回
+        productName: productName,
         salesman: salesmanName,
         shopName: shopName,
         isBlacklistedInfluencer: blacklistInfo.isBlacklisted,
@@ -263,18 +276,18 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     } = req.body;
 
     // 验证并获取 Product 信息
-    let productIdObj;
+    // inputProductId 是前端传的商品 ID（MongoDB ObjectId）
+    let product;
     let productName = inputProductName;
-    
+
     try {
-      const product = await Product.findById(inputProductId);
+      product = await Product.findById(inputProductId);
       if (!product) {
         return res.status(400).json({
           success: false,
           message: '商品不存在'
         });
       }
-      productIdObj = product._id;
       // 如果没传 productName，使用 Product 的 name
       if (!productName) {
         productName = product.name;
@@ -286,11 +299,12 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       });
     }
 
-    // 构建唯一键：日期 + 达人账号 + 商品ID (ObjectId)
+    // 构建唯一键：日期 + 达人账号 + TikTok商品ID
+    // productId 存的是 TikTok 商品 ID（String），用于展示
     const uniqueKey = {
       date: new Date(date),
       influencerAccount,
-      productId: productIdObj
+      productId: product.tiktokProductId || product._id.toString()
     };
 
     // 检查记录是否已存在
@@ -307,12 +321,13 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     }
 
     // 构建数据
+    // productId 存 TikTok 商品 ID（String），用于展示
     const sampleData = {
       companyId: req.companyId,
       creatorId: req.user._id,
       date: new Date(date),
       productName,
-      productId: productIdObj,
+      productId: product.tiktokProductId || product._id.toString(),  // 存 TikTok 商品 ID
       influencerAccount,
       followerCount: parseInt(followerCount) || 0,
       monthlySalesCount: parseInt(monthlySalesCount) || 0,
@@ -693,11 +708,14 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           continue;
         }
 
-        // 构建唯一键：日期 + 达人账号 + 商品ID
+        // 获取 TikTok 商品 ID
+        const tiktokProductId = productByTiktokId?.tiktokProductId || productIdObj.toString();
+        
+        // 构建唯一键：日期 + 达人账号 + TikTok商品ID
         const uniqueKey = {
           date: date,
           influencerAccount: row['达人账号'],
-          productId: productIdObj
+          productId: tiktokProductId  // 存 TikTok 商品 ID
         };
 
         // 检查记录是否已存在
@@ -723,7 +741,7 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           creatorId: req.user._id,
           date: date,
           productName: productName,
-          productId: productIdObj,
+          productId: tiktokProductId,  // 存 TikTok 商品 ID
           influencerAccount: row['达人账号'],
           followerCount: parseInt(row['粉丝数']) || 0,
           salesman: salesmanId,
