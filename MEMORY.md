@@ -74,6 +74,9 @@ curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
 - **重建容器**: `docker compose build --no-cache && docker compose up -d`
 - **不需要重建时**: 直接 `docker compose restart <service>`
 
+### 数据库同步流程
+mongosh导出 → docker cp复制 → mongorestore导入
+
 ---
 
 ## 四、部署前自检清单
@@ -119,7 +122,50 @@ const query = {
 
 ---
 
-## 六、SSL证书位置
+## 六、MongoDB备份与导入规范（必读！）
+
+### 备份命令
+```bash
+sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 \
+  "sudo docker exec tap-mongodb mongosh tap_system --quiet --eval \
+  \"db.getCollectionNames().forEach(function(c) { \
+    print('===COLLECTION:' + c + '==='); \
+    db.getCollection(c).find().forEach(function(doc) { printjson(doc); }); \
+  })\"" > /home/ubuntu/backups/upd日期时间all.json
+```
+
+### mongosh导出格式问题
+- 输出是**JavaScript对象字面量**，不是标准JSON
+- 字符串用单引号 `'value'`
+- 包含`ObjectId`、`ISODate`等JavaScript类型
+- 文档用空行分隔
+
+### 解析方案（已验证）
+```javascript
+const fn = new Function('ObjectId', 'ISODate', 'return ' + docBlock);
+const doc = fn(id => id, s => s);
+```
+
+### ⚠️ 关键问题：ObjectId会变成字符串！
+- 导出后`_id`、`companyId`、`roleId`等字段变成字符串
+- 导入后必须转换回ObjectId，否则`.populate()`失败 → 空白页！
+
+### 导入后必须执行的修复脚本
+```javascript
+// 修复所有集合的ObjectId
+for (const doc of stringIdDocs) {
+  newDoc._id = mongoose.Types.ObjectId.createFromHexString(doc._id);
+  for (const [key, val] of Object.entries(newDoc)) {
+    if (val && typeof val === 'string' && /^[0-9a-f]{24}$/i.test(val)) {
+      newDoc[key] = mongoose.Types.ObjectId.createFromHexString(val);
+    }
+  }
+}
+```
+
+---
+
+## 七、SSL证书位置
 
 | 位置 | 路径 |
 |------|------|
@@ -128,7 +174,7 @@ const query = {
 
 ---
 
-## 七、故障排查
+## 八、故障排查
 
 ### 空白页
 ```bash
@@ -145,20 +191,20 @@ docker network connect tap-system_default <container-name>
 
 ---
 
-## 八、本地开发端口
+## 九、本地开发端口
 
 - 后端: `http://localhost:3000`
 - 前端: `http://localhost:5173`
 
 ---
 
-## 九、项目配色
+## 十、项目配色
 
 - 主色: `#775999`（紫色）
 
 ---
 
-## 九-2、重要操作原则
+## 十一、重要操作原则
 
 1. **先本地后服务器**：所有修改在本地测试，确认后再同步
 2. **服务器操作需授权**：除非紧急情况，否则先询问主人
@@ -167,7 +213,7 @@ docker network connect tap-system_default <container-name>
 
 ---
 
-## 九-3、代码修改记录
+## 十二、代码修改记录
 
 ### 商品图片功能
 - 头图: `images` (String，单个链接)
@@ -180,7 +226,7 @@ docker network connect tap-system_default <container-name>
 
 ---
 
-## 十、2026-04-09 事故记录
+## 十三、2026-04-09 事故记录
 
 ### 事故一：数据库导入覆盖
 **原因**：导入旧备份数据覆盖了线上数据库
@@ -225,7 +271,7 @@ docker network connect tap-system_default <container-name>
 
 ---
 
-## 十一、数据库定时备份
+## 十四、数据库定时备份
 
 | 项目 | 值 |
 |------|-----|
@@ -243,3 +289,15 @@ docker network connect tap-system_default <container-name>
 ```bash
 ls -lh /home/ubuntu/backups/tapdb_*.archive
 ```
+
+---
+
+## 十五、违规处罚
+
+如果再犯以下错误，将接受处罚：
+
+| 违规行为 | 处罚 |
+|----------|------|
+| 未经授权修改/删除MEMORY内容 | 禁止操作任何文件 |
+| 未读MEMORY就执行操作 | 停止当前任务，重新读MEMORY |
+| 擅自执行线上操作 | 暂停所有服务器操作权限 |
