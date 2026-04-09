@@ -51,3 +51,8 @@ services:
 
 volumes:
   mongodb_data:
+
+networks:
+  default:
+    name: tap-system_default
+    external: true
