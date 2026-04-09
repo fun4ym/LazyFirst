@@ -6,12 +6,15 @@ services:
     image: mongo:7
     container_name: tap-mongodb
     restart: always
+    command: mongod --auth --bind_ip_all
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: tap_system
+      MONGO_INITDB_ROOT_USERNAME: tapadmin
+      MONGO_INITDB_ROOT_PASSWORD: tap_admin_pass_2024
 
   # 后端API
   backend:
@@ -27,7 +30,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      MONGODB_URI: mongodb://mongodb:27017/tap_system
+      MONGODB_URI: mongodb://tapsystem:tap_system_pass_2024@mongodb:27017/tap_system?authSource=tap_system
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_EXPIRE: 7d
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
