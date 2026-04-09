@@ -43,7 +43,8 @@ const authenticate = async (req, res, next) => {
 
       req.user = user;
       req.userId = user._id;
-      req.companyId = user.companyId._id || user.companyId;
+      // companyId可能为null（如populate失败），需要安全访问
+      req.companyId = user.companyId && user.companyId._id ? user.companyId._id : user.companyId;
       next();
 
     } catch (jwtError) {
