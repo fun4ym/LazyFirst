@@ -158,6 +158,28 @@ docker network connect tap-system_default <container-name>
 
 ---
 
+## 九-2、重要操作原则
+
+1. **先本地后服务器**：所有修改在本地测试，确认后再同步
+2. **服务器操作需授权**：除非紧急情况，否则先询问主人
+3. **重启服务后告知主人**：有权限自主重启前后端
+4. **先读memory再行动**：每次对话开始先看本文件
+
+---
+
+## 九-3、代码修改记录
+
+### 商品图片功能
+- 头图: `images` (String，单个链接)
+- 图片集: `productImages` (Array，多个链接)
+- 列表显示images，详情显示productImages
+
+### public-samples API
+- 路径: `/api/public/samples?s=识别码`
+- productId字段类型兼容问题：需同时匹配ObjectId和String
+
+---
+
 ## 十、2026-04-09 事故记录
 
 ### 事故一：数据库导入覆盖
@@ -178,3 +200,46 @@ docker network connect tap-system_default <container-name>
 2. 备份位置：`~/backup_YYYYMMDD_HHMMSS/`
 3. 命令：`sudo docker cp tap-backend:/app/server/. ~/backup_$(date +%Y%m%d_%H%M%S)/`
 4. **严禁边想边做，必须先确认再执行**
+
+### 今日教训（2026-04-08）
+
+#### 今天犯的错误
+1. **没先读memory就开始操作** → 被骂后才读
+2. **rsync用了 `--exclude 'dist'`** → 前端构建文件没同步，网站UI没更新
+3. **没加 `--no-cache`** → Docker用旧镜像，后端代码没更新
+4. **混淆数据和UI** → 问"没数据是不是没这一列"，傻逼问题
+
+#### 怎么才能不忘记
+
+**每次部署前自问**：
+1. ✅ 读memory了吗？
+2. ✅ rsync有没有exclude错东西？（dist不能exclude）
+3. ✅ docker build有没有加--no-cache？
+4. ✅ 改的是前端还是后端？还是两个都要重建？
+
+**操作原则**：
+- 前端改了 → 必须同步dist + docker build
+- 后端改了 → docker build --no-cache
+- 都改了 → 两个都做
+- **任何部署操作前，必须先读memory！**
+
+---
+
+## 十一、数据库定时备份
+
+| 项目 | 值 |
+|------|-----|
+| 备份脚本 | `/home/ubuntu/backups/backup-db.sh` |
+| 备份位置 | `/home/ubuntu/backups/tapdb_*.archive` |
+| 执行时间 | 每天东八区 00:00（UTC 16:00） |
+| 保留期限 | 30天 |
+
+### 手动备份命令
+```bash
+/home/ubuntu/backups/backup-db.sh
+```
+
+### 查看备份
+```bash
+ls -lh /home/ubuntu/backups/tapdb_*.archive
+```
