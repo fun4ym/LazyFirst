@@ -162,14 +162,15 @@
                 </el-tag>
                 <el-icon class="edit-icon" @click.stop="openSampleStatusDialog(row)"><Edit /></el-icon>
               </div>
+              <!-- 已寄样时显示物流信息 -->
+              <div v-if="row.sampleStatus === 'sent'" class="sent-info">
+                <span v-if="row.logisticsCompany">{{ row.logisticsCompany }}</span>
+                <span v-if="row.logisticsCompany && row.trackingNumber"> - </span>
+                <span v-if="row.trackingNumber" class="tracking-no">{{ row.trackingNumber }}</span>
+              </div>
+              <!-- 不合作时显示原因 -->
               <div v-if="row.sampleStatus === 'refused' && row.refusalReason" class="refusal-reason">
                 {{ $t('samples.refusalReason') }}：{{ row.refusalReason }}
-              </div>
-              <div v-if="row.trackingNumber" class="tracking-no">
-                {{ row.trackingNumber }}
-              </div>
-              <div v-if="row.shippingDate" class="shipping-date">
-                {{ formatDate(row.shippingDate) }}
               </div>
             </div>
           </template>
@@ -818,9 +819,9 @@
     <el-dialog
       v-model="sampleStatusDialogVisible"
       :title="$t('samples.updateSampleStatus')"
-      width="400px"
+      width="450px"
     >
-      <el-form :model="sampleStatusForm" label-width="80px">
+      <el-form :model="sampleStatusForm" label-width="90px">
         <el-form-item :label="$t('samples.sampleStatus')">
           <el-select v-model="sampleStatusForm.sampleStatus" :placeholder="$t('samples.selectSampleStatus')" style="width: 100%">
             <el-option :label="$t('samples.pending')" value="pending" />
@@ -829,6 +830,22 @@
             <el-option :label="$t('samples.refused')" value="refused" />
           </el-select>
         </el-form-item>
+        <!-- 已寄样时显示物流信息 -->
+        <template v-if="sampleStatusForm.sampleStatus === 'sent'">
+          <el-form-item :label="$t('samples.logisticsCompany') || '物流公司'">
+            <el-select v-model="sampleStatusForm.logisticsCompany" placeholder="Select logistics company" style="width: 100%">
+              <el-option
+                v-for="opt in logisticsCompanyOptions"
+                :key="opt._id"
+                :label="opt.name"
+                :value="opt.code"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="快递单号" :required="sampleStatusForm.logisticsCompany !== 'default'">
+            <el-input v-model="sampleStatusForm.trackingNumber" placeholder="Enter tracking number" />
+          </el-form-item>
+        </template>
         <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samples.refusalReason')">
           <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samples.enterRefusalReason')" />
         </el-form-item>
@@ -923,9 +940,12 @@ const sampleStatusDialogVisible = ref(false)
 const sampleStatusForm = reactive({
   _id: '',
   sampleStatus: 'pending',
-  refusalReason: ''
+  refusalReason: '',
+  logisticsCompany: '',  // 存储 code 值
+  trackingNumber: ''
 })
 const sampleStatusLoading = ref(false)
+const logisticsCompanyOptions = ref([])  // 物流公司选项列表
 
 const samples = ref([])
 const currentSample = ref(null)
@@ -1075,6 +1095,17 @@ const loadSamples = async () => {
     ElMessage.error(t('samples.loadError'))
   } finally {
     loading.value = false
+  }
+}
+
+// 加载物流公司列表
+const loadLogisticsCompanies = async () => {
+  try {
+    const res = await request.get('/base-data', { params: { type: 'trackingUrl', limit: 100 } })
+    logisticsCompanyOptions.value = res.data || []
+  } catch (error) {
+    console.error('Load logistics companies error:', error)
+    logisticsCompanyOptions.value = []
   }
 }
 
@@ -1339,23 +1370,46 @@ const openFulfillmentDialog = (sample) => {
 }
 
 // 打开寄样状态编辑弹窗
-const openSampleStatusDialog = (sample) => {
+const openSampleStatusDialog = async (sample) => {
+  // 加载物流公司列表
+  await loadLogisticsCompanies()
+  // 设置默认值：如果是新建或没有选择物流公司，选中 default
+  let defaultLogistics = sample.logisticsCompany || ''
+  if (!defaultLogistics && logisticsCompanyOptions.value.length > 0) {
+    const defaultOption = logisticsCompanyOptions.value.find(opt => opt.code === 'default')
+    if (defaultOption) {
+      defaultLogistics = 'default'
+    }
+  }
   Object.assign(sampleStatusForm, {
     _id: sample._id,
     sampleStatus: sample.sampleStatus || 'pending',
-    refusalReason: sample.refusalReason || ''
+    refusalReason: sample.refusalReason || '',
+    logisticsCompany: defaultLogistics,
+    trackingNumber: sample.trackingNumber || ''
   })
   sampleStatusDialogVisible.value = true
 }
 
 // 保存寄样状态
 const handleSampleStatusSave = async () => {
+  // 已寄样时：选择非default时快递单号必填
+  if (sampleStatusForm.sampleStatus === 'sent' && sampleStatusForm.logisticsCompany !== 'default' && !sampleStatusForm.trackingNumber) {
+    ElMessage.error('快递单号不能为空')
+    return
+  }
   sampleStatusLoading.value = true
   try {
-    await request.put(`/samples/${sampleStatusForm._id}`, {
+    const payload = {
       sampleStatus: sampleStatusForm.sampleStatus,
       refusalReason: sampleStatusForm.sampleStatus === 'refused' ? sampleStatusForm.refusalReason : ''
-    })
+    }
+    // 已寄样时发送物流信息
+    if (sampleStatusForm.sampleStatus === 'sent') {
+      payload.logisticsCompany = sampleStatusForm.logisticsCompany
+      payload.trackingNumber = sampleStatusForm.trackingNumber
+    }
+    await request.put(`/samples/${sampleStatusForm._id}`, payload)
     ElMessage.success(t('samples.saveSuccess'))
     sampleStatusDialogVisible.value = false
     loadSamples()

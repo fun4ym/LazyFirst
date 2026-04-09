@@ -261,6 +261,8 @@ router.put('/batch', async (req, res) => {
       productId: { $in: tiktokProductIdList }
     };
 
+    const { logisticsCompany, trackingNumber } = req.query;
+
     const updateData = {};
 
     // 更新寄样状态
@@ -268,6 +270,15 @@ router.put('/batch', async (req, res) => {
       updateData.sampleStatus = sampleStatus;
       updateData.isSampleSent = sampleStatus === 'sent';
       updateData.sampleStatusUpdatedAt = new Date();
+      // 已寄样时更新物流信息
+      if (sampleStatus === 'sent') {
+        if (logisticsCompany !== undefined) {
+          updateData.logisticsCompany = logisticsCompany;
+        }
+        if (trackingNumber !== undefined) {
+          updateData.trackingNumber = trackingNumber;
+        }
+      }
     }
 
     // 更新投流开关

@@ -1150,6 +1150,30 @@ const viewProduct = async (row) => {
 
 const editProduct = (row) => {
   editingProduct.value = row
+  console.log('[ProductTab] 编辑产品 row.activityConfigs:', JSON.stringify(row.activityConfigs, null, 2))
+  // 处理 activityConfigs：需要确保只保留 activityId（可能被 populate 了）
+  const processedActivityConfigs = (row.activityConfigs || []).map(config => {
+    console.log('[ProductTab] 单个 config:', JSON.stringify(config, null, 2))
+    return {
+      activityId: config.activityId?._id || config.activityId,
+      isDefault: config.isDefault,
+      activityLink: config.activityLink || '',
+      requirementGmv: config.requirementGmv || 0,
+      requirementMonthlySales: config.requirementMonthlySales || 0,
+      requirementFollowers: config.requirementFollowers || 0,
+      requirementAvgViews: config.requirementAvgViews || 0,
+      requirementRemark: config.requirementRemark || '',
+      sampleMethod: config.sampleMethod || '',
+      cooperationCountry: config.cooperationCountry || '',
+      promotionInfluencerRate: config.promotionInfluencerRate || 0,
+      promotionOriginalRate: config.promotionOriginalRate || 0,
+      promotionCompanyRate: config.promotionCompanyRate || 0,
+      adInfluencerRate: config.adInfluencerRate || 0,
+      adOriginalRate: config.adOriginalRate || 0,
+      adCompanyRate: config.adCompanyRate || 0
+    }
+  })
+  console.log('[ProductTab] processedActivityConfigs:', JSON.stringify(processedActivityConfigs, null, 2))
   const formData = {
     tiktokProductId: row.tiktokProductId || '',
     name: row.name || '',
@@ -1166,10 +1190,8 @@ const editProduct = (row) => {
     currency: row.currency || defaultCurrency.value,
     priceRangeMin: row.priceRangeMin || 0,
     priceRangeMax: row.priceRangeMax || 0,
-    activityConfigs: row.activityConfigs && row.activityConfigs.length > 0
-      ? JSON.parse(JSON.stringify(row.activityConfigs))
-      : [],
-    defaultActivityIndex: findDefaultActivityIndex(row.activityConfigs)
+    activityConfigs: processedActivityConfigs,
+    defaultActivityIndex: findDefaultActivityIndex(processedActivityConfigs)
   }
   convertCommissionRatesToPercent(formData)
   Object.assign(form, formData)
@@ -1216,7 +1238,10 @@ const handleSubmit = async () => {
       companyId: userStore.companyId,
       ...form
     })
+    console.log('[ProductTab] 提交数据:', JSON.stringify(data, null, 2))
+    console.log('[ProductTab] activityConfigs:', JSON.stringify(data.activityConfigs, null, 2))
     if (editingProduct.value) {
+      console.log('[ProductTab] 编辑产品ID:', editingProduct.value._id)
       await request.put(`/products/${editingProduct.value._id}`, data)
       ElMessage.success(t('product.updateSuccess'))
     } else {

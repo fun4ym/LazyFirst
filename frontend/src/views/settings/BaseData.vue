@@ -146,8 +146,20 @@
           <span style="margin-left: 10px; color: #999;">{{ $t('baseData.timeoutTip') }}</span>
         </el-form-item>
 
+        <el-form-item :label="$t('baseData.trackingUrl')" prop="name" v-if="activeTab === 'trackingUrl'">
+          <el-input v-model="form.name" placeholder="物流公司名称，如：圆通速递" />
+        </el-form-item>
+
+        <el-form-item :label="$t('baseData.code')" prop="code" v-if="activeTab === 'trackingUrl'">
+          <el-input v-model="form.code" placeholder="default / yto / zto / ..." />
+        </el-form-item>
+
         <el-form-item :label="$t('baseData.trackingUrl')" prop="value" v-if="activeTab === 'trackingUrl'">
           <el-input v-model="form.value" type="textarea" :rows="3" :placeholder="$t('baseData.trackingUrlPlaceholder')" />
+        </el-form-item>
+
+        <el-form-item :label="$t('baseData.description')" prop="description" v-if="activeTab === 'trackingUrl'">
+          <el-input v-model="form.description" type="textarea" :rows="2" />
         </el-form-item>
 
         <el-form-item :label="$t('baseData.description')" prop="description" v-if="activeTab === 'category' || activeTab === 'grade'">

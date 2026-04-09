@@ -178,6 +178,8 @@ router.get('/:id', authenticate, authorize('products:read'), async (req, res) =>
  */
 router.put('/:id', authenticate, authorize('products:update'), async (req, res) => {
   try {
+    console.log('[Products PUT] 接收到的数据:', JSON.stringify(req.body, null, 2));
+    console.log('[Products PUT] activityConfigs:', JSON.stringify(req.body?.activityConfigs, null, 2));
     const updateData = { ...req.body };
 
     const product = await Product.findOneAndUpdate(
@@ -185,6 +187,12 @@ router.put('/:id', authenticate, authorize('products:update'), async (req, res) 
       updateData,
       { new: true, runValidators: true }
     );
+
+    console.log('[Products PUT] 更新后的产品:', JSON.stringify({
+      _id: product?._id,
+      name: product?.name,
+      activityConfigs: product?.activityConfigs
+    }, null, 2));
 
     if (!product) {
       return res.status(404).json({

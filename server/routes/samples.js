@@ -440,6 +440,15 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
       updateData.sampleStatusUpdatedAt = new Date();
       // 同步更新 isSampleSent 兼容旧数据
       updateData.isSampleSent = sampleStatus === 'sent';
+      // 如果改为已寄样，同步更新物流信息
+      if (sampleStatus === 'sent') {
+        if (req.body.logisticsCompany !== undefined) {
+          updateData.logisticsCompany = req.body.logisticsCompany;
+        }
+        if (req.body.trackingNumber !== undefined) {
+          updateData.trackingNumber = req.body.trackingNumber;
+        }
+      }
     }
 
     // 如果更新了不合作原因
