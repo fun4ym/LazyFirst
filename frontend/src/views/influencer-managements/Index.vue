@@ -40,8 +40,8 @@
         <!-- 第二行：数据筛选 -->
         <el-row :gutter="16" class="filter-row">
           <el-col :span="4">
-            <el-input-number v-model="filters.followersFrom" :min="0" :placeholder="$t('influencer.followers')" clearable @change="loadData" style="width: 100%" />
-            <div class="filter-label">{{ $t('influencer.followers') }} ≥</div>
+            <el-input-number v-model="displayFollowersFrom" :min="0" :placeholder="$t('influencer.followers')" clearable style="width: 100%" @change="handleFollowersFilterChange" />
+            <div class="filter-label">{{ $t('influencer.followers') }} ≥ (K)</div>
           </el-col>
           <el-col :span="4">
             <el-input-number v-model="filters.gmvFrom" :min="0" :placeholder="$t('influencer.latestGmv')" clearable @change="loadData" style="width: 100%" />
@@ -95,7 +95,7 @@
         <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
         <el-table-column :label="$t('influencer.influencerParams')" width="200">
           <template #default="{ row }">
-            <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers || 0 }}</div>
+            <div>{{ $t('influencer.followers') }}: {{ formatFollowers(row.latestFollowers) }}</div>
             <div>
               <el-tooltip content="月销金额" placement="top">
                 <span>GMV: {{ row.latestGmv || 0 }}</span>
@@ -196,7 +196,7 @@
             </el-table-column>
             <el-table-column :label="$t('influencer.latestGmv')" width="150">
               <template #default="{ row }">
-                <div>{{ $t('influencer.followers') }}: {{ row.latestFollowers }}</div>
+                <div>{{ $t('influencer.followers') }}: {{ formatFollowers(row.latestFollowers) }}</div>
                 <div>
                   <el-tooltip content="月销金额" placement="top">
                     <span>GMV: {{ row.latestGmv }}</span>
@@ -420,7 +420,7 @@
           <el-descriptions-item :label="$t('influencer.nickname')">{{ currentInfluencer.nickname }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.gender')">{{ getGenderText(currentInfluencer.gender) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('common.status')">{{ currentInfluencer.status === 'enabled' ? $t('common.enabled') : $t('common.disabled') }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.latestFollowersNum')">{{ currentInfluencer.latestFollowers }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('influencer.latestFollowersNum')">{{ formatFollowers(currentInfluencer.latestFollowers) }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.latestGmvAmount')">{{ currentInfluencer.latestGmv }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.monthlySalesCount')">{{ currentInfluencer.monthlySalesCount || 0 }}</el-descriptions-item>
           <el-descriptions-item :label="$t('influencer.avgVideoViews')">{{ currentInfluencer.avgVideoViews || 0 }}</el-descriptions-item>
@@ -441,7 +441,9 @@
           <el-table-column prop="createdAt" :label="$t('common.time')" width="180">
             <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
           </el-table-column>
-          <el-table-column prop="followers" :label="$t('influencer.followers')" width="100" />
+          <el-table-column :label="$t('influencer.followers')" width="100">
+          <template #default="{ row }">{{ formatFollowers(row.followers) }}</template>
+        </el-table-column>
           <el-table-column prop="gmv" :label="$t('influencer.latestGmv')" width="100">
             <template #default="{ row }">
               <el-tooltip content="月销金额" placement="top">
@@ -462,7 +464,7 @@
             <el-row :gutter="20">
               <el-col :span="6">
                 <el-form-item :label="$t('influencer.followers')">
-                  <el-input-number v-model="maintenanceForm.followers" :min="0" :controls="false" />
+                  <el-input-number v-model="displayFollowers" :min="0" :controls="false" placeholder="K" />
                 </el-form-item>
               </el-col>
               <el-col :span="6">
@@ -594,6 +596,10 @@ const maintenanceForm = reactive({
   remark: ''
 })
 
+// 粉丝数输入显示（K为单位）
+const displayFollowers = ref(0)
+const displayFollowersFrom = ref(null)
+
 // 货币单位列表
 const currencyList = ref([])
 
@@ -673,6 +679,10 @@ const loadData = async () => {
       page: pagination.page,
       limit: pagination.limit
     }
+    // 粉丝数筛选：K转回原始值
+    if (displayFollowersFrom.value !== null && displayFollowersFrom.value !== '') {
+      params.followersFrom = parseFollowersToDb(displayFollowersFrom.value)
+    }
     // 过滤掉空字符串的筛选条件
     Object.keys(params).forEach(key => {
       if (params[key] === '') delete params[key]
@@ -688,6 +698,11 @@ const loadData = async () => {
     console.error(t('influencer.loadFailed') + ':', error)
     ElMessage.error(t('influencer.loadFailed'))
   }
+}
+
+// 粉丝数筛选变化处理
+const handleFollowersFilterChange = () => {
+  loadData()
 }
 
 // 页签切换
@@ -764,6 +779,22 @@ const handleSelectionChange = (selection) => {
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleString('zh-CN')
+}
+
+// 粉丝数格式化：展示时除1000，加K后缀
+const formatFollowers = (value) => {
+  if (!value && value !== 0) return '-'
+  const k = value / 1000
+  if (k >= 1) {
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
+  }
+  return value.toString()
+}
+
+// 粉丝数反向转换：输入值乘1000存入数据库
+const parseFollowersToDb = (value) => {
+  if (!value && value !== 0) return 0
+  return Math.round(value * 1000)
 }
 
 const getGenderText = (gender) => {
@@ -958,9 +989,13 @@ const viewDetail = async (row) => {
 
 const addMaintenance = async () => {
   try {
-    await request.post(`/influencer-managements/${currentInfluencer.value._id}/maintenance`, maintenanceForm)
+    const payload = {
+      ...maintenanceForm,
+      followers: parseFollowersToDb(displayFollowers.value)
+    }
+    await request.post(`/influencer-managements/${currentInfluencer.value._id}/maintenance`, payload)
     ElMessage.success(t('influencer.addRecordSuccess'))
-    maintenanceForm.followers = 0
+    displayFollowers.value = 0
     maintenanceForm.gmv = 0
     maintenanceForm.monthlySalesCount = 0
     maintenanceForm.avgVideoViews = 0

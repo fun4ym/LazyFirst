@@ -73,7 +73,7 @@
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <span class="stat-value">{{ formatNumber(item.latestFollowers) }}</span>
+              <span class="stat-value">{{ formatFollowers(item.latestFollowers) }}</span>
               <span class="stat-label">{{ t2('followers') }}</span>
             </div>
             <div class="stat-divider"></div>
@@ -143,7 +143,7 @@
             </div>
             <div class="detail-row">
               <span class="label">{{ t2('followers') }}:</span>
-              <span class="value">{{ formatNumber(currentInfluencer.latestFollowers) }}</span>
+              <span class="value">{{ formatFollowers(currentInfluencer.latestFollowers) }}</span>
             </div>
             <div class="detail-row">
               <span class="label">{{ isEnglish ? 'Month GMV:' : '月销金额:' }}</span>
@@ -182,7 +182,7 @@
                   <span class="m-date">{{ formatDate(m.createdAt) }}</span>
                 </div>
                 <div class="m-stats">
-                  <span>{{ isEnglish ? 'Followers: ' : '粉丝: ' }}{{ formatNumber(m.followers) }}</span>
+                  <span>{{ isEnglish ? 'Followers: ' : '粉丝: ' }}{{ formatFollowers(m.followers) }}</span>
                   <span :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">GMV: ¥{{ formatNumber(m.gmv) }}</span>
                 </div>
                 <div class="m-remark" v-if="m.remark">{{ m.remark }}</div>
@@ -202,8 +202,8 @@
         </div>
         <div class="modal-body">
           <div class="form-item">
-            <label>{{ isEnglish ? 'Followers' : '当前粉丝数' }}</label>
-            <input v-model="maintenanceForm.followers" type="number" :placeholder="isEnglish ? 'Enter followers' : '请输入粉丝数'" />
+            <label>{{ isEnglish ? 'Followers (K)' : '粉丝数(K)' }}</label>
+            <input v-model="displayFollowers" type="number" :placeholder="isEnglish ? 'Enter followers in K' : '请输入粉丝数(K)'" />
           </div>
           <div class="form-item">
             <label>{{ isEnglish ? 'Month GMV (月销金额)' : '月销金额(฿)' }}</label>
@@ -319,6 +319,9 @@ const maintenanceForm = ref({
   remark: ''
 })
 
+// 粉丝数输入显示（K为单位）
+const displayFollowers = ref('')
+
 const editForm = ref({
   tiktokId: '',
   tiktokName: '',
@@ -342,6 +345,22 @@ const formatNumber = (num) => {
   if (num >= 10000) return (num / 10000).toFixed(1) + 'w'
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
   return num.toString()
+}
+
+// 粉丝数格式化：展示时除1000，加K后缀
+const formatFollowers = (value) => {
+  if (!value && value !== 0) return '-'
+  const k = value / 1000
+  if (k >= 1) {
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
+  }
+  return value.toString()
+}
+
+// 粉丝数反向转换：输入值乘1000存入数据库
+const parseFollowersToDb = (value) => {
+  if (!value && value !== 0) return 0
+  return Math.round(value * 1000)
 }
 
 const formatDate = (date) => {
@@ -523,20 +542,22 @@ const saveEdit = async () => {
 }
 
 const submitMaintenance = async () => {
-  if (!maintenanceForm.value.followers && !maintenanceForm.value.gmv) {
+  if (!displayFollowers.value && !maintenanceForm.value.gmv) {
     ElMessage.warning(isEnglish.value ? 'Please enter followers or GMV' : '请填写粉丝数或GMV')
     return
   }
   submitting.value = true
   try {
     await request.post(`/influencer-managements/${currentInfluencer.value._id}/maintenance`, {
-      followers: Number(maintenanceForm.value.followers) || 0,
+      followers: parseFollowersToDb(displayFollowers.value),
       gmv: Number(maintenanceForm.value.gmv) || 0,
       remark: maintenanceForm.value.remark
     })
     ElMessage.success(isEnglish.value ? 'Added successfully' : '添加成功')
     showAddMaintenance.value = false
-    maintenanceForm.value = { followers: '', gmv: '', remark: '' }
+    displayFollowers.value = ''
+    maintenanceForm.value.gmv = ''
+    maintenanceForm.value.remark = ''
     // 刷新详情
     showDetail(currentInfluencer.value)
     loadInfluencers()

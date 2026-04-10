@@ -69,11 +69,11 @@
 
         <!-- 达人粉丝数 -->
         <div class="form-item">
-          <label>{{ isEnglish ? 'Followers' : '达人粉丝数' }}</label>
+          <label>{{ isEnglish ? 'Followers (K)' : '粉丝数(K)' }}</label>
           <input
-            v-model="form.followerCount"
+            v-model="displayFollowerCount"
             type="number"
-            :placeholder="isEnglish ? 'Enter followers' : '请输入粉丝数'"
+            :placeholder="isEnglish ? 'Enter followers in K' : '请输入粉丝数(K)'"
           />
         </div>
 
@@ -282,7 +282,7 @@
             </div>
             <div class="detail-row">
               <span class="label">{{ isEnglish ? 'Followers' : '达人粉丝' }}</span>
-              <span class="value">{{ currentRecord.followerCount || '-' }}</span>
+              <span class="value">{{ formatFollowers(currentRecord.followerCount) }}</span>
             </div>
             <div class="detail-row">
               <span class="label">{{ t2('applyDate') }}</span>
@@ -374,6 +374,9 @@ const form = ref({
   remark: ''
 })
 
+// 粉丝数输入显示（K为单位）
+const displayFollowerCount = ref('')
+
 const getSampleStatusText = (status) => {
   const map = {
     pending: isEnglish.value ? 'Pending' : '待审核',
@@ -403,6 +406,22 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('zh-CN')
 }
 
+// 粉丝数格式化：展示时除1000，加K后缀
+const formatFollowers = (value) => {
+  if (!value && value !== 0) return '-'
+  const k = value / 1000
+  if (k >= 1) {
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`
+  }
+  return value.toString()
+}
+
+// 粉丝数反向转换：输入值乘1000存入数据库
+const parseFollowersToDb = (value) => {
+  if (!value && value !== 0) return 0
+  return Math.round(value * 1000)
+}
+
 const searchInfluencer = async () => {
   if (!influencerKeyword.value) {
     influencerOptions.value = []
@@ -425,6 +444,8 @@ const searchInfluencer = async () => {
 const selectInfluencer = (item) => {
   selectedInfluencer.value = item
   form.value.followerCount = item.latestFollowers || ''
+    // 粉丝数显示为K单位
+    displayFollowerCount.value = item.latestFollowers ? item.latestFollowers / 1000 : ''
   showInfluencerPicker.value = false
 }
 
@@ -470,7 +491,7 @@ const submitApplication = async () => {
       productName: selectedProduct.value.name,
       productId: selectedProduct.value._id || selectedProduct.value.id,
       influencerAccount: selectedInfluencer.value.tiktokId,
-      followerCount: form.value.followerCount || 0,
+      followerCount: parseFollowersToDb(displayFollowerCount.value),
       quantity: form.value.quantity || 1,
       remark: form.value.remark
     })
@@ -478,6 +499,7 @@ const submitApplication = async () => {
     // 重置表单
     selectedInfluencer.value = null
     selectedProduct.value = null
+    displayFollowerCount.value = ''
     form.value = {
       date: new Date().toISOString().split('T')[0],
       followerCount: '',
