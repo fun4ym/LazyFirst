@@ -353,44 +353,38 @@ async function importSamples(data, companyId, creatorId) {
       }
 
       // 查找商品
-      let productIdObj = null;
+      let productObj = null;
       const productIdInput = String(row['商品ID'] || '').trim();
       
       if (productIdInput) {
         try {
           const product = await Product.findById(productIdInput);
           if (product) {
-            productIdObj = product._id;
+            productObj = product;
           }
         } catch (err) {}
         
-        if (!productIdObj) {
-          const productByTiktokId = await Product.findOne({ tiktokProductId: productIdInput });
-          if (productByTiktokId) {
-            productIdObj = productByTiktokId._id;
-          }
+        if (!productObj) {
+          productObj = await Product.findOne({ tiktokProductId: productIdInput });
         }
         
-        if (!productIdObj) {
-          const productBySku = await Product.findOne({ sku: productIdInput });
-          if (productBySku) {
-            productIdObj = productBySku._id;
-          }
+        if (!productObj) {
+          productObj = await Product.findOne({ sku: productIdInput });
         }
         
-        if (!productIdObj) {
-          const productByTiktokSku = await Product.findOne({ tiktokSku: productIdInput });
-          if (productByTiktokSku) {
-            productIdObj = productByTiktokSku._id;
-          }
+        if (!productObj) {
+          productObj = await Product.findOne({ tiktokSku: productIdInput });
         }
       }
 
-      if (!productIdObj) {
+      if (!productObj) {
         failedCount++;
         errors.push({ row: i + 2, error: `商品不存在: ${productIdInput}` });
         continue;
       }
+
+      // productId 存 TikTok 商品 ID（纯数字），用于前端展示
+      const productIdObj = productObj.tiktokProductId || productObj._id.toString();
 
       // salesman 匹配 user 表的 username 获取 ID
       const salesmanName = row['归属业务员'] || '';
