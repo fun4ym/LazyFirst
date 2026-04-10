@@ -398,6 +398,7 @@
       width="900px"
       :class="currentInfluencer?.isBlacklisted ? 'detail-dialog-blacklist' : ''">
       <div v-if="currentInfluencer" :class="currentInfluencer.isBlacklisted ? 'detail-content-blacklist' : ''">
+
         <!-- 黑名单警告 -->
         <el-alert
           v-if="currentInfluencer.isBlacklisted"
@@ -409,98 +410,190 @@
           style="margin-bottom: 20px"
         />
 
-        <el-descriptions :column="2" border>
-          <el-descriptions-item :label="$t('influencer.tiktokName')">{{ currentInfluencer.tiktokName }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.tiktokId')">
-            <span class="tiktok-id-text">{{ currentInfluencer.tiktokId }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.formerNames')">{{ currentInfluencer.formerNames }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.formerIds')">{{ currentInfluencer.formerIds }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.realName')">{{ currentInfluencer.realName }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.nickname')">{{ currentInfluencer.nickname }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.gender')">{{ getGenderText(currentInfluencer.gender) }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('common.status')">{{ currentInfluencer.status === 'enabled' ? $t('common.enabled') : $t('common.disabled') }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.latestFollowersNum')">{{ formatFollowers(currentInfluencer.latestFollowers) }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.latestGmvAmount')">{{ currentInfluencer.latestGmv }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.monthlySalesCount')">{{ currentInfluencer.monthlySalesCount || 0 }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.avgVideoViews')">{{ currentInfluencer.avgVideoViews || 0 }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.latestMaintenanceTime')">{{ formatDate(currentInfluencer.latestMaintenanceTime) }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.maintainer')">{{ currentInfluencer.latestMaintainerName }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.blacklist')">
-            <el-tag v-if="currentInfluencer.isBlacklisted" type="danger">{{ $t('influencer.blacklisted') }}</el-tag>
-            <span v-else>{{ $t('influencer.normal') }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" :label="$t('influencer.blacklistTime')">{{ formatDate(currentInfluencer.blacklistedAt) }}</el-descriptions-item>
-          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" :label="$t('influencer.blacklistedBy')">{{ currentInfluencer.blacklistedByName }}</el-descriptions-item>
-          <el-descriptions-item v-if="currentInfluencer.isBlacklisted" :label="$t('influencer.blacklistReason')" :span="2">{{ currentInfluencer.blacklistReason || '-' }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('influencer.latestRemark')" :span="2">{{ currentInfluencer.latestRemark }}</el-descriptions-item>
-        </el-descriptions>
+        <!-- 头部区域 -->
+        <div class="detail-header">
+          <div class="detail-avatar">
+            <el-icon :size="48"><User /></el-icon>
+          </div>
+          <div class="detail-title">
+            <div class="detail-id-row">
+              <span class="detail-tiktok-id">{{ currentInfluencer.tiktokId }}</span>
+              <el-tag :type="currentInfluencer.status === 'enabled' ? 'success' : 'info'" size="small">
+                {{ currentInfluencer.status === 'enabled' ? $t('common.enabled') : $t('common.disabled') }}
+              </el-tag>
+              <el-tag v-if="currentInfluencer.isBlacklisted" type="danger" size="small">{{ $t('influencer.blacklisted') }}</el-tag>
+            </div>
+            <div class="detail-name">{{ currentInfluencer.tiktokName || '-' }}</div>
+            <div class="detail-bd">
+              <span class="bd-label">BD:</span>
+              <el-tag v-if="currentInfluencer.poolType === 'public'" type="info" size="small">{{ $t('influencer.publicSea') }}</el-tag>
+              <span v-else>{{ currentInfluencer.assignedTo?.realName || currentInfluencer.assignedTo?.username || '-' }}</span>
+            </div>
+          </div>
+        </div>
 
-        <el-divider>{{ $t('influencer.maintenanceRecord') }}</el-divider>
-        <el-table :data="maintenances" stripe>
-          <el-table-column prop="createdAt" :label="$t('common.time')" width="180">
-            <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-          </el-table-column>
-          <el-table-column :label="$t('influencer.followers')" width="100">
-          <template #default="{ row }">{{ formatFollowers(row.followers) }}</template>
-        </el-table-column>
-          <el-table-column prop="gmv" :label="$t('influencer.latestGmv')" width="100">
-            <template #default="{ row }">
-              <el-tooltip content="月销金额" placement="top">
-                <span>{{ row.gmv || 0 }}</span>
-              </el-tooltip>
-            </template>
-          </el-table-column>
-          <el-table-column prop="monthlySalesCount" :label="$t('influencer.monthlySalesCount')" width="100" />
-          <el-table-column prop="avgVideoViews" :label="$t('influencer.avgVideoViews')" width="100" />
-          <el-table-column prop="maintainerName" :label="$t('influencer.maintainer')" width="120" />
-          <el-table-column prop="remark" :label="$t('common.remark')" />
-        </el-table>
+        <!-- 核心指标卡片 -->
+        <div class="detail-stats">
+          <div class="stat-card">
+            <div class="stat-label">{{ $t('influencer.latestFollowersNum') }}</div>
+            <div class="stat-value">{{ formatFollowers(currentInfluencer.latestFollowers) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">{{ $t('influencer.latestGmvAmount') }}</div>
+            <div class="stat-value">{{ currentInfluencer.latestGmv || 0 }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">{{ $t('influencer.monthlySalesCount') }}</div>
+            <div class="stat-value">{{ currentInfluencer.monthlySalesCount || 0 }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">{{ $t('influencer.avgVideoViews') }}</div>
+            <div class="stat-value">{{ currentInfluencer.avgVideoViews || 0 }}</div>
+          </div>
+        </div>
 
-        <!-- 维护记录区域：黑名单达人不显示 -->
-        <template v-if="!currentInfluencer.isBlacklisted">
-          <el-divider>{{ $t('influencer.addMaintenanceRecord') }}</el-divider>
-          <el-form :model="maintenanceForm" label-width="80px">
-            <el-row :gutter="20">
-              <el-col :span="6">
-                <el-form-item :label="$t('influencer.followers')">
-                  <el-input-number v-model="displayFollowers" :min="0" :controls="false" placeholder="K" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item :label="$t('influencer.latestGmv')">
-                  <div style="display: flex; align-items: center; gap: 4px;">
-                    <el-tooltip content="月销金额" placement="top">
-                      <span style="font-size: 12px; color: #909399;">(?)</span>
-                    </el-tooltip>
-                    <el-select v-model="maintenanceForm.currency" placeholder="币别" style="width: 70px">
-                      <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
-                    </el-select>
-                    <el-input-number v-model="maintenanceForm.gmv" :min="0" :controls="false" style="flex: 1" />
-                  </div>
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item :label="$t('influencer.monthlySalesCount')">
-                  <el-input-number v-model="maintenanceForm.monthlySalesCount" :min="0" :controls="false" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item :label="$t('influencer.avgVideoViews')">
-                  <el-input-number v-model="maintenanceForm.avgVideoViews" :min="0" :controls="false" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="20">
-              <el-col :span="24">
-                <el-form-item :label="$t('common.remark')">
-                  <el-input v-model="maintenanceForm.remark" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-button type="primary" @click="addMaintenance">{{ $t('influencer.submitRecord') }}</el-button>
-          </el-form>
-        </template>
+        <!-- 基本信息和联系方式 -->
+        <div class="detail-info-grid">
+          <div class="info-section">
+            <div class="section-title">{{ $t('influencer.basicInfo') }}</div>
+            <div class="info-row" v-if="currentInfluencer.realName">
+              <span class="info-label">{{ $t('influencer.realName') }}</span>
+              <span class="info-value">{{ currentInfluencer.realName }}</span>
+            </div>
+            <div class="info-row" v-if="currentInfluencer.nickname">
+              <span class="info-label">{{ $t('influencer.nickname') }}</span>
+              <span class="info-value">{{ currentInfluencer.nickname }}</span>
+            </div>
+            <div class="info-row" v-if="currentInfluencer.gender">
+              <span class="info-label">{{ $t('influencer.gender') }}</span>
+              <span class="info-value">{{ getGenderText(currentInfluencer.gender) }}</span>
+            </div>
+            <div class="info-row" v-if="currentInfluencer.formerIds">
+              <span class="info-label">{{ $t('influencer.formerIds') }}</span>
+              <span class="info-value">{{ currentInfluencer.formerIds }}</span>
+            </div>
+            <div class="info-row" v-if="currentInfluencer.formerNames">
+              <span class="info-label">{{ $t('influencer.formerNames') }}</span>
+              <span class="info-value">{{ currentInfluencer.formerNames }}</span>
+            </div>
+          </div>
+          <div class="info-section">
+            <div class="section-title">{{ $t('influencer.contactInfo') }}</div>
+            <div class="info-row" v-if="currentInfluencer.phoneNumbers?.length">
+              <span class="info-label">{{ $t('influencer.phoneNumbers') }}</span>
+              <span class="info-value">{{ currentInfluencer.phoneNumbers.filter(p => p).join(', ') }}</span>
+            </div>
+            <div class="info-row" v-if="currentInfluencer.addresses?.length">
+              <span class="info-label">{{ $t('influencer.addresses') }}</span>
+              <span class="info-value">{{ currentInfluencer.addresses.filter(a => a).join(', ') }}</span>
+            </div>
+            <div class="info-row" v-if="currentInfluencer.socialAccounts?.length">
+              <span class="info-label">{{ $t('influencer.socialAccounts') }}</span>
+              <span class="info-value">{{ currentInfluencer.socialAccounts.filter(s => s).join(', ') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分类标签 -->
+        <div class="detail-tags" v-if="currentInfluencer.suitableCategories?.length || currentInfluencer.categoryTags?.length">
+          <div class="tag-group" v-if="currentInfluencer.suitableCategories?.length">
+            <span class="tag-label">{{ $t('influencer.suitableCategories') }}:</span>
+            <el-tag v-for="cat in currentInfluencer.suitableCategories" :key="cat._id" type="success" size="small">{{ cat.name }}</el-tag>
+          </div>
+          <div class="tag-group" v-if="currentInfluencer.categoryTags?.length">
+            <span class="tag-label">{{ $t('influencer.categoryTag') }}:</span>
+            <el-tag v-for="tag in currentInfluencer.categoryTags" :key="tag._id" size="small">{{ tag.name }}</el-tag>
+          </div>
+        </div>
+
+        <!-- 最新维护信息 -->
+        <div class="latest-maintenance">
+          <div class="maintenance-header">
+            <span class="maintenance-title">{{ $t('influencer.latestMaintenance') }}</span>
+            <el-tag :type="getMaintenanceStatusType(currentInfluencer.maintenanceStatus)" size="small">
+              {{ getMaintenanceStatusText(currentInfluencer.maintenanceStatus) }}
+            </el-tag>
+          </div>
+          <div class="maintenance-content">
+            <span class="maintenance-time">{{ formatDate(currentInfluencer.latestMaintenanceTime) }}</span>
+            <span class="maintenance-sep">|</span>
+            <span class="maintenance-person">{{ $t('influencer.maintainer') }}: {{ currentInfluencer.latestMaintainerName || '-' }}</span>
+            <span class="maintenance-sep" v-if="currentInfluencer.latestRemark">|</span>
+            <span class="maintenance-remark" v-if="currentInfluencer.latestRemark">{{ currentInfluencer.latestRemark }}</span>
+          </div>
+        </div>
+
+        <!-- 维护历史 -->
+        <div class="maintenance-history">
+          <div class="history-header">
+            <span class="history-title">{{ $t('influencer.maintenanceRecord') }}</span>
+            <el-button v-if="!currentInfluencer.isBlacklisted" type="primary" size="small" @click="showMaintenanceForm = !showMaintenanceForm">
+              {{ showMaintenanceForm ? $t('common.close') : $t('influencer.addRecord') }}
+            </el-button>
+          </div>
+
+          <!-- 添加维护表单（可收起） -->
+          <div v-if="showMaintenanceForm && !currentInfluencer.isBlacklisted" class="maintenance-form">
+            <el-form :model="maintenanceForm" label-width="80px">
+              <el-row :gutter="16">
+                <el-col :span="6">
+                  <el-form-item :label="$t('influencer.followers')">
+                    <el-input-number v-model="displayFollowers" :min="0" :controls="false" placeholder="K" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item :label="$t('influencer.latestGmv')">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <el-tooltip content="月销金额" placement="top">
+                        <span style="font-size: 12px; color: #909399; cursor: help;">(?)</span>
+                      </el-tooltip>
+                      <span style="font-size: 12px; color: #606266;">{{ currentDefaultCurrencySymbol }}</span>
+                      <el-input-number v-model="maintenanceForm.gmv" :min="0" :controls="false" style="flex: 1" />
+                    </div>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item :label="$t('influencer.monthlySalesCount')">
+                    <el-input-number v-model="maintenanceForm.monthlySalesCount" :min="0" :controls="false" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item :label="$t('influencer.avgVideoViews')">
+                    <el-input-number v-model="maintenanceForm.avgVideoViews" :min="0" :controls="false" style="width: 100%" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="16">
+                <el-col :span="24">
+                  <el-form-item :label="$t('common.remark')">
+                    <el-input v-model="maintenanceForm.remark" placeholder="选填" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-button type="primary" @click="addMaintenance">{{ $t('influencer.submitRecord') }}</el-button>
+            </el-form>
+          </div>
+
+          <!-- 维护记录表格 -->
+          <el-table :data="maintenances" stripe size="small">
+            <el-table-column prop="createdAt" :label="$t('common.time')" width="160">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.followers')" width="90">
+              <template #default="{ row }">{{ formatFollowers(row.followers) }}</template>
+            </el-table-column>
+            <el-table-column prop="gmv" :label="$t('influencer.latestGmv')" width="120">
+              <template #default="{ row }">
+                <span>{{ row.currency || currentDefaultCurrencySymbol }}{{ row.gmv || 0 }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="monthlySalesCount" :label="$t('influencer.monthlySalesCount')" width="90" />
+            <el-table-column prop="avgVideoViews" :label="$t('influencer.avgVideoViews')" width="100" />
+            <el-table-column prop="maintainerName" :label="$t('influencer.maintainer')" width="100" />
+            <el-table-column prop="remark" :label="$t('common.remark')" />
+          </el-table>
+        </div>
+
       </div>
     </el-dialog>
   </div>
@@ -511,7 +604,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Delete } from '@element-plus/icons-vue'
+import { Search, Plus, Delete, User } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
@@ -532,6 +625,7 @@ const suitableCategoryOptions = ref([])
 const selectedIds = ref([])
 const showCreateDialog = ref(false)
 const showDetailDialog = ref(false)
+const showMaintenanceForm = ref(false)
 const editingInfluencer = ref(null)
 const currentInfluencer = ref(null)
 const maintenances = ref([])
@@ -618,6 +712,12 @@ const loadCurrencies = async () => {
     console.error('Load currencies error:', error)
   }
 }
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
 
 const addPhone = () => {
   form.phoneNumbers.push('')
@@ -1381,5 +1481,235 @@ onMounted(() => {
 
 .text-gray {
   color: #999;
+}
+
+/* ========================================
+   达人详情弹层新样式 - 商务高级版
+   ======================================== */
+
+/* 头部区域 */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 16px;
+}
+
+.detail-avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.detail-title {
+  flex: 1;
+}
+
+.detail-id-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.detail-tiktok-id {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6DAD19;
+}
+
+.detail-name {
+  font-size: 16px;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.detail-bd {
+  font-size: 13px;
+  color: #606266;
+}
+
+.bd-label {
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+/* 核心指标卡片 */
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid #e8e8e8;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 基本信息和联系方式 */
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 4px;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.info-label {
+  color: #909399;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.info-value {
+  color: #303133;
+  word-break: break-all;
+}
+
+/* 分类标签 */
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.tag-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag-label {
+  font-size: 12px;
+  color: #909399;
+  font-weight: 500;
+}
+
+/* 最新维护信息 */
+.latest-maintenance {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #d4edfc 100%);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border-left: 3px solid #409eff;
+}
+
+.maintenance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.maintenance-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.maintenance-content {
+  font-size: 13px;
+  color: #606266;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.maintenance-time {
+  font-weight: 500;
+}
+
+.maintenance-sep {
+  color: #c0c4cc;
+}
+
+.maintenance-person {
+  color: #409eff;
+}
+
+.maintenance-remark {
+  color: #606266;
+  font-style: italic;
+}
+
+/* 维护历史 */
+.maintenance-history {
+  margin-top: 16px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.history-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 添加维护表单 */
+.maintenance-form {
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 </style>
