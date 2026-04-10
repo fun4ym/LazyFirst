@@ -6,6 +6,32 @@ const BaseData = require('../models/BaseData');
 const router = express.Router();
 
 /**
+ * @route   GET /api/public/base-data
+ * @desc    公开获取基础数据列表（给 PublicCollection 页面用）
+ * @access  Public
+ */
+router.get('/', async (req, res) => {
+  try {
+    const { type, limit = 100 } = req.query;
+    const query = {};
+
+    if (type) {
+      query.type = type;
+    }
+
+    const data = await BaseData.find(query)
+      .select('_id name code value description type')
+      .limit(parseInt(limit))
+      .lean();
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Get public base data error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+/**
  * @route   GET /api/base-data
  * @desc    获取基础数据列表
  * @access  Private

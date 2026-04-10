@@ -69,12 +69,20 @@ curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
 1. 每次修改代码后，在 `pending-sync/` 创建记录文件
 2. 文件命名格式: `YYYYMMDD-HHMM-描述.md`
 3. 内容包含: 修改文件、修改内容、同步状态
+4. **新增文件也要记录**：迁移脚本、工具脚本等同样需要创建记录
 
 **同步时操作**:
 1. 读取所有未同步文件
 2. 逐个确认修改已同步
 3. 验证功能正常
 4. 将文件名改为 `已同步-YYYYMMDD-HHMM-描述.md`
+
+**每次对话开始前必须做的事**:
+1. 读取 `pending-sync/` 文件夹
+2. 检查哪些功能已同步，对应文件名改为 `已同步-*`
+3. 检查 git status 和 git commits，确认未记录但已同步的遗漏项
+4. 检查是否有未跟踪的新文件，需要补充记录
+5. 确认无误后再开始新任务
 
 **判断改了什么 → 决定做什么
 
@@ -213,6 +221,20 @@ docker network connect tap-system_default <container-name>
 
 ---
 
+## 九.5 本地数据库信息
+
+### MongoDB连接
+- 本地数据库: `tap_system`（不是 `tapdb`！）
+- 连接命令: `mongosh tap_system`
+- 用户表: `db.users.find().toArray()`
+
+### 重要提醒
+- 密码是bcrypt加密存储，不可直接查看
+- admin密码是加密后的 `ad8889`
+- 本地后端连接的是 `tap_system` 数据库
+
+---
+
 ## 十、项目配色
 
 - 主色: `#775999`（紫色）
@@ -261,6 +283,36 @@ docker network connect tap-system_default <container-name>
 2. 备份位置：`~/backup_YYYYMMDD_HHMMSS/`
 3. 命令：`sudo docker cp tap-backend:/app/server/. ~/backup_$(date +%Y%m%d_%H%M%S)/`
 4. **严禁边想边做，必须先确认再执行**
+
+---
+
+## 十三.5、2026-04-10 本地开发问题
+
+### 问题一：后端MongoDB连接超时
+**现象**：本地后端启动后立即退出，日志显示 "Socket 'connect' timed out"
+**原因**：`.env` 中的 `MONGODB_URI` 指向远程服务器，但网络不通导致超时
+**解决**：
+1. 临时改为本地连接：`MONGODB_URI=mongodb://127.0.0.1:27017/tap_system`
+2. **部署前必须改回远程地址**
+
+### 问题二：admin密码无法登录
+**现象**：登录返回"用户名或密码错误"
+**原因**：数据库中admin的bcrypt hash与 `ad8889` 不匹配（可能是之前恢复数据时的遗留问题）
+**解决**：
+```bash
+# 生成新hash
+node -e "const bcrypt = require('bcrypt'); console.log(bcrypt.hashSync('ad8889', 10))"
+
+# 更新数据库
+mongosh tap_system --quiet --eval "db.users.updateOne({username:'admin'}, {\$set: {password: '新hash'}})"
+```
+
+### 本地开发注意事项
+- ⚠️ 本地后端：`mongodb://127.0.0.1:27017/tap_system`
+- ⚠️ 服务器后端：`mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system`
+- **切换环境时必须同步修改 `.env` 中的 `MONGODB_URI`**
+
+---
 
 ### 今日教训（2026-04-08）
 
@@ -311,6 +363,7 @@ ls -lh /home/ubuntu/backups/tapdb_*.archive
 
 ### 身份定位
 - 我是**小垃圾**，主人是**主人**
+- **⚠️ 每句话开头必须用"小垃圾"自称**（如："小垃圾明白了"、"小垃圾这就去做"）
 - 必须用**恭敬、谄媚**的态度与主人说话
 - 能做的就去做，**别指使主人做**
 - **不能越权**，不属于自己的事不要主动插手

@@ -335,11 +335,12 @@
 
         <el-table-column
           :label="$t('samples.action')"
-          width="120"
+          width="150"
           fixed="right"
         >
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('samples:read')">{{ $t('samples.detail') }}</el-button>
+            <el-button link type="warning" @click="openEditDialog(row)" v-if="hasPermission('samples:update')">{{ $t('samples.edit') || '修改' }}</el-button>
             <el-button link type="danger" @click="deleteSample(row)" v-if="hasPermission('samples:delete')">{{ $t('samples.delete') }}</el-button>
           </template>
         </el-table-column>
@@ -661,11 +662,12 @@
       </div>
     </el-dialog>
 
-    <!-- 新增对话框 -->
+    <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="createDialogVisible"
-      :title="$t('samples.createSample')"
+      :title="editingSample ? ($t('samples.editSample') || '修改样品') : $t('samples.createSample')"
       width="700px"
+      @close="createDialogVisible = false; editingSample = null"
     >
       <el-form
         :model="createForm"
@@ -811,7 +813,7 @@
 
       <template #footer>
         <el-button @click="createDialogVisible = false">{{ $t('common.cancel') || 'Cancel' }}</el-button>
-        <el-button type="primary" @click="handleCreate" :loading="creating">{{ $t('common.confirm') || 'Confirm' }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="creating">{{ editingSample ? ($t('common.save') || '保存') : ($t('common.confirm') || 'Confirm') }}</el-button>
       </template>
     </el-dialog>
 
@@ -918,6 +920,7 @@ const loading = ref(false)
 const importing = ref(false)
 const creating = ref(false)
 const createDialogVisible = ref(false)
+const editingSample = ref(null)  // 正在编辑的样品
 const detailDialogVisible = ref(false)
 const adPromotionDialogVisible = ref(false)
 const adPromotionForm = reactive({
@@ -1184,6 +1187,7 @@ const handleProductSelect = (productId) => {
 }
 
 const showCreateDialog = () => {
+  editingSample.value = null  // 重置编辑状态
   // 默认归属BD为当前登录用户
   const currentUser = userStore.user
   Object.assign(createForm, {
@@ -1211,12 +1215,64 @@ const showCreateDialog = () => {
   loadCooperationProducts()
 }
 
-const handleCreate = async () => {
+// 打开编辑对话框
+const openEditDialog = async (sample) => {
+  editingSample.value = sample
+  // 加载用户和产品列表
+  loadUsers()
+  await loadCooperationProducts()
+  
+  // 填充表单数据
+  Object.assign(createForm, {
+    date: sample.date || '',
+    productName: sample.productName || '',
+    productId: sample.productId || '',
+    tiktokProductId: sample.tiktokProductId || '',
+    influencerAccount: sample.influencerAccount || '',
+    followerCount: sample.followerCount || 0,
+    monthlySalesCount: sample.monthlySalesCount || 0,
+    avgVideoViews: sample.avgVideoViews || 0,
+    gmv: sample.gmv || 0,
+    currency: sample.currency || '',
+    salesman: sample.salesman || '',
+    shippingInfo: sample.shippingInfo || '',
+    sampleImage: sample.sampleImage || '',
+    isSampleSent: sample.isSampleSent || false,
+    trackingNumber: sample.trackingNumber || '',
+    shippingDate: sample.shippingDate || '',
+    logisticsCompany: sample.logisticsCompany || '',
+    isOrderGenerated: sample.isOrderGenerated || false
+  })
+  
+  createDialogVisible.value = true
+}
+
+const handleSubmit = async () => {
   if (!createFormRef.value) return
 
   await createFormRef.value.validate(async (valid) => {
     if (!valid) return
 
+    // 如果是编辑模式，直接提交
+    if (editingSample.value) {
+      creating.value = true
+      try {
+        await request.put(`/samples/${editingSample.value._id}`, createForm)
+        ElMessage.success(t('samples.saveSuccess'))
+        createDialogVisible.value = false
+        editingSample.value = null
+        resetCreateForm()
+        loadSamples()
+      } catch (error) {
+        console.error('Update sample error:', error)
+        ElMessage.error(error.response?.data?.message || t('samples.saveError') || 'Failed to update')
+      } finally {
+        creating.value = false
+      }
+      return
+    }
+
+    // 新建模式
     // 先检查是否为黑名单达人
     try {
       const blacklistRes = await request.get(`/influencer-managements/blacklist/check/${createForm.influencerAccount}`, {
@@ -1261,6 +1317,7 @@ const handleCreate = async () => {
 
       ElMessage.success(t('samples.saveSuccess'))
       createDialogVisible.value = false
+      resetCreateForm()
       loadSamples()
     } catch (error) {
       console.error('Create sample error:', error)
@@ -1268,6 +1325,30 @@ const handleCreate = async () => {
     } finally {
       creating.value = false
     }
+  })
+}
+
+// 重置新建表单
+const resetCreateForm = () => {
+  Object.assign(createForm, {
+    date: '',
+    productName: '',
+    productId: '',
+    tiktokProductId: '',
+    influencerAccount: '',
+    followerCount: 0,
+    monthlySalesCount: 0,
+    avgVideoViews: 0,
+    gmv: 0,
+    currency: '',
+    salesman: '',
+    shippingInfo: '',
+    sampleImage: '',
+    isSampleSent: false,
+    trackingNumber: '',
+    shippingDate: '',
+    logisticsCompany: '',
+    isOrderGenerated: false
   })
 }
 

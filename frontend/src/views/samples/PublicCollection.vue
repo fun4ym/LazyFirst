@@ -20,7 +20,14 @@
         <div class="header-left">
           <!-- 店铺信息 -->
           <div class="shop-info" v-if="shopInfo">
-            <h2>{{ shopInfo.shopName }}</h2>
+            <h2>{{ shopInfo.shopName }}
+              <!-- 语言切换 -->
+              <el-select v-model="$i18n.locale" size="small" style="width: 90px; vertical-align: middle; margin-left: 10px;">
+                <el-option label="中文" value="zh" />
+                <el-option label="EN" value="en" />
+                <el-option label="TH" value="th" />
+              </el-select>
+            </h2>
             <div class="shop-meta">
               <span class="header-subtitle">{{ $t('samplePublic.forLazyFirst') }}</span>
             </div>
@@ -84,20 +91,20 @@
             />
           </el-form-item>
 
-          <el-form-item label="达人ID">
+          <el-form-item :label="$t('samplePublic.influencerId')">
             <el-input
               v-model="searchForm.influencerAccount"
-              placeholder="达人ID"
+              :placeholder="$t('samplePublic.influencerId')"
               clearable
               style="width: 150px"
               @keyup.enter="loadSamples"
             />
           </el-form-item>
 
-          <el-form-item label="商品ID">
+          <el-form-item :label="$t('samplePublic.productIdHeader')">
             <el-input
               v-model="searchForm.productId"
-              placeholder="商品ID"
+              :placeholder="$t('samplePublic.productIdHeader')"
               clearable
               style="width: 150px"
               @keyup.enter="loadSamples"
@@ -318,32 +325,22 @@
     <el-dialog
       v-model="statusDialogVisible"
       :title="$t('samplePublic.modifyShippingStatus')"
-      width="400px"
+      width="500px"
       :close-on-click-modal="false"
     >
-      <div class="status-edit-form">
-        <div class="edit-row">
-          <span class="label">{{ $t('samplePublic.influencer') }}</span>
-          <span class="value">{{ currentEditRow?.influencerAccount }}</span>
-        </div>
-        <div class="edit-row">
-          <span class="label">{{ $t('samplePublic.product') }}</span>
-          <span class="value">{{ currentEditRow?.productName }}</span>
-        </div>
-        <div class="edit-row">
-          <span class="label">{{ $t('samplePublic.shippingStatusLabel') }}</span>
-          <el-select v-model="currentSampleStatus" style="width: 200px" @change="handleStatusChange">
+      <el-form :model="sampleStatusForm" label-width="100px">
+        <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
+          <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
             <el-option :label="$t('samplePublic.pending')" value="pending" />
             <el-option :label="$t('samplePublic.shipping')" value="shipping" />
             <el-option :label="$t('samplePublic.sent')" value="sent" />
             <el-option :label="$t('samplePublic.refused')" value="refused" />
           </el-select>
-        </div>
+        </el-form-item>
         <!-- 已寄样时显示物流信息 -->
-        <template v-if="currentSampleStatus === 'sent'">
-          <div class="edit-row">
-            <span class="label">物流公司</span>
-            <el-select v-model="currentLogisticsCompany" placeholder="Select logistics company" style="width: 200px">
+        <template v-if="sampleStatusForm.sampleStatus === 'sent'">
+          <el-form-item :label="$t('samplePublic.logisticsCompany')">
+            <el-select v-model="sampleStatusForm.logisticsCompany" :placeholder="$t('samplePublic.selectLogistics')" style="width: 100%">
               <el-option
                 v-for="opt in logisticsCompanyOptions"
                 :key="opt._id"
@@ -351,21 +348,50 @@
                 :value="opt.code"
               />
             </el-select>
-          </div>
-          <div class="edit-row">
-            <span class="label">快递单号</span>
+          </el-form-item>
+          <el-form-item :label="$t('samplePublic.trackingNumber')" :required="sampleStatusForm.logisticsCompany !== 'default'">
             <el-input 
-              v-model="currentTrackingNumber" 
-              placeholder="Enter tracking number" 
-              style="width: 200px"
-              :required="currentLogisticsCompany !== 'default'"
+              v-model="sampleStatusForm.trackingNumber" 
+              :placeholder="$t('samplePublic.enterTrackingNumber')" 
             />
-          </div>
+          </el-form-item>
         </template>
-      </div>
+        <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samplePublic.refusalReason')">
+          <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samplePublic.enterRefusalReason')" />
+        </el-form-item>
+      </el-form>
       <template #footer>
         <el-button @click="statusDialogVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
         <el-button type="primary" @click="confirmStatusUpdate" :loading="statusUpdateLoading">
+          {{ $t('samplePublic.confirm') }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量更新物流公司弹窗 -->
+    <el-dialog
+      v-model="batchLogisticsDialogVisible"
+      :title="$t('samplePublic.batchUpdate')"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <div style="margin-bottom: 15px;">
+        {{ $t('samplePublic.batchConfirmLogistics', { count: selectedSamples.length }) }}
+      </div>
+      <div class="edit-row">
+        <span class="label">{{ $t('samplePublic.logisticsCompany') }}</span>
+        <el-select v-model="batchLogisticsCompany" style="width: 200px">
+          <el-option
+            v-for="opt in logisticsCompanyOptions"
+            :key="opt._id"
+            :label="opt.name"
+            :value="opt.code"
+          />
+        </el-select>
+      </div>
+      <template #footer>
+        <el-button @click="batchLogisticsDialogVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmBatchLogistics" :loading="statusUpdateLoading">
           {{ $t('samplePublic.confirm') }}
         </el-button>
       </template>
@@ -414,16 +440,23 @@ const pagination = reactive({
 // 单条编辑弹窗
 const statusDialogVisible = ref(false)
 const currentEditRow = ref(null)
-const currentSampleStatus = ref('')
-const currentLogisticsCompany = ref('')  // 存储 code 值
-const currentTrackingNumber = ref('')
+const sampleStatusForm = reactive({
+  sampleStatus: 'pending',
+  logisticsCompany: '',
+  trackingNumber: '',
+  refusalReason: ''
+})
 const statusUpdateLoading = ref(false)
 const logisticsCompanyOptions = ref([])  // 物流公司选项列表
+
+// 批量更新物流公司弹窗
+const batchLogisticsDialogVisible = ref(false)
+const batchLogisticsCompany = ref('')  // 批量选择的物流公司
 
 // 加载物流公司列表
 const loadLogisticsCompanies = async () => {
   try {
-    const res = await axios.get(`${API_BASE}/base-data`, { params: { type: 'trackingUrl', limit: 100 } })
+    const res = await axios.get(`${API_BASE}/public/base-data`, { params: { type: 'trackingUrl', limit: 100 } })
     logisticsCompanyOptions.value = res.data.data || []
   } catch (error) {
     console.error('Load logistics companies error:', error)
@@ -432,12 +465,18 @@ const loadLogisticsCompanies = async () => {
 }
 
 // 状态变化时处理
-const handleStatusChange = () => {
-  // 如果选择已寄样且没有选择物流公司，默认选择 default
-  if (currentSampleStatus.value === 'sent' && !currentLogisticsCompany.value && logisticsCompanyOptions.value.length > 0) {
-    const defaultOption = logisticsCompanyOptions.value.find(opt => opt.code === 'default')
-    if (defaultOption) {
-      currentLogisticsCompany.value = 'default'
+const handleStatusChange = async () => {
+  // 如果选择已寄样，先确保加载物流公司列表
+  if (sampleStatusForm.sampleStatus === 'sent') {
+    if (logisticsCompanyOptions.value.length === 0) {
+      await loadLogisticsCompanies()
+    }
+    // 默认选择 default（除非已有有效选择）
+    if (!sampleStatusForm.logisticsCompany || !logisticsCompanyOptions.value.find(opt => opt.code === sampleStatusForm.logisticsCompany)) {
+      const defaultOption = logisticsCompanyOptions.value.find(opt => opt.code === 'default')
+      if (defaultOption) {
+        sampleStatusForm.logisticsCompany = 'default'
+      }
     }
   }
 }
@@ -570,7 +609,6 @@ const handleSelectionChange = (selection) => {
 // 打开单条状态编辑
 const openStatusEdit = async (row) => {
   currentEditRow.value = row
-  currentSampleStatus.value = row.sampleStatus || 'pending'
   // 加载物流公司列表
   await loadLogisticsCompanies()
   // 设置默认值：如果是新建或没有选择物流公司，选中 default
@@ -581,8 +619,12 @@ const openStatusEdit = async (row) => {
       defaultLogistics = 'default'
     }
   }
-  currentLogisticsCompany.value = defaultLogistics
-  currentTrackingNumber.value = row.trackingNumber || ''
+  Object.assign(sampleStatusForm, {
+    sampleStatus: row.sampleStatus || 'pending',
+    logisticsCompany: defaultLogistics,
+    trackingNumber: row.trackingNumber || '',
+    refusalReason: row.refusalReason || ''
+  })
   statusDialogVisible.value = true
 }
 
@@ -590,8 +632,19 @@ const openStatusEdit = async (row) => {
 const confirmStatusUpdate = async () => {
   if (!currentEditRow.value) return
 
+  // 已寄样时：确保物流公司有值（默认default）
+  if (sampleStatusForm.sampleStatus === 'sent') {
+    if (logisticsCompanyOptions.value.length === 0) {
+      await loadLogisticsCompanies()
+    }
+    if (!sampleStatusForm.logisticsCompany) {
+      const defaultOption = logisticsCompanyOptions.value.find(opt => opt.code === 'default')
+      sampleStatusForm.logisticsCompany = defaultOption ? 'default' : (logisticsCompanyOptions.value[0]?.code || '')
+    }
+  }
+
   // 已寄样时：选择非default时快递单号必填
-  if (currentSampleStatus.value === 'sent' && currentLogisticsCompany.value !== 'default' && !currentTrackingNumber.value) {
+  if (sampleStatusForm.sampleStatus === 'sent' && sampleStatusForm.logisticsCompany !== 'default' && !sampleStatusForm.trackingNumber) {
     ElMessage.error('快递单号不能为空')
     return
   }
@@ -601,25 +654,33 @@ const confirmStatusUpdate = async () => {
     const identificationCode = getIdentificationCode()
     const params = {
       s: identificationCode,
-      sampleStatus: currentSampleStatus.value,
+      sampleStatus: sampleStatusForm.sampleStatus,
       sampleIds: currentEditRow.value._id
     }
     // 已寄样时发送物流信息
-    if (currentSampleStatus.value === 'sent') {
-      params.logisticsCompany = currentLogisticsCompany.value
-      params.trackingNumber = currentTrackingNumber.value
+    if (sampleStatusForm.sampleStatus === 'sent') {
+      params.logisticsCompany = sampleStatusForm.logisticsCompany
+      params.trackingNumber = sampleStatusForm.trackingNumber
+    }
+    // 被拒绝时发送拒绝原因
+    if (sampleStatusForm.sampleStatus === 'refused') {
+      params.refusalReason = sampleStatusForm.refusalReason
     }
     const res = await axios.put(`${API_BASE}/public/samples/batch`, null, { params })
 
     if (res.data.success) {
       ElMessage.success(t('samplePublic.updateSuccess'))
-      currentEditRow.value.sampleStatus = currentSampleStatus.value
+      currentEditRow.value.sampleStatus = sampleStatusForm.sampleStatus
       // 更新 isSampleSent
-      currentEditRow.value.isSampleSent = currentSampleStatus.value === 'sent'
+      currentEditRow.value.isSampleSent = sampleStatusForm.sampleStatus === 'sent'
       // 更新物流信息
-      if (currentSampleStatus.value === 'sent') {
-        currentEditRow.value.logisticsCompany = currentLogisticsCompany.value
-        currentEditRow.value.trackingNumber = currentTrackingNumber.value
+      if (sampleStatusForm.sampleStatus === 'sent') {
+        currentEditRow.value.logisticsCompany = sampleStatusForm.logisticsCompany
+        currentEditRow.value.trackingNumber = sampleStatusForm.trackingNumber
+      }
+      // 更新拒绝原因
+      if (sampleStatusForm.sampleStatus === 'refused') {
+        currentEditRow.value.refusalReason = sampleStatusForm.refusalReason
       }
       statusDialogVisible.value = false
     } else {
@@ -636,6 +697,23 @@ const confirmStatusUpdate = async () => {
 const handleBatchStatusCommand = async (status) => {
   if (selectedSamples.value.length === 0) {
     ElMessage.warning(t('samplePublic.selectItemsFirst'))
+    return
+  }
+
+  // 如果是改为已寄样，先弹出对话框选择物流公司
+  if (status === 'sent') {
+    // 加载物流公司列表
+    await loadLogisticsCompanies()
+    
+    // 默认选择 default
+    let defaultCode = 'default'
+    if (!logisticsCompanyOptions.value.find(opt => opt.code === 'default')) {
+      defaultCode = logisticsCompanyOptions.value[0]?.code || ''
+    }
+    batchLogisticsCompany.value = defaultCode
+    
+    // 显示批量物流公司选择弹窗
+    batchLogisticsDialogVisible.value = true
     return
   }
 
@@ -668,6 +746,37 @@ const handleBatchStatusCommand = async (status) => {
     if (err !== 'cancel') {
       ElMessage.error(err.response?.data?.message || '更新失败')
     }
+  }
+}
+
+// 确认批量更新物流公司
+const confirmBatchLogistics = async () => {
+  statusUpdateLoading.value = true
+  try {
+    const identificationCode = getIdentificationCode()
+    const sampleIds = selectedSamples.value.map(s => s._id)
+
+    const res = await axios.put(`${API_BASE}/public/samples/batch`, null, {
+      params: {
+        s: identificationCode,
+        sampleStatus: 'sent',
+        logisticsCompany: batchLogisticsCompany.value,
+        sampleIds: sampleIds.join(',')
+      }
+    })
+
+    if (res.data.success) {
+      ElMessage.success(res.data.message)
+      selectedSamples.value = []
+      batchLogisticsDialogVisible.value = false
+      loadSamples()
+    } else {
+      ElMessage.error(res.data.message)
+    }
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || t('samplePublic.updateFailed'))
+  } finally {
+    statusUpdateLoading.value = false
   }
 }
 

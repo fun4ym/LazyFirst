@@ -1085,6 +1085,7 @@ export default {
     // 新增对话框
     createSample: 'Create Sample Request',
     editSample: 'Edit Sample Request',
+    edit: 'Edit',
     selectProduct: 'Select Product',
     selectInfluencer: 'Select Influencer',
     enterTrackingNo: 'Enter tracking number',
@@ -1391,6 +1392,7 @@ export default {
     updateFailed: 'Update failed',
     selectItemsFirst: 'Please select items first',
     confirmUpdate: 'Update {count} records to "{status}"?',
+    batchConfirmLogistics: 'Select logistics company for {count} records',
     batchUpdate: 'Batch Update',
     confirmAdUpdate: 'Update {count} records to "{status}"?',
     openAd: 'Enable',
@@ -1400,7 +1402,15 @@ export default {
     retry: 'Retry',
     missingCode: 'Missing identification code',
     networkError: 'Network error, please try again',
-    loadFailed: 'Load failed'
+    loadFailed: 'Load failed',
+    // Header labels
+    influencerId: 'Influencer ID',
+    productIdHeader: 'Product ID',
+    // Logistics
+    logisticsCompany: 'Logistics Company',
+    trackingNumber: 'Tracking Number',
+    selectLogistics: 'Select logistics',
+    enterTrackingNumber: 'Enter tracking number'
   },
   // BD Workspace - Sample Request
   sampleBD: {

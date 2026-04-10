@@ -14,28 +14,35 @@
 
           <!-- 搜索筛选 -->
       <div class="filter-section">
-        <!-- 第一行：基本筛选 -->
-        <el-row :gutter="16" class="filter-row">
-          <el-col :span="5">
-            <el-select v-model="filters.poolType" :placeholder="$t('influencer.poolType')" clearable @change="loadData">
-              <el-option :label="$t('common.all')" value="" />
-              <el-option :label="$t('influencer.publicSea')" value="public" />
-              <el-option :label="$t('influencer.privateSea')" value="private" />
-            </el-select>
-          </el-col>
-          <el-col :span="4">
-            <el-select v-model="filters.status" :placeholder="$t('common.status')" clearable @change="loadData">
-              <el-option :label="$t('common.all')" value="" />
-              <el-option :label="$t('common.enable')" value="enabled" />
-              <el-option :label="$t('common.disable')" value="disabled" />
-            </el-select>
-          </el-col>
-          <el-col :span="5">
-            <el-select v-model="filters.categoryTag" :placeholder="$t('influencer.categoryTag')" clearable @change="loadData">
-              <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
-            </el-select>
-          </el-col>
-        </el-row>
+      <!-- 第一行：基本筛选 -->
+      <el-row :gutter="16" class="filter-row">
+        <el-col :span="5">
+          <el-select v-model="filters.poolType" :placeholder="$t('influencer.poolType')" clearable @change="loadData">
+            <el-option :label="$t('common.all')" value="" />
+            <el-option :label="$t('influencer.publicSea')" value="public" />
+            <el-option :label="$t('influencer.privateSea')" value="private" />
+          </el-select>
+        </el-col>
+        <el-col :span="4">
+          <el-select v-model="filters.status" :placeholder="$t('common.status')" clearable @change="loadData">
+            <el-option :label="$t('common.all')" value="" />
+            <el-option :label="$t('common.enable')" value="enabled" />
+            <el-option :label="$t('common.disable')" value="disabled" />
+          </el-select>
+        </el-col>
+        <el-col :span="5">
+          <el-select v-model="filters.categoryTag" :placeholder="$t('influencer.categoryTag')" clearable @change="loadData">
+            <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
+          </el-select>
+        </el-col>
+        <el-col :span="5">
+          <el-input v-model="filters.keyword" :placeholder="$t('influencer.tiktokId') + ' ' + $t('common.fuzzySearch')" clearable @change="loadData" style="width: 100%">
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-col>
+      </el-row>
 
         <!-- 第二行：数据筛选 -->
         <el-row :gutter="16" class="filter-row">

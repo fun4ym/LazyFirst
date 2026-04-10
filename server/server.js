@@ -100,6 +100,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/product-stats', productStatsRoutes);
 app.use('/api/public/samples', publicSampleRoutes);
+app.use('/api/public/base-data', baseDataRoutes);  // 公开的基础数据接口
 app.use('/api/initialization', initializationRoutes);
 app.use('/api/init-import', initImportRoutes);
 

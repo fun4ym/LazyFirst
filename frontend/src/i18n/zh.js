@@ -1266,6 +1266,7 @@ export default {
     // 新增对话框
     createSample: '新建样品申请',
     editSample: '编辑样品申请',
+    edit: '修改',
     selectProduct: '选择商品',
     selectInfluencer: '选择达人',
     enterTrackingNo: '输入快递单号',
@@ -1574,6 +1575,7 @@ export default {
     updateFailed: '更新失败',
     selectItemsFirst: '请先选择要更新的记录',
     confirmUpdate: '确定要将 {count} 条记录的寄样状态更新为"{status}"吗？',
+    batchConfirmLogistics: '请为 {count} 条记录选择物流公司',
     batchUpdate: '批量更新',
     confirmAdUpdate: '确定要将 {count} 条记录的投流状态更新为"{status}"吗？',
     openAd: '开启',
@@ -1583,7 +1585,15 @@ export default {
     retry: '重试',
     missingCode: '缺少识别码参数',
     networkError: '网络错误，请稍后重试',
-    loadFailed: '加载失败'
+    loadFailed: '加载失败',
+    // 表头标签
+    influencerId: '达人ID',
+    productIdHeader: '商品ID',
+    // 物流信息
+    logisticsCompany: '物流公司',
+    trackingNumber: '快递单号',
+    selectLogistics: '选择物流公司',
+    enterTrackingNumber: '输入快递单号'
   },
   // BD工作台-样品申请
   sampleBD: {

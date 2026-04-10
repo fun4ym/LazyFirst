@@ -1034,6 +1034,7 @@ export default {
     // 新增对话框
     createSample: 'สร้างคำขอตัวอย่าง',
     editSample: 'แก้ไขคำขอตัวอย่าง',
+    edit: 'แก้ไข',
     selectProduct: 'เลือกสินค้า',
     selectInfluencer: 'เลือกมีเดียร์',
     enterTrackingNo: 'กรอกหมายเลขติดตาม',
@@ -1308,6 +1309,7 @@ export default {
     streamCode: 'รหัสสตรีม',
     applicationDate: 'วันที่สมัคร',
     productInfo: 'ข้อมูลสินค้า',
+    productImage: 'รูปภาพ',
     influencerInfo: 'ข้อมูลมีเดียร์',
     video: 'วิดีโอ',
     orderGenerated: 'ออกคำสั่งซื้อ',
@@ -1339,6 +1341,7 @@ export default {
     updateFailed: 'อัปเดตล้มเหลว',
     selectItemsFirst: 'กรุณาเลือกรายการก่อน',
     confirmUpdate: 'ต้องการอัปเดต {count} รายการเป็น "{status}"?',
+    batchConfirmLogistics: 'เลือกบริษัทขนส่งสำหรับ {count} รายการ',
     batchUpdate: 'อัปเดตเป็นชุด',
     confirmAdUpdate: 'ต้องการอัปเดต {count} รายการเป็น "{status}"?',
     openAd: 'เปิด',
@@ -1348,7 +1351,15 @@ export default {
     retry: 'ลองใหม่',
     missingCode: 'ไม่มีรหัสระบุตัว',
     networkError: 'ข้อผิดพลาดเครือข่าย กรุณาลองอีกครั้ง',
-    loadFailed: 'โหลดล้มเหลว'
+    loadFailed: 'โหลดล้มเหลว',
+    // ป้ายกำกับส่วนหัว
+    influencerId: 'ID มีเดียร์',
+    productIdHeader: 'ID สินค้า',
+    // ข้อมูลขนส่ง
+    logisticsCompany: 'บริษัทขนส่ง',
+    trackingNumber: 'หมายเลขพัสดุ',
+    selectLogistics: 'เลือกบริษัทขนส่ง',
+    enterTrackingNumber: 'กรอกหมายเลขพัสดุ'
   },
   // พื้นที่ทำงาน BD - คำขอตัวอย่าง
   sampleBD: {
