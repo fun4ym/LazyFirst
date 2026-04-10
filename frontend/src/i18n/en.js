@@ -211,8 +211,8 @@ export default {
   influencer: {
     tiktokId: 'TikTok ID',
     tiktokName: 'Name',
-    followers: 'Followers',
-    latestFollowers: 'Latest Followers',
+    followers: 'Followers (K)',
+    latestFollowers: 'Latest Followers (K)',
     latestGmv: 'Latest GMV',
     influencerParams: 'Influencer Params',
     monthlySalesCount: 'Monthly Sales',
@@ -283,7 +283,7 @@ export default {
     blacklistReason: 'Blacklist Reason',
     latestRemark: 'Latest Remark',
     latestMaintenanceTime: 'Latest Maintenance Time',
-    latestFollowersNum: 'Latest Followers',
+    latestFollowersNum: 'Latest Followers (K)',
     latestGmvAmount: 'Latest GMV',
     normal: 'Normal',
     // Messages
@@ -404,7 +404,7 @@ export default {
     influencerRequirement: 'Influencer Requirements',
     gmv: 'GMV',
     monthlySales: 'Monthly Sales',
-    followers: 'Followers',
+    followers: 'Followers (K)',
     avgViews: 'Avg Views',
     requirementRemark: 'Remarks',
     requirementRemarkPlaceholder: 'Enter remarks',
@@ -1054,7 +1054,7 @@ export default {
     videoLink: 'Video Link',
     unknown: 'Unknown',
     // 达人数据
-    followers: 'Followers',
+    followers: 'Followers (K)',
     monthlySales: 'Monthly Sales',
     avgViews: 'Avg Views',
     // 状态
@@ -1215,8 +1215,8 @@ export default {
     selectCurrency: 'Select Currency',
     monthlySales: 'Monthly Sales',
     monthlySalesPlaceholder: 'Monthly Sales',
-    followers: 'Followers',
-    followersPlaceholder: 'Followers',
+    followers: 'Followers (K)',
+    followersPlaceholder: 'Followers (K)',
     avgViews: 'Avg Views',
     avgViewsPlaceholder: 'Monthly Avg Views',
     requirementRemark: 'Requirements',
@@ -1377,7 +1377,7 @@ export default {
     shipping: 'Shipped:',
     viewVideo: 'View Video',
     productId: 'ID: ',
-    followers: 'Followers',
+    followers: 'Followers (K)',
     gmv: 'GMV',
     // Modify status dialog
     modifyShippingStatus: 'Modify Shipping Status',

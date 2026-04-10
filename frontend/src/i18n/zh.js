@@ -212,8 +212,8 @@ export default {
   influencer: {
     tiktokId: 'TikTok ID',
     tiktokName: '昵称',
-    followers: '粉丝数',
-    latestFollowers: '最新粉丝',
+    followers: '粉丝数(K)',
+    latestFollowers: '最新粉丝(K)',
     latestGmv: '最新GMV',
     influencerParams: '达人参数',
     monthlySalesCount: '月销件数',
@@ -284,7 +284,7 @@ export default {
     blacklistReason: '拉黑原因',
     latestRemark: '最新备注',
     latestMaintenanceTime: '最近维护时间',
-    latestFollowersNum: '最新粉丝数',
+    latestFollowersNum: '最新粉丝数(K)',
     latestGmvAmount: '最新GMV',
     normal: '正常',
     // 消息
@@ -406,7 +406,7 @@ export default {
     influencerRequirement: '达人要求',
     gmv: 'GMV',
     monthlySales: '月销售件数',
-    followers: '粉丝数',
+    followers: '粉丝数(K)',
     avgViews: '月均播放量',
     requirementRemark: '要求说明',
     requirementRemarkPlaceholder: '请输入要求说明（最多1000个字符）',
@@ -1235,7 +1235,7 @@ export default {
     videoLink: '视频链接',
     unknown: '未知',
     // 达人数据
-    followers: '粉丝',
+    followers: '粉丝(K)',
     monthlySales: '月销',
     avgViews: '均播',
     // 状态
@@ -1397,8 +1397,8 @@ export default {
     selectCurrency: '请选择货币',
     monthlySales: '月销售件数',
     monthlySalesPlaceholder: '月销售件数',
-    followers: '粉丝数',
-    followersPlaceholder: '粉丝数',
+    followers: '粉丝数(K)',
+    followersPlaceholder: '粉丝数(K)',
     avgViews: '月均播放量',
     avgViewsPlaceholder: '月均播放量',
     requirementRemark: '要求说明',
@@ -1560,7 +1560,7 @@ export default {
     shipping: '发货：',
     viewVideo: '查看视频',
     productId: 'ID: ',
-    followers: '粉丝数',
+    followers: '粉丝数(K)',
     gmv: 'GMV',
     // 修改状态弹窗
     modifyShippingStatus: '修改寄样状态',
