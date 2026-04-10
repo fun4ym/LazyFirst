@@ -1128,8 +1128,8 @@ const loadActivityProducts = async (activity) => {
     const res = await request.get(`/activities/${activity._id}/products`, {
       params: { page: 1, limit: 100 } // 先加载足够多的商品用于展示
     })
-    // 拦截器返回的是 { products, pagination } 或 { data: { products, pagination } }
-    const products = res.products || res.data?.products || []
+    // 拦截器返回的是 { data: products, pagination } 或 { products, pagination }
+    const products = res.data || res.products || []
     // 预先计算每个商品的链接并缓存
     const productsWithLinks = products.map(p => ({
       ...p,

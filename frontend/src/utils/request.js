@@ -37,11 +37,21 @@ request.interceptors.response.use(
       if (Array.isArray(res.data)) {
         return res.data
       }
-      // 如果 res.data 是对象且有 pagination（分页接口），返回 { data, pagination }
+      // 如果 res.data 是对象且有 pagination（分页接口）
       if (res.data && res.data.pagination !== undefined) {
-        return {
-          data: res.data.data,
-          pagination: res.data.pagination
+        // 优先使用 res.data.data（基础数据格式）
+        if (Array.isArray(res.data.data)) {
+          return {
+            data: res.data.data,
+            pagination: res.data.pagination
+          }
+        }
+        // 否则使用 res.data.products（商品格式）
+        if (Array.isArray(res.data.products)) {
+          return {
+            data: res.data.products,
+            pagination: res.data.pagination
+          }
         }
       }
       // 否则返回 data 内容

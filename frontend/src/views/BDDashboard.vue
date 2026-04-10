@@ -271,7 +271,7 @@ const loadBDUsers = async () => {
     const rolesRes = await request.get('/roles', {
       params: { limit: 100 }
     })
-    const roles = rolesRes.roles || []
+    const roles = rolesRes.data || rolesRes.roles || []
     const bdRole = roles.find(r => r.name === 'BD')
     
     if (!bdRole) {
@@ -287,7 +287,7 @@ const loadBDUsers = async () => {
         status: 'active'
       }
     })
-    bdUsers.value = res.users || []
+    bdUsers.value = res.data || res.users || []
   } catch (error) {
     console.error('加载BD用户列表失败:', error)
   }

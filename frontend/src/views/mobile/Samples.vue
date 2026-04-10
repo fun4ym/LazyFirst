@@ -452,13 +452,13 @@ const selectInfluencer = (item) => {
 const loadProducts = async () => {
   try {
     const res = await request.get('/products', { params: { limit: 100 } })
-    productOptions.value = res.products || res.data?.products || []
+    productOptions.value = res.data || res.products || []
   } catch (error) {
     console.error('加载商品失败:', error)
     // 尝试其他返回格式
     try {
       const res = await request.get('/products')
-      productOptions.value = res.data || []
+      productOptions.value = res.data || res.products || []
     } catch (e) {
       console.error('加载商品失败:', e)
     }

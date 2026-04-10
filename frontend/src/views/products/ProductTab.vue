@@ -1109,8 +1109,8 @@ const loadData = async () => {
     console.log('[商品管理] 请求参数:', params)
     const res = await request.get('/products', { params })
     console.log('[商品管理] 返回数据:', res)
-    products.value = res.products || res.data?.products || []
-    pagination.total = res.pagination?.total || res.data?.pagination?.total || 0
+    products.value = res.data || res.products || []
+    pagination.total = res.pagination?.total || 0
 
     // 加载完产品后，自动加载所有产品的订单统计
     if (products.value.length > 0) {

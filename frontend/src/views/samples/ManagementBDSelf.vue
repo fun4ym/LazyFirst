@@ -902,7 +902,7 @@ const resetSearch = () => {
 const loadCooperationProducts = async () => {
   try {
     const res = await request.get('/products', { params: { companyId: userStore.companyId, status: 'active', limit: 100 } })
-    cooperationProducts.value = res.data?.products || res.products || []
+    cooperationProducts.value = res.data || res.products || []
   } catch (error) {
     console.error('加载产品失败:', error)
   }
@@ -923,7 +923,7 @@ const searchProducts = async (query) => {
         limit: 20
       }
     })
-    cooperationProducts.value = res.data?.products || res.products || []
+    cooperationProducts.value = res.data || res.products || []
   } catch (error) {
     console.error('搜索商品失败:', error)
   } finally {

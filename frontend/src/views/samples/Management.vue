@@ -1105,7 +1105,7 @@ const loadSamples = async () => {
 const loadLogisticsCompanies = async () => {
   try {
     const res = await request.get('/base-data', { params: { type: 'trackingUrl', limit: 100 } })
-    logisticsCompanyOptions.value = res || []
+    logisticsCompanyOptions.value = res.data || res || []
   } catch (error) {
     console.error('Load logistics companies error:', error)
     logisticsCompanyOptions.value = []
@@ -1164,7 +1164,7 @@ const loadUsers = async () => {
 const loadCooperationProducts = async () => {
   try {
     const res = await request.get('/products', { params: { companyId: userStore.companyId, status: 'active', limit: 100 } })
-    cooperationProducts.value = res.data?.products || res.products || []
+    cooperationProducts.value = res.data || res.products || []
   } catch (error) {
     console.error('加载产品失败:', error)
   }
@@ -1186,7 +1186,7 @@ const searchProducts = async (query) => {
         limit: 20
       }
     })
-    cooperationProducts.value = res.data?.products || res.products || []
+    cooperationProducts.value = res.data || res.products || []
   } catch (error) {
     console.error('搜索商品失败:', error)
   } finally {
