@@ -61,7 +61,22 @@ sshpass -p 'tokzit-hejwig-6vapwA' ssh ubuntu@150.109.183.29 \
 curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
 ```
 
-### 判断改了什么 → 决定做什么
+### 待同步修改记录
+
+**文件夹**: `pending-sync/`
+
+**记录规则**:
+1. 每次修改代码后，在 `pending-sync/` 创建记录文件
+2. 文件命名格式: `YYYYMMDD-HHMM-描述.md`
+3. 内容包含: 修改文件、修改内容、同步状态
+
+**同步时操作**:
+1. 读取所有未同步文件
+2. 逐个确认修改已同步
+3. 验证功能正常
+4. 将文件名改为 `已同步-YYYYMMDD-HHMM-描述.md`
+
+**判断改了什么 → 决定做什么
 
 | 修改范围 | 必须操作 |
 |----------|----------|
