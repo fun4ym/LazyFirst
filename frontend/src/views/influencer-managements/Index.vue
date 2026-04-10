@@ -791,9 +791,9 @@ const removeSocial = (index) => {
 const loadCategoryTags = async () => {
   try {
     const res = await request.get('/base-data', {
-      params: { type: 'influencerCategory' }
+      params: { type: 'influencerCategory', limit: 1000 }
     })
-    categoryTags.value = res.data || []
+    categoryTags.value = res.data?.data || res.data || []
   } catch (error) {
     console.error(t('influencer.loadFailed') + ':', error)
   }
@@ -802,9 +802,9 @@ const loadCategoryTags = async () => {
 const loadSuitableCategories = async () => {
   try {
     const res = await request.get('/base-data', {
-      params: { type: 'category' }
+      params: { type: 'category', limit: 1000 }
     })
-    suitableCategoryOptions.value = res.data || []
+    suitableCategoryOptions.value = res.data?.data || res.data || []
   } catch (error) {
     console.error(t('influencer.loadFailed') + ':', error)
   }
