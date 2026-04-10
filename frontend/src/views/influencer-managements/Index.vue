@@ -240,151 +240,185 @@
       width="900px"
       :close-on-click-modal="false"
     >
-      <div class="form-container">
-        <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" label-position="right">
-          <!-- TikTok信息 -->
-          <div class="form-section">
-            <div class="section-header">
-              <span class="section-title">{{ $t('influencer.tiktokInfo') }}</span>
-              <span class="section-desc">{{ $t('influencer.influencerPlatformInfo') }}</span>
-            </div>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.tiktokName')" prop="tiktokName" required>
-                  <el-input v-model="form.tiktokName" :placeholder="$t('common.input') + $t('influencer.tiktokName')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.tiktokId')" prop="tiktokId" required class="tiktok-green-label">
-                  <el-input v-model="form.tiktokId" :placeholder="$t('common.input') + $t('influencer.tiktokId')" class="tiktok-green-input" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.formerNames')">
-                  <el-input v-model="form.formerNames" :placeholder="$t('influencer.formerNamesTip')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.formerIds')">
-                  <el-input v-model="form.formerIds" :placeholder="$t('influencer.formerIdsTip')" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.originalTiktokId')" class="tiktok-green-label">
-                  <el-input v-model="form.originalTiktokId" :placeholder="$t('influencer.originalTiktokIdTip')" class="tiktok-green-input" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="$t('common.status')" prop="status" required>
-                  <el-radio-group v-model="form.status">
-                    <el-radio value="enabled">{{ $t('common.enable') }}</el-radio>
-                    <el-radio value="disabled">{{ $t('common.disable') }}</el-radio>
-                  </el-radio-group>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-form-item :label="$t('influencer.categoryTag')">
-              <el-select v-model="form.categoryTags" multiple :placeholder="$t('common.select')" style="width: 100%">
-                <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
-              </el-select>
-              <div class="form-tip">* {{ $t('influencer.categoryTagTip') }}</div>
-            </el-form-item>
-            <!-- 达人参数 -->
-            <el-row :gutter="16">
-              <el-col :span="8">
-                <el-form-item :label="$t('influencer.monthlySalesCount')">
-                  <el-input-number v-model="form.monthlySalesCount" :min="0" :controls="false" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item :label="$t('influencer.avgVideoViews')">
-                  <el-input-number v-model="form.avgVideoViews" :min="0" :controls="false" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item :label="$t('influencer.suitableCategories')">
-                  <el-select v-model="form.suitableCategories" multiple :placeholder="$t('common.select')" style="width: 100%">
-                    <el-option v-for="cat in suitableCategoryOptions" :key="cat._id" :label="cat.name" :value="cat._id" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </div>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" label-position="right">
 
-          <!-- 真实信息 -->
-          <div class="form-section">
-            <div class="section-header">
-              <span class="section-title">{{ $t('user.realName') }}</span>
-            </div>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.realName')">
-                  <el-input v-model="form.realName" :placeholder="$t('influencer.realNameTip')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.nickname')">
-                  <el-input v-model="form.nickname" :placeholder="$t('influencer.nicknameTip')" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="$t('influencer.gender')">
-                  <el-radio-group v-model="form.gender">
-                    <el-radio value="male">{{ $t('influencer.male') }}</el-radio>
-                    <el-radio value="female">{{ $t('influencer.female') }}</el-radio>
-                    <el-radio value="other">{{ $t('influencer.other') }}</el-radio>
-                  </el-radio-group>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-form-item :label="$t('influencer.phone')">
-              <div class="dynamic-inputs">
-                <div v-for="(phone, index) in form.phoneNumbers" :key="'phone-' + index" class="input-item">
-                  <el-input v-model="form.phoneNumbers[index]" :placeholder="$t('influencer.phoneTip')" />
-                  <el-button v-if="form.phoneNumbers.length > 1" type="danger" link @click="removePhone(index)">
-                    <el-icon><Delete /></el-icon>
-                  </el-button>
-                </div>
-                <el-button type="primary" link @click="addPhone" class="add-btn">
-                  <el-icon><Plus /></el-icon> {{ $t('influencer.addPhone') }}
-                </el-button>
-              </div>
-            </el-form-item>
-            <el-form-item :label="$t('influencer.address')">
-              <div class="dynamic-inputs">
-                <div v-for="(address, index) in form.addresses" :key="'address-' + index" class="input-item">
-                  <el-input v-model="form.addresses[index]" :placeholder="$t('influencer.addressTip')" />
-                  <el-button v-if="form.addresses.length > 1" type="danger" link @click="removeAddress(index)">
-                    <el-icon><Delete /></el-icon>
-                  </el-button>
-                </div>
-                <el-button type="primary" link @click="addAddress" class="add-btn">
-                  <el-icon><Plus /></el-icon> {{ $t('influencer.addAddress') }}
-                </el-button>
-              </div>
-            </el-form-item>
-            <el-form-item :label="$t('influencer.socialAccount')">
-              <div class="dynamic-inputs">
-                <div v-for="(social, index) in form.socialAccounts" :key="'social-' + index" class="input-item">
-                  <el-input v-model="form.socialAccounts[index]" :placeholder="$t('influencer.socialAccountTip')" />
-                  <el-button v-if="form.socialAccounts.length > 1" type="danger" link @click="removeSocial(index)">
-                    <el-icon><Delete /></el-icon>
-                  </el-button>
-                </div>
-                <el-button type="primary" link @click="addSocial" class="add-btn">
-                  <el-icon><Plus /></el-icon> {{ $t('influencer.addSocial') }}
-                </el-button>
-              </div>
-            </el-form-item>
+        <!-- 头部信息区 -->
+        <div class="edit-header">
+          <div class="edit-avatar">
+            <el-icon :size="40"><User /></el-icon>
           </div>
-        </el-form>
-      </div>
+          <div class="edit-title-area">
+            <div class="edit-id-row">
+              <el-form-item :label="$t('influencer.tiktokId')" prop="tiktokId" required class="tiktok-green-label inline-form-item">
+                <el-input v-model="form.tiktokId" :placeholder="$t('common.input') + $t('influencer.tiktokId')" class="tiktok-green-input" />
+              </el-form-item>
+              <el-form-item :label="$t('common.status')" prop="status" required class="inline-form-item">
+                <el-radio-group v-model="form.status">
+                  <el-radio value="enabled">{{ $t('common.enable') }}</el-radio>
+                  <el-radio value="disabled">{{ $t('common.disable') }}</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </div>
+          </div>
+        </div>
+
+        <!-- 基础信息 -->
+        <div class="edit-section">
+          <div class="edit-section-title">
+            <span>{{ $t('influencer.tiktokInfo') }}</span>
+          </div>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.tiktokName')" prop="tiktokName" required>
+                <el-input v-model="form.tiktokName" :placeholder="$t('common.input') + $t('influencer.tiktokName')" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.originalTiktokId')" class="tiktok-green-label">
+                <el-input v-model="form.originalTiktokId" :placeholder="$t('influencer.originalTiktokIdTip')" class="tiktok-green-input" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.formerNames')">
+                <el-input v-model="form.formerNames" :placeholder="$t('influencer.formerNamesTip')" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.formerIds')">
+                <el-input v-model="form.formerIds" :placeholder="$t('influencer.formerIdsTip')" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 数据指标 -->
+        <div class="edit-section">
+          <div class="edit-section-title">
+            <span>{{ $t('influencer.influencerParams') }}</span>
+          </div>
+          <el-row :gutter="16">
+            <el-col :span="6">
+              <el-form-item :label="$t('influencer.latestFollowersNum')">
+                <el-input-number v-model="editDisplayFollowers" :min="0" :controls="false" placeholder="K" style="width: 100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item :label="$t('influencer.latestGmvAmount')">
+                <el-input-number v-model="form.latestGmv" :min="0" :controls="false" style="width: 100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item :label="$t('influencer.monthlySalesCount')">
+                <el-input-number v-model="form.monthlySalesCount" :min="0" :controls="false" style="width: 100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item :label="$t('influencer.avgVideoViews')">
+                <el-input-number v-model="form.avgVideoViews" :min="0" :controls="false" style="width: 100%" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 分类标签 -->
+        <div class="edit-section">
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.categoryTag')">
+                <el-select v-model="form.categoryTags" multiple :placeholder="$t('common.select')" style="width: 100%">
+                  <el-option v-for="tag in categoryTags" :key="tag._id" :label="tag.name" :value="tag._id" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.suitableCategories')">
+                <el-select v-model="form.suitableCategories" multiple :placeholder="$t('common.select')" style="width: 100%">
+                  <el-option v-for="cat in suitableCategoryOptions" :key="cat._id" :label="cat.name" :value="cat._id" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 个人信息 -->
+        <div class="edit-section">
+          <div class="edit-section-title">
+            <span>{{ $t('influencer.personalInfo') || $t('user.realName') }}</span>
+          </div>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.realName')">
+                <el-input v-model="form.realName" :placeholder="$t('influencer.realNameTip')" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.nickname')">
+                <el-input v-model="form.nickname" :placeholder="$t('influencer.nicknameTip')" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item :label="$t('influencer.gender')">
+                <el-radio-group v-model="form.gender">
+                  <el-radio value="male">{{ $t('influencer.male') }}</el-radio>
+                  <el-radio value="female">{{ $t('influencer.female') }}</el-radio>
+                  <el-radio value="other">{{ $t('influencer.other') }}</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 联系方式 -->
+        <div class="edit-section">
+          <div class="edit-section-title">
+            <span>{{ $t('influencer.contactInfo') }}</span>
+          </div>
+          <el-form-item :label="$t('influencer.phone')">
+            <div class="dynamic-inputs">
+              <div v-for="(phone, index) in form.phoneNumbers" :key="'phone-' + index" class="input-item">
+                <el-input v-model="form.phoneNumbers[index]" :placeholder="$t('influencer.phoneTip')" />
+                <el-button v-if="form.phoneNumbers.length > 1" type="danger" link @click="removePhone(index)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+              <el-button type="primary" link @click="addPhone" class="add-btn">
+                <el-icon><Plus /></el-icon> {{ $t('influencer.addPhone') }}
+              </el-button>
+            </div>
+          </el-form-item>
+          <el-form-item :label="$t('influencer.address')">
+            <div class="dynamic-inputs">
+              <div v-for="(address, index) in form.addresses" :key="'address-' + index" class="input-item">
+                <el-input v-model="form.addresses[index]" :placeholder="$t('influencer.addressTip')" />
+                <el-button v-if="form.addresses.length > 1" type="danger" link @click="removeAddress(index)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+              <el-button type="primary" link @click="addAddress" class="add-btn">
+                <el-icon><Plus /></el-icon> {{ $t('influencer.addAddress') }}
+              </el-button>
+            </div>
+          </el-form-item>
+          <el-form-item :label="$t('influencer.socialAccount')">
+            <div class="dynamic-inputs">
+              <div v-for="(social, index) in form.socialAccounts" :key="'social-' + index" class="input-item">
+                <el-input v-model="form.socialAccounts[index]" :placeholder="$t('influencer.socialAccountTip')" />
+                <el-button v-if="form.socialAccounts.length > 1" type="danger" link @click="removeSocial(index)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+              <el-button type="primary" link @click="addSocial" class="add-btn">
+                <el-icon><Plus /></el-icon> {{ $t('influencer.addSocial') }}
+              </el-button>
+            </div>
+          </el-form-item>
+        </div>
+
+      </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false" size="large">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" size="large">{{ $t('common.save') }}</el-button>
@@ -630,6 +664,9 @@ const editingInfluencer = ref(null)
 const currentInfluencer = ref(null)
 const maintenances = ref([])
 
+// 编辑表单的K单位粉丝数
+const editDisplayFollowers = ref(0)
+
 // 黑名单相关
 const blacklistInfluencers = ref([])
 const blacklistLoading = ref(false)
@@ -665,6 +702,8 @@ const form = reactive({
   status: 'enabled',
   categoryTags: [],
   suitableCategories: [],
+  latestFollowers: 0,
+  latestGmv: 0,
   monthlySalesCount: 0,
   avgVideoViews: 0,
   realName: '',
@@ -1004,6 +1043,8 @@ const createInfluencer = async () => {
       status: form.status,
       categoryTags: form.categoryTags,
       suitableCategories: form.suitableCategories,
+      latestFollowers: parseFollowersToDb(editDisplayFollowers.value),
+      latestGmv: form.latestGmv,
       monthlySalesCount: form.monthlySalesCount,
       avgVideoViews: form.avgVideoViews,
       realName: form.realName,
@@ -1031,6 +1072,7 @@ const updateInfluencer = async () => {
   try {
     const data = {
       ...form,
+      latestFollowers: parseFollowersToDb(editDisplayFollowers.value),
       phoneNumbers: form.phoneNumbers.filter(p => p.trim()),
       addresses: form.addresses.filter(a => a.trim()),
       socialAccounts: form.socialAccounts.filter(s => s.trim())
@@ -1063,6 +1105,8 @@ const editInfluencer = (row) => {
     status: row.status,
     categoryTags: (row.categoryTags || []).map(t => t._id || t),
     suitableCategories: (row.suitableCategories || []).map(c => c._id || c),
+    latestFollowers: row.latestFollowers || 0,
+    latestGmv: row.latestGmv || 0,
     monthlySalesCount: row.monthlySalesCount || 0,
     avgVideoViews: row.avgVideoViews || 0,
     realName: row.realName,
@@ -1072,6 +1116,8 @@ const editInfluencer = (row) => {
     phoneNumbers: (row.phoneNumbers || []).length > 0 ? [...row.phoneNumbers] : [''],
     socialAccounts: (row.socialAccounts || []).length > 0 ? [...row.socialAccounts] : ['']
   })
+  // 设置K单位粉丝数
+  editDisplayFollowers.value = row.latestFollowers ? row.latestFollowers / 1000 : 0
   showCreateDialog.value = true
 }
 
@@ -1711,5 +1757,91 @@ onMounted(() => {
   background: #f5f7fa;
   border-radius: 8px;
   margin-bottom: 12px;
+}
+
+/* ========================================
+   编辑弹层样式
+   ======================================== */
+
+/* 编辑头部 */
+.edit-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.edit-avatar {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.edit-title-area {
+  flex: 1;
+}
+
+.edit-id-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.edit-id-row .inline-form-item {
+  margin-bottom: 0;
+}
+
+.edit-id-row .inline-form-item :deep(.el-form-item__label) {
+  width: auto !important;
+  margin-right: 8px;
+}
+
+.edit-id-row .inline-form-item :deep(.el-form-item__content) {
+  margin-left: 0 !important;
+}
+
+/* 编辑区块 */
+.edit-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.edit-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+/* TikTok绿色标签 */
+.tiktok-green-label :deep(.el-form-item__label) {
+  color: #6DAD19;
+  font-weight: 500;
+}
+
+.tiktok-green-input :deep(.el-input__wrapper) {
+  border-color: #6DAD19;
+}
+
+.tiktok-green-input :deep(.el-input__wrapper:hover) {
+  border-color: #6DAD19;
+  box-shadow: 0 0 0 1px #6DAD19 inset;
+}
+
+.tiktok-green-input :deep(.el-input__wrapper.is-focus) {
+  border-color: #6DAD19;
+  box-shadow: 0 0 0 1px #6DAD19 inset;
 }
 </style>
