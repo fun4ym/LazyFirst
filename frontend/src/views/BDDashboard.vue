@@ -267,10 +267,23 @@ const loadBDUsers = async () => {
     return
   }
   try {
+    // 先查角色列表，找到BD角色的ID
+    const rolesRes = await request.get('/roles', {
+      params: { limit: 100 }
+    })
+    const roles = rolesRes.roles || []
+    const bdRole = roles.find(r => r.name === 'BD')
+    
+    if (!bdRole) {
+      console.error('未找到BD角色')
+      bdUsers.value = []
+      return
+    }
+    
+    // 再用BD角色ID查询用户
     const res = await request.get('/users', {
       params: {
-        companyId: userStore.companyId,
-        role: 'bd',
+        roleId: bdRole._id,
         status: 'active'
       }
     })
