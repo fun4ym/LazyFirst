@@ -6,11 +6,11 @@ const BaseData = require('../models/BaseData');
 const router = express.Router();
 
 /**
- * @route   GET /api/public/base-data
+ * @route   GET /api/public/base-data/list
  * @desc    公开获取基础数据列表（给 PublicCollection 页面用）
  * @access  Public
  */
-router.get('/', async (req, res) => {
+router.get('/list', async (req, res) => {
   try {
     const { type, limit = 100 } = req.query;
     const query = {};

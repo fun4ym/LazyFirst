@@ -33,11 +33,18 @@ request.interceptors.response.use(
 
     // 成功响应
     if (res.success) {
-      // 如果有data字段且是完整响应对象，则返回整个res（包括message）
-      if (res.data && (res.data.success !== undefined || res.data.errors !== undefined)) {
-        return res
+      // 如果 res.data 是数组（列表接口），直接返回 data
+      if (Array.isArray(res.data)) {
+        return res.data
       }
-      // 否则返回data内容
+      // 如果 res.data 是对象且有 pagination（分页接口），返回 { data, pagination }
+      if (res.data && res.data.pagination !== undefined) {
+        return {
+          data: res.data.data,
+          pagination: res.data.pagination
+        }
+      }
+      // 否则返回 data 内容
       return res.data || res
     } else {
       ElMessage.error(res.message || '请求失败')

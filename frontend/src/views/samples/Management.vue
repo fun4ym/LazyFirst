@@ -825,7 +825,7 @@
     >
       <el-form :model="sampleStatusForm" label-width="90px">
         <el-form-item :label="$t('samples.sampleStatus')">
-          <el-select v-model="sampleStatusForm.sampleStatus" :placeholder="$t('samples.selectSampleStatus')" style="width: 100%">
+          <el-select v-model="sampleStatusForm.sampleStatus" :placeholder="$t('samples.selectSampleStatus')" style="width: 100%" @change="handleSampleStatusChange">
             <el-option :label="$t('samples.pending')" value="pending" />
             <el-option :label="$t('samples.shipping') || 'Shipping'" value="shipping" />
             <el-option :label="$t('samples.shipped')" value="sent" />
@@ -1105,10 +1105,27 @@ const loadSamples = async () => {
 const loadLogisticsCompanies = async () => {
   try {
     const res = await request.get('/base-data', { params: { type: 'trackingUrl', limit: 100 } })
-    logisticsCompanyOptions.value = res.data || []
+    logisticsCompanyOptions.value = res || []
   } catch (error) {
     console.error('Load logistics companies error:', error)
     logisticsCompanyOptions.value = []
+  }
+}
+
+// 寄样状态变化时处理物流公司默认值
+const handleSampleStatusChange = async () => {
+  // 如果选择已寄样，先确保加载物流公司列表
+  if (sampleStatusForm.sampleStatus === 'sent') {
+    if (logisticsCompanyOptions.value.length === 0) {
+      await loadLogisticsCompanies()
+    }
+    // 默认选择 default（除非已有有效选择）
+    if (!sampleStatusForm.logisticsCompany || !logisticsCompanyOptions.value.find(opt => opt.code === sampleStatusForm.logisticsCompany)) {
+      const defaultOption = logisticsCompanyOptions.value.find(opt => opt.code === 'default')
+      if (defaultOption) {
+        sampleStatusForm.logisticsCompany = 'default'
+      }
+    }
   }
 }
 

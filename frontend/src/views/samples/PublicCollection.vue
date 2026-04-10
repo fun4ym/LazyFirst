@@ -456,7 +456,7 @@ const batchLogisticsCompany = ref('')  // 批量选择的物流公司
 // 加载物流公司列表
 const loadLogisticsCompanies = async () => {
   try {
-    const res = await axios.get(`${API_BASE}/public/base-data`, { params: { type: 'trackingUrl', limit: 100 } })
+    const res = await axios.get(`${API_BASE}/public/base-data/list`, { params: { type: 'trackingUrl', limit: 100 } })
     logisticsCompanyOptions.value = res.data.data || []
   } catch (error) {
     console.error('Load logistics companies error:', error)
