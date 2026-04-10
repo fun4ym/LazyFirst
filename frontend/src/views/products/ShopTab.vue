@@ -35,7 +35,9 @@
       <el-table-column :label="$t('shop.sampleLink')" min-width="180">
         <template #default="{ row }">
           <div v-if="row.identificationCode" class="sample-link">
-            <el-tag type="success" size="small">{{ $t('shop.generated') }}</el-tag>
+            <el-tag type="success" size="small">
+              <a :href="getSampleLink(row)" target="_blank" class="sample-link-a">{{ $t('shop.generated') }}</a>
+            </el-tag>
             <span class="generated-time">{{ formatDate(row.identificationCodeGeneratedAt) }}</span>
             <el-button
               link
@@ -545,6 +547,10 @@ const copySampleLink = async (row) => {
   }
 }
 
+const getSampleLink = (row) => {
+  return `${window.location.origin}/samples/public?s=${row.identificationCode}`
+}
+
 const refreshIdentificationCode = async (row) => {
   try {
     await ElMessageBox.confirm(`确定要刷新"${row.shopName}"的识别码吗?`, '提示', {
@@ -615,5 +621,14 @@ defineExpose({
 .generated-time {
   color: #909399;
   font-size: 12px;
+}
+
+.sample-link-a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sample-link-a:hover {
+  text-decoration: underline;
 }
 </style>

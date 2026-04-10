@@ -260,6 +260,7 @@
                 <div class="influencer-address" v-if="row.shippingInfo">
                   <el-icon><Location /></el-icon>
                   <span class="address-text">{{ row.shippingInfo }}</span>
+                  <el-icon class="copy-icon" @click.stop="copyAddress(row.shippingInfo)"><CopyDocument /></el-icon>
                 </div>
               </div>
             </template>
@@ -377,7 +378,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location } from '@element-plus/icons-vue'
+import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 const { t } = useI18n()
@@ -477,6 +478,17 @@ const getSampleStatusText = (status) => {
     refused: t('samplePublic.refused')
   }
   return textMap[status] || t('samplePublic.pending')
+}
+
+// 复制地址
+const copyAddress = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('地址已复制')
+  } catch (error) {
+    console.error('复制失败:', error)
+    ElMessage.error('复制失败')
+  }
 }
 
 // 获取识别码
@@ -1008,7 +1020,20 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
+  max-width: 160px;
+}
+
+.copy-icon {
+  cursor: pointer;
+  color: #409eff;
+  font-size: 14px;
+  margin-left: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.copy-icon:hover {
+  opacity: 1;
 }
 
 .video-info {
