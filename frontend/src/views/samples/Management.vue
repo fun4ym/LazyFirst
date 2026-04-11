@@ -1091,7 +1091,7 @@ const loadSamples = async () => {
       ...searchForm
     }
     const res = await request.get('/samples', { params })
-    samples.value = res.samples
+    samples.value = res.data?.samples || res.samples || []
     pagination.total = res.pagination.total
   } catch (error) {
     console.error('Load samples error:', error)
