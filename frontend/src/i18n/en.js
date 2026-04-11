@@ -1366,9 +1366,10 @@ export default {
     orderGenerated: 'Order Generated',
     // Sample status
     pending: 'Pending',
+    received: 'Received, waiting to ship',
     shipping: 'Shipping',
     sent: 'Sent',
-    refused: 'Refused',
+    refused: 'Refused, no cooperation',
     // Order status
     yes: 'Ordered',
     no: 'No Order',
@@ -1439,9 +1440,10 @@ export default {
     detail: 'Detail',
     // Sample status
     pending: 'Pending',
+    received: 'Received, waiting to ship',
     shipping: 'Shipping',
     sent: 'Sent',
-    refused: 'Refused',
+    refused: 'Refused, no cooperation',
     // Fulfillment status
     orderGenerated: 'Ordered',
     noOrder: 'No Order',

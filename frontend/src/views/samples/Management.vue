@@ -1034,9 +1034,10 @@ const formatDate = (date) => {
 const getSampleStatusType = (status) => {
   const typeMap = {
     pending: 'warning',    // 待审核 - 黄色
-    shipping: 'primary',   // 寄样中 - 蓝色
-    sent: 'success',       // 已寄样 - 绿色
-    refused: 'danger'      // 不合作 - 红色
+    received: 'primary',   // 接受申请 - 蓝色
+    shipping: 'primary',    // 寄样中 - 蓝色
+    sent: 'success',        // 已寄样 - 绿色
+    refused: 'danger'       // 不合作 - 红色
   }
   return typeMap[status] || 'info'
 }
@@ -1044,6 +1045,7 @@ const getSampleStatusType = (status) => {
 // 获取寄样状态文本（使用 computed 确保响应式更新）
 const sampleStatusTextMap = computed(() => ({
   pending: t('samples.pending'),
+  received: t('samples.received'),
   shipping: t('samples.shipping') || 'Shipping',
   sent: t('samples.shipped'),
   refused: t('samples.refused')

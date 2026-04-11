@@ -1622,9 +1622,10 @@ export default {
     detail: '详情',
     // 样品状态
     pending: '待审核',
+    received: '接受申请，等待寄样',
     shipping: '寄样中',
     sent: '已寄样',
-    refused: '不合作',
+    refused: '拒绝，不合作',
     // 履约状态
     orderGenerated: '已出单',
     noOrder: '未出单',

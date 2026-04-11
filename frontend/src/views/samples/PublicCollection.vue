@@ -502,6 +502,7 @@ const formatDateTime = (date) => {
 const getSampleStatusType = (status) => {
   const typeMap = {
     pending: 'warning',
+    received: 'primary',
     shipping: 'primary',
     sent: 'success',
     refused: 'danger'
@@ -512,6 +513,7 @@ const getSampleStatusType = (status) => {
 const getSampleStatusText = (status) => {
   const textMap = {
     pending: t('samplePublic.pending'),
+    received: t('samplePublic.received'),
     shipping: t('samplePublic.shipping'),
     sent: t('samplePublic.sent'),
     refused: t('samplePublic.refused')
