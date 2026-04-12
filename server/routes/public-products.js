@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 20, keyword, categoryId, shopId, gradeId, ref } = req.query;
+    const { page = 1, limit = 20, keyword, categoryId, shopId, gradeId, grade, ref } = req.query;
 
     // 记录推广追踪
     const refUser = ref || req.headers['x-ref-user'] || '';
@@ -51,14 +51,23 @@ router.get('/', async (req, res) => {
       query.shopId = shopId;
     }
 
-    // 商品等级筛选（按gradeId）
+    // 商品等级筛选（支持gradeId和grade code两种方式）
     if (gradeId) {
       query.gradeId = gradeId;
+    } else if (grade) {
+      // 通过grade code查找BaseData的_id，再用gradeId筛选
+      const gradeData = await BaseData.findOne({ type: 'grade', code: grade, status: 'active' }).select('_id').lean();
+      if (gradeData) {
+        query.gradeId = gradeData._id;
+      } else {
+        // fallback到productGrade
+        query.productGrade = grade;
+      }
     }
 
     const products = await Product.find(query)
       .populate('shopId', 'shopName')
-      .select('_id name tiktokProductId productGrade categoryId gradeId images price sellingPrice currency squareCommissionRate commissionRate activityConfigs shopId')
+      .select('_id name tiktokProductId productGrade categoryId gradeId images price sellingPrice currency priceRangeMin priceRangeMax squareCommissionRate commissionRate activityConfigs shopId')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
@@ -168,8 +177,8 @@ router.get('/filters', async (req, res) => {
 
     // 从BaseData获取商品等级（type='grade'）
     const grades = await BaseData.find({ type: 'grade', status: 'active' })
-      .select('_id name englishName')
-      .sort({ name: 1 })
+      .select('_id name code englishName thaiName')
+      .sort({ createdAt: 1 })
       .lean();
 
     // 获取所有active的店铺

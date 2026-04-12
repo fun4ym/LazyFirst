@@ -67,7 +67,7 @@
           <div class="stat-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6DAD19" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
-          <div class="stat-value">฿{{ stats.maxSellingPrice }}</div>
+          <div class="stat-value">+{{ stats.maxCommissionDiff }}%</div>
           <div class="stat-label">ส่วนต่างสูงสุด</div>
         </div>
       </div>
@@ -78,16 +78,19 @@
       <div class="filter-scroll">
         <button
           class="filter-chip"
-          :class="{ active: !filters.gradeId }"
+          :class="{ active: !filters.gradeCode }"
           @click="selectGrade('')"
         >All Products</button>
         <button
           v-for="g in grades"
           :key="g._id"
           class="filter-chip"
-          :class="{ active: filters.gradeId === g._id }"
-          @click="selectGrade(g._id)"
-        >{{ g.name }}</button>
+          :class="{ active: filters.gradeCode === g.code }"
+          @click="selectGrade(g.code)"
+        >
+          <span class="chip-label">{{ g.englishName || g.name }}</span>
+          <span v-if="g.thaiName" class="chip-thai">{{ g.thaiName }}</span>
+        </button>
       </div>
       <div class="filter-row">
         <el-select
@@ -139,7 +142,10 @@
             <span class="shop-dot"></span>{{ prod.shopId.shopName }}
           </div>
           <div class="card-name">{{ prod.name }}</div>
-          <div v-if="prod.tiktokProductId" class="card-tiktok-id">ID: {{ prod.tiktokProductId }}</div>
+          <div class="card-id-price-row">
+            <span v-if="prod.tiktokProductId" class="card-tiktok-id">ID: {{ prod.tiktokProductId }}</span>
+            <span v-if="prod.priceRangeMin || prod.priceRangeMax" class="card-price-range">{{ formatPrice(prod.priceRangeMin, prod.priceRangeMax, prod.currency) }}</span>
+          </div>
 
           <!-- Commission Grid -->
           <div class="comm-grid">
@@ -226,7 +232,7 @@ const stats = ref({
 
 const filters = ref({
   keyword: '',
-  gradeId: '',
+  gradeCode: '',
   categoryId: '',
   shopId: ''
 })
@@ -236,7 +242,7 @@ const toastMessage = ref('')
 const refUser = ref('')
 
 const hasActiveFilters = computed(() => {
-  return filters.value.keyword || filters.value.gradeId || filters.value.categoryId || filters.value.shopId
+  return filters.value.keyword || filters.value.gradeCode || filters.value.categoryId || filters.value.shopId
 })
 
 function showToast(msg) {
@@ -306,7 +312,7 @@ async function loadProducts(append = false) {
       limit: pageSize
     })
     if (filters.value.keyword) params.set('keyword', filters.value.keyword)
-    if (filters.value.gradeId) params.set('gradeId', filters.value.gradeId)
+    if (filters.value.gradeCode) params.set('grade', filters.value.gradeCode)
     if (filters.value.categoryId) params.set('categoryId', filters.value.categoryId)
     if (filters.value.shopId) params.set('shopId', filters.value.shopId)
     if (refUser.value) params.set('ref', refUser.value)
@@ -335,8 +341,8 @@ function onSearch() {
   loadProducts()
 }
 
-function selectGrade(id) {
-  filters.value.gradeId = id
+function selectGrade(code) {
+  filters.value.gradeCode = code
   page.value = 1
   loadProducts()
 }
@@ -347,7 +353,7 @@ function onFilterChange() {
 }
 
 function clearFilters() {
-  filters.value = { keyword: '', gradeId: '', categoryId: '', shopId: '' }
+  filters.value = { keyword: '', gradeCode: '', categoryId: '', shopId: '' }
   page.value = 1
   loadProducts()
 }
@@ -382,6 +388,16 @@ function getActivityLink(prod) {
 function formatRate(rate) {
   if (!rate && rate !== 0) return '-'
   return (rate * 100).toFixed(1) + '%'
+}
+
+function formatPrice(min, max, currency = 'THB') {
+  const symbol = currency === 'THB' ? '฿' : currency
+  if (min && max && min !== max) {
+    return `${symbol}${min.toLocaleString()} - ${max.toLocaleString()}`
+  } else if (min || max) {
+    return `${symbol}${(min || max).toLocaleString()}`
+  }
+  return ''
 }
 
 async function trackClick(productId) {
@@ -428,8 +444,6 @@ async function trackClick(productId) {
   color: var(--eva-text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Noto Sans Thai', sans-serif;
   -webkit-font-smoothing: antialiased;
-  max-width: 480px;
-  margin: 0 auto;
   position: relative;
   overflow-x: hidden;
 }
@@ -438,10 +452,8 @@ async function trackClick(productId) {
 .bg-effects {
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 480px;
-  max-width: 100%;
+  left: 0;
+  right: 0;
   height: 100%;
   pointer-events: none;
   z-index: 0;
@@ -747,6 +759,16 @@ async function trackClick(productId) {
   color: white;
   box-shadow: 0 0 20px rgba(119,89,153,0.35);
 }
+.chip-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.chip-thai {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-left: 4px;
+  font-weight: 400;
+}
 .filter-row {
   display: flex;
   gap: 10px;
@@ -769,6 +791,26 @@ async function trackClick(productId) {
   position: relative;
   z-index: 1;
   padding: 0 16px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .product-list {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 768px) {
+  .product-list {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+@media (min-width: 1024px) {
+  .product-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 .product-card {
   position: relative;
@@ -888,8 +930,18 @@ async function trackClick(productId) {
 .card-tiktok-id {
   font-size: 12px;
   color: var(--eva-text-muted);
-  margin-bottom: 12px;
   font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.card-id-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.card-price-range {
+  font-size: 14px;
+  color: var(--eva-purple-light);
+  font-weight: 600;
 }
 
 /* Commission Grid */

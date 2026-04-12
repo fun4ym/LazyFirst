@@ -92,11 +92,11 @@ const productSchema = new mongoose.Schema({
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ProductCategory'
+    ref: 'BaseData'
   },
   gradeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ProductGrade'
+    ref: 'BaseData'
   },
   name: {
     type: String,
@@ -118,7 +118,7 @@ const productSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'USD'
+    default: 'THB'
   },
   // 售价（合作价格）
   sellingPrice: {

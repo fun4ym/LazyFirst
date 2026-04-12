@@ -19,6 +19,10 @@ const baseDataSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  thaiName: {
+    type: String,
+    trim: true
+  },
   value: {
     type: mongoose.Schema.Types.Mixed
   },
