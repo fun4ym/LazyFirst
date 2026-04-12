@@ -50,7 +50,6 @@
               @change="loadSamples"
             >
               <el-option :label="$t('samplePublic.pending')" value="pending" />
-              <el-option :label="$t('samplePublic.shipping')" value="shipping" />
               <el-option :label="$t('samplePublic.sent')" value="sent" />
               <el-option :label="$t('samplePublic.refused')" value="refused" />
             </el-select>
@@ -135,7 +134,6 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="pending">{{ $t('samplePublic.pending') }}</el-dropdown-item>
-                  <el-dropdown-item command="shipping">{{ $t('samplePublic.shipping') }}</el-dropdown-item>
                   <el-dropdown-item command="sent">{{ $t('samplePublic.sent') }}</el-dropdown-item>
                   <el-dropdown-item command="refused">{{ $t('samplePublic.refused') }}</el-dropdown-item>
                 </el-dropdown-menu>
@@ -181,7 +179,7 @@
                 <el-icon class="edit-icon"><Edit /></el-icon>
               </div>
               <div v-if="row.sampleStatus === 'refused' && row.refusalReason" class="refusal-reason">
-                {{ $t('samplePublic.reason') }}{{ row.refusalReason }}
+                {{ $t('samplePublic.refusalReason') }}：{{ row.refusalReason }}
               </div>
               <!-- 已寄样时显示物流信息 -->
               <div v-if="row.sampleStatus === 'sent'" class="sent-info">
@@ -190,7 +188,7 @@
                 <span v-if="row.trackingNumber" class="tracking-no">{{ row.trackingNumber }}</span>
               </div>
               <div v-if="row.shippingDate" class="shipping-date">
-                {{ $t('samplePublic.shipping') }}{{ formatDate(row.shippingDate) }}
+                {{ $t('samplePublic.shippingPrefix') }}{{ formatDate(row.shippingDate) }}
               </div>
             </template>
           </el-table-column>
@@ -332,7 +330,7 @@
         <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
           <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
             <el-option :label="$t('samplePublic.pending')" value="pending" />
-            <el-option :label="$t('samplePublic.shipping')" value="shipping" />
+            <el-option :label="$t('samplePublic.received')" value="received" />
             <el-option :label="$t('samplePublic.sent')" value="sent" />
             <el-option :label="$t('samplePublic.refused')" value="refused" />
           </el-select>
@@ -503,7 +501,6 @@ const getSampleStatusType = (status) => {
   const typeMap = {
     pending: 'warning',
     received: 'primary',
-    shipping: 'primary',
     sent: 'success',
     refused: 'danger'
   }
@@ -514,7 +511,6 @@ const getSampleStatusText = (status) => {
   const textMap = {
     pending: t('samplePublic.pending'),
     received: t('samplePublic.received'),
-    shipping: t('samplePublic.shipping'),
     sent: t('samplePublic.sent'),
     refused: t('samplePublic.refused')
   }

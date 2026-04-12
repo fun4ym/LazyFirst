@@ -110,7 +110,9 @@ export default {
     bdWorkspace: 'BD工作台',
     shops: '店铺管理',
     bdDashboard: 'BD仪表盘',
-    initImport: '初始化导入'
+    initImport: '初始化导入',
+    marketWorkspace: '市场工作台',
+    recruitmentConfig: '招募配置'
   },
   login: {
     title: 'LazyFirst',
@@ -1223,12 +1225,10 @@ export default {
     detail: '详情',
     delete: '删除',
     // 样品状态
-    pending: '待处理',
-    approved: '已通过',
-    shipped: '已发货',
-    received: '已收货',
-    refused: '已拒绝',
-    returned: '已退货',
+    pending: '待审核',
+    received: '接受申请，等待寄样',
+    shipped: '已寄样',
+    refused: '拒绝，不合作',
     // 履约状态
     orderGenerated: '已出单',
     noOrder: '未出单',
@@ -1549,16 +1549,17 @@ export default {
     orderGenerated: '是否出单',
     // 样品状态
     pending: '待审核',
-    shipping: '寄样中',
+    received: '接受申请，等待寄样',
     sent: '已寄样',
-    refused: '不合作',
+    refused: '拒绝，不合作',
+    refusalReason: '拒绝原因',
     // 出单状态
     yes: '已出单',
     no: '未出单',
     // 其他
     reason: '原因：',
     logistics: '物流：',
-    shipping: '发货：',
+    shippingPrefix: '发货：',
     viewVideo: '查看视频',
     productId: 'ID: ',
     followers: '粉丝数(K)',
@@ -1723,5 +1724,88 @@ export default {
     // 其他
     sampleSent: '已寄样',
     notShipped: '未发货'
+  },
+  // 市场工作台-招募配置
+  recruitment: {
+    title: '招募配置',
+    // 搜索表单
+    search: '搜索',
+    reset: '重置',
+    keyword: '关键词',
+    keywordPlaceholder: '搜索名称或简介',
+    status: '状态',
+    all: '全部',
+    enabled: '启用',
+    disabled: '禁用',
+    // 表格列
+    name: '招募',
+    description: '简介',
+    isStrict: '是否强要求',
+    isStrictShort: '强要求',
+    strictYes: '是',
+    strictNo: '否',
+    requirement: '要求',
+    requirementGmv: 'GMV要求',
+    requirementFollowers: '粉丝数(K)',
+    requirementFollowersShort: '粉丝数',
+    requirementMonthlySales: '月销件数',
+    requirementAvgViews: '视频均播',
+    products: '包含产品',
+    callableUsers: '可调用人员',
+    allUsers: '全部人员',
+    creator: '新增人',
+    createdAt: '新增时间',
+    maintainer: '维护信息',
+    enabledStatus: '启用状态',
+    // 操作
+    add: '新增',
+    edit: '编辑',
+    delete: '删除',
+    detail: '详情',
+    // 弹窗
+    addTitle: '新增招募',
+    editTitle: '编辑招募',
+    detailTitle: '招募详情',
+    // 表单字段
+    nameField: '招募名称',
+    namePlaceholder: '请输入招募名称',
+    descriptionField: '简介',
+    descriptionPlaceholder: '请输入简介',
+    isStrictField: '是否强要求',
+    isStrictTip: '开启后，达人需满足所有条件才能参与',
+    gmvField: 'GMV要求',
+    gmvPlaceholder: '请输入GMV要求',
+    followersField: '粉丝数(K)',
+    followersPlaceholder: '请输入粉丝数要求',
+    monthlySalesField: '月销件数',
+    monthlySalesPlaceholder: '请输入月销件数要求',
+    avgViewsField: '视频均播',
+    avgViewsPlaceholder: '请输入视频均播要求',
+    productsField: '包含产品',
+    productsPlaceholder: '请选择产品',
+    callableUsersField: '可调用人员',
+    callableUsersPlaceholder: '留空表示全部人员可调用',
+    enabledField: '启用状态',
+    // 按钮
+    save: '保存',
+    cancel: '取消',
+    // 消息
+    createSuccess: '创建成功',
+    createFailed: '创建失败',
+    updateSuccess: '更新成功',
+    updateFailed: '更新失败',
+    deleteSuccess: '删除成功',
+    deleteFailed: '删除失败',
+    loadFailed: '加载数据失败',
+    confirmDelete: '确定要删除该招募吗？',
+    confirmDeleteTip: '删除后将禁用该招募',
+    // 验证
+    nameRequired: '请输入招募名称',
+    // 无数据
+    noProducts: '暂无产品',
+    noUsers: '全部人员',
+    squareRate: '广场佣金率',
+    promoRate: '推广收益',
+    extraPromo: '推广加成'
   }
 }

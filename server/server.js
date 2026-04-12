@@ -29,6 +29,9 @@ const productStatsRoutes = require('./routes/product-stats');
 const publicSampleRoutes = require('./routes/public-samples');
 const initializationRoutes = require('./routes/initialization');
 const initImportRoutes = require('./routes/init-import');
+const recruitmentRoutes = require('./routes/recruitments');
+const publicRecruitmentRoutes = require('./routes/public-recruitment');
+const publicProductsRoutes = require('./routes/public-products');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -103,6 +106,9 @@ app.use('/api/public/samples', publicSampleRoutes);
 app.use('/api/public/base-data', baseDataRoutes);  // 公开的基础数据接口
 app.use('/api/initialization', initializationRoutes);
 app.use('/api/init-import', initImportRoutes);
+app.use('/api/recruitments', recruitmentRoutes);
+app.use('/api/public/recruitment', publicRecruitmentRoutes);
+app.use('/api/public/products', publicProductsRoutes);
 
 // 错误处理
 app.use(notFound);

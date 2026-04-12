@@ -110,7 +110,9 @@ export default {
     bdWorkspace: 'พื้นที่ทำงาน BD',
     shops: 'ร้านค้า',
     bdDashboard: 'แดชบอร์ด BD',
-    initImport: 'นำเข้าเริ่มต้น'
+    initImport: 'นำเข้าเริ่มต้น',
+    marketWorkspace: 'พื้นที่ทำงานตลาด',
+    recruitmentConfig: 'ตั้งค่าการรับสมัคร'
   },
   login: {
     title: 'LazyFirst',
@@ -991,12 +993,10 @@ export default {
     detail: 'รายละเอียด',
     delete: 'ลบ',
     // 样品状态
-    pending: 'รอดำเนินการ',
-    approved: 'อนุมัติแล้ว',
+    pending: 'รอตรวจสอบ',
+    received: 'รับแล้ว รอจัดส่ง',
     shipped: 'จัดส่งแล้ว',
-    received: 'รับแล้ว',
-    refused: 'ปฏิเสธ',
-    returned: 'คืนแล้ว',
+    refused: 'ปฏิเสธ ไม่ร่วมมือ',
     // 履约状态
     orderGenerated: 'ออกคำสั่งซื้อ',
     noOrder: 'ยังไม่มีคำสั่งซื้อ',
@@ -1316,16 +1316,16 @@ export default {
     // สถานะตัวอย่าง
     pending: 'รอตรวจสอบ',
     received: 'รับแล้ว รอจัดส่ง',
-    shipping: 'กำลังจัดส่ง',
     sent: 'จัดส่งแล้ว',
     refused: 'ปฏิเสธ ไม่ร่วมมือ',
+    refusalReason: 'เหตุผลที่ปฏิเสธ',
     // สถานะคำสั่งซื้อ
     yes: 'ออกคำสั่งซื้อแล้ว',
     no: 'ยังไม่ออก',
     // อื่นๆ
     reason: 'เหตุผล:',
     logistics: 'ขนส่ง:',
-    shipping: 'จัดส่ง:',
+    shippingPrefix: 'จัดส่ง:',
     viewVideo: 'ดูวิดีโอ',
     productId: 'ID: ',
     followers: 'ผู้ติดตาม',
@@ -1490,5 +1490,88 @@ export default {
     // อื่นๆ
     sampleSent: 'จัดส่งตัวอย่างแล้ว',
     notShipped: 'ยังไม่จัดส่ง'
+  },
+  // พื้นที่ทำงานตลาด - ตั้งค่าการรับสมัคร
+  recruitment: {
+    title: 'ตั้งค่าการรับสมัคร',
+    // แบบฟอร์มค้นหา
+    search: 'ค้นหา',
+    reset: 'รีเซ็ต',
+    keyword: 'คำค้น',
+    keywordPlaceholder: 'ค้นหาชื่อหรือคำอธิบาย',
+    status: 'สถานะ',
+    all: 'ทั้งหมด',
+    enabled: 'เปิดใช้งาน',
+    disabled: 'ปิดใช้งาน',
+    // คอลัมน์ตาราง
+    name: 'การรับสมัคร',
+    description: 'คำอธิบาย',
+    isStrict: 'ข้อกำหนดบังคับ',
+    isStrictShort: 'บังคับ',
+    strictYes: 'ใช่',
+    strictNo: 'ไม่',
+    requirement: 'ข้อกำหนด',
+    requirementGmv: 'GMV ที่ต้องการ',
+    requirementFollowers: 'ผู้ติดตาม (K)',
+    requirementFollowersShort: 'ผู้ติดตาม',
+    requirementMonthlySales: 'ยอดขายรายเดือน',
+    requirementAvgViews: 'ยอดเข้าชมเฉลี่ย',
+    products: 'สินค้า',
+    callableUsers: 'ผู้ใช้ที่เรียกได้',
+    allUsers: 'ผู้ใช้ทั้งหมด',
+    creator: 'ผู้สร้าง',
+    createdAt: 'วันที่สร้าง',
+    maintainer: 'ผู้ดูแล',
+    enabledStatus: 'สถานะ',
+    // การดำเนินการ
+    add: 'เพิ่ม',
+    edit: 'แก้ไข',
+    delete: 'ลบ',
+    detail: 'รายละเอียด',
+    // กล่องโต้ตอบ
+    addTitle: 'เพิ่มการรับสมัคร',
+    editTitle: 'แก้ไขการรับสมัคร',
+    detailTitle: 'รายละเอียดการรับสมัคร',
+    // ฟิลด์แบบฟอร์ม
+    nameField: 'ชื่อการรับสมัคร',
+    namePlaceholder: 'กรอกชื่อการรับสมัคร',
+    descriptionField: 'คำอธิบาย',
+    descriptionPlaceholder: 'กรอกคำอธิบาย',
+    isStrictField: 'ข้อกำหนดบังคับ',
+    isStrictTip: 'เมื่อเปิดใช้ มีเดียร์ต้องเข้าเงื่อนไขทั้งหมด',
+    gmvField: 'GMV ที่ต้องการ',
+    gmvPlaceholder: 'กรอกข้อกำหนด GMV',
+    followersField: 'ผู้ติดตาม (K)',
+    followersPlaceholder: 'กรอกข้อกำหนดผู้ติดตาม',
+    monthlySalesField: 'ยอดขายรายเดือน',
+    monthlySalesPlaceholder: 'กรอกข้อกำหนดยอดขายรายเดือน',
+    avgViewsField: 'ยอดเข้าชมเฉลี่ย',
+    avgViewsPlaceholder: 'กรอกข้อกำหนดยอดเข้าชมเฉลี่ย',
+    productsField: 'สินค้า',
+    productsPlaceholder: 'เลือกสินค้า',
+    callableUsersField: 'ผู้ใช้ที่เรียกได้',
+    callableUsersPlaceholder: 'ปล่อยว่างสำหรับผู้ใช้ทั้งหมด',
+    enabledField: 'สถานะ',
+    // ปุ่ม
+    save: 'บันทึก',
+    cancel: 'ยกเลิก',
+    // ข้อความ
+    createSuccess: 'สร้างสำเร็จ',
+    createFailed: 'สร้างล้มเหลว',
+    updateSuccess: 'อัปเดตสำเร็จ',
+    updateFailed: 'อัปเดตล้มเหลว',
+    deleteSuccess: 'ลบสำเร็จ',
+    deleteFailed: 'ลบล้มเหลว',
+    loadFailed: 'โหลดข้อมูลล้มเหลว',
+    confirmDelete: 'ต้องการลบการรับสมัครนี้หรือไม่?',
+    confirmDeleteTip: 'การรับสมัครจะถูกปิดใช้งานหลังการลบ',
+    // การตรวจสอบ
+    nameRequired: 'กรุณากรอกชื่อการรับสมัคร',
+    // ว่าง
+    noProducts: 'ไม่มีสินค้า',
+    noUsers: 'ผู้ใช้ทั้งหมด',
+    squareRate: 'อัตราค่าคอมสแควร์',
+    promoRate: 'อัตราโปรโมชั่น',
+    extraPromo: 'โปรโมชั่นเพิ่ม'
   }
 }

@@ -109,7 +109,9 @@ export default {
     bdWorkspace: 'BD Workspace',
     shops: 'Shops',
     bdDashboard: 'BD Dashboard',
-    initImport: 'Initial Import'
+    initImport: 'Initial Import',
+    marketWorkspace: 'Market Workspace',
+    recruitmentConfig: 'Recruitment Config'
   },
   login: {
     title: 'LazyFirst',
@@ -1043,11 +1045,9 @@ export default {
     delete: 'Delete',
     // 样品状态
     pending: 'Pending',
-    approved: 'Approved',
-    shipped: 'Shipped',
-    received: 'Received',
-    refused: 'Refused',
-    returned: 'Returned',
+    received: 'Received, waiting to ship',
+    shipped: 'Sent',
+    refused: 'Refused, no cooperation',
     // 履约状态
     orderGenerated: 'Order Generated',
     noOrder: 'No Order',
@@ -1367,16 +1367,16 @@ export default {
     // Sample status
     pending: 'Pending',
     received: 'Received, waiting to ship',
-    shipping: 'Shipping',
     sent: 'Sent',
     refused: 'Refused, no cooperation',
+    refusalReason: 'Refusal Reason',
     // Order status
     yes: 'Ordered',
     no: 'No Order',
     // Other
     reason: 'Reason:',
     logistics: 'Logistics:',
-    shipping: 'Shipped:',
+    shippingPrefix: 'Shipped:',
     viewVideo: 'View Video',
     productId: 'ID: ',
     followers: 'Followers (K)',
@@ -1541,5 +1541,88 @@ export default {
     // Other
     sampleSent: 'Sample Sent',
     notShipped: 'Not Shipped'
+  },
+  // Market Workspace - Recruitment Config
+  recruitment: {
+    title: 'Recruitment Config',
+    // Search form
+    search: 'Search',
+    reset: 'Reset',
+    keyword: 'Keyword',
+    keywordPlaceholder: 'Search by name or description',
+    status: 'Status',
+    all: 'All',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    // Table columns
+    name: 'Recruitment',
+    description: 'Description',
+    isStrict: 'Strict Requirement',
+    isStrictShort: 'Strict',
+    strictYes: 'Yes',
+    strictNo: 'No',
+    requirement: 'Requirements',
+    requirementGmv: 'GMV Required',
+    requirementFollowers: 'Followers (K)',
+    requirementFollowersShort: 'Followers',
+    requirementMonthlySales: 'Monthly Sales',
+    requirementAvgViews: 'Avg Views',
+    products: 'Products',
+    callableUsers: 'Callable Users',
+    allUsers: 'All Users',
+    creator: 'Creator',
+    createdAt: 'Created At',
+    maintainer: 'Maintainer',
+    enabledStatus: 'Status',
+    // Actions
+    add: 'Add',
+    edit: 'Edit',
+    delete: 'Delete',
+    detail: 'Detail',
+    // Dialog
+    addTitle: 'Add Recruitment',
+    editTitle: 'Edit Recruitment',
+    detailTitle: 'Recruitment Detail',
+    // Form fields
+    nameField: 'Recruitment Name',
+    namePlaceholder: 'Enter recruitment name',
+    descriptionField: 'Description',
+    descriptionPlaceholder: 'Enter description',
+    isStrictField: 'Strict Requirement',
+    isStrictTip: 'When enabled, influencers must meet all requirements',
+    gmvField: 'GMV Required',
+    gmvPlaceholder: 'Enter GMV requirement',
+    followersField: 'Followers (K)',
+    followersPlaceholder: 'Enter followers requirement',
+    monthlySalesField: 'Monthly Sales',
+    monthlySalesPlaceholder: 'Enter monthly sales requirement',
+    avgViewsField: 'Avg Views',
+    avgViewsPlaceholder: 'Enter avg views requirement',
+    productsField: 'Products',
+    productsPlaceholder: 'Select products',
+    callableUsersField: 'Callable Users',
+    callableUsersPlaceholder: 'Leave empty for all users',
+    enabledField: 'Status',
+    // Buttons
+    save: 'Save',
+    cancel: 'Cancel',
+    // Messages
+    createSuccess: 'Created successfully',
+    createFailed: 'Create failed',
+    updateSuccess: 'Updated successfully',
+    updateFailed: 'Update failed',
+    deleteSuccess: 'Deleted successfully',
+    deleteFailed: 'Delete failed',
+    loadFailed: 'Failed to load data',
+    confirmDelete: 'Are you sure to delete this recruitment?',
+    confirmDeleteTip: 'The recruitment will be disabled after deletion',
+    // Validation
+    nameRequired: 'Please enter recruitment name',
+    // Empty
+    noProducts: 'No products',
+    noUsers: 'All users',
+    squareRate: 'Square Rate',
+    promoRate: 'Promo Rate',
+    extraPromo: 'Extra Promo'
   }
 }

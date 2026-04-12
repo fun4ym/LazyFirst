@@ -54,6 +54,20 @@ const routes = [
     component: () => import('@/views/samples/PublicCollection.vue'),
     meta: { requiresAuth: false }
   },
+  // 公开招募页面（通过识别码访问）
+  {
+    path: '/recruitments/public',
+    name: 'PublicRecruitment',
+    component: () => import('@/views/recruitments/PublicRecruitment.vue'),
+    meta: { requiresAuth: false }
+  },
+  // 公开商品浏览页面（达人看商品）
+  {
+    path: '/products/public',
+    name: 'PublicProducts',
+    component: () => import('@/views/products/PublicProducts.vue'),
+    meta: { requiresAuth: false }
+  },
   {
     path: '/',
     component: () => import('@/layouts/MainLayout.vue'),
@@ -141,6 +155,12 @@ const routes = [
         name: 'BdDaily',
         component: () => import('@/views/bd-daily/Index.vue'),
         meta: { title: 'BD每日统计' }
+      },
+      {
+        path: 'recruitments',
+        name: 'Recruitments',
+        component: () => import('@/views/recruitments/Index.vue'),
+        meta: { title: '招募配置' }
       },
       {
         path: 'settings',

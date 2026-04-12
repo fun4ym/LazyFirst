@@ -7,7 +7,7 @@
 
       <el-menu
         :default-active="activeMenu"
-        :default-openeds="['bd-workspace', 'supply-chain', 'data-collection', 'reports', 'settings']"
+        :default-openeds="['bd-workspace', 'supply-chain', 'data-collection', 'reports', 'market-workspace', 'settings']"
         router
         class="sidebar-menu"
       >
@@ -77,6 +77,17 @@
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.performance()" index="/performance">
             <span>{{ $t('menu.performance') }}</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 市场工作台 -->
+        <el-sub-menu v-if="menuPermissions.marketWorkspace()" index="market-workspace">
+          <template #title>
+            <el-icon><Shop /></el-icon>
+            <span>{{ $t('menu.marketWorkspace') }}</span>
+          </template>
+          <el-menu-item v-if="menuPermissions.recruitmentConfig()" index="/recruitments">
+            <span>{{ $t('menu.recruitmentConfig') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -232,6 +243,10 @@ const menuPermissions = {
   bdDashboard: () => hasAnyPermission(['bdDashboard:read', 'performance:read']),
   bdDaily: () => hasPermission('bdDaily:read'),
   performance: () => hasPermission('performance:read'),
+
+  // 市场工作台 - 需要招募配置权限
+  marketWorkspace: () => hasAnyPermission(['recruitments:read', 'recruitments:create', 'recruitments:update', 'recruitments:delete']),
+  recruitmentConfig: () => hasAnyPermission(['recruitments:read', 'recruitments:create', 'recruitments:update', 'recruitments:delete']),
 
   // 系统设置 - 需要对应模块的读取权限
   settings: () => hasAnyPermission(['users:read', 'roles:read', 'departments:read', 'commissions:read', 'baseData:read', 'systemModels:read', 'initImport:read']) || isSuperAdmin(),

@@ -827,7 +827,7 @@
         <el-form-item :label="$t('samples.sampleStatus')">
           <el-select v-model="sampleStatusForm.sampleStatus" :placeholder="$t('samples.selectSampleStatus')" style="width: 100%" @change="handleSampleStatusChange">
             <el-option :label="$t('samples.pending')" value="pending" />
-            <el-option :label="$t('samples.shipping') || 'Shipping'" value="shipping" />
+            <el-option :label="$t('samples.received')" value="received" />
             <el-option :label="$t('samples.shipped')" value="sent" />
             <el-option :label="$t('samples.refused')" value="refused" />
           </el-select>
@@ -1035,7 +1035,6 @@ const getSampleStatusType = (status) => {
   const typeMap = {
     pending: 'warning',    // 待审核 - 黄色
     received: 'primary',   // 接受申请 - 蓝色
-    shipping: 'primary',    // 寄样中 - 蓝色
     sent: 'success',        // 已寄样 - 绿色
     refused: 'danger'       // 不合作 - 红色
   }
@@ -1046,7 +1045,6 @@ const getSampleStatusType = (status) => {
 const sampleStatusTextMap = computed(() => ({
   pending: t('samples.pending'),
   received: t('samples.received'),
-  shipping: t('samples.shipping') || 'Shipping',
   sent: t('samples.shipped'),
   refused: t('samples.refused')
 }))
