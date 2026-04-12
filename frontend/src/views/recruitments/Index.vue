@@ -4,7 +4,7 @@
       <template #header>
         <div class="page-header">
           <h3>{{ $t('recruitment.title') }}</h3>
-          <el-button type="primary" @click="showAddDialog">
+          <el-button type="primary" @click="showAddDialog" v-if="hasPermission('recruitments:create')">
             <el-icon><Plus /></el-icon>
             {{ $t('recruitment.add') }}
           </el-button>
@@ -98,8 +98,8 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showEditDialog(row)">{{ $t('recruitment.edit') }}</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">{{ $t('recruitment.delete') }}</el-button>
+            <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('recruitments:update')">{{ $t('recruitment.edit') }}</el-button>
+            <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('recruitments:delete')">{{ $t('recruitment.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -310,9 +310,11 @@ import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
+import AuthManager from '@/utils/auth'
 import { Plus, Link, CopyDocument } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
+const hasPermission = (perm) => AuthManager.hasPermission(perm)
 
 // 搜索表单
 const searchForm = reactive({

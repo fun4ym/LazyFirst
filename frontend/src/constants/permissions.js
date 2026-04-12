@@ -29,6 +29,10 @@ export const MODULES = {
   BD_DAILY: { code: 'bdDaily', name: 'BD日报', parent: 'reports' },
   PERFORMANCE: { code: 'performance', name: '业绩报表', parent: 'reports' },
 
+  // 市场工作台
+  MARKET_WORKSPACE: { code: 'marketWorkspace', name: '市场工作台', dataScope: false },
+  RECRUITMENTS: { code: 'recruitments', name: '招募配置', parent: 'marketWorkspace' },
+
   // 系统设置
   SETTINGS: { code: 'settings', name: '系统设置', dataScope: false },
   USERS: { code: 'users', name: '用户管理', parent: 'settings' },
@@ -121,6 +125,9 @@ export const PERMISSION_MAP = {
   '/bd-daily': [makePermission('bdDaily', 'read')],
   '/performance': [makePermission('performance', 'read')],
 
+  // 市场工作台
+  '/recruitments': [makePermission('recruitments', 'read')],
+
   // 系统设置
   '/settings/users': [makePermission('users', 'read')],
   '/settings/roles': [makePermission('roles', 'read')],
@@ -143,4 +150,5 @@ export const MODULE_DATA_SCOPE = {
   activities: { ownerField: 'userId', label: '活动' },
   bdDaily: { ownerField: 'userId', label: '日报' },
   performance: { ownerField: 'userId', label: '业绩' },
+  recruitments: { ownerField: 'creatorId', label: '招募' },
 }

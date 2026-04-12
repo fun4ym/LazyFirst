@@ -160,7 +160,7 @@ const routes = [
         path: 'recruitments',
         name: 'Recruitments',
         component: () => import('@/views/recruitments/Index.vue'),
-        meta: { title: '招募配置' }
+        meta: { title: '招募配置', permission: 'recruitments:read' }
       },
       {
         path: 'settings',

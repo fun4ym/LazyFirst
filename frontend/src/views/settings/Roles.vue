@@ -230,7 +230,9 @@ const menuNameMap = computed(() => ({
   departments: t('menu.departments'),
   commissions: t('menu.commissionRules'),
   baseData: t('menu.baseData'),
-  systemModels: t('menu.systemModels')
+  systemModels: t('menu.systemModels'),
+  marketWorkspace: t('menu.marketWorkspace'),
+  recruitments: t('menu.recruitmentConfig')
 }))
 
 // 控件名称翻译映射
@@ -267,6 +269,8 @@ const controlNameMap = computed(() => ({
   'btn-add-category': t('commission.addCategory'),
   'btn-add-rule': t('commission.addRule'),
   'btn-save': t('common.save'),
+  'btn-refresh-code': t('common.refresh'),
+  'btn-copy-link': t('shop.copy'),
   // 操作权限
   'read': t('common.viewDetail'),
   'create': t('common.add'),
@@ -526,6 +530,25 @@ const menuTree = ref([
           { code: 'btn-add', name: '新增' },
           { code: 'btn-edit', name: '编辑' },
           { code: 'btn-delete', name: '删除' }
+        ]
+      }
+    ]
+  },
+  {
+    name: '市场工作台',
+    code: 'marketWorkspace',
+    children: [
+      {
+        name: '招募配置',
+        code: 'recruitments',
+        operations: ['read', 'create', 'update', 'delete'],
+        controls: [
+          { code: 'btn-add', name: '新增招募' },
+          { code: 'btn-view', name: '查看详情' },
+          { code: 'btn-edit', name: '编辑' },
+          { code: 'btn-delete', name: '删除' },
+          { code: 'btn-refresh-code', name: '刷新识别码' },
+          { code: 'btn-copy-link', name: '复制链接' }
         ]
       }
     ]
@@ -862,7 +885,8 @@ const handleSubmit = async () => {
         'btn-add-category': 'create',
         'btn-add-rule': 'create',
         'btn-save': 'update',
-        'btn-calculate': 'calculate'
+        'btn-calculate': 'calculate',
+        'btn-import-products': 'create'
       }
 
       // 保存用户实际勾选的所有权限

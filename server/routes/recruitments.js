@@ -12,7 +12,7 @@ const router = express.Router();
  * @desc    获取招募列表
  * @access  Private
  */
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, authorize('recruitments:read'), async (req, res) => {
   try {
     const { keyword, enabled } = req.query;
     
@@ -57,7 +57,56 @@ router.get('/', authenticate, async (req, res) => {
  * @desc    获取单个招募详情
  * @access  Private
  */
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/products/list', authenticate, authorize('recruitments:read'), async (req, res) => {
+  try {
+    console.log('[Recruitments] products/list - companyId:', req.companyId, 'userId:', req.userId);
+    const products = await Product.find({ companyId: req.companyId, status: 'active' })
+      .select('_id name sku tiktokProductId images price activityConfigs')
+      .sort({ createdAt: -1 })
+      .limit(500);
+    console.log('[Recruitments] products found:', products.length);
+
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.json({
+      success: true,
+      data: products
+    });
+  } catch (error) {
+    console.error('Get products list error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取产品列表失败'
+    });
+  }
+});
+
+router.get('/users/list', authenticate, authorize('recruitments:read'), async (req, res) => {
+  try {
+    console.log('[Recruitments] users/list - companyId:', req.companyId, 'userId:', req.userId);
+    const users = await User.find({ companyId: req.companyId, status: 'active' })
+      .select('_id username nickname')
+      .sort({ createdAt: -1 });
+    console.log('[Recruitments] users found:', users.length);
+
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('Get users list error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取用户列表失败'
+    });
+  }
+});
+
+router.get('/:id', authenticate, authorize('recruitments:read'), async (req, res) => {
   try {
     const recruitment = await Recruitment.findOne({
       _id: req.params.id,
@@ -92,7 +141,7 @@ router.get('/:id', authenticate, async (req, res) => {
  * @desc    创建招募
  * @access  Private
  */
-router.post('/', authenticate, [
+router.post('/', authenticate, authorize('recruitments:create'), [
   body('name').notEmpty().withMessage('招募名称不能为空')
 ], async (req, res) => {
   try {
@@ -231,7 +280,7 @@ router.put('/:id', authenticate, async (req, res) => {
  * @desc    删除招募（通过启用状态）
  * @access  Private
  */
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, authorize('recruitments:delete'), async (req, res) => {
   try {
     const recruitment = await Recruitment.findOne({
       _id: req.params.id,
@@ -269,7 +318,7 @@ const crypto = require('crypto');
  * @desc    刷新识别码
  * @access  Private
  */
-router.post('/:id/refresh-code', authenticate, async (req, res) => {
+router.post('/:id/refresh-code', authenticate, authorize('recruitments:update'), async (req, res) => {
   try {
     const recruitment = await Recruitment.findOne({
       _id: req.params.id,
@@ -299,65 +348,6 @@ router.post('/:id/refresh-code', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '刷新识别码失败'
-    });
-  }
-});
-
-/**
- * @route   GET /api/recruitments/products/list
- * @desc    获取可选产品列表（用于选择器）
- * @access  Private
- */
-router.get('/products/list', authenticate, async (req, res) => {
-  try {
-    console.log('[Recruitments] products/list - companyId:', req.companyId, 'userId:', req.userId);
-    const products = await Product.find({ companyId: req.companyId, status: 'active' })
-      .select('_id name sku tiktokProductId images price activityConfigs')
-      .sort({ createdAt: -1 })
-      .limit(500);
-    console.log('[Recruitments] products found:', products.length);
-
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    res.json({
-      success: true,
-      data: products
-    });
-  } catch (error) {
-    console.error('Get products list error:', error);
-    res.status(500).json({
-      success: false,
-      message: '获取产品列表失败'
-    });
-  }
-});
-
-/**
- * @route   GET /api/recruitments/users/list
- * @desc    获取可选用户列表（用于选择器）
- * @access  Private
- */
-router.get('/users/list', authenticate, async (req, res) => {
-  try {
-    console.log('[Recruitments] users/list - companyId:', req.companyId, 'userId:', req.userId);
-    const users = await User.find({ companyId: req.companyId, status: 'active' })
-      .select('_id username nickname')
-      .sort({ createdAt: -1 });
-    console.log('[Recruitments] users found:', users.length);
-
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    res.json({
-      success: true,
-      data: users
-    });
-  } catch (error) {
-    console.error('Get users list error:', error);
-    res.status(500).json({
-      success: false,
-      message: '获取用户列表失败'
     });
   }
 });

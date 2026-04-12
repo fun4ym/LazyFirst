@@ -389,11 +389,8 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item :label="$t('product.productGrade')">
-              <el-select v-model="form.productGrade" :placeholder="$t('product.gradeSelect')">
-                <el-option :label="$t('product.ordinaryGrade')" value="ordinary" />
-                <el-option :label="$t('product.hotGrade')" value="hot" />
-                <el-option :label="$t('product.mainGrade')" value="main" />
-                <el-option :label="$t('product.newGrade')" value="new" />
+              <el-select v-model="form.productGrade" :placeholder="$t('product.gradeSelect')" style="width: 100%">
+                <el-option v-for="g in productGrades" :key="g.code" :label="g.name" :value="g.code" />
               </el-select>
             </el-form-item>
               </el-col>
@@ -778,6 +775,7 @@ const activities = ref([])
 const shops = ref([])
 const countries = ref([])
 const productCategories = ref([])
+const productGrades = ref([])
 
 // 货币选项 - 从基础数据获取
 const currencyOptions = ref([])
@@ -813,6 +811,27 @@ const loadBaseData = async () => {
     })
     const categoryData = categoryRes.data || []
     productCategories.value = categoryData.map(item => item.name || item.value || item)
+
+    // 加载商品等级数据
+    const gradeRes = await request.get('/base-data', {
+      params: { type: 'grade', limit: 100 }
+    })
+    const gradeData = gradeRes.data || []
+    productGrades.value = gradeData.map(item => ({
+      _id: item._id,
+      name: item.name,
+      code: item.code || item.name,
+      englishName: item.englishName || ''
+    }))
+    // 如果没有等级数据，使用默认值
+    if (productGrades.value.length === 0) {
+      productGrades.value = [
+        { name: '普通', code: 'ordinary', englishName: 'Ordinary' },
+        { name: '爆款', code: 'hot', englishName: 'Hot' },
+        { name: '主推款', code: 'main', englishName: 'Main' },
+        { name: '新品', code: 'new', englishName: 'New' }
+      ]
+    }
   } catch (error) {
     console.error('加载基础数据失败:', error)
     // 使用默认值
@@ -1280,6 +1299,8 @@ const resetForm = () => {
 }
 
 const getGradeText = (grade) => {
+  const found = productGrades.value.find(g => g.code === grade)
+  if (found) return found.name
   const map = {
     ordinary: t('product.ordinary'),
     hot: t('product.hot'),
