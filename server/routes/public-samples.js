@@ -153,9 +153,27 @@ router.get('/', async (req, res) => {
       productImageMap[p.tiktokProductId] = p.images?.[0] || p.productImages?.[0] || '';
     });
 
-    // 整理返回数据
-    const samplesData = samples.map(sample => {
+    // 整理返回数据，动态计算重复提交统计
+    const samplesData = await Promise.all(samples.map(async (sample) => {
       const productIdStr = sample.productId || '';
+      
+      // 动态计算重复提交统计（productId + influencerAccount）
+      const previousRecords = await SampleManagement.find({
+        companyId: sample.companyId,
+        influencerAccount: sample.influencerAccount,
+        productId: sample.productId
+      }).sort({ date: -1, createdAt: -1 }).limit(10);
+      
+      const duplicateCount = previousRecords.length;
+      const previousSubmissions = previousRecords.map(record => ({
+        sampleId: record._id,
+        date: record.date,
+        productName: record.productName,
+        influencerAccount: record.influencerAccount,
+        sampleStatus: record.sampleStatus,
+        createdAt: record.createdAt
+      }));
+      
       return {
         _id: sample._id,
         date: sample.date,
@@ -179,10 +197,12 @@ router.get('/', async (req, res) => {
         isAdPromotion: sample.isAdPromotion,
         adPromotionTime: sample.adPromotionTime,
         sampleImage: sample.sampleImage,
+        duplicateCount: duplicateCount,
+        previousSubmissions: previousSubmissions,
         createdAt: sample.createdAt,
         updatedAt: sample.updatedAt
       };
-    });
+    }));
 
     res.json({
       success: true,

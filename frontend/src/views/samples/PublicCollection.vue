@@ -245,7 +245,65 @@
             <template #default="{ row }">
               <div class="influencer-info">
                 <div class="influencer-account">
-                  <span class="tiktok-id">{{ row.influencerAccount || '--' }}</span>
+                  <span class="tiktok-id">
+                    {{ row.influencerAccount || '--' }}
+                    <el-popover
+                      v-if="row.duplicateCount > 0"
+                      placement="right"
+                      :width="400"
+                      trigger="hover"
+                    >
+                      <template #reference>
+                        <div class="duplicate-badge" @click.stop>
+                          <span class="badge-count">{{ row.duplicateCount }}</span>
+                        </div>
+                      </template>
+                      <div class="previous-submissions-popover">
+                        <div class="popover-header">
+                          <h4>历史申样记录 ({{ row.duplicateCount }})</h4>
+                        </div>
+                        <div class="popover-content">
+                          <!-- 商品和达人信息只展示一次 -->
+                          <div class="summary-info" v-if="row.previousSubmissions && row.previousSubmissions.length > 0">
+                            <div class="summary-item">
+                              <span class="summary-label">商品名称：</span>
+                              <span class="summary-value">{{ row.previousSubmissions[0].productName || '-' }}</span>
+                            </div>
+                            <div class="summary-item">
+                              <span class="summary-label">TikTok ID：</span>
+                              <span class="summary-value">{{ row.previousSubmissions[0].influencerAccount || '-' }}</span>
+                            </div>
+                          </div>
+                          
+                          <!-- 申请记录列表 -->
+                          <div class="submissions-list" style="max-height: 280px; overflow-y: auto; margin-top: 16px;">
+                            <div 
+                              v-for="(sub, index) in row.previousSubmissions" 
+                              :key="index"
+                              class="submission-item"
+                              @click="openSubmissionDetail(sub)"
+                              style="cursor: pointer; padding: 12px; border-bottom: 1px solid #f0f0f0;"
+                            >
+                              <div class="submission-row">
+                                <div class="submission-cell">
+                                  <span class="cell-label">申请日期：</span>
+                                  <span class="cell-value">{{ formatDate(sub.date) }}</span>
+                                </div>
+                                <div class="submission-cell">
+                                  <span class="cell-label">审批状态：</span>
+                                  <span class="cell-value">
+                                    <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
+                                      {{ getSampleStatusText(sub.sampleStatus) }}
+                                    </el-tag>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </el-popover>
+                  </span>
                 </div>
                 <div class="influencer-stats">
                   <el-tooltip :content="$t('samplePublic.followers')" placement="top">
@@ -319,50 +377,166 @@
       </el-card>
     </div>
 
-    <!-- 单条记录编辑寄样状态弹窗 -->
+    <!-- 样品申请详情弹窗 - 重新设计为商务感 -->
     <el-dialog
       v-model="statusDialogVisible"
-      :title="$t('samplePublic.modifyShippingStatus')"
-      width="500px"
+      :title="currentEditRow ? $t('samplePublic.sampleDetail') : $t('samplePublic.modifyShippingStatus')"
+      width="700px"
       :close-on-click-modal="false"
+      class="business-detail-dialog"
     >
-      <el-form :model="sampleStatusForm" label-width="100px">
-        <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
-          <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
-            <el-option :label="$t('samplePublic.pending')" value="pending" />
-            <el-option :label="$t('samplePublic.sent')" value="sent" />
-            <el-option :label="$t('samplePublic.refused')" value="refused" />
-          </el-select>
-        </el-form-item>
-        <!-- 已寄样时显示物流信息 -->
-        <template v-if="sampleStatusForm.sampleStatus === 'sent'">
-          <el-form-item :label="$t('samplePublic.logisticsCompany')">
-            <el-select v-model="sampleStatusForm.logisticsCompany" :placeholder="$t('samplePublic.selectLogistics')" style="width: 100%">
-              <el-option
-                v-for="opt in logisticsCompanyOptions"
-                :key="opt._id"
-                :label="opt.name"
-                :value="opt.code"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="$t('samplePublic.trackingNumber')" :required="sampleStatusForm.logisticsCompany !== 'default'">
-            <el-input 
-              v-model="sampleStatusForm.trackingNumber" 
-              :placeholder="$t('samplePublic.enterTrackingNumber')" 
-            />
-          </el-form-item>
-        </template>
-        <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samplePublic.refusalReason')">
-          <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samplePublic.enterRefusalReason')" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="statusDialogVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
-        <el-button type="primary" @click="confirmStatusUpdate" :loading="statusUpdateLoading">
-          {{ $t('samplePublic.confirm') }}
-        </el-button>
-      </template>
+      <div v-if="currentEditRow">
+        <el-tabs v-model="detailActiveTab" class="business-tabs">
+          <!-- 基础信息标签页 -->
+          <el-tab-pane label="基础信息" name="basic">
+            <div class="info-grid">
+              <div class="info-row">
+                <div class="info-cell">
+                  <span class="cell-label">TikTok ID：</span>
+                  <span class="cell-value tiktok-id-text">{{ currentEditRow.influencerAccount || '-' }}</span>
+                </div>
+                <div class="info-cell">
+                  <span class="cell-label">申请日期：</span>
+                  <span class="cell-value">{{ currentEditRow.date ? formatDate(currentEditRow.date) : '-' }}</span>
+                </div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-cell wide">
+                  <span class="cell-label">商品名称：</span>
+                  <span class="cell-value product-name">{{ currentEditRow.productName || '-' }}</span>
+                </div>
+                <div class="info-cell">
+                  <span class="cell-label">商品ID：</span>
+                  <span class="cell-value">{{ currentEditRow.productId || '-' }}</span>
+                </div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-cell">
+                  <span class="cell-label">商品图片：</span>
+                  <div class="cell-value">
+                    <el-image 
+                      v-if="currentEditRow.productImage" 
+                      :src="currentEditRow.productImage" 
+                      style="width: 60px; height: 60px" 
+                      fit="cover" 
+                      :preview-src-list="[currentEditRow.productImage]" 
+                    />
+                    <span v-else>-</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 投流信息 -->
+              <div class="ad-promotion-section">
+                <h4 class="section-title">投流信息</h4>
+                <div class="ad-grid">
+                  <div class="ad-item">
+                    <span class="ad-label">投流状态：</span>
+                    <span class="ad-value">
+                      <el-tag :type="currentEditRow.isAdPromotion ? 'success' : 'info'" size="large">
+                        {{ currentEditRow.isAdPromotion ? $t('samplePublic.adPromoted') : $t('samplePublic.noAdPromoted') }}
+                      </el-tag>
+                    </span>
+                  </div>
+                  <div class="ad-item wide">
+                    <span class="ad-label">流码：</span>
+                    <span class="ad-value">{{ currentEditRow.videoStreamCode || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+          
+          <!-- 寄样状态标签页 -->
+          <el-tab-pane label="寄样状态" name="shipping">
+            <div class="info-grid">
+              <div class="info-row">
+                <div class="info-cell">
+                  <span class="cell-label">当前状态：</span>
+                  <span class="cell-value">
+                    <el-tag :type="getSampleStatusType(currentEditRow.sampleStatus)" size="large">
+                      {{ getSampleStatusText(currentEditRow.sampleStatus) }}
+                    </el-tag>
+                  </span>
+                </div>
+              </div>
+              
+              <!-- 状态编辑表单 -->
+              <div class="status-edit-section">
+                <h4 class="section-title">修改寄样状态</h4>
+                <el-form :model="sampleStatusForm" label-width="100px">
+                  <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
+                    <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
+                      <el-option :label="$t('samplePublic.pending')" value="pending" />
+                      <el-option :label="$t('samplePublic.sent')" value="sent" />
+                      <el-option :label="$t('samplePublic.refused')" value="refused" />
+                    </el-select>
+                  </el-form-item>
+                  <!-- 已寄样时显示物流信息 -->
+                  <template v-if="sampleStatusForm.sampleStatus === 'sent'">
+                    <el-form-item :label="$t('samplePublic.logisticsCompany')">
+                      <el-select v-model="sampleStatusForm.logisticsCompany" :placeholder="$t('samplePublic.selectLogistics')" style="width: 100%">
+                        <el-option
+                          v-for="opt in logisticsCompanyOptions"
+                          :key="opt._id"
+                          :label="opt.name"
+                          :value="opt.code"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="$t('samplePublic.trackingNumber')" :required="sampleStatusForm.logisticsCompany !== 'default'">
+                      <el-input 
+                        v-model="sampleStatusForm.trackingNumber" 
+                        :placeholder="$t('samplePublic.enterTrackingNumber')" 
+                      />
+                    </el-form-item>
+                  </template>
+                  <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samplePublic.refusalReason')">
+                    <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samplePublic.enterRefusalReason')" />
+                  </el-form-item>
+                </el-form>
+              </div>
+              
+              <!-- 当前物流信息（如果已寄样） -->
+              <div class="current-shipping-info" v-if="currentEditRow.sampleStatus === 'sent'">
+                <h4 class="section-title">当前物流信息</h4>
+                <div class="details-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">物流公司：</span>
+                    <span class="detail-value">{{ currentEditRow.logisticsCompany || '-' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">运单号：</span>
+                    <span class="detail-value">{{ currentEditRow.trackingNumber || '-' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">寄出日期：</span>
+                    <span class="detail-value">{{ currentEditRow.shippingDate ? formatDate(currentEditRow.shippingDate) : '-' }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 拒绝原因（如果已拒绝） -->
+              <div class="current-refusal-info" v-if="currentEditRow.sampleStatus === 'refused' && currentEditRow.refusalReason">
+                <h4 class="section-title">当前拒绝原因</h4>
+                <div class="refusal-reason">
+                  {{ currentEditRow.refusalReason }}
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+        
+        <!-- 操作按钮 -->
+        <div class="dialog-footer">
+          <el-button @click="statusDialogVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
+          <el-button type="primary" @click="confirmStatusUpdate" :loading="statusUpdateLoading">
+            {{ $t('samplePublic.confirm') }}
+          </el-button>
+        </div>
+      </div>
     </el-dialog>
 
     <!-- 批量更新物流公司弹窗 -->
@@ -841,6 +1015,17 @@ const handleAdPromotionChange = async (row) => {
   }
 }
 
+const openSubmissionDetail = (submission) => {
+  // 在PublicCollection中，我们使用openStatusEdit来显示详情
+  // 首先找到对应的完整sample记录
+  const sample = sampleList.value.find(s => s._id === submission.sampleId)
+  if (sample) {
+    openStatusEdit(sample)
+  } else {
+    ElMessage.info('正在加载详情...')
+  }
+}
+
 onMounted(() => {
   loadSamples()
 })
@@ -1202,5 +1387,36 @@ onMounted(() => {
   flex: 1;
   color: #333;
   font-size: 14px;
+}
+
+.duplicate-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background-color: #f56c6c;
+  border-radius: 50%;
+  margin-left: 3px;
+  vertical-align: middle;
+  cursor: pointer;
+  font-size: 9px;
+}
+
+.badge-count {
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.previous-submissions-popover h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+.submission-item:hover {
+  background-color: #f5f7fa;
 }
 </style>

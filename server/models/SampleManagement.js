@@ -145,6 +145,33 @@ const sampleManagementSchema = new mongoose.Schema({
     type: Date,
     comment: '投流信息更新时间'
   },
+  // 重复提交统计
+  duplicateCount: {
+    type: Number,
+    default: 0,
+    comment: '重复提交次数（相同商品+达人）'
+  },
+  previousSubmissions: {
+    type: [
+      {
+        sampleId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'SampleManagement',
+          comment: '样品记录ID'
+        },
+        date: {
+          type: Date,
+          comment: '提交日期'
+        },
+        createdAt: {
+          type: Date,
+          comment: '创建时间'
+        }
+      }
+    ],
+    default: [],
+    comment: '同品上次提交记录'
+  },
   // 系统字段
   creatorId: {
     type: mongoose.Schema.Types.ObjectId,

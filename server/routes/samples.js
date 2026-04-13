@@ -59,11 +59,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       if (req.user.realName) {
         salesmanNames.push(req.user.realName);
       }
-      query.$or = [
-        { salesmanId: req.user._id },
-        { salesman: { $in: salesmanNames } }
-      ];
-      delete query.salesmanId;
+      query.salesman = { $in: salesmanNames };
     }
 
     // 日期筛选
@@ -188,10 +184,11 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       };
     });
 
-    // 为每个样品添加黑名单信息和店铺信息
-    const samplesWithBlacklist = samples.map(sample => {
+    // 为每个样品添加黑名单信息、店铺信息，并动态计算重复统计
+    const samplesWithBlacklist = await Promise.all(samples.map(async (sample) => {
       const blacklistInfo = blacklistMap[sample.influencerAccount] || { isBlacklisted: false };
       const sampleObj = sample.toObject();
+      
       // 将salesman ID转换为名字
       let salesmanName = sampleObj.salesman;
       if (sampleObj.salesman) {
@@ -201,12 +198,40 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
           salesmanName = user.realName || user.username;
         }
       }
+      
       // 获取店铺信息
       const productIdStr = sampleObj.productId || '';
       const shopId = productShopMap[productIdStr];
       const shopName = shopId ? (shopMap[shopId.toString()] || '') : '';
+      
       // productName：优先用Product表数据
       const productName = productNameMap[productIdStr] || sampleObj.productName || '';
+      
+      // 动态计算重复提交统计（productId + influencerAccount）
+      // 只计算早于当前记录日期的历史记录，排除当前记录本身
+      const previousRecords = await SampleManagement.find({
+        companyId: sample.companyId,
+        influencerAccount: sample.influencerAccount,
+        productId: sample.productId,
+        $or: [
+          { date: { $lt: sample.date } },  // 日期早于当前记录
+          {
+            date: sample.date,
+            createdAt: { $lt: sample.createdAt }  // 同一天但创建时间早于当前记录
+          }
+        ]
+      }).sort({ date: -1, createdAt: -1 }).limit(10);
+      
+      const duplicateCount = previousRecords.length;
+      const previousSubmissions = previousRecords.map(record => ({
+        sampleId: record._id,
+        date: record.date,
+        productName: record.productName,
+        influencerAccount: record.influencerAccount,
+        sampleStatus: record.sampleStatus,
+        createdAt: record.createdAt
+      }));
+      
       return {
         ...sampleObj,
         productId: productIdStr,  // 已是TikTok商品ID，直接返回
@@ -214,9 +239,11 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
         salesman: salesmanName,
         shopName: shopName,
         isBlacklistedInfluencer: blacklistInfo.isBlacklisted,
-        influencerBlacklistInfo: blacklistInfo.isBlacklisted ? blacklistInfo : null
+        influencerBlacklistInfo: blacklistInfo.isBlacklisted ? blacklistInfo : null,
+        duplicateCount: duplicateCount,
+        previousSubmissions: previousSubmissions
       };
-    });
+    }));
 
     const total = await SampleManagement.countDocuments(query);
 
@@ -311,26 +338,48 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       });
     }
 
-    // 构建唯一键：日期 + 达人账号 + TikTok商品ID
-    // productId 存的是 TikTok 商品 ID（String），用于展示
-    const uniqueKey = {
+    // TikTok商品ID（用于唯一性检查）
+    const tiktokProductId = product.tiktokProductId || product._id.toString();
+
+    // 检查当天是否已有相同记录（date + productId + influencerAccount）
+    const sameDayRecord = await SampleManagement.findOne({
+      companyId: req.companyId,
       date: new Date(date),
       influencerAccount,
-      productId: product.tiktokProductId || product._id.toString()
-    };
-
-    // 检查记录是否已存在
-    const existing = await SampleManagement.findOne({
-      companyId: req.companyId,
-      ...uniqueKey
+      productId: tiktokProductId
     });
 
-    if (existing) {
+    if (sameDayRecord) {
       return res.status(400).json({
         success: false,
-        message: '该记录已存在，请使用导入功能更新'
+        message: '当天已有这位达人对此商品的申样记录，请勿重复提交'
       });
     }
+
+    // 检查历史重复记录（productId + influencerAccount，早于当前日期）
+    const previousRecords = await SampleManagement.find({
+      companyId: req.companyId,
+      influencerAccount,
+      productId: tiktokProductId,
+      $or: [
+        { date: { $lt: new Date(date) } },  // 日期早于当前记录
+        {
+          date: new Date(date),
+          createdAt: { $lt: new Date() }  // 同一天但创建时间早于当前记录
+        }
+      ]
+    }).sort({ date: -1, createdAt: -1 }).limit(10); // 获取最近10条记录
+
+    // 计算重复次数和记录历史
+    const duplicateCount = previousRecords.length;
+    const previousSubmissions = previousRecords.map(record => ({
+      sampleId: record._id,
+      date: record.date,
+      productName: record.productName,
+      influencerAccount: record.influencerAccount,
+      sampleStatus: record.sampleStatus,
+      createdAt: record.createdAt
+    }));
 
     // 构建数据
     // productId 存 TikTok 商品 ID（String），用于展示
@@ -339,7 +388,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       creatorId: req.user._id,
       date: new Date(date),
       productName,
-      productId: product.tiktokProductId || product._id.toString(),  // 存 TikTok 商品 ID
+      productId: tiktokProductId,  // 存 TikTok 商品 ID
       influencerAccount,
       followerCount: parseInt(followerCount) || 0,
       monthlySalesCount: parseInt(monthlySalesCount) || 0,
@@ -357,7 +406,10 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       videoStreamCode: videoStreamCode || '',
       isAdPromotion: isAdPromotion || false,
       adPromotionTime: adPromotionTime ? new Date(adPromotionTime) : undefined,
-      isOrderGenerated: isOrderGenerated || false
+      isOrderGenerated: isOrderGenerated || false,
+      // 重复提交统计
+      duplicateCount: duplicateCount,
+      previousSubmissions: previousSubmissions
     };
 
     // 移除 undefined 字段
