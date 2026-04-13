@@ -4,6 +4,7 @@ const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const Company = require('../models/Company');
 const Influencer = require('../models/Influencer');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -162,8 +163,26 @@ router.get('/', async (req, res) => {
         companyId: sample.companyId,
         influencerAccount: sample.influencerAccount,
         productId: sample.productId
-      }).sort({ date: -1, createdAt: -1 }).limit(10);
+      }).select('_id date productName influencerAccount sampleStatus salesman createdAt')
+      .sort({ date: -1, createdAt: -1 }).limit(10);
       
+      // 获取所有salesman ID并查询用户信息
+      const salesmanIds = [];
+      previousRecords.forEach(record => {
+        if (record.salesman && typeof record.salesman === 'string' && record.salesman.length === 24) {
+          salesmanIds.push(record.salesman);
+        }
+      });
+
+      const salesmanUsers = await User.find({ 
+        _id: { $in: salesmanIds.filter(id => /^[0-9a-fA-F]{24}$/.test(id)) }
+      }).select('_id realName username');
+
+      const userMap = {};
+      salesmanUsers.forEach(user => {
+        userMap[user._id.toString()] = user.realName || user.username;
+      });
+
       const duplicateCount = previousRecords.length;
       const previousSubmissions = previousRecords.map(record => ({
         sampleId: record._id,
@@ -171,6 +190,7 @@ router.get('/', async (req, res) => {
         productName: record.productName,
         influencerAccount: record.influencerAccount,
         sampleStatus: record.sampleStatus,
+        salesman: userMap[record.salesman] || record.salesman || '',  // 将ID转换为名字
         createdAt: record.createdAt
       }));
       

@@ -220,7 +220,8 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
             createdAt: { $lt: sample.createdAt }  // 同一天但创建时间早于当前记录
           }
         ]
-      }).sort({ date: -1, createdAt: -1 }).limit(10);
+      }).select('_id date productName influencerAccount sampleStatus salesman createdAt')
+      .sort({ date: -1, createdAt: -1 }).limit(10);
       
       const duplicateCount = previousRecords.length;
       const previousSubmissions = previousRecords.map(record => ({
@@ -229,6 +230,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
         productName: record.productName,
         influencerAccount: record.influencerAccount,
         sampleStatus: record.sampleStatus,
+        salesman: record.salesman,  // 添加salesman字段
         createdAt: record.createdAt
       }));
       
@@ -378,6 +380,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       productName: record.productName,
       influencerAccount: record.influencerAccount,
       sampleStatus: record.sampleStatus,
+      salesman: record.salesman,  // 添加salesman字段
       createdAt: record.createdAt
     }));
 

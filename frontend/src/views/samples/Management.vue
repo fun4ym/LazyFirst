@@ -168,11 +168,8 @@
                                     <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
                                       {{ getSampleStatusText(sub.sampleStatus) }}
                                     </el-tag>
+                                    <span class="salesman-text">{{ sub.salesman || '' }}</span>
                                   </span>
-                                </div>
-                                <div class="submission-cell">
-                                  <span class="cell-label">BD：</span>
-                                  <span class="cell-value">{{ sub.salesman || '-' }}</span>
                                 </div>
                               </div>
                             </div>
@@ -2200,6 +2197,13 @@ onMounted(() => {
   margin-bottom: 10px;
   color: #333;
   font-size: 14px;
+}
+
+.salesman-text {
+  margin-left: 8px;
+  color: #666;
+  font-size: 12px;
+  vertical-align: middle;
 }
 
 .submission-item:hover {
