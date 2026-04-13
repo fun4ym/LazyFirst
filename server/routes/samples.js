@@ -44,6 +44,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       salesman,
       salesmanId,
       isSampleSent,
+      sampleStatus,
       isOrderGenerated,
       productId  // 商品ID搜索
     } = req.query;
@@ -92,9 +93,20 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       query.salesman = { $regex: salesman, $options: 'i' };
     }
 
-    // 是否寄样筛选
-    if (isSampleSent !== undefined) {
+    // 寄样状态筛选（新，优先使用）
+    if (sampleStatus) {
+      query.sampleStatus = sampleStatus;
+    }
+    // 是否寄样筛选（旧，向后兼容）- 只有当新筛选不存在时才使用
+    else if (isSampleSent !== undefined) {
       query.isSampleSent = isSampleSent === 'true';
+      // 同时将布尔值转换为状态值，避免数据不一致
+      if (isSampleSent === 'true') {
+        query.sampleStatus = 'sent';
+      } else {
+        // 非寄样状态可能是 pending 或 refused
+        // 这里我们不加限制，让用户自行筛选
+      }
     }
 
     // 是否出单筛选

@@ -1227,8 +1227,8 @@ export default {
     // 样品状态
     pending: '待审核',
     received: '接受申请，等待寄样',
-    shipped: '已寄样',
-    refused: '拒绝，不合作',
+    sent: '核准',
+    refused: '不合作',
     // 履约状态
     orderGenerated: '已出单',
     noOrder: '未出单',
@@ -1550,8 +1550,8 @@ export default {
     // 样品状态
     pending: '待审核',
     received: '接受申请，等待寄样',
-    sent: '已寄样',
-    refused: '拒绝，不合作',
+    sent: '核准',
+    refused: '不合作',
     refusalReason: '拒绝原因',
     // 出单状态
     yes: '已出单',
@@ -1625,8 +1625,8 @@ export default {
     pending: '待审核',
     received: '接受申请，等待寄样',
     shipping: '寄样中',
-    sent: '已寄样',
-    refused: '拒绝，不合作',
+    sent: '核准',
+    refused: '不合作',
     // 履约状态
     orderGenerated: '已出单',
     noOrder: '未出单',

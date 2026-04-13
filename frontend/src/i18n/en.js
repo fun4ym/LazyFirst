@@ -1046,8 +1046,8 @@ export default {
     // 样品状态
     pending: 'Pending',
     received: 'Received, waiting to ship',
-    shipped: 'Sent',
-    refused: 'Refused, no cooperation',
+    sent: 'Approved',
+    refused: 'Refused',
     // 履约状态
     orderGenerated: 'Order Generated',
     noOrder: 'No Order',
@@ -1367,8 +1367,8 @@ export default {
     // Sample status
     pending: 'Pending',
     received: 'Received, waiting to ship',
-    sent: 'Sent',
-    refused: 'Refused, no cooperation',
+    sent: 'Approved',
+    refused: 'Refused',
     refusalReason: 'Refusal Reason',
     // Order status
     yes: 'Ordered',
@@ -1442,8 +1442,8 @@ export default {
     pending: 'Pending',
     received: 'Received, waiting to ship',
     shipping: 'Shipping',
-    sent: 'Sent',
-    refused: 'Refused, no cooperation',
+    sent: 'Approved',
+    refused: 'Refused',
     // Fulfillment status
     orderGenerated: 'Ordered',
     noOrder: 'No Order',

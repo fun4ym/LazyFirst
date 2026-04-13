@@ -62,15 +62,16 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('samples.isSampleSent')">
+        <el-form-item :label="$t('samples.sampleStatus')">
           <el-select
-            v-model="searchForm.isSampleSent"
+            v-model="searchForm.sampleStatus"
             :placeholder="$t('samples.all')"
             clearable
-            style="width: 100px"
+            style="width: 120px"
           >
-            <el-option :label="$t('samples.yes')" :value="true" />
-            <el-option :label="$t('samples.no')" :value="false" />
+            <el-option :label="$t('samples.pending')" :value="'pending'" />
+            <el-option :label="$t('samples.sent')" :value="'sent'" />
+            <el-option :label="$t('samples.refused')" :value="'refused'" />
           </el-select>
         </el-form-item>
 
@@ -827,8 +828,7 @@
         <el-form-item :label="$t('samples.sampleStatus')">
           <el-select v-model="sampleStatusForm.sampleStatus" :placeholder="$t('samples.selectSampleStatus')" style="width: 100%" @change="handleSampleStatusChange">
             <el-option :label="$t('samples.pending')" value="pending" />
-            <el-option :label="$t('samples.received')" value="received" />
-            <el-option :label="$t('samples.shipped')" value="sent" />
+            <el-option :label="$t('samples.sent')" value="sent" />
             <el-option :label="$t('samples.refused')" value="refused" />
           </el-select>
         </el-form-item>
@@ -966,7 +966,7 @@ const searchForm = reactive({
   productName: '',
   influencerAccount: '',
   salesman: '',
-  isSampleSent: null,
+  sampleStatus: '',
   isOrderGenerated: null,
   productId: ''  // 商品ID搜索
 })
@@ -1034,8 +1034,7 @@ const formatDate = (date) => {
 const getSampleStatusType = (status) => {
   const typeMap = {
     pending: 'warning',    // 待审核 - 黄色
-    received: 'primary',   // 接受申请 - 蓝色
-    sent: 'success',        // 已寄样 - 绿色
+    sent: 'success',        // 已寄样（核准）- 绿色
     refused: 'danger'       // 不合作 - 红色
   }
   return typeMap[status] || 'info'
@@ -1044,8 +1043,7 @@ const getSampleStatusType = (status) => {
 // 获取寄样状态文本（使用 computed 确保响应式更新）
 const sampleStatusTextMap = computed(() => ({
   pending: t('samples.pending'),
-  received: t('samples.received'),
-  sent: t('samples.shipped'),
+  sent: t('samples.sent'),
   refused: t('samples.refused')
 }))
 
@@ -1135,7 +1133,7 @@ const resetSearch = () => {
     productName: '',
     influencerAccount: '',
     salesman: '',
-    isSampleSent: null,
+    sampleStatus: '',
     isOrderGenerated: null,
     productId: ''
   })

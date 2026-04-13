@@ -330,7 +330,6 @@
         <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
           <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
             <el-option :label="$t('samplePublic.pending')" value="pending" />
-            <el-option :label="$t('samplePublic.received')" value="received" />
             <el-option :label="$t('samplePublic.sent')" value="sent" />
             <el-option :label="$t('samplePublic.refused')" value="refused" />
           </el-select>
@@ -500,7 +499,6 @@ const formatDateTime = (date) => {
 const getSampleStatusType = (status) => {
   const typeMap = {
     pending: 'warning',
-    received: 'primary',
     sent: 'success',
     refused: 'danger'
   }
@@ -510,7 +508,6 @@ const getSampleStatusType = (status) => {
 const getSampleStatusText = (status) => {
   const textMap = {
     pending: t('samplePublic.pending'),
-    received: t('samplePublic.received'),
     sent: t('samplePublic.sent'),
     refused: t('samplePublic.refused')
   }
