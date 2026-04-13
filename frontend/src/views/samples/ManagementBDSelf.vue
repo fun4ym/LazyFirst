@@ -124,7 +124,7 @@
                                     <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
                                       {{ getSampleStatusText(sub.sampleStatus) }}
                                     </el-tag>
-                                    <span class="salesman-text">{{ sub.salesman || '' }}</span>
+                                    <span class="salesman-text" v-if="sub.salesman">{{ sub.salesman }}</span>
                                   </span>
                                 </div>
                               </div>
@@ -175,11 +175,16 @@
               <el-tag :type="getSampleStatusType(row.sampleStatus)" size="small">
                 {{ getSampleStatusText(row.sampleStatus) }}
               </el-tag>
+              <!-- 已寄样时显示物流信息 -->
+              <div v-if="row.sampleStatus === 'sent'" class="sent-info">
+                <span v-if="row.logisticsCompany">
+                  {{ getLogisticsCompanyText(row.logisticsCompany) }}
+                </span>
+                <span v-if="row.logisticsCompany && row.trackingNumber"> - </span>
+                <span v-if="row.trackingNumber" class="tracking-no">{{ row.trackingNumber }}</span>
+              </div>
               <div v-if="row.sampleStatus === 'refused' && row.refusalReason" class="refusal-reason">
                 {{ $t('sampleBD.refusalReasonDetail') }}: {{ row.refusalReason }}
-              </div>
-              <div v-if="row.trackingNumber" class="tracking-no">
-                {{ row.trackingNumber }}
               </div>
               <div v-if="row.shippingDate" class="shipping-date">
                 {{ formatDate(row.shippingDate) }}
@@ -925,6 +930,17 @@ const getSampleStatusText = (status) => {
     refused: t('sampleBD.refused')
   }
   return textMap[status] || t('sampleBD.pending')
+}
+
+// 获取物流公司显示文本
+const getLogisticsCompanyText = (company) => {
+  if (company === 'default') {
+    return 'TikTok 默认物流'
+  } else if (company === 'other') {
+    return '其他物流'
+  } else {
+    return company || ''
+  }
 }
 
 const loadSamples = async () => {
