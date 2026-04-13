@@ -233,6 +233,201 @@ docker network connect tap-system_default <container-name>
 - admin密码是加密后的 `ad8889`
 - 本地后端连接的是 `tap_system` 数据库
 
+## 九.6、本地开发环境配置（新增）
+
+### 一、本地数据库信息
+
+#### 1. 数据库名称：`tap_system`
+- 运行位置：本地MongoDB（非Docker）
+- 连接URI：`mongodb://localhost:27017/tap_system` 或 `mongodb://127.0.0.1:27017/tap_system`
+- 数据量：
+  - users: 18条记录（包含admin用户）
+  - samplemanagements: 6030条记录
+  - influencers: 查看详细数量
+  - products: 查看详细数量
+
+#### 2. 本地用户信息
+- **admin**: 管理员账户，密码 `ad8889`
+- **BD用户**: eye, sa, cin, film, nam, dingyan, sun, yuzi, test, moji, diana, xs, taa
+- **inactive用户**: ice, tee, poppy, ink
+
+### 二、本地开发配置
+
+#### 1. 环境变量（.env文件）
+```env
+MONGODB_URI=mongodb://localhost:27017/tap_system  # 本地开发使用
+JWT_SECRET=your_jwt_secret_key_change_this_in_production
+PORT=3000
+NODE_ENV=development
+```
+
+#### 2. 服务器配置
+- 前端端口：5174（vite.config.js中配置）
+- 后端端口：3000（.env中配置）
+- 前端代理：`http://localhost:5174/api` → `http://localhost:3000`
+
+#### 3. Docker容器配置（生产环境使用）
+- MongoDB容器：`tap-mongodb`（端口27017）
+- 后端容器：`tap-backend`（端口3000）
+- 前端容器：`tap-frontend`（端口80/443）
+- Docker Compose文件中的MONGODB_URI：`mongodb://tapsystem:tap_system_pass_2024@mongodb:27017/tap_system?authSource=tap_system`
+
+### 三、本地启动步骤
+
+#### 方案A：纯本地开发（推荐）
+1. **启动MongoDB本地服务**
+   ```bash
+   # 确保MongoDB服务已启动
+   brew services start mongodb-community  # 如果是brew安装
+   # 或
+   mongod --dbpath /usr/local/var/mongodb
+   ```
+
+2. **启动后端服务**
+   ```bash
+   cd /Users/mor/CodeBuddy/LazyFirst/server
+   npm install
+   npm run dev  # 或 node server.js
+   ```
+
+3. **启动前端服务**
+   ```bash
+   cd /Users/mor/CodeBuddy/LazyFirst/frontend
+   npm install
+   npm run dev
+   ```
+
+4. **访问地址**
+   - 前端：http://localhost:5174
+   - 后端API：http://localhost:3000
+   - 登录：admin / ad8889
+
+#### 方案B：Docker开发
+1. **修改.env文件**
+   ```env
+   MONGODB_URI=mongodb://tapsystem:tap_system_pass_2024@localhost:27017/tap_system?authSource=tap_system
+   ```
+
+2. **启动Docker服务**
+   ```bash
+   cd /Users/mor/CodeBuddy/LazyFirst
+   docker compose up -d
+   ```
+
+3. **访问地址**
+   - 前端：http://localhost
+   - 后端API：http://localhost:3000
+
+### 四、数据库操作步骤
+
+#### 1. 连接本地数据库
+```bash
+# 使用mongosh连接
+mongosh tap_system
+
+# 查看所有集合
+db.getCollectionNames()
+
+# 查看用户
+db.users.find().toArray()
+
+# 查看样品记录
+db.samplemanagements.countDocuments()
+```
+
+#### 2. 备份本地数据库
+```bash
+# 导出JSON格式
+mongosh tap_system --quiet --eval "JSON.stringify(db.users.find().toArray())" > users.json
+
+# 导出所有集合
+mongodump --db tap_system --out ./backup_$(date +%Y%m%d)
+```
+
+#### 3. 恢复本地数据库
+```bash
+# 从备份恢复
+mongorestore --db tap_system ./backup_20260413/
+
+# 从JSON文件导入
+mongoimport --db tap_system --collection users --file users.json --jsonArray
+```
+
+#### 4. 常用查询命令
+```javascript
+// 查看admin用户
+db.users.findOne({username: 'admin'})
+
+// 查看活跃BD用户
+db.users.find({role: 'bd', status: 'active'}).toArray()
+
+// 查看样品记录前10条
+db.samplemanagements.find().limit(10).toArray()
+
+// 统计样品状态
+db.samplemanagements.aggregate([
+  {$group: {_id: "$sampleStatus", count: {$sum: 1}}}
+])
+```
+
+### 五、环境切换注意事项
+
+#### 本地开发 → 线上部署
+1. **修改.env文件**：将MONGODB_URI改为服务器地址
+   ```env
+   MONGODB_URI=mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system
+   ```
+
+2. **确认环境变量**：确保JWT_SECRET等与线上一致
+
+#### 线上部署 → 本地开发
+1. **修改.env文件**：将MONGODB_URI改回本地
+   ```env
+   MONGODB_URI=mongodb://localhost:27017/tap_system
+   ```
+
+2. **停止Docker服务**：避免端口冲突
+   ```bash
+   docker compose down
+   ```
+
+### 六、故障排除
+
+#### 1. 连接失败
+- **问题**：MongoDB连接超时
+- **解决**：检查MongoDB服务是否启动，检查.env文件中的MONGODB_URI
+
+#### 2. admin密码错误
+- **问题**：admin登录失败
+- **解决**：重置admin密码
+  ```bash
+  node -e "const bcrypt = require('bcrypt'); console.log(bcrypt.hashSync('ad8889', 10))"
+  ```
+  将生成的hash更新到数据库
+
+#### 3. 前端无法访问后端
+- **问题**：跨域或代理配置错误
+- **解决**：检查vite.config.js中的proxy配置，确保前端端口为5174，后端端口为3000
+
+### 七、数据同步策略
+
+#### 1. 本地 ↔ 线上数据同步
+- **严禁直接覆盖**：避免数据丢失事故
+- **使用备份脚本**：先备份线上数据
+- **分步迁移**：只迁移必要的测试数据
+
+#### 2. 开发数据准备
+- **创建测试账号**：在本地数据库中创建测试用户
+- **导入样品数据**：从tapdb_sync导入测试数据
+- **保持数据一致性**：确保本地数据模型与线上一致
+
+### 八、重要原则
+1. **本地开发优先**：所有修改先在本地测试
+2. **环境隔离**：本地环境与线上环境完全隔离
+3. **数据安全**：本地数据库可随意修改，但不能影响线上
+4. **版本控制**：所有修改通过git管理，确保可追溯
+5. **备份意识**：重要操作前先备份本地数据
+
 ---
 
 ## 十、项目配色

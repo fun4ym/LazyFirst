@@ -187,12 +187,26 @@ router.get('/filters', async (req, res) => {
       .sort({ shopName: 1 })
       .lean();
 
+    // 获取distinct productGrade值
+    const productGradesRaw = await Product.distinct('productGrade', { 
+      status: 'active',
+      'activityConfigs.activityLink': { $ne: '' },
+      productGrade: { $ne: null, $ne: '' }
+    });
+    
+    // 按照指定顺序排序：ordinary, hot, main, new
+    const gradeOrder = ['ordinary', 'hot', 'main', 'new'];
+    const productGrades = productGradesRaw
+      .filter(grade => gradeOrder.includes(grade))
+      .sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
+
     res.json({
       success: true,
       data: {
         categories,
         grades,
-        shops
+        shops,
+        productGrades
       }
     });
   } catch (error) {
