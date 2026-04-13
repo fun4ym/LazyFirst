@@ -170,6 +170,10 @@
                                     </el-tag>
                                   </span>
                                 </div>
+                                <div class="submission-cell">
+                                  <span class="cell-label">BD：</span>
+                                  <span class="cell-value">{{ sub.salesman || '-' }}</span>
+                                </div>
                               </div>
                             </div>
                           </div>

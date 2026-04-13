@@ -284,7 +284,7 @@
                               @click="openSubmissionDetail(sub)"
                               style="cursor: pointer; padding: 12px; border-bottom: 1px solid #f0f0f0;"
                             >
-                              <div class="submission-row">
+                                <div class="submission-row">
                                 <div class="submission-cell">
                                   <span class="cell-label">申请日期：</span>
                                   <span class="cell-value">{{ formatDate(sub.date) }}</span>
@@ -296,6 +296,10 @@
                                       {{ getSampleStatusText(sub.sampleStatus) }}
                                     </el-tag>
                                   </span>
+                                </div>
+                                <div class="submission-cell">
+                                  <span class="cell-label">BD：</span>
+                                  <span class="cell-value">{{ sub.salesman || '-' }}</span>
                                 </div>
                               </div>
                             </div>
