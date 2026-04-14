@@ -1360,7 +1360,28 @@ export default {
     logisticsCompany: 'บริษัทขนส่ง',
     trackingNumber: 'หมายเลขพัสดุ',
     selectLogistics: 'เลือกบริษัทขนส่ง',
-    enterTrackingNumber: 'กรอกหมายเลขพัสดุ'
+    enterTrackingNumber: 'กรอกหมายเลขพัสดุ',
+    // ป้ายรายละเอียดในกล่องโต้ตอบ
+    adInfo: 'ข้อมูลโฆษณา',
+    currentStatus: 'สถานะปัจจุบัน',
+    currentShippingInfo: 'ข้อมูลการจัดส่งปัจจุบัน',
+    currentRefusalReason: 'เหตุผลการปฏิเสธปัจจุบัน',
+    approvalStatus: 'สถานะการอนุมัติ',
+    historyRecords: 'ประวัติการสมัคร ({count})',
+    sampleDetail: 'รายละเอียดคำขอตัวอย่าง',
+    basicInfo: 'ข้อมูลพื้นฐาน',
+    tiktokIdDetail: 'TikTok ID',
+    productNameDetail: 'ชื่อสินค้า',
+    productIdDetail: 'รหัสสินค้า',
+    applicationDate: 'วันที่สมัคร',
+    adInfo: 'ข้อมูลโฆษณา',
+    adStatus: 'สถานะโฆษณา',
+    adPromoted: 'โฆษณาแล้ว',
+    noAdPromoted: 'ยังไม่โฆษณา',
+    streamCodeDetail: 'รหัสสตรีม',
+    shippingDate: 'วันที่จัดส่ง',
+    currentLogisticsInfo: 'ข้อมูลขนส่งปัจจุบัน',
+    bd: 'BD'
   },
   // พื้นที่ทำงาน BD - คำขอตัวอย่าง
   sampleBD: {

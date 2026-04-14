@@ -258,19 +258,19 @@
                           <span class="badge-count">{{ row.duplicateCount }}</span>
                         </div>
                       </template>
-                      <div class="previous-submissions-popover">
+                        <div class="previous-submissions-popover">
                         <div class="popover-header">
-                          <h4>历史申样记录 ({{ row.duplicateCount }})</h4>
+                          <h4>{{ $t('samplePublic.historyRecords', { count: row.duplicateCount }) }}</h4>
                         </div>
                         <div class="popover-content">
                           <!-- 商品和达人信息只展示一次 -->
                           <div class="summary-info" v-if="row.previousSubmissions && row.previousSubmissions.length > 0">
                             <div class="summary-item">
-                              <span class="summary-label">商品名称：</span>
+                              <span class="summary-label">{{ $t('samplePublic.productNameDetail') || $t('samplePublic.productName') }}：</span>
                               <span class="summary-value">{{ row.previousSubmissions[0].productName || '-' }}</span>
                             </div>
                             <div class="summary-item">
-                              <span class="summary-label">TikTok ID：</span>
+                              <span class="summary-label">{{ $t('samplePublic.tiktokIdDetail') || $t('samplePublic.tiktokId') }}：</span>
                               <span class="summary-value">{{ row.previousSubmissions[0].influencerAccount || '-' }}</span>
                             </div>
                           </div>
@@ -286,11 +286,11 @@
                             >
                                 <div class="submission-row">
                                 <div class="submission-cell">
-                                  <span class="cell-label">申请日期：</span>
+                                  <span class="cell-label">{{ $t('samplePublic.applicationDate') }}：</span>
                                   <span class="cell-value">{{ formatDate(sub.date) }}</span>
                                 </div>
                                 <div class="submission-cell">
-                                  <span class="cell-label">审批状态：</span>
+                                  <span class="cell-label">{{ $t('samplePublic.approvalStatus') }}：</span>
                                   <span class="cell-value">
                                     <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
                                       {{ getSampleStatusText(sub.sampleStatus) }}
@@ -298,7 +298,7 @@
                                   </span>
                                 </div>
                                 <div class="submission-cell">
-                                  <span class="cell-label">BD：</span>
+                                  <span class="cell-label">{{ $t('samplePublic.bd') }}：</span>
                                   <span class="cell-value">{{ sub.salesman || '-' }}</span>
                                 </div>
                               </div>
@@ -392,33 +392,33 @@
       <div v-if="currentEditRow">
         <el-tabs v-model="detailActiveTab" class="business-tabs">
           <!-- 基础信息标签页 -->
-          <el-tab-pane label="基础信息" name="basic">
+          <el-tab-pane :label="$t('samplePublic.basicInfo')" name="basic">
             <div class="info-grid">
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">TikTok ID：</span>
+                  <span class="cell-label">{{ $t('samplePublic.tiktokIdDetail') || $t('samplePublic.tiktokId') }}：</span>
                   <span class="cell-value tiktok-id-text">{{ currentEditRow.influencerAccount || '-' }}</span>
                 </div>
                 <div class="info-cell">
-                  <span class="cell-label">申请日期：</span>
+                  <span class="cell-label">{{ $t('samplePublic.applicationDate') }}：</span>
                   <span class="cell-value">{{ currentEditRow.date ? formatDate(currentEditRow.date) : '-' }}</span>
                 </div>
               </div>
               
               <div class="info-row">
                 <div class="info-cell wide">
-                  <span class="cell-label">商品名称：</span>
+                  <span class="cell-label">{{ $t('samplePublic.productNameDetail') || $t('samplePublic.productName') }}：</span>
                   <span class="cell-value product-name">{{ currentEditRow.productName || '-' }}</span>
                 </div>
                 <div class="info-cell">
-                  <span class="cell-label">商品ID：</span>
+                  <span class="cell-label">{{ $t('samplePublic.productIdDetail') || $t('samplePublic.productId') }}：</span>
                   <span class="cell-value">{{ currentEditRow.productId || '-' }}</span>
                 </div>
               </div>
               
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">商品图片：</span>
+                  <span class="cell-label">{{ $t('samplePublic.productImage') }}：</span>
                   <div class="cell-value">
                     <el-image 
                       v-if="currentEditRow.productImage" 
@@ -434,10 +434,10 @@
               
               <!-- 投流信息 -->
               <div class="ad-promotion-section">
-                <h4 class="section-title">投流信息</h4>
+                <h4 class="section-title">{{ $t('samplePublic.adInfo') || '投流信息' }}</h4>
                 <div class="ad-grid">
                   <div class="ad-item">
-                    <span class="ad-label">投流状态：</span>
+                    <span class="ad-label">{{ $t('samplePublic.adStatusDetail') || $t('samplePublic.adStatus') }}：</span>
                     <span class="ad-value">
                       <el-tag :type="currentEditRow.isAdPromotion ? 'success' : 'info'" size="large">
                         {{ currentEditRow.isAdPromotion ? $t('samplePublic.adPromoted') : $t('samplePublic.noAdPromoted') }}
@@ -445,7 +445,7 @@
                     </span>
                   </div>
                   <div class="ad-item wide">
-                    <span class="ad-label">流码：</span>
+                    <span class="ad-label">{{ $t('samplePublic.streamCodeDetail') || $t('samplePublic.streamCode') }}：</span>
                     <span class="ad-value">{{ currentEditRow.videoStreamCode || '-' }}</span>
                   </div>
                 </div>
@@ -454,11 +454,11 @@
           </el-tab-pane>
           
           <!-- 寄样状态标签页 -->
-          <el-tab-pane label="寄样状态" name="shipping">
+          <el-tab-pane :label="$t('samplePublic.shippingStatus')" name="shipping">
             <div class="info-grid">
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">当前状态：</span>
+                  <span class="cell-label">{{ $t('samplePublic.currentStatus') || '当前状态' }}：</span>
                   <span class="cell-value">
                     <el-tag :type="getSampleStatusType(currentEditRow.sampleStatus)" size="large">
                       {{ getSampleStatusText(currentEditRow.sampleStatus) }}
@@ -469,7 +469,7 @@
               
               <!-- 状态编辑表单 -->
               <div class="status-edit-section">
-                <h4 class="section-title">修改寄样状态</h4>
+                <h4 class="section-title">{{ $t('samplePublic.modifyShippingStatus') }}</h4>
                 <el-form :model="sampleStatusForm" label-width="100px">
                   <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
                     <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
@@ -505,18 +505,18 @@
               
               <!-- 当前物流信息（如果已寄样） -->
               <div class="current-shipping-info" v-if="currentEditRow.sampleStatus === 'sent'">
-                <h4 class="section-title">当前物流信息</h4>
+                <h4 class="section-title">{{ $t('samplePublic.currentShippingInfo') || '当前物流信息' }}</h4>
                 <div class="details-grid">
                   <div class="detail-item">
-                    <span class="detail-label">物流公司：</span>
+                    <span class="detail-label">{{ $t('samplePublic.logisticsCompany') }}：</span>
                     <span class="detail-value">{{ currentEditRow.logisticsCompany || '-' }}</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">运单号：</span>
+                    <span class="detail-label">{{ $t('samplePublic.trackingNumber') || $t('samplePublic.trackingNumberDetail') || '运单号' }}：</span>
                     <span class="detail-value">{{ currentEditRow.trackingNumber || '-' }}</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">寄出日期：</span>
+                    <span class="detail-label">{{ $t('samplePublic.shippingDate') || $t('samplePublic.shippingDateDetail') || '寄出日期' }}：</span>
                     <span class="detail-value">{{ currentEditRow.shippingDate ? formatDate(currentEditRow.shippingDate) : '-' }}</span>
                   </div>
                 </div>
@@ -524,7 +524,7 @@
               
               <!-- 拒绝原因（如果已拒绝） -->
               <div class="current-refusal-info" v-if="currentEditRow.sampleStatus === 'refused' && currentEditRow.refusalReason">
-                <h4 class="section-title">当前拒绝原因</h4>
+                <h4 class="section-title">{{ $t('samplePublic.currentRefusalReason') || '当前拒绝原因' }}</h4>
                 <div class="refusal-reason">
                   {{ currentEditRow.refusalReason }}
                 </div>
@@ -615,6 +615,7 @@ const pagination = reactive({
 // 单条编辑弹窗
 const statusDialogVisible = ref(false)
 const currentEditRow = ref(null)
+const detailActiveTab = ref('shipping') // 默认显示寄样状态页签
 const sampleStatusForm = reactive({
   sampleStatus: 'pending',
   logisticsCompany: '',
@@ -782,6 +783,8 @@ const handleSelectionChange = (selection) => {
 // 打开单条状态编辑
 const openStatusEdit = async (row) => {
   currentEditRow.value = row
+  // 重置标签页为寄样状态页签
+  detailActiveTab.value = 'shipping'
   // 加载物流公司列表
   await loadLogisticsCompanies()
   // 设置默认值：如果是新建或没有选择物流公司，选中 default

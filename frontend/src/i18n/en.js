@@ -1411,7 +1411,28 @@ export default {
     logisticsCompany: 'Logistics Company',
     trackingNumber: 'Tracking Number',
     selectLogistics: 'Select logistics',
-    enterTrackingNumber: 'Enter tracking number'
+    enterTrackingNumber: 'Enter tracking number',
+    // Detail dialog labels
+    adInfo: 'Ad Information',
+    currentStatus: 'Current Status',
+    currentShippingInfo: 'Current Shipping Info',
+    currentRefusalReason: 'Current Refusal Reason',
+    approvalStatus: 'Approval Status',
+    historyRecords: 'History Records ({count})',
+    sampleDetail: 'Sample Request Detail',
+    basicInfo: 'Basic Info',
+    tiktokIdDetail: 'TikTok ID',
+    productNameDetail: 'Product Name',
+    productIdDetail: 'Product ID',
+    applicationDate: 'Application Date',
+    adInfo: 'Ad Information',
+    adStatus: 'Ad Status',
+    adPromoted: 'Ad Promoted',
+    noAdPromoted: 'Not Ad Promoted',
+    streamCodeDetail: 'Stream Code',
+    shippingDate: 'Shipping Date',
+    currentLogisticsInfo: 'Current Logistics Info',
+    bd: 'BD'
   },
   // BD Workspace - Sample Request
   sampleBD: {

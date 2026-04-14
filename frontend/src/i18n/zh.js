@@ -1594,7 +1594,28 @@ export default {
     logisticsCompany: '物流公司',
     trackingNumber: '快递单号',
     selectLogistics: '选择物流公司',
-    enterTrackingNumber: '输入快递单号'
+    enterTrackingNumber: '输入快递单号',
+    // 弹窗详情标签
+    adInfo: '投流信息',
+    currentStatus: '当前状态',
+    currentShippingInfo: '当前物流信息',
+    currentRefusalReason: '当前拒绝原因',
+    approvalStatus: '审批状态',
+    historyRecords: '历史申样记录 ({count})',
+    sampleDetail: '样品申请详情',
+    basicInfo: '基础信息',
+    tiktokIdDetail: 'TikTok ID',
+    productNameDetail: '商品名称',
+    productIdDetail: '商品ID',
+    applicationDate: '申请日期',
+    adInfo: '投流信息',
+    adStatus: '投流状态',
+    adPromoted: '已投流',
+    noAdPromoted: '未投流',
+    streamCodeDetail: '投流码',
+    shippingDate: '寄出日期',
+    currentLogisticsInfo: '当前物流信息',
+    bd: 'BD'
   },
   // BD工作台-样品申请
   sampleBD: {
