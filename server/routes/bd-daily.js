@@ -151,6 +151,7 @@ router.post('/', authenticate, authorize('bdDaily:create'), [
       commission,
       orderGeneratedCount,
       sampleSentCount,
+      sampleRefusedCount,
       remark
     } = req.body;
 
@@ -181,6 +182,7 @@ router.post('/', authenticate, authorize('bdDaily:create'), [
       commission: commission || 0,
       orderGeneratedCount: orderGeneratedCount || 0,
       sampleSentCount: sampleSentCount || 0,
+      sampleRefusedCount: sampleRefusedCount || 0,
       remark: remark || '',
       creatorId: req.userId
     });
@@ -217,6 +219,7 @@ router.put('/:id', authenticate, authorize('bdDaily:update'), async (req, res) =
       commission,
       orderGeneratedCount,
       sampleSentCount,
+      sampleRefusedCount,
       remark
     } = req.body;
 
@@ -230,6 +233,7 @@ router.put('/:id', authenticate, authorize('bdDaily:update'), async (req, res) =
       commission,
       orderGeneratedCount,
       sampleSentCount,
+      sampleRefusedCount,
       remark,
       updaterId: req.userId
     };
@@ -406,10 +410,25 @@ async function generateSingleDate(targetDate, companyId, userId) {
       if (!bdStats[salesman]) {
         bdStats[salesman] = {
           sampleCount: 0,
+          sampleSentCount: 0,
+          sampleRefusedCount: 0,
+          videoPublishCount: 0,
           sampleIds: []
         };
       }
       bdStats[salesman].sampleCount++;
+      // 统计申样成功数（sampleStatus为sent）
+      if (sample.sampleStatus === 'sent') {
+        bdStats[salesman].sampleSentCount++;
+      }
+      // 统计申样拒绝数（sampleStatus为refused）
+      if (sample.sampleStatus === 'refused') {
+        bdStats[salesman].sampleRefusedCount++;
+      }
+      // 统计视频发布数（videoLink不为空）
+      if (sample.videoLink && sample.videoLink.trim() !== '') {
+        bdStats[salesman].videoPublishCount++;
+      }
       bdStats[salesman].sampleIds.push(sample._id.toString());
     });
 
@@ -497,7 +516,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
 
     const results = [];
     for (const salesman of allSalesmen) {
-      const sampleData = bdStats[salesman] || { sampleCount: 0, sampleIds: [] };
+      const sampleData = bdStats[salesman] || { sampleCount: 0, sampleSentCount: 0, sampleRefusedCount: 0, videoPublishCount: 0, sampleIds: [] };
       const orderData = orderStats[salesman] || { gmvTotal: 0, estimatedCommissionTotal: 0, orderGeneratedCount: 0, orderCount: 0, orderIds: [] };
       const commissionData = commissionStats[salesman] || { commissionTotal: 0, revenueIds: [], orderCount: 0 };
 
@@ -513,6 +532,9 @@ async function generateSingleDate(targetDate, companyId, userId) {
         date: normalizedDate,
         salesman,
         sampleCount: sampleData.sampleCount,
+        sampleSentCount: sampleData.sampleSentCount || 0,
+        sampleRefusedCount: sampleData.sampleRefusedCount || 0,
+        videoPublishCount: sampleData.videoPublishCount || 0,
         sampleIds: sampleData.sampleIds.join(','),
         revenue: orderData.gmvTotal || 0,  // 本日收入（GMV）
         estimatedCommission: orderData.estimatedCommissionTotal || 0,  // 本日预估服务费

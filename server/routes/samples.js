@@ -39,6 +39,8 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       page = 1,
       limit = 10,
       date,
+      dateStart,  // 日期区间开始
+      dateEnd,    // 日期区间结束
       productName,
       influencerAccount,
       salesman,
@@ -46,7 +48,8 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       isSampleSent,
       sampleStatus,
       isOrderGenerated,
-      productId  // 商品ID搜索
+      productId,  // 商品ID搜索
+      shopId      // 店铺ID筛选
     } = req.query;
 
     // 使用数据权限过滤条件
@@ -62,8 +65,18 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       query.salesman = { $in: salesmanNames };
     }
 
-    // 日期筛选
-    if (date) {
+    // 日期筛选 - 支持日期区间和单个日期
+    if (dateStart && dateEnd) {
+      // 日期区间查询
+      const startDate = new Date(dateStart);
+      const endDate = new Date(dateEnd);
+      endDate.setHours(23, 59, 59, 999); // 结束日期设为当天最后一刻
+      query.date = {
+        $gte: startDate,
+        $lte: endDate
+      };
+    } else if (date) {
+      // 单个日期查询（向后兼容）
       query.date = {
         $gte: new Date(date),
         $lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1))
@@ -113,6 +126,32 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
     // TikTok商品ID筛选（模糊搜索）- productId字段存的就是TikTok商品ID
     if (productId) {
       query.productId = { $regex: productId, $options: 'i' };
+    }
+
+    // 店铺筛选 - 通过关联的Product表获取该店铺下的商品，然后筛选samples
+    if (shopId) {
+      // 先查询该店铺下的所有商品
+      const shopProducts = await Product.find({ shopId: mongoose.Types.ObjectId(shopId) })
+        .select('tiktokProductId _id')
+        .lean();
+      
+      if (shopProducts && shopProducts.length > 0) {
+        // 收集该店铺下所有商品的tiktokProductId和_id
+        const shopProductIds = shopProducts.map(p => 
+          p.tiktokProductId || (typeof p._id === 'string' ? p._id : p._id.toString())
+        );
+        // 同时也要考虑用ObjectId匹配的_id
+        const shopObjectIds = shopProducts
+          .filter(p => /^[0-9a-fA-F]{24}$/.test(p._id.toString()))
+          .map(p => mongoose.Types.ObjectId(p._id));
+        
+        query.productId = { 
+          $in: [...shopProductIds, ...shopObjectIds]
+        };
+      } else {
+        // 如果该店铺下没有商品，返回空结果
+        query.productId = { $in: [] };
+      }
     }
 
     const samples = await SampleManagement.find(query)
@@ -714,7 +753,7 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
         }
 
         // 根据商品ID或名称查找 Product
-        let productIdObj = null;
+        let productObj = null;
         let productName = row['商品名称'] || '';
         const productIdInput = String(row['商品ID'] || '').trim();
         
@@ -723,7 +762,7 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           try {
             const product = await Product.findById(productIdInput);
             if (product) {
-              productIdObj = product._id;
+              productObj = product;
               productName = product.name || productName;
             }
           } catch (err) {
@@ -731,61 +770,62 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           }
           
           // 2. 如果没找到，尝试用 tiktokProductId 查找
-          if (!productIdObj) {
+          if (!productObj) {
             const productByTiktokId = await Product.findOne({ tiktokProductId: productIdInput });
             if (productByTiktokId) {
-              productIdObj = productByTiktokId._id;
+              productObj = productByTiktokId;
               productName = productByTiktokId.name || productName;
             }
           }
           
           // 3. 如果还没找到，尝试用 sku 查找
-          if (!productIdObj) {
+          if (!productObj) {
             const productBySku = await Product.findOne({ sku: productIdInput });
             if (productBySku) {
-              productIdObj = productBySku._id;
+              productObj = productBySku;
               productName = productBySku.name || productName;
             }
           }
           
           // 4. 如果还没找到，尝试用 tiktokSku 查找
-          if (!productIdObj) {
+          if (!productObj) {
             const productByTiktokSku = await Product.findOne({ tiktokSku: productIdInput });
             if (productByTiktokSku) {
-              productIdObj = productByTiktokSku._id;
+              productObj = productByTiktokSku;
               productName = productByTiktokSku.name || productName;
             }
           }
           
           // 5. 如果还没找到，尝试用 name 查找
-          if (!productIdObj && productName) {
+          if (!productObj && productName) {
             const productByName = await Product.findOne({ name: productName });
             if (productByName) {
-              productIdObj = productByName._id;
+              productObj = productByName;
+              productName = productByName.name || productName;
             }
           }
           
           // 6. 如果还没找到，模糊匹配 name
-          if (!productIdObj && productName) {
+          if (!productObj && productName) {
             const productByNameLike = await Product.findOne({ name: { $regex: productName, $options: 'i' } });
             if (productByNameLike) {
-              productIdObj = productByNameLike._id;
+              productObj = productByNameLike;
               productName = productByNameLike.name || productName;
             }
           }
         }
         
-        if (!productIdObj) {
+        if (!productObj) {
           result.failed++;
           result.errors.push({
-            row: rowIndex + 1,
+            row: i + 2,
             message: `商品不存在: ${productIdInput || productName}`
           });
           continue;
         }
 
-        // 获取 TikTok 商品 ID
-        const tiktokProductId = productByTiktokId?.tiktokProductId || productIdObj.toString();
+        // 获取 TikTok 商品 ID（优先使用 tiktokProductId，否则用原始输入值）
+        const tiktokProductId = productObj.tiktokProductId || productIdInput;
         
         // 构建唯一键：日期 + 达人账号 + TikTok商品ID
         const uniqueKey = {

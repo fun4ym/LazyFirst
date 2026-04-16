@@ -434,23 +434,60 @@ const TrendChart = defineComponent({
 
       const color = props.type === 'sample' ? '#7b1fa2' : '#0288d1'
 
-      const series = props.data.map(item => ({
-        name: item.name,
-        type: item.type,
-        data: item.data,
-        itemStyle: { color: item.itemStyle?.color || color },
-        lineStyle: { width: 3 },
-        symbol: 'circle',
-        symbolSize: 6
-      }))
+      const series = props.data.map(item => {
+        const itemColor = item.itemStyle?.color || color
+        return {
+          name: item.name,
+          type: item.type || 'line',
+          data: item.data,
+          itemStyle: { color: itemColor },
+          lineStyle: {
+            width: 3,
+            color: itemColor
+          },
+          barMaxWidth: 30,
+          symbol: 'circle',
+          symbolSize: 6
+        }
+      })
 
-      console.log('[TrendChart] updateChart type:', props.type, 'data:', props.data, 'dates:', props.dates)
+      console.log('[TrendChart] updateChart type:', props.type, 'series:', JSON.stringify(series, null, 2), 'dates:', props.dates)
+
+      // 通过率使用右侧Y轴，申样数使用左侧Y轴
+      const yAxis = props.type === 'sample' ? [
+        {
+          type: 'value',
+          name: '申样数',
+          position: 'left'
+        },
+        {
+          type: 'value',
+          name: '通过率(%)',
+          position: 'right',
+          axisLabel: {
+            formatter: '{value}%'
+          }
+        }
+      ] : [
+        {
+          type: 'value',
+          name: '订单数'
+        }
+      ]
 
       chartInstance.setOption({
         tooltip: {
           trigger: 'axis',
           axisPointer: {
             type: 'cross'
+          },
+          formatter: function(params) {
+            let result = params[0].axisValue + '<br/>'
+            params.forEach(param => {
+              const value = param.seriesName === '通过率' ? param.value + '%' : param.value
+              result += `${param.marker} ${param.seriesName}: ${value}<br/>`
+            })
+            return result
           }
         },
         legend: {
@@ -471,12 +508,9 @@ const TrendChart = defineComponent({
             rotate: 45
           }
         },
-        yAxis: {
-          type: 'value',
-          name: props.type === 'sample' ? '申样数' : '订单数'
-        },
+        yAxis: yAxis,
         series: series
-      }, { notMerge: false })
+      }, true)
 
       console.log('[TrendChart] chart setOption completed')
     }

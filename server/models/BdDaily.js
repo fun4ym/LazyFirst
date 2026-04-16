@@ -25,6 +25,16 @@ const bdDailySchema = new mongoose.Schema({
     default: 0,
     comment: '本日申样数'
   },
+  sampleSentCount: {
+    type: Number,
+    default: 0,
+    comment: '申样成功数'
+  },
+  sampleRefusedCount: {
+    type: Number,
+    default: 0,
+    comment: '申样拒绝数'
+  },
   sampleIds: {
     type: String,
     comment: '申样记录ID，逗号分隔'
@@ -61,6 +71,12 @@ const bdDailySchema = new mongoose.Schema({
     type: Number,
     default: 0,
     comment: '本日出单数'
+  },
+  // 视频发布统计
+  videoPublishCount: {
+    type: Number,
+    default: 0,
+    comment: '视频发布数'
   },
   // 系统字段
   creatorId: {

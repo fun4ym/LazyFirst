@@ -88,7 +88,8 @@ const productSchema = new mongoose.Schema({
   },
   shopId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Shop'
+    ref: 'Shop',
+    required: [true, '请选择所属店铺']
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -104,13 +105,14 @@ const productSchema = new mongoose.Schema({
   },
   sku: {
     type: String,
-    required: true
+    required: false
   },
   tiktokSku: String,
   // TikTok shop信息（从合作产品迁移）
   tiktokProductId: String,
   productCategory: {
     type: String,
+    required: [true, '请选择商品类目'],
     default: ''
   },
   price: {

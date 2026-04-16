@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .chart-container { width: 100%; height: 400px; border: 1px solid #ccc; margin: 20px 0; }
+        .info { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard图表测试</h1>
+    
+    <div class="info">
+        <h3>问题分析：</h3>
+        <p>1. 橙色线（通过率）应该使用右侧Y轴（yAxisIndex: 1）</p>
+        <p>2. 右侧Y轴应该显示"通过率(%)"，范围0-100，带%符号</p>
+        <p>3. 左侧Y轴显示"申样数"</p>
+    </div>
+    
+    <div id="chart1" class="chart-container"></div>
+    
+    <div class="info">
+        <h3>测试数据：</h3>
+        <pre id="dataDisplay"></pre>
+    </div>
+    
+    <script>
+        // 模拟数据
+        const dates = ['04/01', '04/02', '04/03', '04/04', '04/05', '04/06', '04/07'];
+        const userData = [10, 20, 15, 25, 30, 20, 25];
+        const teamData = [50, 60, 55, 65, 70, 60, 65];
+        const passRateData = [30, 40, 35, 45, 50, 40, 45]; // 百分比数据
+        
+        document.getElementById('dataDisplay').textContent = JSON.stringify({
+            dates,
+            userData,
+            teamData,
+            passRateData
+        }, null, 2);
+        
+        // 初始化图表
+        const chart = echarts.init(document.getElementById('chart1'));
+        
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'cross' }
+            },
+            legend: {
+                data: ['个人', '团队', '通过率'],
+                top: 10
+            },
+            grid: {
+                left: '3%',
+                right: '8%', // 右侧留更多空间给Y轴
+                bottom: '3%',
+                top: '50px',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: dates,
+                axisLabel: { rotate: 45 }
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '申样数',
+                    position: 'left'
+                },
+                {
+                    type: 'value',
+                    name: '通过率(%)',
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    axisLabel: {
+                        formatter: '{value}%'
+                    }
+                }
+            ],
+            series: [
+                {
+                    name: '个人',
+                    type: 'line',
+                    data: userData,
+                    yAxisIndex: 0,
+                    itemStyle: { color: '#7b1fa2' },
+                    lineStyle: { width: 3 },
+                    symbol: 'circle',
+                    symbolSize: 6
+                },
+                {
+                    name: '团队',
+                    type: 'bar',
+                    data: teamData,
+                    yAxisIndex: 0,
+                    itemStyle: { color: '#e8e4ef' }
+                },
+                {
+                    name: '通过率',
+                    type: 'line',
+                    data: passRateData,
+                    yAxisIndex: 1,
+                    itemStyle: { color: '#ff9800' },
+                    lineStyle: { 
+                        width: 3,
+                        type: 'dashed'
+                    },
+                    symbol: 'circle',
+                    symbolSize: 6
+                }
+            ]
+        };
+        
+        chart.setOption(option);
+        
+        // 窗口大小变化时重绘
+        window.addEventListener('resize', () => {
+            chart.resize();
+        });
+    </script>
+</body>
+</html>

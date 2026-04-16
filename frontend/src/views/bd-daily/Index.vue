@@ -105,6 +105,32 @@
         </el-table-column>
 
         <el-table-column
+          :label="$t('bdDaily.sampleSentCount')"
+          width="150"
+          sortable
+          prop="sampleSentCount"
+        >
+          <template #default="{ row }">
+            <div class="stat-info">
+              <div class="stat-value success">{{ row.sampleSentCount || 0 }}</div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :label="$t('bdDaily.sampleRefusedCount')"
+          width="150"
+          sortable
+          prop="sampleRefusedCount"
+        >
+          <template #default="{ row }">
+            <div class="stat-info">
+              <div class="stat-value danger">{{ row.sampleRefusedCount || 0 }}</div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
           :label="$t('bdDaily.orderStats')"
           width="200"
         >
@@ -246,13 +272,41 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="申样数" width="150" sortable prop="sampleCount">
+            <el-table-column :label="$t('bdDaily.sampleCount')" width="150" sortable prop="sampleCount">
               <template #default="{ row }">
                 <div class="stat-value">{{ row.sampleCount || 0 }}</div>
               </template>
             </el-table-column>
 
-            <el-table-column label="订单数" width="150" sortable prop="orderCount">
+            <el-table-column :label="$t('bdDaily.sampleSentCount')" width="150" sortable prop="sampleSentCount">
+              <template #default="{ row }">
+                <div class="stat-value success">{{ row.sampleSentCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column :label="$t('bdDaily.sampleRefusedCount')" width="150" sortable prop="sampleRefusedCount">
+              <template #default="{ row }">
+                <div class="stat-value danger">{{ row.sampleRefusedCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column :label="$t('bdDaily.sampleSuccessRate')" width="150" sortable>
+              <template #default="{ row }">
+                <div class="stat-value" :class="{'success': (row.sampleSentCount / (row.sampleCount || 1)) * 100 >= 50}">
+                  {{ row.sampleCount ? ((row.sampleSentCount / row.sampleCount) * 100).toFixed(1) : '0.0' }}%
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column :label="$t('bdDaily.sampleFailureRate')" width="150" sortable>
+              <template #default="{ row }">
+                <div class="stat-value" :class="{'danger': (row.sampleRefusedCount / (row.sampleCount || 1)) * 100 >= 20}">
+                  {{ row.sampleCount ? ((row.sampleRefusedCount / row.sampleCount) * 100).toFixed(1) : '0.0' }}%
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column :label="$t('bdDaily.orderCount')" width="150" sortable prop="orderCount">
               <template #default="{ row }">
                 <div class="stat-value">{{ row.orderCount || 0 }}</div>
               </template>
@@ -279,6 +333,20 @@
             <el-table-column label="成单数" width="120" sortable prop="orderGeneratedCount">
               <template #default="{ row }">
                 <div class="stat-value">{{ row.orderGeneratedCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="视频发布数" width="120" sortable prop="videoPublishCount">
+              <template #default="{ row }">
+                <div class="stat-value">{{ row.videoPublishCount || 0 }}</div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="视频发布率" width="120" sortable>
+              <template #default="{ row }">
+                <div class="stat-value" :class="{'success': (row.videoPublishCount / (row.sampleCount || 1)) * 100 >= 50}">
+                  {{ row.sampleCount ? ((row.videoPublishCount / row.sampleCount) * 100).toFixed(1) : '0.0' }}%
+                </div>
               </template>
             </el-table-column>
 
@@ -589,6 +657,9 @@ const loadMonthlyData = async () => {
           salesman: bd,
           month: monthPickerValue.value,
           sampleCount: 0,
+          sampleSentCount: 0,
+          sampleRefusedCount: 0,
+          videoPublishCount: 0,
           orderCount: 0,
           revenue: 0,
           estimatedCommission: 0,
@@ -598,6 +669,9 @@ const loadMonthlyData = async () => {
         }
       }
       bdSummary[bd].sampleCount += item.sampleCount || 0
+      bdSummary[bd].sampleSentCount += item.sampleSentCount || 0
+      bdSummary[bd].sampleRefusedCount += item.sampleRefusedCount || 0
+      bdSummary[bd].videoPublishCount += item.videoPublishCount || 0
       bdSummary[bd].orderCount += item.orderCount || 0
       bdSummary[bd].revenue += item.revenue || 0
       bdSummary[bd].estimatedCommission += item.estimatedCommission || 0
@@ -1065,6 +1139,16 @@ onMounted(() => {
 .stat-value.highlight {
   font-size: 15px;
   color: #7b1fa2;
+}
+
+.stat-value.success {
+  color: #2e7d32;
+  font-weight: 700;
+}
+
+.stat-value.danger {
+  color: #c62828;
+  font-weight: 700;
 }
 
 .stat-detail {

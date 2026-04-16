@@ -490,7 +490,7 @@
                         />
                       </el-select>
                     </el-form-item>
-                    <el-form-item :label="$t('samplePublic.trackingNumber')" :required="sampleStatusForm.logisticsCompany !== 'default'">
+                    <el-form-item :label="$t('samplePublic.trackingNumber')">
                       <el-input 
                         v-model="sampleStatusForm.trackingNumber" 
                         :placeholder="$t('samplePublic.enterTrackingNumber')" 
@@ -819,11 +819,7 @@ const confirmStatusUpdate = async () => {
     }
   }
 
-  // 已寄样时：选择非default时快递单号必填
-  if (sampleStatusForm.sampleStatus === 'sent' && sampleStatusForm.logisticsCompany !== 'default' && !sampleStatusForm.trackingNumber) {
-    ElMessage.error('快递单号不能为空')
-    return
-  }
+
 
   statusUpdateLoading.value = true
   try {

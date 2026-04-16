@@ -132,12 +132,8 @@ router.get('/bd-stats', authenticate, async (req, res) => {
       if (isAll) {
         return {};
       }
-      return {
-        $or: [
-          { salesman: username.toLowerCase() },
-          { salesman: realName }
-        ]
-      };
+      // salesman字段存的是username，统一用小写匹配
+      return { salesman: username.toLowerCase() };
     };
 
     // 查询用户/未分配的昨日数据

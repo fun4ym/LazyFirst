@@ -334,14 +334,14 @@
             </el-row>
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item :label="$t('product.shop')">
+                <el-form-item :label="$t('product.shop')" prop="shopId" :rules="{ required: true, message: $t('product.shopRequired'), trigger: 'change' }">
                   <el-select v-model="form.shopId" :placeholder="$t('product.shopSelect')" style="width: 100%">
                     <el-option v-for="shop in shops" :key="shop._id" :label="shop.shopName" :value="shop._id" />
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item :label="$t('product.productCategory')">
+                <el-form-item :label="$t('product.productCategory')" prop="productCategory" :rules="{ required: true, message: $t('product.categoryRequired'), trigger: 'change' }">
                   <el-select v-model="form.productCategory" :placeholder="$t('product.categorySelect')" style="width: 100%">
                     <el-option v-for="cat in productCategories" :key="cat" :label="cat" :value="cat" />
                   </el-select>
@@ -764,6 +764,7 @@ const hasPermission = (perm) => {
 
 const loading = ref(false)
 const showDialog = ref(false)
+const formRef = ref(null)
 const showDetailDialog = ref(false)
 const showReportDialog = ref(false)
 const loadingReport = ref(false)
@@ -1234,6 +1235,19 @@ const deleteProduct = async (row) => {
 }
 
 const handleSubmit = async () => {
+  // 验证表单必填字段
+  if (!formRef.value) {
+    ElMessage.error('表单组件未初始化，请稍后重试')
+    return
+  }
+  try {
+    await formRef.value.validate()
+  } catch (error) {
+    console.log('表单验证失败:', error)
+    ElMessage.error(t('product.formValidationFailed') || '请检查必填字段')
+    return
+  }
+
   // 活动配置是可选的，如果填写了则验证
   if (form.activityConfigs && form.activityConfigs.length > 0) {
     // 验证每个活动配置都有活动ID

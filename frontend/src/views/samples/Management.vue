@@ -51,13 +51,32 @@
           />
         </el-form-item>
 
+        <el-form-item :label="$t('samples.shop')">
+          <el-select
+            v-model="searchForm.shopId"
+            :placeholder="$t('samples.selectShop')"
+            clearable
+            filterable
+            style="width: 150px"
+          >
+            <el-option
+              v-for="shop in shopList"
+              :key="shop._id"
+              :label="shop.shopName"
+              :value="shop._id"
+            />
+          </el-select>
+        </el-form-item>
+
         <el-form-item :label="$t('samples.applyDate')">
           <el-date-picker
-            v-model="searchForm.date"
-            type="date"
-            :placeholder="$t('samples.selectDate')"
+            v-model="searchForm.dateRange"
+            type="daterange"
+            :range-separator="'-'"
+            :start-placeholder="$t('samples.startDate') || '开始日期'"
+            :end-placeholder="$t('samples.endDate') || '结束日期'"
             clearable
-            style="width: 150px"
+            style="width: 240px"
             value-format="YYYY-MM-DD"
           />
         </el-form-item>
@@ -900,7 +919,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="快递单号" :required="sampleStatusForm.logisticsCompany !== 'default'">
+          <el-form-item label="快递单号">
             <el-input v-model="sampleStatusForm.trackingNumber" placeholder="Enter tracking number" />
           </el-form-item>
         </template>
@@ -1017,15 +1036,17 @@ const users = ref([])
 const cooperationProducts = ref([])
 const bdLoading = ref(false)
 const productLoading = ref(false)
+const shopList = ref([])  // 店铺列表
 
 const searchForm = reactive({
-  date: '',
+  dateRange: [],  // 日期区间
   productName: '',
   influencerAccount: '',
   salesman: '',
   sampleStatus: '',
   isOrderGenerated: null,
-  productId: ''  // 商品ID搜索
+  productId: '',  // 商品ID搜索
+  shopId: ''      // 店铺筛选
 })
 
 const pagination = reactive({
@@ -1071,6 +1092,17 @@ const loadCurrencies = async () => {
     }
   } catch (error) {
     console.error('Load currencies error:', error)
+  }
+}
+
+// 加载店铺列表
+const loadShopList = async () => {
+  try {
+    const res = await request.get('/shops', { params: { limit: 500 } })
+    shopList.value = res.shops || res.data || []
+  } catch (error) {
+    console.error('Load shops error:', error)
+    shopList.value = []
   }
 }
 
@@ -1156,6 +1188,16 @@ const loadSamples = async () => {
       companyId: userStore.companyId,
       ...searchForm
     }
+    
+    // 处理日期区间
+    if (searchForm.dateRange && searchForm.dateRange.length === 2) {
+      params.dateStart = searchForm.dateRange[0]
+      params.dateEnd = searchForm.dateRange[1]
+      delete params.dateRange
+    } else {
+      delete params.dateRange
+    }
+    
     const res = await request.get('/samples', { params })
     samples.value = res.data?.samples || res.samples || []
     pagination.total = res.pagination.total
@@ -1197,13 +1239,14 @@ const handleSampleStatusChange = async () => {
 
 const resetSearch = () => {
   Object.assign(searchForm, {
-    date: '',
+    dateRange: [],
     productName: '',
     influencerAccount: '',
     salesman: '',
     sampleStatus: '',
     isOrderGenerated: null,
-    productId: ''
+    productId: '',
+    shopId: ''
   })
   pagination.page = 1
   loadSamples()
@@ -1577,21 +1620,20 @@ const openSampleStatusDialog = async (sample) => {
 
 // 保存寄样状态
 const handleSampleStatusSave = async () => {
-  // 已寄样时：选择非default时快递单号必填
-  if (sampleStatusForm.sampleStatus === 'sent' && sampleStatusForm.logisticsCompany !== 'default' && !sampleStatusForm.trackingNumber) {
-    ElMessage.error('快递单号不能为空')
-    return
-  }
   sampleStatusLoading.value = true
   try {
     const payload = {
       sampleStatus: sampleStatusForm.sampleStatus,
       refusalReason: sampleStatusForm.sampleStatus === 'refused' ? sampleStatusForm.refusalReason : ''
     }
-    // 已寄样时发送物流信息
+    // 已寄样时发送物流信息（快递单号非必填）
     if (sampleStatusForm.sampleStatus === 'sent') {
-      payload.logisticsCompany = sampleStatusForm.logisticsCompany
-      payload.trackingNumber = sampleStatusForm.trackingNumber
+      if (sampleStatusForm.logisticsCompany) {
+        payload.logisticsCompany = sampleStatusForm.logisticsCompany
+      }
+      if (sampleStatusForm.trackingNumber) {
+        payload.trackingNumber = sampleStatusForm.trackingNumber
+      }
     }
     await request.put(`/samples/${sampleStatusForm._id}`, payload)
     ElMessage.success(t('samples.saveSuccess'))
@@ -1708,6 +1750,7 @@ const openSubmissionDetail = (submission) => {
 onMounted(() => {
   loadSamples()
   loadCurrencies()
+  loadShopList()
 })
 </script>
 

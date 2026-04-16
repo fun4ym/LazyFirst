@@ -116,6 +116,11 @@ router.post('/', authenticate, authorize('products:create'), async (req, res) =>
       companyId: req.companyId
     };
 
+    // 确保 images 是数组类型（Model 要求 [String]，前端可能传字符串）
+    if (productData.images && !Array.isArray(productData.images)) {
+      productData.images = productData.images ? [productData.images] : [];
+    }
+
     const product = await Product.create(productData);
 
     res.status(201).json({
@@ -126,6 +131,13 @@ router.post('/', authenticate, authorize('products:create'), async (req, res) =>
 
   } catch (error) {
     console.error('Create product error:', error);
+    // Mongoose验证错误返回400
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: Object.values(error.errors)[0].message || '数据验证失败'
+      });
+    }
     res.status(500).json({
       success: false,
       message: error.message || '创建商品失败'
@@ -182,6 +194,11 @@ router.put('/:id', authenticate, authorize('products:update'), async (req, res) 
     console.log('[Products PUT] activityConfigs:', JSON.stringify(req.body?.activityConfigs, null, 2));
     const updateData = { ...req.body };
 
+    // 确保 images 是数组类型（Model 要求 [String]，前端可能传字符串）
+    if (updateData.images && !Array.isArray(updateData.images)) {
+      updateData.images = updateData.images ? [updateData.images] : [];
+    }
+
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, companyId: req.companyId },
       updateData,
@@ -209,6 +226,13 @@ router.put('/:id', authenticate, authorize('products:update'), async (req, res) 
 
   } catch (error) {
     console.error('Update product error:', error);
+    // Mongoose验证错误返回400
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: Object.values(error.errors)[0].message || '数据验证失败'
+      });
+    }
     res.status(500).json({
       success: false,
       message: error.message || '更新商品失败'
