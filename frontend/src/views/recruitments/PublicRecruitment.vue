@@ -3,14 +3,14 @@
     <!-- 加载中 -->
     <div v-if="loading" class="loading-container">
       <el-icon class="loading-spin" :size="40"><Loading /></el-icon>
-      <p>加载中...</p>
+      <p>{{ $t('common.loading') }}</p>
     </div>
 
     <!-- 错误提示 -->
     <div v-else-if="error" class="error-container">
-      <el-result icon="error" title="访问失败" :sub-title="error">
+      <el-result icon="error" :title="$t('samplePublic.accessFailed')" :sub-title="error">
         <template #extra>
-          <el-button type="primary" @click="loadData">重试</el-button>
+          <el-button type="primary" @click="loadData">{{ $t('samplePublic.retry') }}</el-button>
         </template>
       </el-result>
     </div>
@@ -115,7 +115,10 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Loading } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+
+const { t } = useI18n()
 
 const route = useRoute()
 
@@ -134,7 +137,7 @@ const getApiBase = () => {
 const loadData = async () => {
   const y = route.query.y
   if (!y) {
-    error.value = '缺少识别码参数'
+    error.value = t('samplePublic.missingCode')
     loading.value = false
     return
   }
@@ -152,15 +155,15 @@ const loadData = async () => {
         themeColor.value = res.data.data.pageStyle.themeColor
       }
     } else {
-      error.value = res.data?.message || '获取数据失败'
+      error.value = res.data?.message || t('samplePublic.loadFailed')
     }
   } catch (err) {
     if (err.response?.status === 403) {
-      error.value = '该招募已停用'
+      error.value = t('recruitment.disabled')
     } else if (err.response?.status === 404) {
-      error.value = '招募不存在或识别码无效'
+      error.value = t('samplePublic.accessFailed')
     } else {
-      error.value = '网络错误，请稍后重试'
+      error.value = t('samplePublic.networkError')
     }
   } finally {
     loading.value = false

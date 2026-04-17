@@ -486,14 +486,13 @@ const submitApplication = async () => {
 
   submitting.value = true
   try {
+    // ★ 重构后：发送 ObjectId 引用字段（不再传冗余的字符串）
     await request.post('/samples', {
       date: form.value.date,
-      productName: selectedProduct.value.name,
-      productId: selectedProduct.value._id || selectedProduct.value.id,
-      influencerAccount: selectedInfluencer.value.tiktokId,
-      followerCount: parseFollowersToDb(displayFollowerCount.value),
-      quantity: form.value.quantity || 1,
-      remark: form.value.remark
+      productId: selectedProduct.value._id,           // ObjectId
+      influencerId: selectedInfluencer.value._id,       // ObjectId
+      shippingInfo: `Mobile申请 - ${form.value.remark || ''}`,
+      isOrderGenerated: false
     })
     ElMessage.success('申请提交成功')
     // 重置表单

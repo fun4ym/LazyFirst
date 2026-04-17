@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
 
-MONGODB_URI = 'mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system'
+MONGODB_URI = 'mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@150.109.183.29:27017/tap_system?authSource=tap_system'
 BACKUP_FILE = '/Users/mor/CodeBuddy/LazyFirst/tapdb_sync/upd202604081635all.json'
 DROP_COLLECTIONS = True
 

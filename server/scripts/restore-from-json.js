@@ -7,7 +7,7 @@
 const fs = require('fs');
 const { MongoClient } = require('mongodb');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://tapsystem:tap_system_pass_2024@localhost:27017/tap_system?authSource=tap_system';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@localhost:27017/tap_system?authSource=tap_system';
 const BACKUP_FILE = process.argv[2];
 
 if (!BACKUP_FILE) {

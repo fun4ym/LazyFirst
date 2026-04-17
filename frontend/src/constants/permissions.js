@@ -11,6 +11,7 @@ export const MODULES = {
   // BD工作台
   BD_WORKSPACE: { code: 'bdWorkspace', name: 'BD工作台', dataScope: false },
   INFLUENCERS: { code: 'influencers', name: '达人列表', parent: 'bdWorkspace' },
+  VIDEOS: { code: 'videos', name: '视频登记', parent: 'bdWorkspace' },
   SAMPLES_BD: { code: 'samplesBd', name: '样品申请(BD)', parent: 'bdWorkspace' },
 
   // 供应链
@@ -110,6 +111,7 @@ export const PERMISSION_MAP = {
 
   // BD工作台
   '/influencer-managements': [makePermission('influencers', 'read')],
+  '/videos': [makePermission('videos', 'read'), makePermission('videos', 'create'), makePermission('videos', 'update'), makePermission('videos', 'delete')],
   '/samples-bd': [makePermission('samplesBd', 'read'), makePermission('samplesBd', 'create')],
 
   // 供应链
@@ -143,6 +145,7 @@ export const PERMISSION_MAP = {
  */
 export const MODULE_DATA_SCOPE = {
   influencers: { ownerField: 'assignedTo', label: '达人' },
+  videos: { ownerField: 'createdBy', label: '视频登记' },
   samplesBd: { ownerField: 'salesmanId', label: '样品' },
   samples: { ownerField: 'salesmanId', label: '样品' },
   orders: { ownerField: 'salesmanId', label: '订单' },

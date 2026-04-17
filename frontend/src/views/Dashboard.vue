@@ -83,9 +83,9 @@
                 :label="$t('dashboard.sampleCount')"
               />
               <div class="team-info">
-                <p>个人: {{ bdStats.yesterdayStats.sampleCount }} 条</p>
-                <p>团队: {{ bdStats.teamStats.sampleCount }} 条</p>
-                <p>占比: {{ bdStats.percentage.sample }}%</p>
+                <p>{{ $t('dashboard.personal') }}: {{ bdStats.yesterdayStats.sampleCount }} {{ $t('bdDaily.items') }}</p>
+                <p>{{ $t('dashboard.team') }}: {{ bdStats.teamStats.sampleCount }} {{ $t('bdDaily.items') }}</p>
+                <p>{{ $t('dashboard.percentage') }}: {{ bdStats.percentage.sample }}%</p>
               </div>
             </div>
           </el-card>
@@ -95,19 +95,19 @@
           <el-card shadow="hover">
             <template #header>
               <div class="card-header-title">
-                <span>订单数团队占比</span>
+                <span>{{ $t('dashboard.orderPercentage') }}</span>
               </div>
             </template>
             <div class="pie-chart-container">
               <pie-chart
                 :data="orderPieData"
                 :percentage="bdStats.percentage.order"
-                label="订单数"
+                :label="$t('dashboard.orderCount')"
               />
               <div class="team-info">
-                <p>个人: {{ bdStats.yesterdayStats.orderCount }} 单</p>
-                <p>团队: {{ bdStats.teamStats.orderCount }} 单</p>
-                <p>占比: {{ bdStats.percentage.order }}%</p>
+                <p>{{ $t('dashboard.personal') }}: {{ bdStats.yesterdayStats.orderCount }} {{ $t('bdDaily.orders') }}</p>
+                <p>{{ $t('dashboard.team') }}: {{ bdStats.teamStats.orderCount }} {{ $t('bdDaily.orders') }}</p>
+                <p>{{ $t('dashboard.percentage') }}: {{ bdStats.percentage.order }}%</p>
               </div>
             </div>
           </el-card>
@@ -239,8 +239,8 @@ const sampleTrendData = computed(() => {
   const trendData = bdStats.value.trendStats[dataKey]
   console.log('[sampleTrendData] key:', key, 'dataKey:', dataKey, 'trendData:', trendData)
   return [
-    { name: '个人', data: trendData?.user || [], type: 'line', itemStyle: { color: '#7b1fa2' } },
-    { name: '团队', data: trendData?.team || [], type: 'bar', itemStyle: { color: '#e8e4ef' } }
+    { name: t('dashboard.personal'), data: trendData?.user || [], type: 'line', itemStyle: { color: '#7b1fa2' } },
+    { name: t('dashboard.team'), data: trendData?.team || [], type: 'bar', itemStyle: { color: '#e8e4ef' } }
   ]
 })
 
@@ -259,8 +259,8 @@ const orderTrendData = computed(() => {
   const trendData = bdStats.value.trendStats[dataKey]
   console.log('[orderTrendData] key:', key, 'dataKey:', dataKey, 'trendData:', trendData)
   return [
-    { name: '个人', data: trendData?.user || [], type: 'line', itemStyle: { color: '#0288d1' } },
-    { name: '团队', data: trendData?.team || [], type: 'bar', itemStyle: { color: '#e3f2fd' } }
+    { name: t('dashboard.personal'), data: trendData?.user || [], type: 'line', itemStyle: { color: '#0288d1' } },
+    { name: t('dashboard.team'), data: trendData?.team || [], type: 'bar', itemStyle: { color: '#e3f2fd' } }
   ]
 })
 
@@ -278,8 +278,8 @@ const samplePieData = computed(() => {
   const team = bdStats.value.teamStats.sampleCount
   const others = Math.max(0, team - user)
   return [
-    { name: '个人', value: user, itemStyle: { color: '#7b1fa2' } },
-    { name: '团队其他', value: others, itemStyle: { color: '#e8e4ef' } }
+    { name: t('dashboard.personal'), value: user, itemStyle: { color: '#7b1fa2' } },
+    { name: t('dashboard.teamOthers'), value: others, itemStyle: { color: '#e8e4ef' } }
   ]
 })
 
@@ -289,13 +289,13 @@ const orderPieData = computed(() => {
   const team = bdStats.value.teamStats.orderCount
   const others = Math.max(0, team - user)
   return [
-    { name: '个人', value: user, itemStyle: { color: '#0288d1' } },
-    { name: '团队其他', value: others, itemStyle: { color: '#e8e4ef' } }
+    { name: t('dashboard.personal'), value: user, itemStyle: { color: '#0288d1' } },
+    { name: t('dashboard.teamOthers'), value: others, itemStyle: { color: '#e8e4ef' } }
   ]
 })
 
 const formatMoney = (value) => {
-  return value.toLocaleString('zh-CN', {
+  return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
@@ -342,7 +342,7 @@ const loadBDStats = async () => {
     if (error.response?.status === 403) {
       isBD.value = false
     } else {
-      ElMessage.error('加载数据概览失败')
+      ElMessage.error(t('dashboard.loadFailed'))
     }
   }
 }
@@ -361,7 +361,7 @@ const PieChart = defineComponent({
     },
     label: {
       type: String,
-      default: '占比'
+      default: ''
     }
   },
   setup(props) {
@@ -424,6 +424,7 @@ const TrendChart = defineComponent({
   setup(props) {
     const chartRef = ref(null)
     let chartInstance = null
+    const { t: ct } = useI18n()
 
     const updateChart = (echarts) => {
       if (!chartRef.value) return
@@ -457,12 +458,12 @@ const TrendChart = defineComponent({
       const yAxis = props.type === 'sample' ? [
         {
           type: 'value',
-          name: '申样数',
+          name: ct('dashboard.sampleCount'),
           position: 'left'
         },
         {
           type: 'value',
-          name: '通过率(%)',
+          name: ct('dashboard.passRate') + '(%)',
           position: 'right',
           axisLabel: {
             formatter: '{value}%'
@@ -471,7 +472,7 @@ const TrendChart = defineComponent({
       ] : [
         {
           type: 'value',
-          name: '订单数'
+          name: ct('dashboard.orderCount')
         }
       ]
 
@@ -484,7 +485,7 @@ const TrendChart = defineComponent({
           formatter: function(params) {
             let result = params[0].axisValue + '<br/>'
             params.forEach(param => {
-              const value = param.seriesName === '通过率' ? param.value + '%' : param.value
+              const value = param.seriesName === ct('dashboard.passRate') ? param.value + '%' : param.value
               result += `${param.marker} ${param.seriesName}: ${value}<br/>`
             })
             return result

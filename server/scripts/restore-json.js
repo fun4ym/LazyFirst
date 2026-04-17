@@ -7,7 +7,7 @@
 const fs = require('fs');
 const { MongoClient, ObjectId, Binary } = require('mongodb');
 
-const MONGODB_URI = 'mongodb://tapsystem:tap_system_pass_2024@mongodb:27017/tap_system?authSource=tap_system';
+const MONGODB_URI = 'mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@mongodb:27017/tap_system?authSource=tap_system';
 const BACKUP_FILE = process.argv[2] || '/backup.json';
 const DROP_COLLECTIONS = process.argv.includes('--drop');
 

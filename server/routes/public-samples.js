@@ -1,5 +1,6 @@
 const express = require('express');
 const SampleManagement = require('../models/SampleManagement');
+const Video = require('../models/Video');
 const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const Company = require('../models/Company');
@@ -12,198 +13,124 @@ const router = express.Router();
  * @route   GET /api/public/samples
  * @desc    通过店铺识别码获取样品申请列表（公开接口，无需登录）
  * @access  Public
+ * @notes   重构后适配新数据模型：productId是ObjectId，influencerId替换influencerAccount
  */
 router.get('/', async (req, res) => {
   try {
     const { s: identificationCode } = req.query;
 
     if (!identificationCode) {
-      return res.status(400).json({
-        success: false,
-        message: '缺少识别码参数'
-      });
+      return res.status(400).json({ success: false, message: '缺少识别码参数' });
     }
 
     // 1. 通过识别码查找店铺
     const shop = await Shop.findOne({ identificationCode });
-
     if (!shop) {
-      return res.status(404).json({
-        success: false,
-        message: '店铺不存在或识别码无效'
-      });
+      return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
     }
 
-    // 获取公司信息
     let companyInfo = null;
     if (shop.companyId) {
       const company = await Company.findById(shop.companyId).select('name logo avatar');
       if (company) {
-        companyInfo = {
-          _id: company._id,
-          name: company.name,
-          logo: company.logo || company.avatar || ''
-        };
+        companyInfo = { _id: company._id, name: company.name, logo: company.logo || company.avatar || '' };
       }
     }
 
-    // 2. 用 shopId 查询该店铺关联的商品
-    const products = await Product.find({ shopId: shop._id }).select('_id tiktokProductId name');
+    // ★ 重构后：用shopId查Product的_id列表（不再是tiktokProductId）
+    const products = await Product.find({ shopId: shop._id }).select('_id tiktokProductId name images productImages');
 
     if (products.length === 0) {
       return res.json({
         success: true,
         data: {
-          shop: {
-            _id: shop._id,
-            shopName: shop.shopName,
-            identificationCode: shop.identificationCode,
-            identificationCodeGeneratedAt: shop.identificationCodeGeneratedAt
-          },
+          shop: { _id: shop._id, shopName: shop.shopName, identificationCode: shop.identificationCode, identificationCodeGeneratedAt: shop.identificationCodeGeneratedAt },
           samples: [],
           pagination: { total: 0, page: 1, limit: 20, pages: 0 }
         }
       });
     }
 
-    // 3. 获取 TikTok 商品 ID 列表（productId 存的是 TikTok 商品 ID）
-    const tiktokProductIdList = products.map(p => p.tiktokProductId).filter(Boolean);
+    // ★ 用Product._id列表查询样品
+    const productIds = products.map(p => p._id);
 
-    // 4. 查询样品申请
-    const { 
-      page = 1, 
-      limit = 20,
-      sampleStatus,
-      isOrderGenerated,
-      date,
-      productName,
-      influencerAccount,
-      productId
-    } = req.query;
+    const { page = 1, limit = 20, sampleStatus, isOrderGenerated, date, productName, influencerAccount } = req.query;
 
-    // 用 tiktokProductId 查样品申请
-    const query = {
-      productId: { $in: tiktokProductIdList }
-    };
+    // ★ productId 现在是 ObjectId
+    const query = { productId: { $in: productIds } };
 
-    // 筛选：寄样状态
-    if (sampleStatus) {
-      query.sampleStatus = sampleStatus;
-    }
+    if (sampleStatus) query.sampleStatus = sampleStatus;
+    if (isOrderGenerated !== undefined) query.isOrderGenerated = isOrderGenerated === 'true';
+    if (date) query.date = { $gte: new Date(date), $lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1)) };
 
-    // 筛选：是否出单
-    if (isOrderGenerated !== undefined) {
-      query.isOrderGenerated = isOrderGenerated === 'true';
-    }
-
-    // 筛选：申请日期
-    if (date) {
-      query.date = {
-        $gte: new Date(date),
-        $lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1))
-      };
-    }
-
-    // 筛选：商品名称
+    // ★ 商品名称筛选 → 先查Product获取_ids
     if (productName) {
-      query.productName = { $regex: productName, $options: 'i' };
+      const matchedProducts = await Product.find({
+        _id: { $in: productIds },
+        name: { $regex: productName, $options: 'i' }
+      }).select('_id').lean();
+      query.productId = matchedProducts.length > 0 ? { $in: matchedProducts.map(p => p._id) } : { $in: [] };
     }
 
-    // 筛选：达人ID（模糊搜索）
+    // ★ 达人账号筛选 → 先查Influencer获取_ids
     if (influencerAccount) {
-      query.influencerAccount = { $regex: influencerAccount, $options: 'i' };
-    }
-
-    // 筛选：商品ID（模糊搜索）
-    if (productId) {
-      query.productId = { $regex: productId, $options: 'i' };
+      const matchedInfluencers = await Influencer.find({
+        tiktokId: { $regex: influencerAccount, $options: 'i' }
+      }).select('_id').lean();
+      if (matchedInfluencers.length > 0) {
+        query.influencerId = { $in: matchedInfluencers.map(inf => inf._id) };
+      } else {
+        query.influencerId = { $in: [] };
+      }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // ★ populate关联查询
     const samples = await SampleManagement.find(query)
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv')
+      .populate('salesmanId', 'realName username')
       .limit(parseInt(limit))
       .skip(skip)
       .sort({ date: -1 });
 
     const total = await SampleManagement.countDocuments(query);
 
-    // 获取所有达人账号，用于查询GMV
-    const influencerAccounts = [...new Set(samples.map(s => s.influencerAccount).filter(Boolean))];
-    
-    // 查询达人信息获取GMV
-    const influencers = await Influencer.find({ tiktokId: { $in: influencerAccounts } })
-      .select('tiktokId latestFollowers latestGmv');
-    
-    // 构建达人信息映射
-    const influencerMap = {};
-    influencers.forEach(inf => {
-      influencerMap[inf.tiktokId] = {
-        latestFollowers: inf.latestFollowers,
-        latestGmv: inf.latestGmv
+    // 获取样品的Videos
+    const sampleIds = samples.map(s => s._id);
+    const videos = sampleIds.length > 0 ? await Video.find({ sampleId: { $in: sampleIds } }).lean() : [];
+    const videoMap = {};
+    videos.forEach(v => {
+      if (!videoMap[v.sampleId.toString()]) videoMap[v.sampleId.toString()] = [];
+      videoMap[v.sampleId.toString()].push(v);
+    });
+
+    // 构建商品信息映射
+    const productMap = {};
+    products.forEach(p => {
+      productMap[p._id.toString()] = {
+        name: p.name,
+        tiktokProductId: p.tiktokProductId,
+        image: p.images?.[0] || p.productImages?.[0] || ''
       };
     });
 
-    // 获取商品图片（productId 存的就是 TikTok 商品 ID）
-    const tiktokProductIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
-    const productList = await Product.find({
-      tiktokProductId: { $in: tiktokProductIds }
-    }).select('tiktokProductId images productImages').lean();
-    const productImageMap = {};
-    productList.forEach(p => {
-      productImageMap[p.tiktokProductId] = p.images?.[0] || p.productImages?.[0] || '';
-    });
+    // 组装返回数据（带兼容字段）
+    const samplesData = samples.map(sample => {
+      const sampleVideos = videoMap[sample._id.toString()] || [];
+      const latestVideo = sampleVideos[0] || null;
 
-    // 整理返回数据，动态计算重复提交统计
-    const samplesData = await Promise.all(samples.map(async (sample) => {
-      const productIdStr = sample.productId || '';
-      
-      // 动态计算重复提交统计（productId + influencerAccount）
-      const previousRecords = await SampleManagement.find({
-        companyId: sample.companyId,
-        influencerAccount: sample.influencerAccount,
-        productId: sample.productId
-      }).select('_id date productName influencerAccount sampleStatus salesman createdAt')
-      .sort({ date: -1, createdAt: -1 }).limit(10);
-      
-      // 获取所有salesman ID并查询用户信息
-      const salesmanIds = [];
-      previousRecords.forEach(record => {
-        if (record.salesman && typeof record.salesman === 'string' && record.salesman.length === 24) {
-          salesmanIds.push(record.salesman);
-        }
-      });
-
-      const salesmanUsers = await User.find({ 
-        _id: { $in: salesmanIds.filter(id => /^[0-9a-fA-F]{24}$/.test(id)) }
-      }).select('_id realName username');
-
-      const userMap = {};
-      salesmanUsers.forEach(user => {
-        userMap[user._id.toString()] = user.realName || user.username;
-      });
-
-      const duplicateCount = previousRecords.length;
-      const previousSubmissions = previousRecords.map(record => ({
-        sampleId: record._id,
-        date: record.date,
-        productName: record.productName,
-        influencerAccount: record.influencerAccount,
-        sampleStatus: record.sampleStatus,
-        salesman: userMap[record.salesman] || record.salesman || '',  // 将ID转换为名字
-        createdAt: record.createdAt
-      }));
-      
       return {
         _id: sample._id,
         date: sample.date,
-        influencerAccount: sample.influencerAccount,
-        productName: sample.productName,
-        productId: productIdStr,  // 已是 TikTok 商品 ID
-        productImage: productImageMap[productIdStr] || '',
-        followerCount: sample.followerCount,
-        gmv: influencerMap[sample.influencerAccount]?.latestGmv || 0,
-        salesman: sample.salesman,
+        // 兼容字段
+        productName: sample.productId?.name || '',
+        productId: sample.productId?.tiktokProductId || '',       // TikTok ID用于展示
+        productImage: sample.productId?.images?.[0] || sample.productId?.productImages?.[0] || '',
+        influencerAccount: sample.influencerId?.tiktokId || '',
+        followerCount: sample.influencerId?.latestFollowers || 0,
+        gmv: sample.influencerId?.latestGmv || 0,
+        salesman: sample.salesmanId?.realName || sample.salesmanId?.username || '',
         shippingInfo: sample.shippingInfo,
         isSampleSent: sample.isSampleSent,
         sampleStatus: sample.sampleStatus,
@@ -212,44 +139,35 @@ router.get('/', async (req, res) => {
         receivedDate: sample.receivedDate,
         isOrderGenerated: sample.isOrderGenerated,
         orderCount: sample.orderCount,
-        videoLink: sample.videoLink,
-        videoStreamCode: sample.videoStreamCode,
-        isAdPromotion: sample.isAdPromotion,
-        adPromotionTime: sample.adPromotionTime,
-        sampleImage: sample.sampleImage,
-        duplicateCount: duplicateCount,
-        previousSubmissions: previousSubmissions,
+        // Video信息
+        videoLink: latestVideo?.videoLink || '',
+        videoStreamCode: latestVideo?.videoStreamCode || '',
+        isAdPromotion: sampleVideos.some(v => v.isAdPromotion) || sample.isAdPromotion || false,
+        adPromotionTime: latestVideo?.adPromotionTime || sample.adPromotionTime,
+        duplicateCount: sample.duplicateCount || 0,
+        previousSubmissions: (sample.previousSubmissions || []).map(ps => ({
+          ...ps.toObject ? ps.toObject() : ps,
+          influencerAccount: ps.influencerAccount || '',
+          salesman: ps.salesman || ''
+        })),
         createdAt: sample.createdAt,
         updatedAt: sample.updatedAt
       };
-    }));
+    });
 
     res.json({
       success: true,
       data: {
         company: companyInfo,
-        shop: {
-          _id: shop._id,
-          shopName: shop.shopName,
-          identificationCode: shop.identificationCode,
-          identificationCodeGeneratedAt: shop.identificationCodeGeneratedAt
-        },
+        shop: { _id: shop._id, shopName: shop.shopName, identificationCode: shop.identificationCode, identificationCodeGeneratedAt: shop.identificationCodeGeneratedAt },
         samples: samplesData,
-        pagination: {
-          total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(total / parseInt(limit))
-        }
+        pagination: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) }
       }
     });
 
   } catch (error) {
     console.error('Public samples API error:', error);
-    res.status(500).json({
-      success: false,
-      message: '获取样品申请列表失败'
-    });
+    res.status(500).json({ success: false, message: '获取样品申请列表失败' });
   }
 });
 
@@ -262,91 +180,44 @@ router.put('/batch', async (req, res) => {
   try {
     const { s: identificationCode, sampleStatus, isAdPromotion, sampleIds } = req.query;
 
-    if (!identificationCode) {
-      return res.status(400).json({
-        success: false,
-        message: '缺少识别码参数'
-      });
-    }
+    if (!identificationCode) return res.status(400).json({ success: false, message: '缺少识别码参数' });
 
-    // 处理 sampleIds：可能是数组或逗号分隔的字符串
     let idsArray = sampleIds;
-    if (typeof sampleIds === 'string') {
-      idsArray = sampleIds.split(',').filter(id => id.trim());
-    }
-    
-    if (!idsArray || !Array.isArray(idsArray) || idsArray.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: '缺少样品记录ID'
-      });
-    }
+    if (typeof sampleIds === 'string') idsArray = sampleIds.split(',').filter(id => id.trim());
+    if (!idsArray || !Array.isArray(idsArray) || idsArray.length === 0) return res.status(400).json({ success: false, message: '缺少样品记录ID' });
 
-    // 验证识别码
     const shop = await Shop.findOne({ identificationCode });
-    if (!shop) {
-      return res.status(404).json({
-        success: false,
-        message: '店铺不存在或识别码无效'
-      });
-    }
+    if (!shop) return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
 
-    // 获取该店铺的 TikTok 商品 ID 列表
-    const products = await Product.find({ shopId: shop._id }).select('tiktokProductId');
-    const tiktokProductIdList = products.map(p => p.tiktokProductId).filter(Boolean);
+    // ★ 重构后用Product._id匹配
+    const products = await Product.find({ shopId: shop._id }).select('_id');
+    const productObjectIdList = products.map(p => p._id);
 
-    // 构建查询条件：必须是该店铺的商品
-    const query = {
-      _id: { $in: idsArray },
-      productId: { $in: tiktokProductIdList }
-    };
-
+    const query = { _id: { $in: idsArray }, productId: { $in: productObjectIdList } };
     const { logisticsCompany, trackingNumber } = req.query;
-
     const updateData = {};
 
-    // 更新寄样状态
     if (sampleStatus !== undefined) {
       updateData.sampleStatus = sampleStatus;
       updateData.isSampleSent = sampleStatus === 'sent';
       updateData.sampleStatusUpdatedAt = new Date();
-      // 已寄样时更新物流信息
       if (sampleStatus === 'sent') {
-        if (logisticsCompany !== undefined) {
-          updateData.logisticsCompany = logisticsCompany;
-        }
-        if (trackingNumber !== undefined) {
-          updateData.trackingNumber = trackingNumber;
-        }
+        if (logisticsCompany !== undefined) updateData.logisticsCompany = logisticsCompany;
+        if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber;
       }
     }
 
-    // 更新投流开关
     if (isAdPromotion !== undefined) {
       updateData.isAdPromotion = isAdPromotion === 'true';
       updateData.adPromotionUpdatedAt = new Date();
     }
 
-    const result = await SampleManagement.updateMany(
-      query,
-      { $set: updateData }
-    );
-
-    res.json({
-      success: true,
-      message: `更新成功，共更新 ${result.modifiedCount} 条记录`,
-      data: {
-        modifiedCount: result.modifiedCount,
-        matchedCount: result.matchedCount
-      }
-    });
+    const result = await SampleManagement.updateMany(query, { $set: updateData });
+    res.json({ success: true, message: `更新成功，共更新 ${result.modifiedCount} 条记录`, data: { modifiedCount: result.modifiedCount, matchedCount: result.matchedCount } });
 
   } catch (error) {
     console.error('Public samples batch update error:', error);
-    res.status(500).json({
-      success: false,
-      message: '批量更新失败'
-    });
+    res.status(500).json({ success: false, message: '批量更新失败' });
   }
 });
 

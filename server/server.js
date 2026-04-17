@@ -32,6 +32,7 @@ const initImportRoutes = require('./routes/init-import');
 const recruitmentRoutes = require('./routes/recruitments');
 const publicRecruitmentRoutes = require('./routes/public-recruitment');
 const publicProductsRoutes = require('./routes/public-products');
+const videoRoutes = require('./routes/videos');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -109,6 +110,7 @@ app.use('/api/init-import', initImportRoutes);
 app.use('/api/recruitments', recruitmentRoutes);
 app.use('/api/public/recruitment', publicRecruitmentRoutes);
 app.use('/api/public/products', publicProductsRoutes);
+app.use('/api/videos', videoRoutes);
 
 // 错误处理
 app.use(notFound);

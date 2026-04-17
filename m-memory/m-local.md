@@ -17,7 +17,7 @@
 | 环境 | MONGODB_URI |
 |------|-------------|
 | 本地开发 | `mongodb://127.0.0.1:27017/tap_system` |
-| 线上部署 | `mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system` |
+| 线上部署 | `mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@150.109.183.29:27017/tap_system?authSource=tap_system` |
 
 **⚠️ 部署前必须改回线上地址！**
 

@@ -89,17 +89,17 @@
                       </template>
                       <div class="previous-submissions-popover">
                         <div class="popover-header">
-                          <h4>历史申样记录 ({{ row.duplicateCount }})</h4>
+                          <h4>{{ $t('sampleBD.historyRecords', { count: row.duplicateCount }) }}</h4>
                         </div>
                         <div class="popover-content">
                           <!-- 商品和达人信息只展示一次 -->
                           <div class="summary-info" v-if="row.previousSubmissions && row.previousSubmissions.length > 0">
                             <div class="summary-item">
-                              <span class="summary-label">商品名称：</span>
+                              <span class="summary-label">{{ $t('sampleBD.productNameDetail') }}</span>
                               <span class="summary-value">{{ row.previousSubmissions[0].productName || '-' }}</span>
                             </div>
                             <div class="summary-item">
-                              <span class="summary-label">TikTok ID：</span>
+                              <span class="summary-label">{{ $t('sampleBD.tiktokIdDetail') }}</span>
                               <span class="summary-value">{{ row.previousSubmissions[0].influencerAccount || '-' }}</span>
                             </div>
                           </div>
@@ -115,11 +115,11 @@
                             >
                               <div class="submission-row">
                                 <div class="submission-cell">
-                                  <span class="cell-label">申请日期：</span>
+                                  <span class="cell-label">{{ $t('sampleBD.applyDateDetail') }}</span>
                                   <span class="cell-value">{{ formatDate(sub.date) }}</span>
                                 </div>
                                 <div class="submission-cell">
-                                  <span class="cell-label">审批状态：</span>
+                                  <span class="cell-label">{{ $t('sampleBD.approvalStatus') }}</span>
                                   <span class="cell-value">
                                     <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
                                       {{ getSampleStatusText(sub.sampleStatus) }}
@@ -218,11 +218,6 @@
                 </span>
                 <el-icon class="edit-icon" @click.stop="openFulfillmentDialog(row)"><Edit /></el-icon>
               </div>
-              <div v-if="row.videoLink" class="video-link">
-                <el-link :href="row.videoLink" target="_blank" type="primary">
-                  {{ $t('sampleBD.videoLink') }}
-                </el-link>
-              </div>
               <div v-if="row.fulfillmentUpdatedAt" class="update-info">
                 {{ row.fulfillmentUpdatedBy?.realName || row.fulfillmentUpdatedBy?.username || '-' }} {{ formatDateTime(row.fulfillmentUpdatedAt) }}
               </div>
@@ -237,7 +232,26 @@
         >
           <template #default="{ row }">
             <div class="promotion-info">
-              <div class="stream-code">
+              <div class="video-list" v-if="row.videos && row.videos.length > 0">
+                <div v-for="(video, idx) in row.videos" :key="idx" class="video-item">
+                  <div v-if="video.videoLink" class="video-link">
+                    <el-link :href="video.videoLink" target="_blank" type="primary">
+                      {{ $t('sampleBD.videoLink') }}
+                    </el-link>
+                    <span v-if="video.videoStreamCode" class="stream-code">「{{ video.videoStreamCode }}」</span>
+                    <el-tag :type="video.isAdPromotion ? 'success' : 'info'" size="small">
+                      {{ video.isAdPromotion ? $t('sampleBD.adPromoted') : $t('sampleBD.noAdPromoted') }}
+                    </el-tag>
+                  </div>
+                  <div v-else-if="video.videoStreamCode" class="stream-only">
+                    {{ video.videoStreamCode }}
+                  </div>
+                  <div v-else>
+                    --
+                  </div>
+                </div>
+              </div>
+              <div v-else class="stream-code">
                 {{ row.videoStreamCode || '--' }}
                 <el-icon class="edit-icon" @click.stop="openAdPromotionDialog(row)"><Edit /></el-icon>
               </div>
@@ -274,7 +288,7 @@
         >
           <template #default="{ row }">
             <div class="product-info">
-              <div class="product-id">{{ row.productId || '--' }}</div>
+              <div class="product-id">{{ row.productId_display || row.productId || '--' }}</div>
               <el-tooltip :content="row.productName" placement="top">
                 <div class="product-name">
                   {{ truncateText(row.productName, 60) }}
@@ -365,30 +379,30 @@
         <!-- 标签页导航 -->
         <el-tabs v-model="detailActiveTab" class="business-tabs">
           <!-- 基础信息标签页 -->
-          <el-tab-pane label="基础信息" name="basic">
+          <el-tab-pane :label="$t('sampleBD.basicInfo')" name="basic">
             <div class="info-grid">
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">TikTok ID：</span>
+                  <span class="cell-label">{{ $t('sampleBD.tiktokIdDetail') }}</span>
                   <span class="cell-value tiktok-id-text">{{ currentSample.influencerAccount || '-' }}</span>
                 </div>
                 <div class="info-cell">
-                  <span class="cell-label">申请日期：</span>
+                  <span class="cell-label">{{ $t('sampleBD.applyDateDetail') }}</span>
                   <span class="cell-value">{{ currentSample.date ? formatDate(currentSample.date) : '-' }}</span>
                 </div>
                 <div class="info-cell">
-                  <span class="cell-label">商品名称：</span>
+                  <span class="cell-label">{{ $t('sampleBD.productNameDetail') }}</span>
                   <span class="cell-value product-name">{{ currentSample.productName || '-' }}</span>
                 </div>
               </div>
               
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">商品ID：</span>
+                  <span class="cell-label">{{ $t('sampleBD.productIdDetail') }}</span>
                   <span class="cell-value">{{ currentSample.productId || '-' }}</span>
                 </div>
                 <div class="info-cell">
-                  <span class="cell-label">样品图片：</span>
+                  <span class="cell-label">{{ $t('sampleBD.sampleImage') }}</span>
                   <div class="cell-value">
                     <el-image 
                       v-if="currentSample.sampleImage" 
@@ -404,14 +418,14 @@
               
               <!-- 达人数据统计 -->
               <div class="statistics-section">
-                <h4 class="section-title">达人数据统计</h4>
+                <h4 class="section-title">{{ $t('sampleBD.influencerStats') }}</h4>
                 <div class="stats-grid">
                   <div class="stat-item">
-                    <span class="stat-label">粉丝数</span>
+                    <span class="stat-label">{{ $t('sampleBD.followerCount') }}</span>
                     <span class="stat-value highlight-value">{{ formatNumber(currentSample.followerCount) }}</span>
                   </div>
                   <div class="stat-item">
-                    <span class="stat-label">GMV</span>
+                    <span class="stat-label">{{ $t('sampleBD.gmv') }}</span>
                     <span class="stat-value">{{ currentSample.gmv || '-' }}</span>
                   </div>
                 </div>
@@ -419,7 +433,7 @@
               
               <!-- 收货地址 -->
               <div class="shipping-section">
-                <h4 class="section-title">收货地址信息</h4>
+                <h4 class="section-title">{{ $t('sampleBD.shippingInfoDetail') }}</h4>
                 <div class="shipping-info">
                   <span class="shipping-value">{{ currentSample.shippingInfo || '-' }}</span>
                 </div>
@@ -428,11 +442,11 @@
           </el-tab-pane>
           
           <!-- 寄样状态标签页 -->
-          <el-tab-pane label="寄样状态" name="shipping">
+          <el-tab-pane :label="$t('sampleBD.shippingInfo')" name="shipping">
             <div class="info-grid">
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">寄样状态：</span>
+                  <span class="cell-label">{{ $t('sampleBD.shippingStatusDetail') }}</span>
                   <span class="cell-value">
                     <el-tag :type="getSampleStatusType(currentSample.sampleStatus)" size="large">
                       {{ getSampleStatusText(currentSample.sampleStatus) }}
@@ -443,7 +457,7 @@
               
               <!-- 拒绝时的原因 -->
               <div class="refusal-section" v-if="currentSample.sampleStatus === 'refused' && currentSample.refusalReason">
-                <h4 class="section-title">拒绝原因</h4>
+                <h4 class="section-title">{{ $t('sampleBD.refusalReasonTitle') }}</h4>
                 <div class="refusal-reason">
                   {{ currentSample.refusalReason }}
                 </div>
@@ -451,22 +465,22 @@
               
               <!-- 已寄样时的物流信息 -->
               <div class="shipping-details" v-if="currentSample.sampleStatus === 'sent'">
-                <h4 class="section-title">物流信息</h4>
+                <h4 class="section-title">{{ $t('sampleBD.logisticsInfo') }}</h4>
                 <div class="details-grid">
                   <div class="detail-item">
-                    <span class="detail-label">寄出日期：</span>
+                    <span class="detail-label">{{ $t('sampleBD.shippingDateDetail') }}</span>
                     <span class="detail-value">{{ currentSample.shippingDate ? formatDate(currentSample.shippingDate) : '-' }}</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">物流公司：</span>
+                    <span class="detail-label">{{ $t('sampleBD.logisticsCompany') }}</span>
                     <span class="detail-value">{{ currentSample.logisticsCompany || '-' }}</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">运单号：</span>
+                    <span class="detail-label">{{ $t('sampleBD.trackingNumberDetail') }}</span>
                     <span class="detail-value">{{ currentSample.trackingNumber || '-' }}</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">签收日期：</span>
+                    <span class="detail-label">{{ $t('sampleBD.receivedDateDetail') }}</span>
                     <span class="detail-value">{{ currentSample.receivedDate ? formatDate(currentSample.receivedDate) : '-' }}</span>
                   </div>
                 </div>
@@ -475,7 +489,7 @@
               <!-- 状态更新信息 -->
               <div class="update-info-section" v-if="currentSample.sampleStatusUpdatedAt">
                 <div class="update-item">
-                  <span class="update-label">状态更新时间：</span>
+                  <span class="update-label">{{ $t('sampleBD.statusUpdateTime') }}</span>
                   <span class="update-value">
                     {{ currentSample.sampleStatusUpdatedBy?.realName || currentSample.sampleStatusUpdatedBy?.username || '-' }}
                     <span>{{ formatDateTime(currentSample.sampleStatusUpdatedAt) }}</span>
@@ -486,11 +500,11 @@
           </el-tab-pane>
           
           <!-- 履约信息标签页 -->
-          <el-tab-pane label="履约信息" name="fulfillment">
+          <el-tab-pane :label="$t('sampleBD.fulfillmentInfo')" name="fulfillment">
             <div class="info-grid">
               <div class="info-row">
                 <div class="info-cell">
-                  <span class="cell-label">订单状态：</span>
+                  <span class="cell-label">{{ $t('sampleBD.orderGeneratedDetail') }}</span>
                   <span class="cell-value">
                     <el-tag :type="currentSample.isOrderGenerated ? 'success' : 'warning'" size="large">
                       {{ currentSample.isOrderGenerated ? $t('sampleBD.orderGenerated') : $t('sampleBD.noOrder') }}
@@ -498,14 +512,14 @@
                   </span>
                 </div>
                 <div class="info-cell">
-                  <span class="cell-label">履约时间：</span>
+                  <span class="cell-label">{{ $t('sampleBD.fulfillmentTime') }}</span>
                   <span class="cell-value">{{ currentSample.fulfillmentTime || '-' }}</span>
                 </div>
               </div>
               
               <!-- 视频链接 -->
               <div class="video-section" v-if="currentSample.videoLink">
-                <h4 class="section-title">视频链接</h4>
+                <h4 class="section-title">{{ $t('sampleBD.videoLinkDetail') }}</h4>
                 <div class="video-info">
                   <el-link :href="currentSample.videoLink" target="_blank" type="primary">
                     {{ $t('sampleBD.viewVideo') }}
@@ -515,10 +529,10 @@
               
               <!-- 投流信息 -->
               <div class="ad-promotion-section">
-                <h4 class="section-title">投流信息</h4>
+                <h4 class="section-title">{{ $t('sampleBD.adPromotionDetail') }}</h4>
                 <div class="ad-grid">
                   <div class="ad-item">
-                    <span class="ad-label">投流状态：</span>
+                    <span class="ad-label">{{ $t('sampleBD.adStatusDetail') }}</span>
                     <span class="ad-value">
                       <el-tag :type="currentSample.isAdPromotion ? 'success' : 'info'" size="large">
                         {{ currentSample.isAdPromotion ? $t('sampleBD.adPromoted') : $t('sampleBD.noAdPromoted') }}
@@ -526,11 +540,11 @@
                     </span>
                   </div>
                   <div class="ad-item">
-                    <span class="ad-label">投流时间：</span>
+                    <span class="ad-label">{{ $t('sampleBD.adTimeDetail') }}</span>
                     <span class="ad-value">{{ currentSample.adPromotionTime ? formatDate(currentSample.adPromotionTime) : '-' }}</span>
                   </div>
                   <div class="ad-item wide">
-                    <span class="ad-label">流码：</span>
+                    <span class="ad-label">{{ $t('sampleBD.streamCodeDetail') }}</span>
                     <span class="ad-value">{{ currentSample.videoStreamCode || '-' }}</span>
                   </div>
                 </div>
@@ -539,14 +553,14 @@
               <!-- 更新信息 -->
               <div class="update-info-section">
                 <div class="update-item" v-if="currentSample.fulfillmentUpdatedAt">
-                  <span class="update-label">订单信息更新：</span>
+                  <span class="update-label">{{ $t('sampleBD.orderInfoUpdate') }}</span>
                   <span class="update-value">
                     {{ currentSample.fulfillmentUpdatedBy?.realName || currentSample.fulfillmentUpdatedBy?.username || '-' }}
                     <span v-if="currentSample.fulfillmentUpdatedAt">{{ formatDateTime(currentSample.fulfillmentUpdatedAt) }}</span>
                   </span>
                 </div>
                 <div class="update-item" v-if="currentSample.adPromotionUpdatedAt">
-                  <span class="update-label">投流信息更新：</span>
+                  <span class="update-label">{{ $t('sampleBD.adInfoUpdate') }}</span>
                   <span class="update-value">
                     {{ currentSample.adPromotionUpdatedBy?.realName || currentSample.adPromotionUpdatedBy?.username || '-' }}
                     <span v-if="currentSample.adPromotionUpdatedAt">{{ formatDateTime(currentSample.adPromotionUpdatedAt) }}</span>
@@ -557,41 +571,41 @@
           </el-tab-pane>
           
           <!-- 达人信息标签页 -->
-          <el-tab-pane label="达人信息" name="influencer">
+          <el-tab-pane :label="$t('sampleBD.influencerInfo')" name="influencer">
             <div v-if="influencerDetail">
               <div class="info-grid">
                 <div class="info-row">
                   <div class="info-cell">
-                    <span class="cell-label">TikTok ID：</span>
+                    <span class="cell-label">{{ $t('sampleBD.tiktokIdDetail') }}</span>
                     <span class="cell-value tiktok-id-text">{{ influencerDetail.tiktokId }}</span>
                   </div>
                   <div class="info-cell">
-                    <span class="cell-label">TikTok名称：</span>
+                    <span class="cell-label">{{ $t('sampleBD.tiktokName') }}</span>
                     <span class="cell-value">{{ influencerDetail.tiktokName || '-' }}</span>
                   </div>
                 </div>
                 
                 <div class="info-row">
                   <div class="info-cell">
-                    <span class="cell-label">真实姓名：</span>
+                    <span class="cell-label">{{ $t('sampleBD.realName') }}</span>
                     <span class="cell-value">{{ influencerDetail.realName || '-' }}</span>
                   </div>
                   <div class="info-cell">
-                    <span class="cell-label">昵称：</span>
+                    <span class="cell-label">{{ $t('sampleBD.nickname') }}</span>
                     <span class="cell-value">{{ influencerDetail.nickname || '-' }}</span>
                   </div>
                 </div>
                 
                 <!-- 达人统计数据 -->
                 <div class="influencer-stats">
-                  <h4 class="section-title">达人统计数据</h4>
+                  <h4 class="section-title">{{ $t('sampleBD.influencerStatsData') }}</h4>
                   <div class="stats-grid">
                     <div class="stat-item">
-                      <span class="stat-label">最新粉丝数</span>
+                      <span class="stat-label">{{ $t('sampleBD.latestFollowers') }}</span>
                       <span class="stat-value highlight-value">{{ formatNumber(influencerDetail.latestFollowers) }}</span>
                     </div>
                     <div class="stat-item">
-                      <span class="stat-label">最新GMV</span>
+                      <span class="stat-label">{{ $t('sampleBD.latestGmv') }}</span>
                       <span class="stat-value">{{ influencerDetail.latestGmv || '-' }}</span>
                     </div>
                   </div>
@@ -600,7 +614,7 @@
                 <!-- 达人状态 -->
                 <div class="status-section">
                   <div class="status-item">
-                    <span class="status-label">达人状态：</span>
+                    <span class="status-label">{{ $t('sampleBD.influencerStatus') }}</span>
                     <span class="status-value">
                       <el-tag :type="influencerDetail.status === 'enabled' ? 'success' : 'info'" size="large">
                         {{ influencerDetail.status === 'enabled' ? $t('sampleBD.enabled') : $t('sampleBD.disabled') }}
@@ -608,7 +622,7 @@
                     </span>
                   </div>
                   <div class="status-item">
-                    <span class="status-label">黑名单状态：</span>
+                    <span class="status-label">{{ $t('sampleBD.blacklistStatus') }}</span>
                     <span class="status-value">
                       <el-tag v-if="influencerDetail.isBlacklisted" type="danger" size="large">{{ $t('sampleBD.blacklist') }}</el-tag>
                       <span v-else>{{ $t('sampleBD.normal') }}</span>
@@ -623,7 +637,7 @@
         
         <!-- 创建时间信息 -->
         <div class="created-info">
-          <span class="created-label">创建时间：</span>
+          <span class="created-label">{{ $t('sampleBD.createTime') }}</span>
           <span class="created-value">{{ currentSample.createdAt ? formatDate(currentSample.createdAt) : '-' }}</span>
         </div>
       </div>
@@ -679,40 +693,29 @@
           <el-input v-model="createForm.productName" type="hidden" />
         </el-form-item>
 
-        <el-form-item :label="$t('sampleBD.tiktokIdField')" prop="influencerAccount" class="tiktok-label">
-          <el-input v-model="createForm.influencerAccount" :placeholder="$t('sampleBD.tiktokIdPlaceholder')" />
+        <el-form-item :label="$t('sampleBD.tiktokIdField')" prop="influencerId" class="tiktok-label">
+          <el-select
+            v-model="createForm.influencerId"
+            filterable
+            remote
+            :placeholder="$t('sampleBD.tiktokIdPlaceholder')"
+            :remote-method="searchInfluencers"
+            :loading="influencerLoading"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="inf in influencerOptions"
+              :key="inf._id"
+              :label="`${inf.tiktokId} (${inf.tiktokName || '-'})`"
+              :value="inf._id"
+            >
+              <span>{{ inf.tiktokId }}</span>
+              <span style="color: #999; font-size: 12px; margin-left: 8px;">{{ inf.tiktokName || '' }}</span>
+            </el-option>
+          </el-select>
         </el-form-item>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('sampleBD.followerCountField')" prop="followerCount">
-              <el-input-number v-model="createForm.followerCount" :min="0" :controls="false" :placeholder="$t('sampleBD.followers')" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('sampleBD.gmvField')" prop="gmv">
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <el-select v-model="createForm.currency" :placeholder="$t('sampleBD.currency')" style="width: 70px">
-                  <el-option v-for="c in currencyList" :key="c.code" :label="c.name" :value="c.code" />
-                </el-select>
-                <el-input-number v-model="createForm.gmv" :min="0" :precision="2" :controls="false" style="flex: 1" :placeholder="$t('sampleBD.gmv')" />
-              </div>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('samples.monthlySales')" prop="monthlySalesCount">
-              <el-input-number v-model="createForm.monthlySalesCount" :min="0" :controls="false" :placeholder="$t('samples.monthlySales')" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('samples.avgViews')" prop="avgVideoViews">
-              <el-input-number v-model="createForm.avgVideoViews" :min="0" :controls="false" :placeholder="$t('samples.avgViews')" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <!-- 移除了粉丝数/GMV/月销量/均播等冗余字段，数据从达人表populate自动获取 -->
 
         <el-form-item :label="$t('sampleBD.addressInfoField')" prop="shippingInfo">
           <el-input
@@ -723,9 +726,7 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('sampleBD.sampleImageField')">
-          <el-input v-model="createForm.sampleImage" :placeholder="$t('sampleBD.imageUrlPlaceholder')" />
-        </el-form-item>
+        <!-- 移除了样品图片字段，现在从Product表populate自动获取 -->
       </el-form>
 
       <template #footer>
@@ -833,25 +834,20 @@ const pagination = reactive({
 
 const createForm = reactive({
   date: '',
-  productName: '',
-  productId: '',
-  influencerAccount: '',
-  followerCount: 0,
-  monthlySalesCount: 0,
-  avgVideoViews: 0,
-  gmv: 0,
-  currency: '',
-  salesman: '',
+  productId: '',           // ★ ObjectId (ref Product)
+  influencerId: '',         // ★ ObjectId (ref Influencer)
   shippingInfo: '',
-  sampleImage: '',
   isSampleSent: false,
   trackingNumber: '',
   shippingDate: '',
   logisticsCompany: '',
-  isOrderGenerated: false
+  isOrderGenerated: false,
+  currency: ''              // 货币单位
 })
 
-// 货币单位列表
+// 达人搜索相关（重构后用远程搜索选择器替代手动输入）
+const influencerLoading = ref(false)
+const influencerOptions = ref([])
 const currencyList = ref([])
 
 const loadCurrencies = async () => {
@@ -873,9 +869,7 @@ const loadCurrencies = async () => {
 const createRules = {
   date: [{ required: true, message: t('common.select') + t('sampleBD.applyDate'), trigger: 'change' }],
   productId: [{ required: true, message: t('sampleBD.selectProductPlaceholder'), trigger: 'change' }],
-  influencerAccount: [{ required: true, message: t('sampleBD.tiktokIdPlaceholder'), trigger: 'blur' }],
-  monthlySalesCount: [{ type: 'number', message: '月销必须为数字' }],
-  avgVideoViews: [{ type: 'number', message: '均播必须为数字' }]
+  influencerId: [{ required: true, message: t('sampleBD.selectInfluencer'), trigger: 'change' }]
 }
 
 const formatDate = (date) => {
@@ -935,9 +929,9 @@ const getSampleStatusText = (status) => {
 // 获取物流公司显示文本
 const getLogisticsCompanyText = (company) => {
   if (company === 'default') {
-    return 'TikTok 默认物流'
+    return t('videos.defaultLogistics')
   } else if (company === 'other') {
-    return '其他物流'
+    return t('videos.otherLogistics')
   } else {
     return company || ''
   }
@@ -950,9 +944,8 @@ const loadSamples = async () => {
       page: pagination.page,
       limit: pagination.limit,
       companyId: userStore.companyId,
-      ...searchForm,
-      // 固定过滤当前用户（传username，不是realName，因为数据库存的是username）
-      salesmanId: userStore.user?.username || userStore.username
+      ...searchForm
+      // salesmanId 由后端数据权限中间件自动设置
     }
     const res = await request.get('/samples', { params })
     samples.value = res.samples
@@ -1013,25 +1006,36 @@ const searchProducts = async (query) => {
 const handleProductSelect = (productId) => {
   const product = cooperationProducts.value.find(p => p._id === productId)
   if (product) {
-    createForm.productName = product.name || product.productName || ''
     createForm.productId = product._id
   }
 }
 
+// ★ 搜索达人（重构后：远程搜索选择器）
+const searchInfluencers = async (query) => {
+  if (!query) {
+    influencerOptions.value = []
+    return
+  }
+  influencerLoading.value = true
+  try {
+    const res = await request.get('/influencer-managements', {
+      params: { companyId: userStore.companyId, keyword: query, limit: 20 }
+    })
+    influencerOptions.value = res.influencers || []
+  } catch (error) {
+    console.error('搜索达人失败:', error)
+  } finally {
+    influencerLoading.value = false
+  }
+}
+
 const showCreateDialog = () => {
-  const currentUser = userStore.user
+  // BD页面默认salesmanId由后端数据权限自动填充，前端不传或传当前用户_id
   Object.assign(createForm, {
     date: getTodayDate(),
-    productName: '',
     productId: '',
-    influencerAccount: '',
-    followerCount: 0,
-    monthlySalesCount: 0,
-    avgVideoViews: 0,
-    gmv: 0,
-    salesman: currentUser?.username || currentUser?.realName || '',
+    influencerId: '',
     shippingInfo: '',
-    sampleImage: '',
     isSampleSent: false,
     trackingNumber: '',
     shippingDate: '',
@@ -1048,42 +1052,42 @@ const handleCreate = async () => {
   await createFormRef.value.validate(async (valid) => {
     if (!valid) return
 
-    // 先检查是否为黑名单达人
+    // ★ 先检查黑名单达人（通过选中的influencerId查找）
     try {
-      const blacklistRes = await request.get(`/influencer-managements/blacklist/check/${createForm.influencerAccount}`, {
-        params: { companyId: userStore.companyId }
-      })
-      if (blacklistRes.isBlacklisted) {
+      const selectedInf = influencerOptions.value.find(i => i._id === createForm.influencerId)
+      if (selectedInf && selectedInf.isBlacklisted) {
         ElMessage.error(t('sampleBD.blacklistInfluencerWarning'))
         return
+      }
+      if (selectedInf) {
+        const blacklistRes = await request.get(`/influencer-managements/blacklist/check/${selectedInf.tiktokId}`, {
+          params: { companyId: userStore.companyId }
+        })
+        if (blacklistRes.isBlacklisted) {
+          ElMessage.error(t('sampleBD.blacklistInfluencerWarning'))
+          return
+        }
       }
     } catch (blError) {
       console.error('检查黑名单失败:', blError)
     }
 
-    // 检查当天是否已有相同记录（date + productId + influencerAccount）
-    try {
-      const checkRes = await request.get('/samples', {
-        params: {
-          companyId: userStore.companyId,
-          date: createForm.date,
-          productId: createForm.productId,
-          influencerAccount: createForm.influencerAccount,
-          limit: 1
-        }
-      })
-      if (checkRes.data && checkRes.data.length > 0) {
-        ElMessage.error('当天已有这位达人对此商品的申样记录，请勿重复提交')
-        return
-      }
-    } catch (checkError) {
-      console.error('检查重复记录失败:', checkError)
-      // 如果检查失败，继续提交，后端会再次检查
-    }
-
     creating.value = true
     try {
-      await request.post('/samples', createForm)
+      // ★ 构造新的请求体（只包含重构后需要的字段）
+      const submitPayload = {
+        date: createForm.date,
+        productId: createForm.productId,       // ObjectId
+        influencerId: createForm.influencerId, // ObjectId
+        shippingInfo: createForm.shippingInfo,
+        isSampleSent: createForm.isSampleSent,
+        trackingNumber: createForm.trackingNumber,
+        shippingDate: createForm.shippingDate,
+        logisticsCompany: createForm.logisticsCompany,
+        isOrderGenerated: createForm.isOrderGenerated
+      }
+
+      await request.post('/samples', submitPayload)
       ElMessage.success(t('sampleBD.createSuccess'))
       createDialogVisible.value = false
       loadSamples()
@@ -1166,8 +1170,11 @@ const openAdPromotionDialog = (sample) => {
 const handleAdPromotionSave = async () => {
   adPromotionLoading.value = true
   try {
-    await request.put(`/samples/${adPromotionForm._id}`, {
-      videoStreamCode: adPromotionForm.videoStreamCode
+    // ★ 通过Video API创建/更新视频记录
+    await request.post(`/samples/${adPromotionForm._id}/videos`, {
+      videoStreamCode: adPromotionForm.videoStreamCode,
+      isAdPromotion: true,
+      adPromotionTime: new Date().toISOString()
     })
     ElMessage.success(t('sampleBD.saveSuccess'))
     adPromotionDialogVisible.value = false
@@ -1189,12 +1196,18 @@ const openFulfillmentDialog = (sample) => {
   fulfillmentDialogVisible.value = true
 }
 
-// 保存履约信息
+// ★ 保存履约信息（重构后：通过Video API创建视频记录）
 const handleFulfillmentSave = async () => {
+  if (!fulfillmentForm.videoLink?.trim()) {
+    ElMessage.warning(t('videos.enterVideoLinkWarning'))
+    return
+  }
   fulfillmentLoading.value = true
   try {
-    await request.put(`/samples/${fulfillmentForm._id}`, {
-      videoLink: fulfillmentForm.videoLink
+    // 通过样品的子路由Video API创建视频记录
+    await request.post(`/samples/${fulfillmentForm._id}/videos`, {
+      videoLink: fulfillmentForm.videoLink,
+      isAdPromotion: false
     })
     ElMessage.success(t('sampleBD.saveSuccess'))
     fulfillmentDialogVisible.value = false
@@ -1222,12 +1235,12 @@ const goToOrders = async (sample) => {
 
 const openSubmissionDetail = (submission) => {
   // 找到对应的完整sample记录
-  const sample = sampleList.value.find(s => s._id === submission.sampleId)
+  const sample = samples.value.find(s => s._id === submission.sampleId)
   if (sample) {
     viewSampleDetail(sample)
   } else {
     // 如果找不到，尝试通过ID获取
-    ElMessage.info('正在加载详情...')
+    ElMessage.info(t('videos.loadingDetail'))
     // 这里可以添加通过ID获取sample详情的逻辑
   }
 }

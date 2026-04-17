@@ -26,6 +26,9 @@
           <el-menu-item v-if="menuPermissions.influencerList()" index="/influencer-managements">
             <span>{{ $t('menu.influencerList') }}</span>
           </el-menu-item>
+          <el-menu-item v-if="menuPermissions.videoRegister()" index="/videos">
+            <span>{{ $t('menu.videoRegister') }}</span>
+          </el-menu-item>
           <el-menu-item v-if="menuPermissions.samplesBd()" index="/samples-bd">
             <span>{{ $t('menu.samples') }}</span>
           </el-menu-item>
@@ -222,8 +225,9 @@ const menuPermissions = {
   dashboard: () => true,
 
   // BD工作台 - 需要达人或样品申请(BD)权限
-  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samplesBd:read', 'samplesBd:create']),
+  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samplesBd:read', 'samplesBd:create', 'videos:read']),
   influencerList: () => hasPermission('influencers:read'),
+  videoRegister: () => hasAnyPermission(['videos:read', 'videos:create', 'videos:update', 'videos:delete']),
   samplesBd: () => hasAnyPermission(['samplesBd:read', 'samplesBd:create']),
 
   // 供应链 - 需要产品或活动或店铺权限

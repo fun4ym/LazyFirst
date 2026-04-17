@@ -59,6 +59,7 @@ export default {
     influencerList: 'Influencer List',
     blacklist: 'Blacklist',
     samples: 'Sample Request',
+    videoRegister: 'Video Register',
     orders: 'TikTok Orders',
     products: 'Products',
     bdmgt: 'BD Management',
@@ -149,7 +150,8 @@ export default {
     newPassword: 'New Password',
     confirmPassword: 'Confirm Password',
     passwordChanged: 'Password changed successfully',
-    passwordMismatch: 'Passwords do not match'
+    passwordMismatch: 'Passwords do not match',
+    logoutConfirm: 'Are you sure you want to logout?'
   },
   status: {
     pending: 'Pending',
@@ -831,6 +833,7 @@ export default {
     naturalMonth: 'Month',
     noData: 'No Data',
     bdOnly: 'Data overview is only available for BD users',
+    passRate: 'Pass Rate',
     loadFailed: 'Failed to load data overview'
   },
   bdDaily: {
@@ -1149,6 +1152,7 @@ export default {
     tiktokName: 'Influencer Name',
     productId: 'Product ID',
     logisticsCompany: 'Logistics Company',
+    enterLogistics: 'Enter logistics company',
     currency: 'Currency',
     selectBD: 'Select BD',
     searchProduct: 'Search product',
@@ -1161,7 +1165,58 @@ export default {
     nickname: 'Nickname',
     normal: 'Normal',
     createdAt: 'Created At',
-    blacklistStatus: 'Blacklist Status'
+    blacklistStatus: 'Blacklist Status',
+    // Detail dialog - Basic info labels
+    tiktokIdLabel: 'TikTok ID: ',
+    applyDateLabel: 'Apply Date: ',
+    bdLabel: 'BD: ',
+    productNameLabel: 'Product Name: ',
+    productIdLabel: 'Product ID: ',
+    sampleImageLabel: 'Sample Image: ',
+    influencerStats: 'Influencer Statistics',
+    followerCountLabel: 'Followers',
+    monthlySalesLabel: 'Monthly Sales',
+    avgViewsLabel: 'Avg Views',
+    shippingInfoSection: 'Shipping Address Info',
+    // Detail dialog - Sample status labels
+    sampleStatusLabel: 'Sample Status: ',
+    sampleSentLabel: 'Sample Sent: ',
+    shippingDetails: 'Shipping Details',
+    shippingDateLabel: 'Shipping Date: ',
+    logisticsCompanyLabel: 'Logistics Company: ',
+    trackingNumberLabel: 'Tracking No.: ',
+    receivedDateLabel: 'Received Date: ',
+    refusalSection: 'Refusal Reason',
+    // Detail dialog - Fulfillment labels
+    orderStatusLabel: 'Order Status: ',
+    fulfillmentTimeLabel: 'Fulfillment Time: ',
+    videoSection: 'Video Link',
+    adPromotionSection: 'Ad Promotion',
+    adStatusLabel: 'Ad Status: ',
+    adTimeLabel: 'Ad Time: ',
+    streamCodeLabel: 'Stream Code: ',
+    orderInfoUpdate: 'Order Info Update: ',
+    adInfoUpdate: 'Ad Info Update: ',
+    // Detail dialog - Influencer info labels
+    tiktokNameLabel: 'TikTok Name: ',
+    realNameLabel: 'Real Name: ',
+    nicknameLabel: 'Nickname: ',
+    influencerStatsSection: 'Influencer Statistics',
+    latestFollowerCount: 'Latest Followers',
+    latestGmv: 'Latest GMV',
+    influencerStatusLabel: 'Influencer Status: ',
+    blacklistStatusLabel: 'Blacklist Status: ',
+    // Created time label
+    createdAtLabel: 'Created At: ',
+    // Popover
+    historySampleRecords: 'History Records ({count})',
+    productNameColon: 'Product Name: ',
+    tiktokIdColon: 'TikTok ID: ',
+    applyDateColon: 'Apply Date: ',
+    approvalStatusColon: 'Approval Status: ',
+    // Sample status dialog
+    trackingNumberPlaceholder: 'Enter tracking number',
+    selectLogisticsPlaceholder: 'Select logistics company'
   },
   // TikTok Activities
   activities: {
@@ -1572,7 +1627,19 @@ export default {
     influencerNotFound: 'Influencer not found',
     // Other
     sampleSent: 'Sample Sent',
-    notShipped: 'Not Shipped'
+    notShipped: 'Not Shipped',
+    // New
+    historyRecords: 'History Records ({count})',
+    approvalStatus: 'Approval Status',
+    influencerStats: 'Influencer Stats',
+    refusalReasonTitle: 'Refusal Reason',
+    logisticsInfo: 'Logistics Info',
+    statusUpdateTime: 'Status Update Time',
+    orderInfoUpdate: 'Order Info Update',
+    adInfoUpdate: 'Ad Info Update',
+    influencerStatsData: 'Influencer Stats Data',
+    influencerStatus: 'Influencer Status',
+    selectInfluencer: 'Please select influencer'
   },
   // Market Workspace - Recruitment Config
   recruitment: {
@@ -1655,6 +1722,55 @@ export default {
     noUsers: 'All users',
     squareRate: 'Square Rate',
     promoRate: 'Promo Rate',
-    extraPromo: 'Extra Promo'
+    extraPromo: 'Extra Promo',
+    disabled: 'This recruitment has been disabled'
+  },
+  // Video Register
+  videos: {
+    title: 'Video Register',
+    dateRange: 'Date Range',
+    registeredBy: 'Registered By',
+    selectUser: 'Select User',
+    adStatus: 'Ad Status',
+    sampleRecord: 'Sample Record',
+    selectSample: 'Search samples (date + influencer + product)',
+    enterVideoLink: 'Enter video link',
+    enterStreamCode: 'Enter stream code',
+    isAdPromotion: 'Is Ad Promotion',
+    adTime: 'Ad Time',
+    selectAdTime: 'Select ad time',
+    // Status
+    adPromoted: 'Ad Promoted',
+    notAdPromoted: 'Not Ad Promoted',
+    // Validation
+    selectSampleRequired: 'Please select a sample record',
+    // Messages
+    loadFailed: 'Load failed',
+    loadUserFailed: 'Failed to load users',
+    loadVideoFailed: 'Failed to load video list',
+    searchSampleFailed: 'Failed to search samples',
+    operationFailed: 'Operation failed',
+    deleteSuccess: 'Deleted successfully',
+    deleteFailed: 'Delete failed',
+    createSuccess: 'Created successfully',
+    updateSuccess: 'Updated successfully',
+    enterVideoLinkWarning: 'Please enter video link',
+    loadingDetail: 'Loading detail...',
+    // Logistics
+    defaultLogistics: 'TikTok Default Logistics',
+    otherLogistics: 'Other Logistics',
+    // New fields
+    operator: 'Operator',
+    selectOperator: 'Select Operator',
+    selectProduct: 'Select Product',
+    selectInfluencer: 'Select Influencer',
+    creationMode: 'Creation Mode',
+    modeSampleLinked: 'Sample Linked',
+    modeIndependent: 'Independent',
+    selectProductRequired: 'Please select a product',
+    selectInfluencerRequired: 'Please select an influencer',
+    operatorSelfOnlyTip: 'You can only select yourself as the operator',
+    searchProductFailed: 'Failed to search products',
+    searchInfluencerFailed: 'Failed to search influencers'
   }
 }

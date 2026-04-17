@@ -115,6 +115,12 @@ const routes = [
         meta: { title: '' }
       },
       {
+        path: 'videos',
+        name: 'Videos',
+        component: () => import('@/views/samples/VideoManagement.vue'),
+        meta: { title: '' }
+      },
+      {
         path: 'samples-bd',
         name: 'SamplesBD',
         component: () => import('@/views/samples/ManagementBDSelf.vue'),

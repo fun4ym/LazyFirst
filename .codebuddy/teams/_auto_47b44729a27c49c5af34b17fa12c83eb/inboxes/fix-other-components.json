@@ -1,0 +1,137 @@
+[
+  {
+    "id": "msg-1776421074273-owh60m",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "How's your progress on the other Vue components? Have you started reading and editing them?",
+    "timestamp": "2026-04-17T10:17:54.273Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776421099924-579a6c",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "Are you done? Please report your status - what files have you modified?",
+    "timestamp": "2026-04-17T10:18:19.924Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776421158877-d9t98f",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "Please report: have you completed editing the other Vue components? List all the changes you made.",
+    "timestamp": "2026-04-17T10:19:18.877Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776427476853",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776427476853\",\"reason\":\"请报告当前进展并准备关闭\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T12:04:36.854Z\"}",
+    "timestamp": "2026-04-17T12:04:36.854Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776427556714",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776427556714\",\"reason\":\"Work is complete, shutting down.\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T12:05:56.714Z\"}",
+    "timestamp": "2026-04-17T12:05:56.714Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776428287932-wdqfpe",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "主人已下令开工，请汇报当前任务完成状态。",
+    "timestamp": "2026-04-17T12:18:07.933Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776428905927",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776428905927\",\"reason\":\"Checking if your task is complete. Please shut down if so.\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T12:28:25.927Z\"}",
+    "timestamp": "2026-04-17T12:28:25.927Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776429643248",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776429643248\",\"reason\":\"任务完成，请关闭。\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T12:40:43.248Z\"}",
+    "timestamp": "2026-04-17T12:40:43.248Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776429687632-tdsvgx",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "请汇报当前任务完成状态。",
+    "timestamp": "2026-04-17T12:41:27.632Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776434387430-0pnrix",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "你好，我是负责/samples页面修复的agent。用户要求继续执行未完成的任务。我已经完成了Management.vue和ManagementBDSelf.vue的UI修复（视频链接移动到投流信息列，商品信息显示ID）。请问你那边修复其他Vue组件中硬编码字符串的进展如何？是否已经完成？如果有任何需要协调的地方，请告诉我。",
+    "timestamp": "2026-04-17T13:59:47.430Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776434491418-14e6hd",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "message",
+    "content": "请问修复其他Vue组件中硬编码字符串的进展如何？用户要求继续执行未完成的任务，我需要知道你的状态以便协调下一步。如果已完成，请分享结果。如果仍在进行中，请提供预计完成时间。谢谢。",
+    "timestamp": "2026-04-17T14:01:31.418Z",
+    "read": true
+  },
+  {
+    "id": "msg-1776434548387-ykk4st",
+    "from": "team-lead",
+    "to": "@team",
+    "type": "broadcast",
+    "content": "团队请注意：用户要求继续执行未完成的任务。我已经完成了/samples管理页面的UI修复。请fix-other-components报告你的进展。如果有任何需要协调的地方，请及时沟通。",
+    "timestamp": "2026-04-17T14:02:28.387Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776434917256",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776434917256\",\"reason\":\"用户要求关闭队友进程并继续未完成任务，请立即停止工作并准备关闭。\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T14:08:37.256Z\"}",
+    "timestamp": "2026-04-17T14:08:37.256Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776434962086",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776434962086\",\"reason\":\"再次发送关闭请求，请立即响应。\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T14:09:22.086Z\"}",
+    "timestamp": "2026-04-17T14:09:22.086Z",
+    "read": true
+  },
+  {
+    "id": "shutdown-1776435140667",
+    "from": "team-lead",
+    "to": "fix-other-components",
+    "type": "shutdown_request",
+    "content": "{\"type\":\"shutdown_request\",\"request_id\":\"shutdown-1776435140667\",\"reason\":\"最后一次关闭请求，请立即响应。迁移脚本已完成，准备提交代码。\",\"from\":\"team-lead\",\"timestamp\":\"2026-04-17T14:12:20.667Z\"}",
+    "timestamp": "2026-04-17T14:12:20.667Z",
+    "read": true
+  }
+]

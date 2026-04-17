@@ -12,49 +12,29 @@ const sampleManagementSchema = new mongoose.Schema({
     required: true,
     comment: '日期'
   },
-  productName: {
-    type: String,
-    required: true,
-    comment: '商品名称'
-  },
+  // ★ 改为 ObjectId ref Product（原来是String存TikTok商品ID）
   productId: {
-    type: String,  // 存 TikTok 商品 ID（String），用于展示
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
     required: true,
-    comment: 'TikTok商品ID'
+    comment: '商品ID（ObjectId引用Product）'
   },
-  influencerAccount: {
-    type: String,
+  // ★ 新增，替换原来的 influencerAccount (String)
+  influencerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Influencer',
     required: true,
-    comment: '达人账号'
+    comment: '达人ID（ObjectId引用Influencer）'
   },
-  followerCount: {
-    type: Number,
-    default: 0,
-    comment: '粉丝数'
-  },
-  // 月销件数
-  monthlySalesCount: {
-    type: Number,
-    default: 0,
-    comment: '月销件数'
-  },
-  // 视频均播
-  avgVideoViews: {
-    type: Number,
-    default: 0,
-    comment: '视频均播'
-  },
-  salesman: {
-    type: String,
+  // ★ 替换原来的 salesman (String/ObjectId混合)
+  salesmanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     comment: '归属业务员ID'
   },
   shippingInfo: {
     type: String,
     comment: '收货信息'
-  },
-  sampleImage: {
-    type: String,
-    comment: '样品图片URL'
   },
   isSampleSent: {
     type: Boolean,
@@ -103,18 +83,12 @@ const sampleManagementSchema = new mongoose.Schema({
     type: String,
     comment: '履约时间'
   },
-  videoLink: {
-    type: String,
-    comment: '达人视频链接'
-  },
-  videoStreamCode: {
-    type: String,
-    comment: '视频推流码'
-  },
+  // ★ 移到Video表：videoLink, videoStreamCode
+  // 保留 isAdPromotion 作为样品级别的快捷标记
   isAdPromotion: {
     type: Boolean,
     default: false,
-    comment: '是否投流'
+    comment: '是否投流（快捷标记）'
   },
   adPromotionTime: {
     type: Date,
@@ -190,14 +164,15 @@ const sampleManagementSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// 唯一索引：日期 + 达人账号 + 商品ID
-sampleManagementSchema.index({ companyId: 1, date: 1, influencerAccount: 1, productId: 1 }, { unique: true });
+// ★ 唯一索引改为 {companyId, date, influencerId, productId}
+sampleManagementSchema.index({ companyId: 1, date: 1, influencerId: 1, productId: 1 }, { unique: true });
 
 // 辅助索引
-sampleManagementSchema.index({ companyId: 1, influencerAccount: 1 });
+sampleManagementSchema.index({ companyId: 1, influencerId: 1 });
 sampleManagementSchema.index({ companyId: 1, productId: 1 });
 sampleManagementSchema.index({ companyId: 1, isSampleSent: 1 });
 sampleManagementSchema.index({ companyId: 1, isOrderGenerated: 1 });
+sampleManagementSchema.index({ companyId: 1, salesmanId: 1 });
 
 const SampleManagement = mongoose.model('SampleManagement', sampleManagementSchema);
 

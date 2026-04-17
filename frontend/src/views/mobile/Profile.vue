@@ -94,11 +94,11 @@
             <div class="percentage-detail">
               <div class="detail-item">
                 <span class="dot personal"></span>
-                <span>{{ $t('mobile.profile.personal') }}: {{ bdStats.yesterdayStats?.sampleCount || 0 }} {{ isEnglish ? 'items' : '条' }}</span>
+                <span>{{ $t('mobile.profile.personal') }}: {{ bdStats.yesterdayStats?.sampleCount || 0 }} {{ $t('bdDaily.items') }}</span>
               </div>
               <div class="detail-item">
                 <span class="dot team"></span>
-                <span>{{ $t('mobile.profile.team') }}: {{ bdStats.teamStats?.sampleCount || 0 }} {{ isEnglish ? 'items' : '条' }}</span>
+                <span>{{ $t('mobile.profile.team') }}: {{ bdStats.teamStats?.sampleCount || 0 }} {{ $t('bdDaily.items') }}</span>
               </div>
             </div>
           </div>
@@ -126,11 +126,11 @@
             <div class="percentage-detail">
               <div class="detail-item">
                 <span class="dot personal"></span>
-                <span>{{ $t('mobile.profile.personal') }}: {{ bdStats.yesterdayStats?.orderCount || 0 }} {{ isEnglish ? 'orders' : '单' }}</span>
+                <span>{{ $t('mobile.profile.personal') }}: {{ bdStats.yesterdayStats?.orderCount || 0 }} {{ $t('bdDaily.orders') }}</span>
               </div>
               <div class="detail-item">
                 <span class="dot team"></span>
-                <span>{{ $t('mobile.profile.team') }}: {{ bdStats.teamStats?.orderCount || 0 }} {{ isEnglish ? 'orders' : '单' }}</span>
+                <span>{{ $t('mobile.profile.team') }}: {{ bdStats.teamStats?.orderCount || 0 }} {{ $t('bdDaily.orders') }}</span>
               </div>
             </div>
           </div>
@@ -235,8 +235,8 @@ const loadBDStats = async () => {
 const logout = async () => {
   try {
     await ElMessageBox.confirm(
-      isEnglish.value ? 'Are you sure you want to logout?' : '确定要退出登录吗？',
-      isEnglish.value ? 'Confirm' : '提示',
+      t('auth.logoutConfirm'),
+      t('common.confirm'),
       { type: 'warning' }
     )
     AuthManager.logout()

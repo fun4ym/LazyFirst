@@ -17,7 +17,7 @@ sudo docker exec tap-mongodb mongodump \
   --db=tap_system \
   --authenticationDatabase=admin \
   -u tapadmin \
-  -p tap_admin_pass_2024
+  -p s0MxUUtrWwdjfX70W2gf
 
 if [ $? -ne 0 ]; then
     echo "[$(date)] 容器内备份失败!" >&2

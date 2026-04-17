@@ -10,19 +10,19 @@
 |------|-----|
 | IP | `150.109.183.29` |
 | 用户 | `ubuntu` |
-| 密码 | `tokzit-hejwig-6vapwA` |
+| 密码 | `IT8vuP53MB6LbjP2Htvp` |
 | 域名 | `tap.lazyfirst.com` |
 | MongoDB数据库 | `tap_system` |
 
 ### SSH命令模板
 ```bash
-sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 "命令"
+sshpass -p 'IT8vuP53MB6LbjP2Htvp' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 "命令"
 ```
 
 ### MongoDB认证
 - 用户名: `tapsystem`
-- 密码: `tap_system_pass_2024`
-- 连接: `mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system`
+- 密码: `5Qb0Q9WqztimCNuzfVoX`
+- 连接: `mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@150.109.183.29:27017/tap_system?authSource=tap_system`
 
 ---
 
@@ -56,13 +56,13 @@ git pull origin main
 cd frontend && npm run build && cd ..
 
 # 3. 同步代码（dist不要exclude！）
-sshpass -p 'tokzit-hejwig-6vapwA' rsync -avz \
+sshpass -p 'IT8vuP53MB6LbjP2Htvp' rsync -avz \
   --exclude 'node_modules' --exclude '.git' \
   /Users/mor/CodeBuddy/LazyFirst/ \
   ubuntu@150.109.183.29:/home/ubuntu/tap-system/
 
 # 4. 重建并重启（必须加--no-cache）
-sshpass -p 'tokzit-hejwig-6vapwA' ssh ubuntu@150.109.183.29 \
+sshpass -p 'IT8vuP53MB6LbjP2Htvp' ssh ubuntu@150.109.183.29 \
   "cd /home/ubuntu/tap-system && sudo docker compose build --no-cache && sudo docker compose up -d"
 
 # 5. 验证
@@ -88,7 +88,7 @@ curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
 
 ### 备份命令
 ```bash
-sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 \
+sshpass -p 'IT8vuP53MB6LbjP2Htvp' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 \
   "sudo docker exec tap-mongodb mongodump --db tap_system --archive --gzip > /home/ubuntu/backups/tapdb_backup_$(date +%Y%m%d_%H%M%S).archive.gz"
 ```
 

@@ -11,12 +11,12 @@
 |------|-----|------|
 | IP | `150.109.183.29` | SSH连接 |
 | 用户 | `ubuntu` | SSH登录 |
-| 密码 | `tokzit-hejwig-6vapwA` | SSH登录 |
+| 密码 | `IT8vuP53MB6LbjP2Htvp` | SSH登录 |
 | 域名 | `tap.lazyfirst.com` | 网站访问 |
 
 ### SSH命令模板
 ```bash
-sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 "命令"
+sshpass -p 'IT8vuP53MB6LbjP2Htvp' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 "命令"
 ```
 
 ---
@@ -26,12 +26,12 @@ sshpass -p 'tokzit-hejwig-6vapwA' ssh -o StrictHostKeyChecking=no ubuntu@150.109
 | 项目 | 值 | 用途 |
 |------|-----|------|
 | 用户 | `tapsystem` | 数据库认证 |
-| 密码 | `tap_system_pass_2024` | 数据库认证 |
+| 密码 | `5Qb0Q9WqztimCNuzfVoX` | 数据库认证 |
 | 数据库 | `tap_system` | 数据存储 |
 
 ### MongoDB连接字符串
 ```
-mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system
+mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@150.109.183.29:27017/tap_system?authSource=tap_system
 ```
 
 ---
@@ -78,7 +78,7 @@ NODE_ENV=development
 
 ### 线上部署 (.env)
 ```env
-MONGODB_URI=mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system
+MONGODB_URI=mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@150.109.183.29:27017/tap_system?authSource=tap_system
 JWT_SECRET=your_jwt_secret_key_change_this_in_production
 PORT=3000
 NODE_ENV=production

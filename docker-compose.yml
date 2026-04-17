@@ -14,7 +14,7 @@ services:
     environment:
       MONGO_INITDB_DATABASE: tap_system
       MONGO_INITDB_ROOT_USERNAME: tapadmin
-      MONGO_INITDB_ROOT_PASSWORD: tap_admin_pass_2024
+      MONGO_INITDB_ROOT_PASSWORD: s0MxUUtrWwdjfX70W2gf
 
   # 后端API
   backend:
@@ -30,7 +30,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      MONGODB_URI: mongodb://tapsystem:tap_system_pass_2024@mongodb:27017/tap_system?authSource=tap_system
+      MONGODB_URI: mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@mongodb:27017/tap_system?authSource=tap_system
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_EXPIRE: 7d
       CORS_ORIGIN: ${CORS_ORIGIN:-*}

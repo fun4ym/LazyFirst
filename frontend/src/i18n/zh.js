@@ -59,6 +59,7 @@ export default {
     influencerList: '建联达人',
     blacklist: '小黑屋',
     samples: '样品申请',
+    videoRegister: '视频登记',
     orders: 'TikTok订单',
     products: '商品管理',
     bdmgt: 'BD管理',
@@ -150,7 +151,8 @@ export default {
     newPassword: '新密码',
     confirmPassword: '确认密码',
     passwordChanged: '密码修改成功',
-    passwordMismatch: '两次输入的密码不一致'
+    passwordMismatch: '两次输入的密码不一致',
+    logoutConfirm: '确定要退出登录吗？'
   },
   status: {
     pending: '待处理',
@@ -1039,6 +1041,7 @@ export default {
     naturalMonth: '自然月',
     noData: '暂无数据',
     bdOnly: '数据概览仅对BD用户开放',
+    passRate: '通过率',
     loadFailed: '加载数据概览失败'
   },
   bdDaily: {
@@ -1330,6 +1333,7 @@ export default {
     tiktokName: '达人昵称',
     productId: '商品ID',
     logisticsCompany: '物流公司',
+    enterLogistics: '输入物流公司',
     currency: '币别',
     selectBD: '选择BD',
     searchProduct: '搜索商品',
@@ -1342,7 +1346,58 @@ export default {
     nickname: '常用昵称',
     normal: '正常',
     createdAt: '创建时间',
-    blacklistStatus: '黑名单状态'
+    blacklistStatus: '黑名单状态',
+    // 详情弹层-基础信息标签
+    tiktokIdLabel: 'TikTok ID：',
+    applyDateLabel: '申请日期：',
+    bdLabel: 'BD：',
+    productNameLabel: '商品名称：',
+    productIdLabel: '商品ID：',
+    sampleImageLabel: '样品图片：',
+    influencerStats: '达人数据统计',
+    followerCountLabel: '粉丝数',
+    monthlySalesLabel: '月销量',
+    avgViewsLabel: '平均播放',
+    shippingInfoSection: '收货地址信息',
+    // 详情弹层-寄样状态标签
+    sampleStatusLabel: '寄样状态：',
+    sampleSentLabel: '样品已寄出：',
+    shippingDetails: '物流信息',
+    shippingDateLabel: '寄出日期：',
+    logisticsCompanyLabel: '物流公司：',
+    trackingNumberLabel: '运单号：',
+    receivedDateLabel: '签收日期：',
+    refusalSection: '拒绝原因',
+    // 详情弹层-履约信息标签
+    orderStatusLabel: '订单状态：',
+    fulfillmentTimeLabel: '履约时间：',
+    videoSection: '视频链接',
+    adPromotionSection: '投流信息',
+    adStatusLabel: '投流状态：',
+    adTimeLabel: '投流时间：',
+    streamCodeLabel: '流码：',
+    orderInfoUpdate: '订单信息更新：',
+    adInfoUpdate: '投流信息更新：',
+    // 详情弹层-达人信息标签
+    tiktokNameLabel: 'TikTok名称：',
+    realNameLabel: '真实姓名：',
+    nicknameLabel: '常用昵称：',
+    influencerStatsSection: '达人统计数据',
+    latestFollowerCount: '最新粉丝数',
+    latestGmv: '最新GMV',
+    influencerStatusLabel: '达人状态：',
+    blacklistStatusLabel: '黑名单状态：',
+    // 创建时间标签
+    createdAtLabel: '创建时间：',
+    // popover
+    historySampleRecords: '历史申样记录 ({count})',
+    productNameColon: '商品名称：',
+    tiktokIdColon: 'TikTok ID：',
+    applyDateColon: '申请日期：',
+    approvalStatusColon: '审批状态：',
+    // 寄样状态对话框
+    trackingNumberPlaceholder: '输入快递单号',
+    selectLogisticsPlaceholder: '选择物流公司'
   },
   // TikTok活动
   activities: {
@@ -1755,7 +1810,19 @@ export default {
     influencerNotFound: '未找到达人信息',
     // 其他
     sampleSent: '已寄样',
-    notShipped: '未发货'
+    notShipped: '未发货',
+    // 新增
+    historyRecords: '历史申样记录 ({count})',
+    approvalStatus: '审批状态',
+    influencerStats: '达人数据统计',
+    refusalReasonTitle: '拒绝原因',
+    logisticsInfo: '物流信息',
+    statusUpdateTime: '状态更新时间',
+    orderInfoUpdate: '订单信息更新',
+    adInfoUpdate: '投流信息更新',
+    influencerStatsData: '达人统计数据',
+    influencerStatus: '达人状态',
+    selectInfluencer: '请选择达人'
   },
   // 市场工作台-招募配置
   recruitment: {
@@ -1838,6 +1905,55 @@ export default {
     noUsers: '全部人员',
     squareRate: '广场佣金率',
     promoRate: '推广收益',
-    extraPromo: '推广加成'
+    extraPromo: '推广加成',
+    disabled: '该招募已停用'
+  },
+  // 视频登记
+  videos: {
+    title: '视频登记',
+    dateRange: '登记时间',
+    registeredBy: '登记人',
+    selectUser: '选择用户',
+    adStatus: '投流状态',
+    sampleRecord: '申样记录',
+    selectSample: '搜索样品（日期+达人+商品）',
+    enterVideoLink: '请输入视频链接',
+    enterStreamCode: '请输入视频推流码',
+    isAdPromotion: '是否投流',
+    adTime: '投流时间',
+    selectAdTime: '选择投流时间',
+    // 状态
+    adPromoted: '已投流',
+    notAdPromoted: '未投流',
+    // 验证
+    selectSampleRequired: '请选择申样记录',
+    // 消息
+    loadFailed: '加载失败',
+    loadUserFailed: '加载用户失败',
+    loadVideoFailed: '加载视频列表失败',
+    searchSampleFailed: '搜索样品失败',
+    operationFailed: '操作失败',
+    deleteSuccess: '删除成功',
+    deleteFailed: '删除失败',
+    createSuccess: '创建成功',
+    updateSuccess: '更新成功',
+    enterVideoLinkWarning: '请输入视频链接',
+    loadingDetail: '正在加载详情...',
+    // 物流
+    defaultLogistics: 'TikTok 默认物流',
+    otherLogistics: '其他物流',
+    // 新增字段
+    operator: '操作员',
+    selectOperator: '选择操作员',
+    selectProduct: '选择商品',
+    selectInfluencer: '选择达人',
+    creationMode: '创建模式',
+    modeSampleLinked: '样品关联',
+    modeIndependent: '独立创建',
+    selectProductRequired: '请选择商品',
+    selectInfluencerRequired: '请选择达人',
+    operatorSelfOnlyTip: '您只能选择自己作为操作员',
+    searchProductFailed: '搜索商品失败',
+    searchInfluencerFailed: '搜索达人失败'
   }
 }

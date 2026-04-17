@@ -1,7 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb');
 const fs = require('fs');
 
-const uri = 'mongodb://tapsystem:tap_system_pass_2024@mongodb:27017/tap_system?authSource=tap_system';
+const uri = 'mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@mongodb:27017/tap_system?authSource=tap_system';
 const targetColl = process.argv[2] || 'users';
 
 function convertDoc(str) {

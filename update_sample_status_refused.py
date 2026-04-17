@@ -2,7 +2,7 @@ import pandas as pd
 from pymongo import MongoClient
 
 # 连接线上MongoDB
-client = MongoClient('mongodb://tapsystem:tap_system_pass_2024@150.109.183.29:27017/tap_system?authSource=tap_system')
+client = MongoClient('mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@150.109.183.29:27017/tap_system?authSource=tap_system')
 db = client.tap_system
 
 # 读取Excel

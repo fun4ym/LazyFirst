@@ -5,7 +5,7 @@
  *    权重: pending < sent < received = refused
  */
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://tapsystem:tap_system_pass_2024@mongodb:27017/tap_system?authSource=tap_system');
+mongoose.connect('mongodb://tapsystem:5Qb0Q9WqztimCNuzfVoX@mongodb:27017/tap_system?authSource=tap_system');
 const Sample = require('./models/SampleManagement');
 const Product = require('./models/Product');
 

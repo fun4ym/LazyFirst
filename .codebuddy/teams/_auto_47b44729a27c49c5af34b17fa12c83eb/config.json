@@ -1,0 +1,23 @@
+{
+  "name": "_auto_47b44729a27c49c5af34b17fa12c83eb",
+  "leadAgentId": "47b44729a27c49c5af34b17fa12c83eb",
+  "workspacePath": "/Users/mor/CodeBuddy/LazyFirst",
+  "createdAt": "2026-04-17T10:16:58.428Z",
+  "options": {
+    "workspacePath": "/Users/mor/CodeBuddy/LazyFirst",
+    "isAutoTeam": true
+  },
+  "members": [
+    {
+      "memberId": "team-lead@_auto_47b44729a27c49c5af34b17fa12c83eb",
+      "name": "team-lead",
+      "role": "Team Lead - coordinates the team and interacts with the user"
+    },
+    {
+      "memberId": "fix-other-components@_auto_47b44729a27c49c5af34b17fa12c83eb",
+      "name": "fix-other-components",
+      "role": "Fix hardcoded strings in other Vue components"
+    }
+  ],
+  "isAutoTeam": true
+}

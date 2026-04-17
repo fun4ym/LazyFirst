@@ -5,7 +5,7 @@ echo "=== Step 1: 全量数据备份 ==="
 BACKUP_DIR="/home/ubuntu/backups/backup_$(date +%Y%m%d_%H%M%S)"
 sudo docker exec tap-mongodb mongodump \
   --username tapsystem \
-  --password tap_system_pass_2024 \
+  --password 5Qb0Q9WqztimCNuzfVoX \
   --authenticationDatabase tap_system \
   --db tap_system \
   --out "$BACKUP_DIR"
