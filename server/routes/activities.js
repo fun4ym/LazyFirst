@@ -74,13 +74,16 @@ const parsePercentage = (percentStr) => {
 
 // 获取或创建店铺
 const getOrCreateShop = async (companyId, shopName) => {
+  console.log(`[店铺查找] companyId: ${companyId}, shopName: "${shopName}"`);
   let shop = await Shop.findOne({ companyId, shopName });
   if (shop) {
+    console.log(`[店铺查找] 找到现有店铺: _id=${shop._id}, shopNumber=${shop.shopNumber}`);
     return shop;
   }
   
   // 生成shopNumber（使用时间戳+随机数）
   const shopNumber = `SHOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  console.log(`[店铺创建] 创建新店铺: shopName="${shopName}", shopNumber=${shopNumber}`);
   
   shop = await Shop.create({
     companyId,
@@ -88,6 +91,7 @@ const getOrCreateShop = async (companyId, shopName) => {
     shopNumber
   });
   
+  console.log(`[店铺创建] 店铺创建成功: _id=${shop._id}`);
   return shop;
 };
 
@@ -610,7 +614,10 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
     
     for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
       const row = data[rowIndex];
-      if (!row || !row[productIdCol]) continue;
+      if (!row || !row[productIdCol]) {
+        console.log(`[商品导入] 跳过第${rowIndex + 1}行: 行数据为空或商品ID为空`);
+        continue;
+      }
       
       try {
         const productName = row[productNameCol];
@@ -642,12 +649,14 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
         const shop = await getOrCreateShop(companyId, shopName);
         
         // 查找现有商品
+        console.log(`[商品导入] 查找商品: tiktokProductId=${tiktokProductId}, companyId=${companyId}`);
         let product = await Product.findOne({
           companyId,
           tiktokProductId
         });
         
         if (product) {
+          console.log(`[商品导入] 找到现有商品: _id=${product._id}, tiktokProductId=${product.tiktokProductId}, name="${product.name}"`);
           // 商品已存在：修改有传参的字段
           if (productName) product.name = productName;
           if (shop._id) product.shopId = shop._id;
@@ -656,6 +665,10 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
             product.priceRangeMin = priceRangeMin;
             product.priceRangeMax = priceRangeMax;
           }
+          // 如果商品类目为空，设置默认值
+          if (!product.productCategory) {
+            product.productCategory = '未分类';
+          }
           
           // 检查该商品是否已有当前活动的配置
           const existingConfigIndex = product.activityConfigs.findIndex(
@@ -663,6 +676,7 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
           );
           
           if (existingConfigIndex >= 0) {
+            console.log(`[商品导入] 更新现有活动配置 (index=${existingConfigIndex})`);
             // 已有该活动配置 -> 修改该配置
             product.activityConfigs[existingConfigIndex].isDefault = true;
             if (activityLink) product.activityConfigs[existingConfigIndex].activityLink = activityLink;
@@ -677,6 +691,7 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
               if (idx !== existingConfigIndex) ac.isDefault = false;
             });
           } else {
+            console.log(`[商品导入] 添加新活动配置 (activityId=${activityId})`);
             // 没有该活动配置 -> 新增并设为默认
             product.activityConfigs.push({
               activityId: activity._id,
@@ -703,8 +718,10 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
           }
           
           await product.save();
+          console.log(`[商品导入] 商品更新成功: _id=${product._id}, shopId=${product.shopId}`);
           results.updated.push({ name: productName, tiktokProductId });
         } else {
+          console.log(`[商品导入] 未找到现有商品，创建新商品: tiktokProductId=${tiktokProductId}, name="${productName}", shopId=${shop._id}`);
           // 新建商品
           const sku = `SKU${Date.now()}${Math.floor(Math.random() * 10000)}`;
           
@@ -712,6 +729,7 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
             companyId,
             shopId: shop._id,
             name: productName,
+            productCategory: '未分类',
             sku,
             tiktokProductId,
             tiktokSku: '',  // 置空
@@ -741,10 +759,13 @@ router.post('/:id/import-products', authenticate, authorize('activities:btn-impo
             status: 'active'
           });
           
+          console.log(`[商品导入] 商品创建成功: _id=${product._id}, sku=${sku}, shopId=${product.shopId}`);
           results.created.push({ name: productName, tiktokProductId });
         }
       } catch (rowError) {
         console.error(`处理第${rowIndex + 1}行失败:`, rowError);
+        console.error(`错误详情:`, rowError.stack);
+        console.error(`失败行数据:`, JSON.stringify(row));
         results.failed.push({ row: rowIndex + 1, error: rowError.message });
       }
     }

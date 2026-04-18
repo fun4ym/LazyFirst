@@ -429,6 +429,21 @@ router.post('/products', authenticate, verifyAdmin, upload.single('file'), async
       shopIdMap[m.originalId] = m.newId;
     });
     console.log('[商品导入] 店铺映射:', JSON.stringify(shopIdMap));
+    
+    // 详细日志：打印每个映射的详细信息
+    console.log('[商品导入] 详细店铺映射信息:');
+    for (const mapping of shopMappings) {
+      const shop = await Shop.findById(mapping.newId).select('shopName shopNumber').lean();
+      console.log(`  originalId: "${mapping.originalId}" -> newId: ${mapping.newId} (店铺名: ${shop?.shopName || '未知'}, 店铺号: ${shop?.shopNumber || '未知'})`);
+    }
+    
+    // 同时构建shopNumber到ID的映射，作为备用查找方式
+    const shopNumberToIdMap = {};
+    const allShops = await Shop.find({ companyId }).select('shopNumber _id').lean();
+    allShops.forEach(s => {
+      shopNumberToIdMap[s.shopNumber] = s._id;
+    });
+    console.log('[商品导入] shopNumber映射数量:', Object.keys(shopNumberToIdMap).length);
 
     // 获取基础数据中的产品类目映射
     const categoryMappings = await BaseData.find({ type: 'category', companyId });
@@ -459,10 +474,24 @@ router.post('/products', authenticate, verifyAdmin, upload.single('file'), async
       if (!originalId) continue;
 
       // 查找对应店铺ID（用店铺ID或店铺号匹配）
-      const shopId = shopIdMap[originalShopId] || null;
-      console.log('[商品导入] 商品:', row.goods_name, 'shop_id:', originalShopId, '匹配结果:', shopId ? shopId.toString() : '未匹配');
+      let shopId = shopIdMap[originalShopId] || null;
+      let matchMethod = '通过originalId匹配';
+      
+      // 如果通过originalId找不到，尝试通过shopNumber查找（originalShopId可能是shopNumber）
+      if (!shopId && originalShopId) {
+        shopId = shopNumberToIdMap[originalShopId] || null;
+        if (shopId) {
+          matchMethod = '通过shopNumber匹配';
+        }
+      }
+      
+      console.log('[商品导入] 商品:', row.goods_name, 'shop_id:', originalShopId, '匹配结果:', shopId ? shopId.toString() : '未匹配', '匹配方式:', matchMethod);
+      
       if (!shopId && originalShopId) {
         console.log('[商品导入] 警告: 店铺号', originalShopId, '未匹配到店铺,商品:', row.goods_name);
+        // 详细调试：打印所有可能的匹配项
+        console.log('[商品导入] 调试: shopIdMap中的键:', Object.keys(shopIdMap));
+        console.log('[商品导入] 调试: shopNumberToIdMap中的键:', Object.keys(shopNumberToIdMap));
       }
 
       // 匹配Product模型字段（name、sku、price是必填）
@@ -532,6 +561,18 @@ router.post('/products', authenticate, verifyAdmin, upload.single('file'), async
 
       if (product.tiktokProductId || product.name) {
         products.push({ product, originalId });
+        console.log('[商品导入] 商品已添加到导入列表:', { 
+          name: product.name, 
+          tiktokProductId: product.tiktokProductId,
+          shopId: product.shopId 
+        });
+      } else {
+        console.log('[商品导入] 警告: 商品被跳过，缺少tiktokProductId和name字段:', {
+          originalId: originalId,
+          goods_name: row.goods_name,
+          goods_no: row.goods_no,
+          shop_id: originalShopId
+        });
       }
     }
 

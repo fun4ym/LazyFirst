@@ -33,18 +33,9 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item :label="$t('influencer.account')">
-          <el-input
-            v-model="searchForm.influencerAccount"
-            clearable
-            :placeholder="$t('influencer.inputAccountPlaceholder')"
-            style="width: 160px"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
-          />
-        </el-form-item>
 
-        <el-form-item :label="$t('products.productName')">
+
+        <el-form-item :label="$t('product.productName')">
           <el-input
             v-model="searchForm.productName"
             clearable
@@ -55,18 +46,7 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('videos.adStatus')">
-          <el-select
-            v-model="searchForm.isAdPromotion"
-            clearable
-            :placeholder="$t('common.all')"
-            style="width: 120px"
-            @change="handleSearch"
-          >
-            <el-option :label="$t('videos.adPromoted')" :value="'true'" />
-            <el-option :label="$t('videos.notAdPromoted')" :value="'false'" />
-          </el-select>
-        </el-form-item>
+
 
         <el-form-item>
           <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
@@ -87,25 +67,19 @@
     <!-- 表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="videoList" v-loading="loading" stripe border>
-        <el-table-column :label="$t('videos.registeredBy')" width="100">
+        <el-table-column :label="$t('samples.date')" width="110" sortable fixed="left">
           <template #default="{ row }">
-            {{ row.createdBy?.realName || row.createdBy?.username || '-' }}
+            {{ formatDate(row.sampleId?.date) }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('influencer.account')" min-width="130">
+        <el-table-column :label="$t('videos.registeredBy')" width="100" fixed="left">
           <template #default="{ row }">
-            {{ row.influencerId?.tiktokId || '-' }}
+            {{ row.createdBy?.realName || row.createdBy?.username || $t('common.dash') }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('influencer.name')" min-width="110">
-          <template #default="{ row }">
-            {{ row.influencerId?.tiktokName || '-' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('products.productName')" min-width="150">
+        <el-table-column :label="$t('videos.productInfo')" min-width="320">
           <template #default="{ row }">
             <div class="product-cell">
               <el-image
@@ -115,14 +89,21 @@
                 class="product-thumb"
                 :preview-src-list="[row.productId.images[0]]"
               />
-              <span>{{ row.productId?.name || '-' }}</span>
+              <div v-else class="product-thumb-placeholder"></div>
+              <div class="product-info">
+                <div class="product-id purple">{{ row.productId?.tiktokProductId || $t('common.dash') }}</div>
+                <el-tooltip :content="row.productId?.name" placement="top">
+                  <div class="product-name">
+                    {{ row.productId?.name || $t('common.dash') }}
+                  </div>
+                </el-tooltip>
+                <div class="shop-name" v-if="row.productId?.shopName || row.productId?.shop?.shopName">
+                  <svg t="1776483244387" class="shop-svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="32239" width="32" height="32"><path d="M 469.3 793.7 H 305.6 c -18.6 0 -33.6 -15 -33.6 -33.6 V 575.3 c 34.5 8.1 70.8 0.2 98.7 -21.6 20.5 16 45.8 0.8 -0.6 1.4 -1.4 1.4 h -83.6 c -0.8 0 -1.4 -0.6 -1.4 -1.4 V 648.4 c 0 -0.8 0.6 -1.4 1.4 -1.4 h 83.6 m 0 -17.3 h -83.6 c -10.3 0 -18.7 8.4 -18.7 18.7 v 134.9 c 0 10.3 8.4 18.7 18.7 18.7 h 83.6 c 10.3 0 18.7 -8.4 18.7 -18.7 V 648.4 c 0.1 -10.3 -8.3 -18.7 -18.7 -18.7 z" p-id="32245"></path><path d="m -12.4 -18.6 -12.4 -29.9 V 575.2 c 0 -2.6 1.2 -5.1 3.3 -6.8 2.1 -1.6 4.8 -2.2 7.4 -1.6 32.1 7.6 65.4 0.3 91.4 -20 3.1 -2.4 7.5 -2.4 10.6 0 18.8 14.7 42.3 22.8 66.2 22.8 h 0.3 c 23.9 0 47.4 -8.1 66.3 -22.8 3.1 -2.5 7.5 -2.5 10.7 0 18.8 14.7 42.3 22.8 66.2 22.8 h 0.2 c 28 0 54.6 -10.7 74.8 -30.1 a 8.7 8.7 0 0 1 12 0 c 22.1 21.3 52.4 32.2 83 29.7 2.4 -0.2 4.8 0.6 6.6 2.3 s 2.8 3.9 2.8 6.4 v 182 c 0 11.3 -4.4 21.9 -12.4 29.9 -8.1 8.1 -18.7 12.5 -30 12.5 zM 469.3 785 H 722.7 c 6.7 0 12.9 -2.6 17.6 -7.3 4.7 -4.7 7.3 -11 7.3 -17.6 v -173 h -0.4 c -29.5 0 -58.1 -10.5 -80.6 -29.5 -22.6 19.1 -50.9 29.5 -80.7 29.5 h -0.2 c -25.5 0 -50.7 -8 -71.6 -22.6 -20.9 14.6 -46 22.6 -71.6 22.6 h -0.4 c -25.5 0 -50.7 -8 -71.6 -22.6 -26.3 18.4 -58.4 25.9 -90 21.3 v 174.3 c 0 6.7 2.6 12.9 7.3 17.6 4.7 4.7 11 7.3 17.6 7.3 h 163.9 z" p-id="32241"></path><path d="M 685.2 219.6 c 19 0 36.5 10 46.2 26.3 L 817 389.6 h -0.2 c 23.2 45.9 4.9 101.9 -41 125.1 -38 19.2 -84.1 10.3 -112.1 -21.7 -19.2 20.3 -45.9 31.9 -73.8 31.8 -29.2 0 -56.9 -12.5 -76.2 -34.4 -19.3 21.9 -47 34.4 -76.2 34.4 -27.9 0 -54.6 -11.5 -73.8 -31.8 -33.9 38.6 -92.8 42.4 -131.4 8.5 -34.8 -30.6 -41.8 -82.2 -16.4 -121 l 72 -132.7 c 9.4 -17.4 27.6 -28.2 47.3 -28.2 h 350 z" fill="#99E5E2" p-id="32242"></path><path d="M 685.2 237.1 c 12.7 0 24.7 6.8 31.2 17.7 l 83.8 140.6 1 2 c 18.8 37.2 3.9 82.7 -33.3 101.6 -10.5 5.3 -22.3 8.2 -34.1 8.2 -21.8 0 -42.6 -9.4 -56.9 -25.8 l -12.7 -14.5 L 651 481 c -15.7 16.7 -37.9 26.3 -60.9 26.3 H 589.8 c -24.1 0 -47 -10.4 -62.9 -28.4 l -13.2 -15 -13.2 15 c -15.9 18.1 -38.8 28.4 -62.9 28.4 h -0.2 c -23 0 -45.2 -9.6 -60.9 -26.3 l -13.2 -14 -12.7 14.5 c -14.3 16.3 -35.1 25.7 -56.8 25.76 -18.3 0 -36 -6.7 -49.8 -18.8 -13.7 -12 -22.6 -28.6 -25 -46.6 -2.4 -18 1.7 -36.4 11.7 -51.6 l 0.4 -0.6 0.3 -0.6 72 -132.7 c 6.4 -11.7 18.6 -19 31.9 -19 h 349.9 m 0 -17.7 h -350 c -19.7 0 -37.9 10.8 -47.3 28.2 l -72 132.7 c -25.4 38.8 -18.4 90.4 16.4 121 17.7 15.5 39.6 23.2 61.4 23.2 25.9 0 51.6 -10.7 70 -31.7 19.1 20.3 45.8 31.8 73.7 31.8 h 0.2 c 29.1 0 56.8 -12.5 76.1 -34.4 19.2 21.9 46.9 34.4 76.1 34.4 H 590.1 c 27.9 0 54.5 -11.5 73.6 -31.8 18.1 20.7 43.9 31.8 70.1 31.8 14.3 0 28.7 -3.3 42 -10.1 45.9 -23.2 64.2 -79.3 41 -125.1 h 0.2 l -85.6 -143.7 c -9.7 -16.3 -27.3 -26.3 -46.2 -26.3 z" p-id="32243"></path><path d="M 555.9 802.1 h -83.6 c -10.3 0 -18.7 -8.4 -18.7 -18.7 v -135 c 0 -10.3 8.4 -18.7 18.7 -18.7 h 83.6 c 10.3 0 18.7 8.4 18.7 18.7 v 134.9 c 0.1 10.4 -8.3 18.8 -18.7 18.8 z" fill="#FF9999" p-id="32244"></path><path d="M 555.9 647 c 0.8 0 1.4 0.6 1.4 1.4 v 134.9 c 0 0.8 -0.6 1.4 -1.4 1.4 h -83.6 c -0.8 0 -1.4 -0.6 -1.4 -1.4 V 648.4 c 0 -0.8 0.6 -1.4 1.4 -1.4 h 83.6 m 0 -17.3 h -83.6 c -10.3 0 -18.7 8.4 -18.7 18.7 v 134.9 c 0 10.3 8.4 18.7 18.7 18.7 h 83.6 c 10.3 0 18.7 8.4 18.7 18.7 V 648.4 c 0.1 -10.3 -8.3 -18.7 -18.7 -18.7 z" p-id="32245"></path></svg>
+                  {{ row.productId?.shopName || row.productId?.shop?.shopName }}
+                </div>
+                <div class="shop-name" v-else>{{ $t('common.doubleDash') }}</div>
+              </div>
             </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('samples.productId')" width="120">
-          <template #default="{ row }">
-            {{ row.productId?.tiktokProductId || '-' }}
           </template>
         </el-table-column>
 
@@ -132,28 +113,14 @@
               <a v-if="row.videoLink" :href="row.videoLink" target="_blank" class="video-link">
                 {{ row.videoLink }}
               </a>
-              <span v-else>-</span>
+              <span v-else>{{ $t('common.dash') }}</span>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column :label="$t('samples.videoStreamCode')" width="120">
           <template #default="{ row }">
-            {{ row.videoStreamCode || '-' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('videos.adStatus')" width="90" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.isAdPromotion ? 'success' : 'info'" size="small">
-              {{ row.isAdPromotion ? $t('common.yes') : $t('common.no') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('samples.date')" width="110" sortable>
-          <template #default="{ row }">
-            {{ formatDate(row.sampleId?.date) }}
+            {{ row.videoStreamCode || $t('common.dash') }}
           </template>
         </el-table-column>
 
@@ -199,103 +166,95 @@
       destroy-on-close
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="110px">
-        <!-- 创建模式选择 -->
-        <el-form-item :label="$t('videos.creationMode')">
-          <el-radio-group v-model="formData.creationMode">
-            <el-radio label="sampleLinked">{{ $t('videos.modeSampleLinked') }}</el-radio>
-            <el-radio label="independent">{{ $t('videos.modeIndependent') }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
 
-        <!-- 样品关联模式字段 -->
-        <div v-if="formData.creationMode === 'sampleLinked'">
-          <el-form-item :label="$t('videos.sampleRecord')" prop="sampleId">
-            <el-select
-              v-model="formData.sampleId"
-              filterable
-              remote
-              reserve-keyword
-              :remote-method="searchSamples"
-              :loading="sampleSearchLoading"
-              :placeholder="$t('videos.selectSample')"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="s in sampleOptions"
-                :key="s._id"
-                :label="`${formatDate(s.date)} | ${s.influencerId?.tiktokId} | ${s.productId?.name}`"
-                :value="s._id"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
+
+
 
         <!-- 独立创建模式字段 -->
-        <div v-else>
-          <!-- 操作员选择 -->
-          <el-form-item :label="$t('videos.operator')">
-            <el-select
-              v-model="formData.operator"
-              clearable
-              filterable
-              :placeholder="$t('videos.selectOperator')"
-              style="width: 100%"
-              :disabled="!canSelectOtherOperator"
-            >
-              <el-option
-                v-for="user in userList"
-                :key="user._id"
-                :label="user.realName || user.username"
-                :value="user._id"
-              />
-            </el-select>
-            <div class="form-tip" v-if="!canSelectOtherOperator">
-              {{ $t('videos.operatorSelfOnlyTip') }}
-            </div>
-          </el-form-item>
+        <!-- BD选择 -->
+        <el-form-item :label="$t('videos.bd')">
+          <el-select
+            v-model="formData.operator"
+            clearable
+            filterable
+            :placeholder="$t('videos.selectOperator')"
+            style="width: 100%"
+            :disabled="!canSelectOtherOperator"
+          >
+            <el-option
+              v-for="user in userList"
+              :key="user._id"
+              :label="user.realName || user.username"
+              :value="user._id"
+            />
+          </el-select>
+          <div class="form-tip" v-if="!canSelectOtherOperator">
+            {{ $t('videos.operatorSelfOnlyTip') }}
+          </div>
+        </el-form-item>
 
-          <!-- 商品选择 -->
-          <el-form-item :label="$t('videos.selectProduct')" prop="productId">
-            <el-select
-              v-model="formData.productId"
-              filterable
-              remote
-              reserve-keyword
-              :remote-method="searchProducts"
-              :loading="productSearchLoading"
-              :placeholder="$t('videos.selectProduct')"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="p in productOptions"
-                :key="p._id"
-                :label="p.name"
-                :value="p._id"
-              />
-            </el-select>
-          </el-form-item>
+        <!-- 商品选择 -->
+        <el-form-item :label="$t('videos.selectProduct')" prop="productId">
+          <el-select
+            v-model="formData.productId"
+            filterable
+            remote
+            reserve-keyword
+            :remote-method="searchProducts"
+            :loading="productSearchLoading"
+            :placeholder="$t('videos.selectProduct')"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="p in productOptions"
+              :key="p._id"
+              :label="p.tiktokProductId ? `${p.name} (${p.tiktokProductId})` : p.name"
+              :value="p._id"
+            />
+          </el-select>
+        </el-form-item>
 
-          <!-- 达人选择 -->
-          <el-form-item :label="$t('videos.selectInfluencer')" prop="influencerId">
-            <el-select
-              v-model="formData.influencerId"
-              filterable
-              remote
-              reserve-keyword
-              :remote-method="searchInfluencers"
-              :loading="influencerSearchLoading"
-              :placeholder="$t('videos.selectInfluencer')"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="inf in influencerOptions"
-                :key="inf._id"
-                :label="`${inf.tiktokId} (${inf.tiktokName || ''})`"
-                :value="inf._id"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
+        <!-- 达人选择 -->
+        <el-form-item :label="$t('videos.selectInfluencer')" prop="influencerId">
+          <el-select
+            v-model="formData.influencerId"
+            filterable
+            remote
+            reserve-keyword
+            :remote-method="searchInfluencers"
+            :loading="influencerSearchLoading"
+            :placeholder="$t('videos.selectInfluencer')"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="inf in influencerOptions"
+              :key="inf._id"
+              :label="`${inf.tiktokId} (${inf.tiktokName || ''})`"
+              :value="inf._id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <!-- 关联申样记录 -->
+        <el-form-item :label="$t('videos.linkSampleRecord')">
+          <el-checkbox v-model="formData.linkSampleRecord">{{ $t('videos.linkSampleRecord') }}</el-checkbox>
+        </el-form-item>
+        
+        <el-form-item v-if="formData.linkSampleRecord" :label="$t('videos.sampleFilteredOptions')">
+          <el-select
+            v-model="formData.sampleId"
+            filterable
+            :placeholder="$t('videos.sampleSelectionPlaceholder')"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="sample in filteredSampleOptions"
+              :key="sample._id"
+              :label="$t('videos.sampleDateAndStatus', { date: formatDate(sample.date), status: $t(`samples.${sample.sampleStatus}`) })"
+              :value="sample._id"
+            />
+          </el-select>
+        </el-form-item>
 
         <!-- 公共字段 -->
         <el-form-item :label="$t('samples.videoLink')">
@@ -332,7 +291,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -346,9 +305,7 @@ const API_BASE = '/api/videos'
 const searchForm = reactive({
   dateRange: [],
   createdBy: '',
-  influencerAccount: '',
-  productName: '',
-  isAdPromotion: ''
+  productName: ''
 })
 
 const loading = ref(false)
@@ -365,53 +322,27 @@ const submitting = ref(false)
 
 const formData = reactive({
   sampleId: '',
+  linkSampleRecord: true,
   videoLink: '',
   videoStreamCode: '',
   isAdPromotion: false,
   adPromotionTime: '',
-  // 独立创建模式字段
-  creationMode: 'sampleLinked', // 'sampleLinked' 或 'independent'
+  // 商品、达人选择
   productId: '',
   influencerId: '',
   operator: ''
 })
 
 const formRules = {
-  sampleId: [{ 
-    required: true, 
-    message: () => t('videos.selectSampleRequired'), 
-    trigger: 'change',
-    validator: (rule, value, callback) => {
-      if (formData.creationMode === 'sampleLinked' && !value) {
-        callback(new Error(t('videos.selectSampleRequired')))
-      } else {
-        callback()
-      }
-    }
-  }],
   productId: [{
     required: true,
     message: () => t('videos.selectProductRequired'),
-    trigger: 'change',
-    validator: (rule, value, callback) => {
-      if (formData.creationMode === 'independent' && !value) {
-        callback(new Error(t('videos.selectProductRequired')))
-      } else {
-        callback()
-      }
-    }
+    trigger: 'change'
   }],
   influencerId: [{
     required: true,
     message: () => t('videos.selectInfluencerRequired'),
-    trigger: 'change',
-    validator: (rule, value, callback) => {
-      if (formData.creationMode === 'independent' && !value) {
-        callback(new Error(t('videos.selectInfluencerRequired')))
-      } else {
-        callback()
-      }
-    }
+    trigger: 'change'
   }]
 }
 
@@ -427,6 +358,9 @@ const productSearchLoading = ref(false)
 const influencerOptions = ref([])
 const influencerSearchLoading = ref(false)
 
+// 筛选后的样品记录
+const filteredSampleOptions = ref([])
+
 // 计算属性：是否可以选其他操作员（基于数据权限）
 const canSelectOtherOperator = computed(() => {
   // 这里需要根据实际的数据权限逻辑实现
@@ -438,13 +372,30 @@ const canSelectOtherOperator = computed(() => {
 // 加载用户列表
 async function loadUsers() {
   try {
-    const res = await fetch('/api/users', {
+    // 添加limit参数获取更多用户，避免数据不全
+    const params = new URLSearchParams({ limit: '1000' })
+    const res = await fetch(`/api/users?${params}`, {
       headers: { Authorization: `Bearer ${AuthManager.getToken()}` }
     })
     const json = await res.json()
+    let users = []
     if (json.success && json.data) {
-      userList.value = json.data.users || []
+      users = json.data.users || []
     }
+    // 确保当前登录用户存在于用户列表中
+    const currentUser = AuthManager.getUser()
+    if (currentUser && currentUser._id) {
+      const userExists = users.some(user => user._id === currentUser._id)
+      if (!userExists) {
+        // 将当前用户添加到列表前面
+        users.unshift({
+          _id: currentUser._id,
+          realName: currentUser.realName,
+          username: currentUser.username
+        })
+      }
+    }
+    userList.value = users
   } catch (e) {
     console.error(t('videos.loadUserFailed'), e)
   }
@@ -464,9 +415,7 @@ async function loadVideos() {
       params.append('dateEnd', searchForm.dateRange[1])
     }
     if (searchForm.createdBy) params.append('createdBy', searchForm.createdBy)
-    if (searchForm.influencerAccount) params.append('influencerAccount', searchForm.influencerAccount)
     if (searchForm.productName) params.append('productName', searchForm.productName)
-    if (searchForm.isAdPromotion !== '') params.append('isAdPromotion', searchForm.isAdPromotion)
 
     const res = await fetch(`${API_BASE}?${params}`, {
       headers: { Authorization: `Bearer ${AuthManager.getToken()}` }
@@ -492,9 +441,7 @@ function handleSearch() {
 function resetSearch() {
   searchForm.dateRange = []
   searchForm.createdBy = ''
-  searchForm.influencerAccount = ''
   searchForm.productName = ''
-  searchForm.isAdPromotion = ''
   handleSearch()
 }
 
@@ -524,7 +471,13 @@ async function searchProducts(query) {
 
   productSearchLoading.value = true
   try {
-    const res = await fetch(`/api/products?page=1&limit=20&${new URLSearchParams({ name: query })}`, {
+    // 使用keyword参数同时搜索商品名称和TikTok商品ID
+    const params = new URLSearchParams({
+      keyword: query,
+      page: '1',
+      limit: '20'
+    })
+    const res = await fetch(`/api/products?${params}`, {
       headers: { Authorization: `Bearer ${AuthManager.getToken()}` }
     })
     const json = await res.json()
@@ -544,12 +497,25 @@ async function searchInfluencers(query) {
 
   influencerSearchLoading.value = true
   try {
-    const res = await fetch(`/api/influencers?page=1&limit=20&${new URLSearchParams({ tiktokId: query })}`, {
+    const user = AuthManager.getUser()
+    const params = new URLSearchParams({
+      keyword: query,
+      limit: 20
+    })
+    if (user?.companyId) {
+      params.append('companyId', user.companyId)
+    } else if (user?.company?._id) {
+      params.append('companyId', user.company._id)
+    }
+    const res = await fetch(`/api/influencer-managements?${params}`, {
       headers: { Authorization: `Bearer ${AuthManager.getToken()}` }
     })
     const json = await res.json()
+    // 注意：响应结构可能为 { success: true, data: { influencers: [...] } } 或 { influencers: [...] }
     if (json.success) {
-      influencerOptions.value = json.data.influencers || []
+      influencerOptions.value = json.data?.influencers || json.influencers || []
+    } else {
+      influencerOptions.value = json.influencers || []
     }
   } catch (e) {
     console.error(t('videos.searchInfluencerFailed'), e)
@@ -557,6 +523,50 @@ async function searchInfluencers(query) {
     influencerSearchLoading.value = false
   }
 }
+
+// 加载筛选后的样品记录
+async function loadFilteredSamples() {
+  if (!formData.productId || !formData.influencerId) {
+    filteredSampleOptions.value = []
+    return
+  }
+  try {
+    const params = new URLSearchParams({
+      productId: formData.productId,
+      influencerId: formData.influencerId,
+      limit: 100
+    })
+    const res = await fetch(`/api/samples?${params}`, {
+      headers: { Authorization: `Bearer ${AuthManager.getToken()}` }
+    })
+    const json = await res.json()
+    if (json.success) {
+      filteredSampleOptions.value = json.data?.samples || json.samples || []
+    } else {
+      filteredSampleOptions.value = []
+    }
+  } catch (e) {
+    console.error(t('videos.loadSamplesFailed'), e)
+    filteredSampleOptions.value = []
+  }
+}
+
+// 监听商品和达人选择变化
+watch(() => [formData.productId, formData.influencerId], () => {
+  if (formData.linkSampleRecord) {
+    loadFilteredSamples()
+  }
+})
+
+// 监听关联申样记录复选框变化
+watch(() => formData.linkSampleRecord, (newVal) => {
+  if (newVal && formData.productId && formData.influencerId) {
+    loadFilteredSamples()
+  } else {
+    filteredSampleOptions.value = []
+    formData.sampleId = ''
+  }
+})
 
 function openAddDialog() {
   isEditing.value = false
@@ -566,10 +576,22 @@ function openAddDialog() {
   formData.videoStreamCode = ''
   formData.isAdPromotion = false
   formData.adPromotionTime = ''
-  formData.creationMode = 'sampleLinked'
   formData.productId = ''
   formData.influencerId = ''
-  formData.operator = ''
+  // 默认选中当前登录用户作为BD
+  const currentUser = AuthManager.getUser()
+  formData.operator = currentUser?._id || ''
+  // 确保当前用户存在于用户列表中
+  if (currentUser && currentUser._id) {
+    const exists = userList.value.some(user => user._id === currentUser._id)
+    if (!exists) {
+      userList.value.unshift({
+        _id: currentUser._id,
+        realName: currentUser.realName,
+        username: currentUser.username
+      })
+    }
+  }
   dialogVisible.value = true
 }
 
@@ -577,13 +599,12 @@ function openEditDialog(row) {
   isEditing.value = true
   editingId.value = row._id
   formData.sampleId = row.sampleId?._id || ''
+  formData.linkSampleRecord = !!row.sampleId
   formData.videoLink = row.videoLink || ''
   formData.videoStreamCode = row.videoStreamCode || ''
   formData.isAdPromotion = row.isAdPromotion || false
   formData.adPromotionTime = row.adPromotionTime ? row.adPromotionTime.slice(0, 19).replace('T', ' ') : ''
   
-  // 根据是否有sampleId决定创建模式
-  formData.creationMode = row.sampleId ? 'sampleLinked' : 'independent'
   formData.productId = row.productId?._id || ''
   formData.influencerId = row.influencerId?._id || ''
   formData.operator = row.createdBy?._id || ''
@@ -629,39 +650,22 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    // 根据创建模式构建请求体
+    // 构建请求体（独立模式）
     let body = {
       videoLink: formData.videoLink,
       videoStreamCode: formData.videoStreamCode,
       isAdPromotion: formData.isAdPromotion,
-      adPromotionTime: formData.adPromotionTime || undefined
+      adPromotionTime: formData.adPromotionTime || undefined,
+      productId: formData.productId,
+      influencerId: formData.influencerId,
+      sampleId: formData.sampleId || undefined
     }
     
-    if (formData.creationMode === 'sampleLinked') {
-      // 样品关联模式
-      body.sampleId = formData.sampleId
-    } else {
-      // 独立创建模式
-      body.productId = formData.productId
-      body.influencerId = formData.influencerId
-      if (formData.operator) {
-        body.createdBy = formData.operator
-      }
+    if (formData.operator) {
+      body.createdBy = formData.operator
     }
     
-    // 编辑时需要发送所有字段，因为后端PUT路由会处理更新
-    if (isEditing.value) {
-      // 确保发送当前模式下的所有关联字段
-      if (formData.creationMode === 'sampleLinked') {
-        // 如果切换到样品关联模式，确保productId和influencerId不被发送（后端会从样品中获取）
-        // 但为了明确，我们发送空值
-        body.productId = undefined
-        body.influencerId = undefined
-      } else {
-        // 独立创建模式，确保sampleId为空
-        body.sampleId = undefined
-      }
-    }
+    // 编辑时不需要特殊处理，因为所有字段都已包含
 
     const url = isEditing.value ? `${API_BASE}/${editingId.value}` : API_BASE
     const method = isEditing.value ? 'PUT' : 'POST'
@@ -781,6 +785,54 @@ onMounted(() => {
   height: 36px;
   border-radius: 4px;
   border: 1px solid #ebeef5;
+  flex-shrink: 0;
+}
+
+.product-thumb-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  border: 1px dashed #dcdfe6;
+  background-color: #f5f7fa;
+  flex-shrink: 0;
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.product-name {
+  font-weight: 500;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-id {
+  font-size: 11px;
+  color: #909399;
+}
+
+.product-id.purple {
+  color: #7b1fa2;
+}
+
+.shop-name {
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.shop-svg-icon {
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
 }
 

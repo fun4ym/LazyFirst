@@ -243,7 +243,7 @@
               </div>
               <!-- 已寄样时显示物流信息 -->
               <div v-if="row.sampleStatus === 'sent'" class="sent-info">
-                <span v-if="row.logisticsCompany">
+                <span v-if="row.logisticsCompany" class="logistics-company-small">
                   {{ getLogisticsCompanyText(row.logisticsCompany) }}
                 </span>
                 <span v-if="row.logisticsCompany && row.trackingNumber"> - </span>
@@ -264,69 +264,108 @@
         >
           <template #default="{ row }">
             <div class="fulfillment-info">
-              <div class="fulfillment-row">
-                <span
-                  class="clickable-link"
-                  :class="{ 'has-orders': row.orderCount > 0 }"
-                  @click="goToOrders(row)"
+              <span
+                class="clickable-link"
+                :class="{ 'has-orders': row.orderCount > 0 }"
+                @click="goToOrders(row)"
+              >
+                <el-tag
+                  :type="row.isOrderGenerated ? 'success' : 'warning'"
+                  size="small"
                 >
-                  <el-tag
-                    :type="row.isOrderGenerated ? 'success' : 'warning'"
-                    size="small"
-                  >
-                    {{ row.isOrderGenerated ? $t('samples.orderGenerated') : $t('samples.noOrder') }}
-                  </el-tag>
-                  <span v-if="row.isOrderGenerated && row.orderCount" class="order-count-badge">
-                    {{ row.orderCount > 99 ? '...' : row.orderCount }}
-                  </span>
+                  {{ row.isOrderGenerated ? $t('samples.orderGenerated') : $t('samples.noOrder') }}
+                </el-tag>
+                <span v-if="row.isOrderGenerated && row.orderCount" class="order-count-badge">
+                  {{ row.orderCount > 99 ? '...' : row.orderCount }}
                 </span>
-                <el-icon class="edit-icon" @click.stop="openFulfillmentDialog(row)"><Edit /></el-icon>
-              </div>
-              <div v-if="row.fulfillmentUpdatedAt" class="update-info">
-                {{ row.fulfillmentUpdatedBy?.realName || row.fulfillmentUpdatedBy?.username || $t('samples.unknown') }} {{ formatDateTime(row.fulfillmentUpdatedAt) }}
-              </div>
+              </span>
             </div>
           </template>
         </el-table-column>
 
-        <!-- 投流信息 - 带编辑功能 -->
+        <!-- 履约视频 - 带编辑功能 -->
         <el-table-column
-          :label="$t('samples.adPromotion')"
-          width="240"
+          :label="$t('samples.fulfillmentVideo')"
+          width="320"
         >
           <template #default="{ row }">
-            <div class="promotion-info">
-              <div class="video-list" v-if="row.videos && row.videos.length > 0">
-                <div v-for="(video, idx) in row.videos" :key="idx" class="video-item">
-                  <div v-if="video.videoLink" class="video-link">
-                    <el-link :href="video.videoLink" target="_blank" type="primary">
-                      {{ $t('samples.videoLink') }}
-                    </el-link>
-                    <span v-if="video.videoStreamCode" class="stream-code">「{{ video.videoStreamCode }}」</span>
-                    <el-tag :type="video.isAdPromotion ? 'success' : 'info'" size="small">
-                      {{ video.isAdPromotion ? $t('samples.adPromoted') : $t('samples.notAdPromoted') }}
-                    </el-tag>
-                  </div>
-                  <div v-else-if="video.videoStreamCode" class="stream-only">
-                    {{ video.videoStreamCode }}
-                  </div>
-                  <div v-else>
-                    --
-                  </div>
-                </div>
-              </div>
-              <div v-else class="stream-code">
-                {{ row.videoStreamCode || '--' }}
-                <el-icon class="edit-icon" @click.stop="openAdPromotionDialog(row)"><Edit /></el-icon>
-              </div>
-              <div class="promotion-status">
-                <el-tag :type="row.isAdPromotion ? 'success' : 'info'" size="small">
-                  {{ row.isAdPromotion ? $t('samples.adPromoted') : $t('samples.notAdPromoted') }}
-                </el-tag>
-                <span v-if="row.adPromotionTime">{{ formatDate(row.adPromotionTime) }}</span>
-              </div>
-              <div v-if="row.adPromotionUpdatedAt" class="update-info">
-                {{ row.adPromotionUpdatedBy?.realName || row.adPromotionUpdatedBy?.username || $t('samples.unknown') }} {{ formatDateTime(row.adPromotionUpdatedAt) }}
+            <div class="fulfillment-video-col">
+              <!-- 视频列表 - 每条视频一行 -->
+              <template v-if="row.videos && row.videos.length > 0">
+                <div v-for="(video, idx) in row.videos" :key="idx" class="video-row"><!-- 视频链接 -->
+                  <a
+                    v-if="video.videoLink"
+                    :href="video.videoLink"
+                    target="_blank"
+                    class="video-link-text"
+                  >{{ $t('samples.videoLink') }}</a>
+                  <span v-else class="video-link-empty">{{ $t('samples.noVideo') }}</span>
+
+<!-- 复制图标 -->
+                  <svg
+                    v-if="video.videoLink"
+                    class="icon copy-icon"
+                    viewBox="0 0 1024 1024"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    @click.stop="copyVideoLink(video.videoLink)"
+                  >
+                    <path d="M 96.1 575.7 a 32.2 32.1 0 1 0 64.4 0 32.2 32.1 0 1 0 -64.4 0 Z" fill="#4D4D4D"></path>
+                    <path d="M 736.1 63.9 H 417 c -70.4 0 -128 57.6 -128 128 h -64.9 c -70.4 0 -128 57.6 -128 128 v 128 c -0.1 17.7 14.4 32 32.2 32 17.8 0 32.2 -14.4 32.2 -32.1 V 320 c 0 -35.2 28.8 -64 64 -64 H 289 v 447.8 c 0 70.4 57.6 128 128 128 h 255.1 c -0.1 35.2 -28.8 63.8 -64 63.8 H 224.5 c -35.2 0 -64 -28.8 -64 -64 V 703.5 c 0 -17.7 -14.4 -32.1 -32.2 -32.1 -17.8 0 -32.3 14.4 -32.3 32.1 v 128.3 c 0 70.4 57.6 128 128 128 h 384.1 c 70.4 0 128 -57.6 128 -128 h 65 c 70.4 0 128 -57.6 128 -128 V 255.9 l -193 -192 z m 0.1 63.4 l 127.7 128.3 H 800 c -35.2 0 -64 -28.8 -64 -64 v -64.3 h 0.2 z m 64 641 H 416.1 c -35.2 0 -64 -28.8 -64 -64 v -513 c 0 -35.2 28.8 -64 64 -64 H 671 V 191 c 0 70.4 57.6 128 128 128 h 65.2 v 385.3 c 0 35.2 -28.8 64 -64 64 z" fill="#4D4D4D"></path>
+                  </svg>
+                  <span v-else class="icon-placeholder"></span>
+
+<!-- 加热/待加热火焰图标 - 以推流码判断是否投流 -->
+                  <svg
+                    v-if="video.videoStreamCode && video.videoStreamCode.trim()"
+                    class="icon fire-icon heated"
+                    viewBox="0 0 1024 1024"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    @click.stop="copyStreamCode(video.videoStreamCode)"
+                    style="cursor: pointer;"
+                  >
+                    <path d="M 730.289826 190.531934 c 23.222322 53.94432 26.710915 143.090263 -21.368132 185.948409 C 630.863922 61.957495 435.714498 0.58343 435.714498 0.58343 c 23.221323 159.889858 -81.547364 334.866981 -184.46386 466.756184 -3.488593 -63.20128 -7.194974 -105.946537 -40.774181 -171.090919 C 203.281483 413.396293 118.244527 506.426443 93.3888 623.573042 c -30.090615 161.83296 24.856726 275.321132 234.068418 400.011364 -65.630907 -143.090263 -30.089616 -225.035239 21.369131 -299.322693 54.946341 -85.488515 69.337288 -167.433491 69.337288 -167.433491 s 44.261776 57.601748 26.709916 148.689796 c 74.35239 -89.144944 88.743337 -232.577873 78.168664 -284.579091 C 693.223024 545.627161 769.428605 820.950291 670.219489 1019.926978 c 524.827473 -314.295071 129.189838 -781.165143 60.071336 -829.395044 z" fill="#FF6A00"></path>
+                  </svg>
+                  <svg
+                    v-else-if="video.videoLink"
+                    class="icon fire-icon unheated"
+                    viewBox="0 0 1024 1024"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                  >
+                    <path d="M 730.289826 190.531934 c 23.222322 53.94432 26.710915 143.090263 -21.368132 185.948409 C 630.863922 61.957495 435.714498 0.58343 435.714498 0.58343 c 23.221323 159.889858 -81.547364 334.866981 -184.46386 466.756184 -3.488593 -63.20128 -7.194974 -105.946537 -40.774181 -171.090919 C 203.281483 413.396293 118.244527 506.426443 93.3888 623.573042 c -30.090615 161.83296 24.856726 275.321132 234.068418 400.011364 -65.630907 -143.090263 -30.089616 -225.035239 21.369131 -299.322693 54.946341 -85.488515 69.337288 -167.433491 69.337288 -167.433491 s 44.261776 57.601748 26.709916 148.689796 c 74.35239 -89.144944 88.743337 -232.577873 78.168664 -284.579091 C 693.223024 545.627161 769.428605 820.950291 670.219489 1019.926978 c 524.827473 -314.295071 129.189838 -781.165143 60.071336 -829.395044 z" fill="#bfbfbf"></path>
+                  </svg>
+                  <span v-else class="icon-placeholder"></span>
+
+<!-- 复制投流码文字 -->
+                  <span
+                    v-if="video.videoStreamCode && video.videoStreamCode.trim()"
+                    class="stream-code-text"
+                    @click.stop="copyStreamCode(video.videoStreamCode)"
+                  >复制投流码</span>
+
+<!-- 编辑图标 -->
+                  <el-icon class="edit-icon" @click.stop="openVideoEditDialog(row, video, idx)"><Edit /></el-icon>
+<!-- 删除图标 -->
+                  <el-icon class="delete-icon" @click.stop="handleDeleteVideo(row, video, idx)"><Delete /></el-icon></div>
+              </template>
+              <!-- 无视频时只保留新增视频入口，不再显示 -->
+
+              <!-- 新增视频按钮 -->
+              <div class="add-video-row" @click.stop="openVideoAddDialog(row)">
+                <svg class="icon add-video-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                  <path d="M 788 512.73 V 454 a 14.33 14.33 0 0 1 14.33 -14.33 h 74.73 A 14.33 14.33 0 0 1 891.42 454 v 74.7 a 14.38 14.38 0 0 1 -0.33 3 224.05 224.05 0 0 1 69.26 48.42 V 98.69 a 34.52 34.52 0 0 0 -34.5 -34.47 h -34.43 v 68.94 H 788 V 64.22 H 236.54 v 68.94 H 133.12 V 64.22 H 98.67 a 34.53 34.53 0 0 0 -34.46 34.47 v 631.1 a 52 52 0 0 0 51.67 46.78 h 341.88 l 0.3 1 H 64.21 v 79.36 a 34.52 34.52 0 0 0 34.46 34.46 h 34.44 v -34.44 h 103.43 v 34.46 h 402.82 A 222.82 222.82 0 0 1 576.48 736 c 0 -119.45 93.65 -217 211.52 -223.27 z m 0 -265.57 a 14.33 14.33 0 0 1 14.33 -14.33 h 74.73 a 14.33 14.33 0 0 1 14.37 14.33 v 74.74 a 14.33 14.33 0 0 1 -14.34 14.33 h -74.76 A 14.33 14.33 0 0 1 788 321.9 zM 222.2 749.8 h -74.72 a 14.33 14.33 0 0 1 -14.36 -14.32 v -74.73 a 14.33 14.33 0 0 1 14.33 -14.34 h 74.73 a 14.33 14.33 0 0 1 14.33 14.34 v 74.73 a 14.33 14.33 0 0 1 -14.31 14.32 z m 14.33 -221.12 A 14.34 14.34 0 0 1 222.2 543 h -74.72 a 14.33 14.33 0 0 1 -14.36 -14.32 V 454 a 14.33 14.33 0 0 1 14.36 -14.33 h 74.72 A 14.32 14.32 0 0 1 236.54 454 zM 232.34 332 a 14.31 14.31 0 0 1 -10.14 4.2 h -74.72 a 14.33 14.33 0 0 1 -14.36 -14.33 v -74.71 a 14.32 14.32 0 0 1 14.33 -14.33 h 74.73 a 14.33 14.33 0 0 1 14.33 14.33 v 74.73 a 14.3 14.3 0 0 1 -4.17 10.11 z m 213.93 295.4 a 26.12 26.12 0 0 1 -11.66 2.69 26.55 26.55 0 0 1 -13.61 -3.73 25.23 25.23 0 0 1 -12.21 -21.54 V 343.39 A 25.22 25.22 0 0 1 421 321.82 a 26.11 26.11 0 0 1 25.15 -1 l 224.18 130.65 a 25.09 25.09 0 0 1 0 45.22 h 0.07 z" fill="#8a8a8a"></path>
+                  <path d="M 640.12 703.84 m 32 0 l 256.06 0 q 32 0 32 32 l 0 0 q 0 32 -32 32 l -256.06 0 q -32 0 -32 -32 l 0 0 q 0 -32 32 -32 Z" fill="#8a8a8a"></path>
+                  <path d="M 832.15 576.04 m 0 32 l 0 256.06 q 0 32 -32 32 l 0 0 q -32 0 -32 -32 l 0 -256.06 q 0 -32 32 -32 l 0 0 q 32 0 32 32 Z" fill="#8a8a8a"></path>
+                </svg>
+                <span class="add-video-text">{{ $t('samples.addVideo') }}</span>
               </div>
             </div>
           </template>
@@ -351,26 +390,27 @@
           sortable
         >
           <template #default="{ row }">
-            <div class="product-info">
-              <div class="product-id">{{ row.productId_display || row.productId || '--' }}</div>
-              <el-tooltip :content="row.productName" placement="top">
-                <div class="product-name">
-                  {{ truncateText(row.productName, 60) }}
+            <div class="product-cell">
+              <el-image v-if="row.productImage" :src="row.productImage" fit="cover" class="product-thumb" :preview-src-list="[row.productImage]" />
+              <div v-else class="product-thumb-placeholder"></div>
+              <div class="product-info">
+                <div class="product-id purple">{{ row.productId_display || row.productId || '--' }}</div>
+                <el-tooltip :content="row.productName" placement="top">
+                  <div class="product-name">
+                    {{ truncateText(row.productName, 50) }}
+                  </div>
+                </el-tooltip>
+                <div class="shop-name" v-if="row.shopName">
+                  <svg t="1776483244387" class="shop-svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="32239" width="32" height="32"><path d="M 469.3 793.7 H 305.6 c -18.6 0 -33.6 -15 -33.6 -33.6 V 575.3 c 34.5 8.1 70.8 0.2 98.7 -21.6 20.5 16 45.8 0.8 -0.6 1.4 -1.4 1.4 h -83.6 c -0.8 0 -1.4 -0.6 -1.4 -1.4 V 648.4 c 0 -0.8 0.6 -1.4 1.4 -1.4 h 83.6 m 0 -17.3 h -83.6 c -10.3 0 -18.7 8.4 -18.7 18.7 v 134.9 c 0 10.3 8.4 18.7 18.7 18.7 h 83.6 c 10.3 0 18.7 -8.4 18.7 -18.7 V 648.4 c 0.1 -10.3 -8.3 -18.7 -18.7 -18.7 z" p-id="32245"></path><path d="m -12.4 -18.6 -12.4 -29.9 V 575.2 c 0 -2.6 1.2 -5.1 3.3 -6.8 2.1 -1.6 4.8 -2.2 7.4 -1.6 32.1 7.6 65.4 0.3 91.4 -20 3.1 -2.4 7.5 -2.4 10.6 0 18.8 14.7 42.3 22.8 66.2 22.8 h 0.3 c 23.9 0 47.4 -8.1 66.3 -22.8 3.1 -2.5 7.5 -2.5 10.7 0 18.8 14.7 42.3 22.8 66.2 22.8 h 0.2 c 28 0 54.6 -10.7 74.8 -30.1 a 8.7 8.7 0 0 1 12 0 c 22.1 21.3 52.4 32.2 83 29.7 2.4 -0.2 4.8 0.6 6.6 2.3 s 2.8 3.9 2.8 6.4 v 182 c 0 11.3 -4.4 21.9 -12.4 29.9 -8.1 8.1 -18.7 12.5 -30 12.5 zM 469.3 785 H 722.7 c 6.7 0 12.9 -2.6 17.6 -7.3 4.7 -4.7 7.3 -11 7.3 -17.6 v -173 h -0.4 c -29.5 0 -58.1 -10.5 -80.6 -29.5 -22.6 19.1 -50.9 29.5 -80.7 29.5 h -0.2 c -25.5 0 -50.7 -8 -71.6 -22.6 -20.9 14.6 -46 22.6 -71.6 22.6 h -0.4 c -25.5 0 -50.7 -8 -71.6 -22.6 -26.3 18.4 -58.4 25.9 -90 21.3 v 174.3 c 0 6.7 2.6 12.9 7.3 17.6 4.7 4.7 11 7.3 17.6 7.3 h 163.9 z" p-id="32241"></path><path d="M 685.2 219.6 c 19 0 36.5 10 46.2 26.3 L 817 389.6 h -0.2 c 23.2 45.9 4.9 101.9 -41 125.1 -38 19.2 -84.1 10.3 -112.1 -21.7 -19.2 20.3 -45.9 31.9 -73.8 31.8 -29.2 0 -56.9 -12.5 -76.2 -34.4 -19.3 21.9 -47 34.4 -76.2 34.4 -27.9 0 -54.6 -11.5 -73.8 -31.8 -33.9 38.6 -92.8 42.4 -131.4 8.5 -34.8 -30.6 -41.8 -82.2 -16.4 -121 l 72 -132.7 c 9.4 -17.4 27.6 -28.2 47.3 -28.2 h 350 z" fill="#99E5E2" p-id="32242"></path><path d="M 685.2 237.1 c 12.7 0 24.7 6.8 31.2 17.7 l 83.8 140.6 1 2 c 18.8 37.2 3.9 82.7 -33.3 101.6 -10.5 5.3 -22.3 8.2 -34.1 8.2 -21.8 0 -42.6 -9.4 -56.9 -25.8 l -12.7 -14.5 L 651 481 c -15.7 16.7 -37.9 26.3 -60.9 26.3 H 589.8 c -24.1 0 -47 -10.4 -62.9 -28.4 l -13.2 -15 -13.2 15 c -15.9 18.1 -38.8 28.4 -62.9 28.4 h -0.2 c -23 0 -45.2 -9.6 -60.9 -26.3 l -13.2 -14 -12.7 14.5 c -14.3 16.3 -35.1 25.7 -56.8 25.76 -18.3 0 -36 -6.7 -49.8 -18.8 -13.7 -12 -22.6 -28.6 -25 -46.6 -2.4 -18 1.7 -36.4 11.7 -51.6 l 0.4 -0.6 0.3 -0.6 72 -132.7 c 6.4 -11.7 18.6 -19 31.9 -19 h 349.9 m 0 -17.7 h -350 c -19.7 0 -37.9 10.8 -47.3 28.2 l -72 132.7 c -25.4 38.8 -18.4 90.4 16.4 121 17.7 15.5 39.6 23.2 61.4 23.2 25.9 0 51.6 -10.7 70 -31.7 19.1 20.3 45.8 31.8 73.7 31.8 h 0.2 c 29.1 0 56.8 -12.5 76.1 -34.4 19.2 21.9 46.9 34.4 76.1 34.4 H 590.1 c 27.9 0 54.5 -11.5 73.6 -31.8 18.1 20.7 43.9 31.8 70.1 31.8 14.3 0 28.7 -3.3 42 -10.1 45.9 -23.2 64.2 -79.3 41 -125.1 h 0.2 l -85.6 -143.7 c -9.7 -16.3 -27.3 -26.3 -46.2 -26.3 z" p-id="32243"></path><path d="M 555.9 802.1 h -83.6 c -10.3 0 -18.7 -8.4 -18.7 -18.7 v -135 c 0 -10.3 8.4 -18.7 18.7 -18.7 h 83.6 c 10.3 0 18.7 8.4 18.7 18.7 v 134.9 c 0.1 10.4 -8.3 18.8 -18.7 18.8 z" fill="#FF9999" p-id="32244"></path><path d="M 555.9 647 c 0.8 0 1.4 0.6 1.4 1.4 v 134.9 c 0 0.8 -0.6 1.4 -1.4 1.4 h -83.6 c -0.8 0 -1.4 -0.6 -1.4 -1.4 V 648.4 c 0 -0.8 0.6 -1.4 1.4 -1.4 h 83.6 m 0 -17.3 h -83.6 c -10.3 0 -18.7 8.4 -18.7 18.7 v 134.9 c 0 10.3 8.4 18.7 18.7 18.7 h 83.6 c 10.3 0 18.7 8.4 18.7 18.7 V 648.4 c 0.1 -10.3 -8.3 -18.7 -18.7 -18.7 z" p-id="32245"></path></svg>
+                  {{ row.shopName }}
                 </div>
-              </el-tooltip>
+                <div class="shop-name" v-else>--</div>
+              </div>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column
-          :label="$t('samples.shop')"
-          width="150"
-          prop="shopName"
-        >
-          <template #default="{ row }">
-            <div class="column-text">{{ row.shopName || '--' }}</div>
-          </template>
-        </el-table-column>
+
 
         <el-table-column
           :label="$t('samples.influencerData')"
@@ -937,40 +977,23 @@
       </template>
     </el-dialog>
 
-    <!-- 投流信息编辑对话框 -->
+    <!-- 履约内容编辑对话框（新增/编辑视频） -->
     <el-dialog
-      v-model="adPromotionDialogVisible"
-      :title="$t('samples.updateAdPromotion')"
-      width="400px"
+      v-model="videoEditDialogVisible"
+      :title="videoEditForm.videoId ? $t('samples.editVideo') : $t('samples.addVideo')"
+      width="450px"
     >
-      <el-form :model="adPromotionForm" label-width="80px">
-        <el-form-item :label="$t('samples.adPromotion')">
-          <el-switch v-model="adPromotionForm.isAdPromotion" />
+      <el-form :model="videoEditForm" label-width="100px" :rules="videoEditRules" ref="videoEditFormRef">
+        <el-form-item :label="$t('samples.videoLink')" prop="videoLink">
+          <el-input v-model="videoEditForm.videoLink" :placeholder="$t('samples.enterVideoLink')" />
         </el-form-item>
         <el-form-item :label="$t('samples.streamCode')">
-          <el-input v-model="adPromotionForm.videoStreamCode" :placeholder="$t('samples.enterStreamCode')" :disabled="!adPromotionForm.isAdPromotion" />
+          <el-input v-model="videoEditForm.videoStreamCode" :placeholder="$t('samples.enterStreamCode')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="adPromotionDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" @click="handleAdPromotionSave" :loading="adPromotionLoading">{{ $t('common.save') }}</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 履约信息编辑对话框（重构后：通过Video API操作） -->
-    <el-dialog
-      v-model="fulfillmentDialogVisible"
-      :title="$t('samples.updateFulfillment')"
-      width="400px"
-    >
-      <el-form :model="fulfillmentForm" label-width="80px">
-        <el-form-item :label="$t('samples.videoLink')">
-          <el-input v-model="fulfillmentForm.videoLink" :placeholder="$t('samples.enterVideoLink')" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="fulfillmentDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" @click="handleFulfillmentSave" :loading="fulfillmentLoading">{{ $t('common.save') }}</el-button>
+        <el-button @click="videoEditDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleVideoEditSave" :loading="videoEditLoading">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -986,7 +1009,7 @@ import request from '@/utils/request'
 const { t } = useI18n()
 
 const router = useRouter()
-import { Upload, Plus, Loading, InfoFilled, Box, TrendCharts, User, Edit, Warning } from '@element-plus/icons-vue'
+import { Upload, Plus, Loading, InfoFilled, Box, TrendCharts, User, Edit, Warning, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 
@@ -1002,21 +1025,20 @@ const createDialogVisible = ref(false)
 const editingSample = ref(null)  // 正在编辑的样品
 const detailDialogVisible = ref(false)
 const detailActiveTab = ref('basic')  // 详情弹层当前标签页
-const adPromotionDialogVisible = ref(false)
-const adPromotionForm = reactive({
-  _id: '',
-  videoStreamCode: '',
-  isAdPromotion: false
+// 履约内容（视频）编辑弹层
+const videoEditDialogVisible = ref(false)
+const videoEditFormRef = ref(null)
+const videoEditForm = reactive({
+  sampleId: '',
+  videoId: null, // null表示新增，字符串表示编辑视频的_id
+  videoLink: '',
+  videoStreamCode: ''
 })
-const adPromotionLoading = ref(false)
+const videoEditLoading = ref(false)
 
-// 履约信息编辑
-const fulfillmentDialogVisible = ref(false)
-const fulfillmentForm = reactive({
-  _id: '',
-  videoLink: ''
-})
-const fulfillmentLoading = ref(false)
+const videoEditRules = {
+  videoLink: [{ required: true, message: () => t('samples.videoLinkRequired'), trigger: 'blur' }]
+}
 
 // 寄样状态编辑
 const sampleStatusDialogVisible = ref(false)
@@ -1559,44 +1581,77 @@ const viewDetail = (sample) => {
   viewSampleDetail(sample)
 }
 
-// 打开投流信息编辑弹窗
-const openAdPromotionDialog = (sample) => {
-  Object.assign(adPromotionForm, {
-    _id: sample._id,
-    videoStreamCode: sample.videoStreamCode || '',
-    isAdPromotion: sample.isAdPromotion || false
+// 打开视频编辑弹窗（编辑已有视频）
+const openVideoEditDialog = (sample, video, index) => {
+  Object.assign(videoEditForm, {
+    sampleId: sample._id,
+    videoId: video._id || null,
+    videoLink: video.videoLink || '',
+    videoStreamCode: video.videoStreamCode || ''
   })
-  adPromotionDialogVisible.value = true
+  videoEditDialogVisible.value = true
 }
 
-// ★ 保存投流信息（重构后：通过Video API操作）
-const handleAdPromotionSave = async () => {
-  adPromotionLoading.value = true
+// 打开视频新增弹窗
+const openVideoAddDialog = (sample) => {
+  Object.assign(videoEditForm, {
+    sampleId: sample._id,
+    videoId: null,
+    videoLink: '',
+    videoStreamCode: ''
+  })
+  videoEditDialogVisible.value = true
+}
+
+// ★ 保存视频信息（新增或编辑）
+const handleVideoEditSave = async () => {
+  if (!videoEditFormRef.value) return
+
+  await videoEditFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    videoEditLoading.value = true
+    try {
+      const payload = {
+        videoLink: videoEditForm.videoLink,
+        videoStreamCode: videoEditForm.videoStreamCode || ''
+      }
+
+      if (videoEditForm.videoId) {
+        // 编辑模式 - 更新指定视频
+        await request.put(`/videos/${videoEditForm.videoId}`, payload)
+      } else {
+        // 新增模式 - 添加新视频
+        await request.post(`/samples/${videoEditForm.sampleId}/videos`, payload)
+      }
+
+      ElMessage.success(t('samples.saveSuccess'))
+      videoEditDialogVisible.value = false
+      loadSamples()
+    } catch (error) {
+      console.error('Save video error:', error)
+      ElMessage.error(error.response?.data?.message || t('samples.saveError'))
+    } finally {
+      videoEditLoading.value = false
+    }
+  })
+}
+
+// ★ 删除视频
+const handleDeleteVideo = async (sample, video, index) => {
   try {
-    // 通过样品的子路由Video API创建/更新视频记录
-    await request.post(`/samples/${adPromotionForm._id}/videos`, {
-      videoStreamCode: adPromotionForm.videoStreamCode,
-      isAdPromotion: adPromotionForm.isAdPromotion,
-      adPromotionTime: adPromotionForm.isAdPromotion ? new Date().toISOString() : null
+    await ElMessageBox.confirm(t('samples.confirmDeleteVideo'), t('common.warning'), {
+      type: 'warning'
     })
-    ElMessage.success(t('samples.saveSuccess'))
-    adPromotionDialogVisible.value = false
+    await request.delete(`/videos/${video._id}`)
+    ElMessage.success(t('samples.deleteVideoSuccess'))
     loadSamples()
   } catch (error) {
-    console.error('Save ad promotion error:', error)
-    ElMessage.error(t('samples.saveError'))
-  } finally {
-    adPromotionLoading.value = false
+    if (error !== 'cancel') {
+      console.error('Delete video error:', error)
+      ElMessage.error(t('samples.deleteVideoError'))
+    }
   }
-}
-
-// 打开履约信息编辑弹窗
-const openFulfillmentDialog = (sample) => {
-  Object.assign(fulfillmentForm, {
-    _id: sample._id,
-    videoLink: sample.videoLink || ''
-  })
-  fulfillmentDialogVisible.value = true
 }
 
 // 打开寄样状态编辑弹窗
@@ -1650,30 +1705,6 @@ const handleSampleStatusSave = async () => {
   }
 }
 
-// ★ 保存履约信息（重构后：通过Video API创建视频记录）
-const handleFulfillmentSave = async () => {
-  if (!fulfillmentForm.videoLink?.trim()) {
-    ElMessage.warning(t('videos.enterVideoLinkWarning'))
-    return
-  }
-  fulfillmentLoading.value = true
-  try {
-    // 通过样品的子路由Video API创建视频记录
-    await request.post(`/samples/${fulfillmentForm._id}/videos`, {
-      videoLink: fulfillmentForm.videoLink,
-      isAdPromotion: false
-    })
-    ElMessage.success(t('samples.saveSuccess'))
-    fulfillmentDialogVisible.value = false
-    loadSamples()
-  } catch (error) {
-    console.error('Save fulfillment error:', error)
-    ElMessage.error(t('samples.saveError'))
-  } finally {
-    fulfillmentLoading.value = false
-  }
-}
-
 // 跳转到TikTok订单页面
 const goToOrders = async (sample) => {
   if (!sample.isOrderGenerated) return
@@ -1686,6 +1717,62 @@ const goToOrders = async (sample) => {
       productId: sample.productId
     }
   })
+}
+
+// 复制视频链接到剪贴板
+const copyVideoLink = async (videoLink) => {
+  if (!videoLink) {
+    ElMessage.warning(t('samples.noVideoLinkToCopy'))
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(videoLink)
+    ElMessage.success(t('samples.copySuccess'))
+  } catch (error) {
+    console.error('Copy video link error:', error)
+    // 降级方案
+    const textarea = document.createElement('textarea')
+    textarea.value = videoLink
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      ElMessage.success(t('samples.copySuccess'))
+    } catch (e) {
+      ElMessage.error(t('samples.copyFailed'))
+    }
+    document.body.removeChild(textarea)
+  }
+}
+
+// 复制投流码到剪贴板
+const copyStreamCode = async (streamCode) => {
+  if (!streamCode) {
+    ElMessage.warning(t('samples.noStreamCodeToCopy'))
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(streamCode)
+    ElMessage.success(t('samples.copyStreamCodeSuccess'))
+  } catch (error) {
+    console.error('Copy stream code error:', error)
+    // 降级方案
+    const textarea = document.createElement('textarea')
+    textarea.value = streamCode
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      ElMessage.success(t('samples.copyStreamCodeSuccess'))
+    } catch (e) {
+      ElMessage.error(t('samples.copyStreamCodeFailed'))
+    }
+    document.body.removeChild(textarea)
+  }
 }
 
 const deleteSample = async (sample) => {
@@ -1939,8 +2026,76 @@ onMounted(() => {
   color: #757575;
 }
 
-.video-link {
-  font-size: 11px;
+:deep(.video-item) {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  margin-bottom: 4px !important;
+  min-height: 28px;
+  width: 100%;
+}
+
+:deep(.video-info) {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+:deep(.switch-wrap) {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.video-link-inline {
+  color: #409eff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.video-link-inline:hover {
+  text-decoration: underline;
+}
+
+.stream-code-inline {
+  color: #909399;
+  white-space: nowrap;
+}
+
+.empty-text {
+  color: #909399;
+  white-space: nowrap;
+}
+
+.add-video-row {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  min-height: 28px;
+}
+
+.add-icon {
+  cursor: pointer;
+  color: #67c23a;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px dashed #c2e7b0;
+}
+
+.add-icon:hover {
+  background-color: #f0f9eb;
+  color: #85ce61;
 }
 
 .update-info {
@@ -1954,14 +2109,6 @@ onMounted(() => {
   color: #909399;
 }
 
-.stream-code {
-  font-size: 12px;
-  color: #757575;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .edit-icon {
   cursor: pointer;
   color: #409eff;
@@ -1973,6 +2120,19 @@ onMounted(() => {
 .edit-icon:hover {
   background-color: #ecf5ff;
   color: #66b1ff;
+}
+
+.delete-icon {
+  cursor: pointer;
+  color: #f56c6c;
+  font-size: 14px;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.delete-icon:hover {
+  background-color: #fef0f0;
+  color: #f78989;
 }
 
 .fulfillment-row {
@@ -2273,5 +2433,125 @@ onMounted(() => {
 
 .submission-item:hover {
   background-color: #f5f7fa;
+}
+
+/* 物流公司名称缩小字体 */
+.logistics-company-small {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 履约视频列样式 */
+.fulfillment-video-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.video-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.icon {
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.icon:hover {
+  opacity: 0.8;
+}
+
+.icon-placeholder {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.copy-icon {
+  color: #4D4D4D;
+}
+
+.copy-icon:hover {
+  color: #409eff;
+}
+
+.fire-icon {
+  flex-shrink: 0;
+}
+
+.fire-icon.heated {
+  /* 加热状态 - 橙色火焰 */
+}
+
+.fire-icon.unheated {
+  /* 待加热状态 - 灰色火焰 */
+}
+
+.stream-code-text {
+  font-size: 12px;
+  color: #67c23a;
+  cursor: pointer;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.stream-code-text:hover {
+  color: #85ce61;
+}
+
+.stream-code-text.empty {
+  color: #909399;
+  cursor: default;
+}
+
+.video-link-text {
+  color: #409eff;
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.video-link-text:hover {
+  text-decoration: underline;
+}
+
+.video-link-empty {
+  color: #909399;
+  font-size: 13px;
+}
+
+.add-video-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 2px 0;
+  margin-top: 2px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.add-video-row:hover {
+  background-color: #f5f7fa;
+}
+
+.add-video-icon {
+  flex-shrink: 0;
+}
+
+.add-video-text {
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+.add-video-row:hover .add-video-text {
+  color: #409eff;
 }
 </style>

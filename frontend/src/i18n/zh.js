@@ -51,7 +51,10 @@ export default {
     createTime: '创建时间',
     updateTime: '更新时间',
     startDate: '开始日期',
-    endDate: '结束日期'
+    endDate: '结束日期',
+    dash: '-',
+    doubleDash: '--',
+    countUnit: '条'
   },
   menu: {
     dashboard: '仪表盘',
@@ -1225,9 +1228,11 @@ export default {
     all: '全部',
     selectDate: '选择日期',
     // 表格列
+    date: '日期',
+    videoStreamCode: '投流码',
     sampleStatus: '寄样状态',
-    fulfillment: '履约情况',
-    adPromotion: '投流信息',
+    fulfillment: '出单情况',
+    adPromotion: '履约视频',
     applicationDate: '申请日期',
     productInfo: '商品信息',
     shop: '店铺',
@@ -1305,6 +1310,9 @@ export default {
     loadError: '加载样品列表失败',
     saveSuccess: '保存成功',
     deleteError: '删除失败',
+    confirmDeleteVideo: '确定删除该视频？',
+    deleteVideoSuccess: '视频已删除',
+    deleteVideoError: '删除视频失败',
     // 详情对话框内
     noVideoLink: '暂无视频链接',
     noTrackingNo: '暂无快递单号',
@@ -1397,7 +1405,19 @@ export default {
     approvalStatusColon: '审批状态：',
     // 寄样状态对话框
     trackingNumberPlaceholder: '输入快递单号',
-    selectLogisticsPlaceholder: '选择物流公司'
+    selectLogisticsPlaceholder: '选择物流公司',
+    // 履约视频列
+    fulfillmentVideo: '履约视频',
+    addVideo: '新增视频',
+    editVideo: '编辑视频',
+    noVideo: '无视频',
+    videoLinkRequired: '请输入视频链接',
+    copySuccess: '复制成功',
+    copyFailed: '复制失败',
+    noVideoLinkToCopy: '没有可复制的视频链接',
+    noStreamCodeToCopy: '没有可复制的投流码',
+    copyStreamCodeSuccess: '投流码复制成功',
+    copyStreamCodeFailed: '投流码复制失败'
   },
   // TikTok活动
   activities: {
@@ -1605,7 +1625,7 @@ export default {
     adToggle: '投流开关',
     // 表格列
     shippingStatus: '寄样状态',
-    adPromotion: '投流',
+    adPromotion: '履约视频',
     streamCode: '投流码',
     applicationDate: '申请日期',
     productInfo: '商品信息',
@@ -1699,8 +1719,8 @@ export default {
     // 表格列
     tiktokIdCol: 'TikTok ID',
     shippingStatus: '寄样状态',
-    fulfillment: '履约情况',
-    adPromotion: '投流信息',
+    fulfillment: '出单情况',
+    adPromotion: '履约视频',
     applicationDate: '申请日期',
     productInfo: '商品信息',
     influencerData: '达人数据',
@@ -1822,7 +1842,22 @@ export default {
     adInfoUpdate: '投流信息更新',
     influencerStatsData: '达人统计数据',
     influencerStatus: '达人状态',
-    selectInfluencer: '请选择达人'
+    selectInfluencer: '请选择达人',
+    // 履约视频列
+    fulfillmentVideo: '履约视频',
+    addVideo: '新增视频',
+    editVideo: '编辑视频',
+    noVideo: '无视频',
+    videoLinkRequired: '请输入视频链接',
+    copySuccess: '复制成功',
+    copyFailed: '复制失败',
+    noVideoLinkToCopy: '没有可复制的视频链接',
+    noStreamCodeToCopy: '没有可复制的投流码',
+    copyStreamCodeSuccess: '投流码复制成功',
+    copyStreamCodeFailed: '投流码复制失败',
+    confirmDeleteVideo: '确定删除该视频？',
+    deleteSuccess: '删除成功',
+    deleteFailed: '删除视频失败'
   },
   // 市场工作台-招募配置
   recruitment: {
@@ -1943,6 +1978,7 @@ export default {
     defaultLogistics: 'TikTok 默认物流',
     otherLogistics: '其他物流',
     // 新增字段
+    productInfo: '商品信息',
     operator: '操作员',
     selectOperator: '选择操作员',
     selectProduct: '选择商品',
@@ -1954,6 +1990,13 @@ export default {
     selectInfluencerRequired: '请选择达人',
     operatorSelfOnlyTip: '您只能选择自己作为操作员',
     searchProductFailed: '搜索商品失败',
-    searchInfluencerFailed: '搜索达人失败'
+    searchInfluencerFailed: '搜索达人失败',
+    loadSamplesFailed: '加载样品记录失败',
+    // 新增翻译
+    bd: 'BD',
+    linkSampleRecord: '关联申样记录',
+    sampleFilteredOptions: '筛选样品记录',
+    sampleSelectionPlaceholder: '请选择样品记录',
+    sampleDateAndStatus: '{date} - {status}'
   }
 }

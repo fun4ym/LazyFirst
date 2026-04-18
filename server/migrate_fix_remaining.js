@@ -164,8 +164,8 @@ async function fix() {
           hasInfluencerIdObj: { $sum: { $cond: [{ $eq: [{ $type: '$influencerId' }, 'objectId'] }, 1, 0] } },
           hasSalesmanIdObj: { $sum: { $cond: [{ $eq: [{ $type: '$salesmanId' }, 'objectId'] }, 1, 0] } },
           stillHasOldFields: { $sum: { $cond: [{ $or: [
-            { $gt: [{ $size: { $ifNull: ['$productName', []] } }, 0] },
-            { $gt: [{ $size: { $ifNull: ['$influencerAccount', []] } }, 0] }
+            { $and: [{ $ne: ['$productName', null] }, { $ne: ['$productName', ''] }] },
+            { $and: [{ $ne: ['$influencerAccount', null] }, { $ne: ['$influencerAccount', ''] }] }
           ]}, 1, 0] } }
         }
       }

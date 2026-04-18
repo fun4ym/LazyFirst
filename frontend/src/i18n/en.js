@@ -51,7 +51,10 @@ export default {
     createTime: 'Create Time',
     updateTime: 'Update Time',
     startDate: 'Start Date',
-    endDate: 'End Date'
+    endDate: 'End Date',
+    dash: '-',
+    doubleDash: '--',
+    countUnit: 'items'
   },
   menu: {
     dashboard: 'Dashboard',
@@ -1044,9 +1047,11 @@ export default {
     all: 'All',
     selectDate: 'Select Date',
     // 表格列
+    date: 'Date',
+    videoStreamCode: 'Stream Code',
     sampleStatus: 'Sample Status',
-    fulfillment: 'Fulfillment',
-    adPromotion: 'Ad Promotion',
+    fulfillment: 'Order Status',
+    adPromotion: 'Fulfillment Video',
     applicationDate: 'Application Date',
     productInfo: 'Product Info',
     shop: 'Shop',
@@ -1124,6 +1129,9 @@ export default {
     loadError: 'Failed to load sample list',
     saveSuccess: 'Saved successfully',
     deleteError: 'Failed to delete',
+    confirmDeleteVideo: 'Are you sure to delete this video?',
+    deleteVideoSuccess: 'Video deleted',
+    deleteVideoError: 'Failed to delete video',
     // 详情对话框内
     noVideoLink: 'No video link',
     noTrackingNo: 'No tracking number',
@@ -1216,7 +1224,19 @@ export default {
     approvalStatusColon: 'Approval Status: ',
     // Sample status dialog
     trackingNumberPlaceholder: 'Enter tracking number',
-    selectLogisticsPlaceholder: 'Select logistics company'
+    selectLogisticsPlaceholder: 'Select logistics company',
+    // Fulfillment video column
+    fulfillmentVideo: 'Fulfillment Video',
+    addVideo: 'Add Video',
+    editVideo: 'Edit Video',
+    noVideo: 'No Video',
+    videoLinkRequired: 'Please enter video link',
+    copySuccess: 'Copied successfully',
+    copyFailed: 'Copy failed',
+    noVideoLinkToCopy: 'No video link to copy',
+    noStreamCodeToCopy: 'No stream code to copy',
+    copyStreamCodeSuccess: 'Stream code copied',
+    copyStreamCodeFailed: 'Failed to copy stream code'
   },
   // TikTok Activities
   activities: {
@@ -1422,7 +1442,7 @@ export default {
     adToggle: 'Ad Toggle',
     // Table columns
     shippingStatus: 'Shipping Status',
-    adPromotion: 'Ad',
+    adPromotion: 'Fulfillment Video',
     streamCode: 'Stream Code',
     applicationDate: 'Application Date',
     productInfo: 'Product Info',
@@ -1516,8 +1536,8 @@ export default {
     // Table columns
     tiktokIdCol: 'TikTok ID',
     shippingStatus: 'Shipping Status',
-    fulfillment: 'Fulfillment',
-    adPromotion: 'Ad Promotion',
+    fulfillment: 'Order Status',
+    adPromotion: 'Fulfillment Video',
     applicationDate: 'Application Date',
     productInfo: 'Product Info',
     influencerData: 'Influencer Data',
@@ -1639,7 +1659,23 @@ export default {
     adInfoUpdate: 'Ad Info Update',
     influencerStatsData: 'Influencer Stats Data',
     influencerStatus: 'Influencer Status',
-    selectInfluencer: 'Please select influencer'
+    selectInfluencer: 'Please select influencer',
+    // Fulfillment video column
+    fulfillmentVideo: 'Fulfillment Video',
+    addVideo: 'Add Video',
+    editVideo: 'Edit Video',
+    noVideo: 'No Video',
+    videoLinkRequired: 'Please enter video link',
+    copySuccess: 'Copied successfully',
+    copyFailed: 'Copy failed',
+    noVideoLinkToCopy: 'No video link to copy',
+    noStreamCodeToCopy: 'No stream code to copy',
+    copyStreamCodeSuccess: 'Stream code copied',
+    copyStreamCodeSuccess: 'Stream code copied',
+    copyStreamCodeFailed: 'Failed to copy stream code',
+    confirmDeleteVideo: 'Are you sure to delete this video?',
+    deleteSuccess: 'Deleted successfully',
+    deleteFailed: 'Failed to delete video'
   },
   // Market Workspace - Recruitment Config
   recruitment: {
@@ -1760,6 +1796,7 @@ export default {
     defaultLogistics: 'TikTok Default Logistics',
     otherLogistics: 'Other Logistics',
     // New fields
+    productInfo: 'Product Info',
     operator: 'Operator',
     selectOperator: 'Select Operator',
     selectProduct: 'Select Product',
@@ -1771,6 +1808,13 @@ export default {
     selectInfluencerRequired: 'Please select an influencer',
     operatorSelfOnlyTip: 'You can only select yourself as the operator',
     searchProductFailed: 'Failed to search products',
-    searchInfluencerFailed: 'Failed to search influencers'
+    searchInfluencerFailed: 'Failed to search influencers',
+    loadSamplesFailed: 'Failed to load sample records',
+    // New translations
+    bd: 'BD',
+    linkSampleRecord: 'Link Sample Record',
+    sampleFilteredOptions: 'Filtered Sample Records',
+    sampleSelectionPlaceholder: 'Please select sample record',
+    sampleDateAndStatus: '{date} - {status}'
   }
 }

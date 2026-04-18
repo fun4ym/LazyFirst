@@ -23,7 +23,7 @@ const sampleManagementSchema = new mongoose.Schema({
   influencerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Influencer',
-    required: true,
+    required: false,
     comment: '达人ID（ObjectId引用Influencer）'
   },
   // ★ 替换原来的 salesman (String/ObjectId混合)

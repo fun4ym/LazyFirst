@@ -51,7 +51,10 @@ export default {
     createTime: 'วันที่สร้าง',
     updateTime: 'วันที่อัปเดต',
     startDate: 'วันเริ่มต้น',
-    endDate: 'วันสิ้นสุด'
+    endDate: 'วันสิ้นสุด',
+    dash: '-',
+    doubleDash: '--',
+    countUnit: 'รายการ'
   },
   menu: {
     dashboard: 'แดชบอร์ด',
@@ -1018,9 +1021,11 @@ export default {
     all: 'ทั้งหมด',
     selectDate: 'เลือกวันที่',
     // 表格列
+    date: 'วันที่',
+    videoStreamCode: 'รหัสสตรีม',
     sampleStatus: 'สถานะตัวอย่าง',
-    fulfillment: 'การปฏิบัติตามข้อตกลง',
-    adPromotion: 'โฆษณา',
+    fulfillment: 'สถานะคำสั่งซื้อ',
+    adPromotion: 'วิดีโอการปฏิบัติตาม',
     applicationDate: 'วันที่สมัคร',
     productInfo: 'ข้อมูลสินค้า',
     influencerData: 'ข้อมูลมีเดียร์',
@@ -1188,7 +1193,19 @@ export default {
     approvalStatusColon: 'สถานะการอนุมัติ: ',
     // กล่องโต้ตอบสถานะตัวอย่าง
     trackingNumberPlaceholder: 'กรอกหมายเลขติดตาม',
-    selectLogisticsPlaceholder: 'เลือกบริษัทขนส่ง'
+    selectLogisticsPlaceholder: 'เลือกบริษัทขนส่ง',
+    // คอลัมน์วิดีโอการปฏิบัติตาม
+    fulfillmentVideo: 'วิดีโอการปฏิบัติตาม',
+    addVideo: 'เพิ่มวิดีโอ',
+    editVideo: 'แก้ไขวิดีโอ',
+    noVideo: 'ไม่มีวิดีโอ',
+    videoLinkRequired: 'กรุณากรอกลิงก์วิดีโอ',
+    copySuccess: 'คัดลอกสำเร็จ',
+    copyFailed: 'คัดลอกล้มเหลว',
+    noVideoLinkToCopy: 'ไม่มีลิงก์วิดีโอให้คัดลอก',
+    noStreamCodeToCopy: 'ไม่มีรหัสสตรีมให้คัดลอก',
+    copyStreamCodeSuccess: 'คัดลอกรหัสสตรีมสำเร็จ',
+    copyStreamCodeFailed: 'คัดลอกรหัสสตรีมล้มเหลว'
   },
   activities: {
     title: 'กิจกรรม TikTok',
@@ -1394,7 +1411,7 @@ export default {
     adToggle: 'สลับโฆษณา',
     // คอลัมน์ตาราง
     shippingStatus: 'สถานะจัดส่ง',
-    adPromotion: 'โฆษณา',
+    adPromotion: 'วิดีโอการปฏิบัติตาม',
     streamCode: 'รหัสสตรีม',
     applicationDate: 'วันที่สมัคร',
     productInfo: 'ข้อมูลสินค้า',
@@ -1488,8 +1505,8 @@ export default {
     // คอลัมน์ตาราง
     tiktokIdCol: 'TikTok ID',
     shippingStatus: 'สถานะตัวอย่าง',
-    fulfillment: 'การปฏิบัติตามข้อตกลง',
-    adPromotion: 'ข้อมูลโฆษณา',
+    fulfillment: 'สถานะคำสั่งซื้อ',
+    adPromotion: 'วิดีโอการปฏิบัติตาม',
     applicationDate: 'วันที่สมัคร',
     productInfo: 'ข้อมูลสินค้า',
     influencerData: 'ข้อมูลมีเดียร์',
@@ -1611,7 +1628,19 @@ export default {
     adInfoUpdate: 'อัปเดตข้อมูลโฆษณา',
     influencerStatsData: 'ข้อมูลสถิติมีเดียร์',
     influencerStatus: 'สถานะมีเดียร์',
-    selectInfluencer: 'กรุณาเลือกมีเดียร์'
+    selectInfluencer: 'กรุณาเลือกมีเดียร์',
+    // คอลัมน์วิดีโอการปฏิบัติตาม
+    fulfillmentVideo: 'วิดีโอการปฏิบัติตาม',
+    addVideo: 'เพิ่มวิดีโอ',
+    editVideo: 'แก้ไขวิดีโอ',
+    noVideo: 'ไม่มีวิดีโอ',
+    videoLinkRequired: 'กรุณากรอกลิงก์วิดีโอ',
+    copySuccess: 'คัดลอกสำเร็จ',
+    copyFailed: 'คัดลอกล้มเหลว',
+    noVideoLinkToCopy: 'ไม่มีลิงก์วิดีโอให้คัดลอก',
+    noStreamCodeToCopy: 'ไม่มีรหัสสตรีมให้คัดลอก',
+    copyStreamCodeSuccess: 'คัดลอกรหัสสตรีมสำเร็จ',
+    copyStreamCodeFailed: 'คัดลอกรหัสสตรีมล้มเหลว'
   },
   // พื้นที่ทำงานตลาด - ตั้งค่าการรับสมัคร
   recruitment: {
@@ -1732,6 +1761,7 @@ export default {
     defaultLogistics: 'โลจิสติกส์ TikTok เริ่มต้น',
     otherLogistics: 'โลจิสติกส์อื่นๆ',
     // ฟิลด์ใหม่
+    productInfo: 'ข้อมูลสินค้า',
     operator: 'ผู้ดำเนินการ',
     selectOperator: 'เลือกผู้ดำเนินการ',
     selectProduct: 'เลือกสินค้า',
@@ -1743,7 +1773,14 @@ export default {
     selectInfluencerRequired: 'กรุณาเลือกมีเดียร์',
     operatorSelfOnlyTip: 'คุณสามารถเลือกตัวเองเป็นผู้ดำเนินการเท่านั้น',
     searchProductFailed: 'ค้นหาสินค้าล้มเหลว',
-    searchInfluencerFailed: 'ค้นหามีเดียร์ล้มเหลว'
+    searchInfluencerFailed: 'ค้นหามีเดียร์ล้มเหลว',
+    loadSamplesFailed: 'โหลดบันทึกตัวอย่างล้มเหลว',
+    // การแปลเพิ่มเติม
+    bd: 'BD',
+    linkSampleRecord: 'เชื่อมโยงบันทึกตัวอย่าง',
+    sampleFilteredOptions: 'บันทึกตัวอย่างที่กรองแล้ว',
+    sampleSelectionPlaceholder: 'กรุณาเลือกบันทึกตัวอย่าง',
+    sampleDateAndStatus: '{date} - {status}'
   },
   // แดชบอร์ด
   dashboard: {
