@@ -134,19 +134,26 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       query.isOrderGenerated = isOrderGenerated === 'true';
     }
 
-    // ★ TikTok商品ID或商品ID筛选（重构后productId是ObjectId）
+    // ★ TikTok商品ID或商品ID筛选（productId现在是String存TikTok商品ID）
     if (productId) {
       // 尝试匹配 ObjectId 或 tiktokProductId
       if (/^[0-9a-fA-F]{24}$/.test(productId)) {
-        query.productId = mongoose.Types.ObjectId(productId);
+        // 如果是ObjectId格式，可能是Product._id，需要查找对应的tiktokProductId
+        const product = await Product.findById(productId).select('tiktokProductId').lean();
+        if (product && product.tiktokProductId) {
+          query.productId = product.tiktokProductId;
+        } else {
+          // 如果没有找到对应商品，直接使用ObjectId（兼容旧数据）
+          query.productId = productId;
+        }
       } else {
         // 按 tiktokProductId 模糊搜索
         const products = await Product.find({
           companyId: req.companyId,
           tiktokProductId: { $regex: productId, $options: 'i' }
-        }).select('_id').lean();
+        }).select('tiktokProductId').lean();
         if (products.length > 0) {
-          query.productId = { $in: products.map(p => p._id) };
+          query.productId = { $in: products.map(p => p.tiktokProductId).filter(Boolean) };
         } else {
           query.productId = { $in: [] };
         }
@@ -156,18 +163,22 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
     // 店铺筛选
     if (shopId) {
       const shopProducts = await Product.find({ shopId: mongoose.Types.ObjectId(shopId) })
-        .select('_id').lean();
+        .select('tiktokProductId').lean();
 
       if (shopProducts && shopProducts.length > 0) {
-        query.productId = { $in: shopProducts.map(p => p._id) };
+        const tiktokIds = shopProducts.map(p => p.tiktokProductId).filter(Boolean);
+        if (tiktokIds.length > 0) {
+          query.productId = { $in: tiktokIds };
+        } else {
+          query.productId = { $in: [] };
+        }
       } else {
         query.productId = { $in: [] };
       }
     }
 
-    // ★ 核心改动：使用populate替代手动关联查询
+    // ★ 查询样品（productId现在是String，不能使用populate）
     const samples = await SampleManagement.find(query)
-      .populate('productId', 'name tiktokProductId images productImages shopId')
       .populate('influencerId', 'tiktokId tiktokName latestFollowers monthlySalesCount avgVideoViews latestGmv isBlacklisted blacklistedAt blacklistedByName blacklistReason poolType status')
       .populate('salesmanId', 'realName username')
       .populate('creatorId', 'realName')
@@ -177,6 +188,17 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ date: -1 });
+
+    // ★ 手动关联商品信息（通过tiktokProductId）
+    const productIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
+    const products = await Product.find({
+      companyId: req.companyId,
+      tiktokProductId: { $in: productIds }
+    }).select('name tiktokProductId images productImages shopId').lean();
+    const productMap = {};
+    products.forEach(p => {
+      productMap[p.tiktokProductId] = p;
+    });
 
     // ★ 查询每个样品的Videos
     const sampleIds = samples.map(s => s._id);
@@ -190,7 +212,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
     });
 
     // 查shopName
-    const shopIdsFromProducts = [...new Set(samples.map(s => s.productId?.shopId).filter(Boolean))];
+    const shopIdsFromProducts = [...new Set(products.map(p => p.shopId).filter(Boolean))];
     const shops = await Shop.find({ _id: { $in: shopIdsFromProducts } }).select('_id shopName').lean();
     const shopMap = {};
     shops.forEach(s => { shopMap[s._id.toString()] = s.shopName; });
@@ -204,15 +226,15 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       return {
         ...obj,
         // ===== 兼容字段（前端逐步迁移后可移除）=====
-        productName: obj.productId?.name || '',
-        productId_display: obj.productId?.tiktokProductId || '',
+        productName: productMap[obj.productId]?.name || '',
+        productId_display: productMap[obj.productId]?.tiktokProductId || obj.productId || '',
         influencerAccount: obj.influencerId?.tiktokId || '',
         followerCount: obj.influencerId?.latestFollowers || 0,
         monthlySalesCount: obj.influencerId?.monthlySalesCount || 0,
         avgVideoViews: obj.influencerId?.avgVideoViews || 0,
-        sampleImage: obj.productId?.images?.[0] || obj.productId?.productImages?.[0] || '',
+        sampleImage: productMap[obj.productId]?.images?.[0] || productMap[obj.productId]?.productImages?.[0] || '',
         salesman: obj.salesmanId?.realName || obj.salesmanId?.username || '',
-        shopName: shopMap[obj.productId?.shopId?.toString()] || '',
+        shopName: shopMap[productMap[obj.productId]?.shopId?.toString()] || '',
         // ===== Video信息 =====
         videos: sampleVideos,
         videoLink: latestVideo?.videoLink || '',

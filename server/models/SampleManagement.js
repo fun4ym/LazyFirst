@@ -12,12 +12,11 @@ const sampleManagementSchema = new mongoose.Schema({
     required: true,
     comment: '日期'
   },
-  // ★ 改为 ObjectId ref Product（原来是String存TikTok商品ID）
+  // ★ 存TikTok商品ID（String），用于展示
   productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
+    type: String,
     required: true,
-    comment: '商品ID（ObjectId引用Product）'
+    comment: '商品ID（存TikTok商品ID）'
   },
   // ★ 新增，替换原来的 influencerAccount (String)
   influencerId: {
