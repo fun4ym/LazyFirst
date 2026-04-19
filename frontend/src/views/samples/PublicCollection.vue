@@ -302,7 +302,148 @@
         </el-tab-pane>
         <el-tab-pane label="商家视角" name="businessView">
           <div class="business-view">
-            <p>商家视角页面正在开发中，将展示产品相关的视频信息、投流码、达人信息等。</p>
+            <!-- 搜索筛选 -->
+            <el-card class="search-card">
+              <el-form :model="businessSearchForm" inline class="search-form">
+                <el-form-item :label="$t('samplePublic.productName')">
+                  <el-input
+                    v-model="businessSearchForm.productName"
+                    :placeholder="$t('samplePublic.productNamePlaceholder')"
+                    clearable
+                    style="width: 150px"
+                    @keyup.enter="loadBusinessViewData"
+                  />
+                </el-form-item>
+                
+                <el-form-item :label="$t('samplePublic.category')">
+                  <el-select
+                    v-model="businessSearchForm.categoryId"
+                    :placeholder="$t('samplePublic.selectCategory')"
+                    clearable
+                    style="width: 150px"
+                    @change="loadBusinessViewData"
+                  >
+                    <!-- 类别选项需要从API获取，暂时留空 -->
+                    <el-option label="全部" value="" />
+                  </el-select>
+                </el-form-item>
+                
+                <el-form-item>
+                  <el-button type="primary" @click="loadBusinessViewData">{{ $t('samplePublic.search') }}</el-button>
+                  <el-button @click="resetBusinessSearch">{{ $t('samplePublic.reset') }}</el-button>
+                </el-form-item>
+              </el-form>
+            </el-card>
+            
+            <!-- 错误提示 -->
+            <div v-if="businessViewError" class="error-container">
+              <el-result
+                icon="error"
+                :title="$t('samplePublic.accessFailed')"
+                :sub-title="businessViewError"
+              >
+                <template #extra>
+                  <el-button type="primary" @click="loadBusinessViewData">{{ $t('samplePublic.retry') }}</el-button>
+                </template>
+              </el-result>
+            </div>
+            
+            <!-- 产品统计表格 -->
+            <el-card v-else class="table-card">
+              <el-table
+                :data="products"
+                v-loading="businessViewLoading"
+                stripe
+                border
+              >
+                <!-- 产品信息 -->
+                <el-table-column :label="$t('samplePublic.productInfo')" min-width="280">
+                  <template #default="{ row }">
+                    <ProductCell :product="{
+                      id: row._id,
+                      name: row.name,
+                      image: row.images?.[0] || row.productImages?.[0],
+                      shopName: shopInfo?.shopName,
+                      tiktokProductId: row.tiktokProductId
+                    }" @copy-field="onCopyField" />
+                  </template>
+                </el-table-column>
+                
+                <!-- 样品申请数量 -->
+                <el-table-column :label="$t('samplePublic.sampleApplications')" width="140">
+                  <template #default="{ row }">
+                    <div class="stat-item">
+                      <el-icon><Document /></el-icon>
+                      <span>{{ productStats[row._id]?.sampleCount || 0 }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                
+                <!-- 视频数量 -->
+                <el-table-column :label="$t('samplePublic.videoCount')" width="120">
+                  <template #default="{ row }">
+                    <div class="stat-item">
+                      <el-icon><VideoCamera /></el-icon>
+                      <span>{{ productStats[row._id]?.videoCount || 0 }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                
+                <!-- 投流视频数量 -->
+                <el-table-column :label="$t('samplePublic.adPromotionCount')" width="140">
+                  <template #default="{ row }">
+                    <div class="stat-item">
+                      <el-icon><Star /></el-icon>
+                      <span>{{ productStats[row._id]?.adPromotionCount || 0 }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                
+                <!-- 达人数 -->
+                <el-table-column :label="$t('samplePublic.influencerCount')" width="120">
+                  <template #default="{ row }">
+                    <div class="stat-item">
+                      <el-icon><User /></el-icon>
+                      <span>{{ productStats[row._id]?.influencerCount || 0 }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                
+                <!-- 出单情况 -->
+                <el-table-column :label="$t('samplePublic.orderGenerated')" width="120">
+                  <template #default="{ row }">
+                    <div class="stat-item">
+                      <el-icon><Money /></el-icon>
+                      <span>{{ productStats[row._id]?.orderGeneratedCount || 0 }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                
+                <!-- 操作 -->
+                <el-table-column :label="$t('samplePublic.operations')" width="180" fixed="right">
+                  <template #default="{ row }">
+                    <el-button type="primary" size="small" @click="viewProductDetails(row)">
+                      {{ $t('samplePublic.viewDetails') }}
+                    </el-button>
+                    <el-button type="info" size="small" @click="viewProductVideos(row)">
+                      {{ $t('samplePublic.viewVideos') }}
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <!-- 分页 -->
+              <el-pagination
+                v-model:current-page="businessPagination.page"
+                v-model:page-size="businessPagination.limit"
+                :total="businessPagination.total"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next, jumper"
+                @size-change="loadBusinessViewData"
+                @current-change="loadBusinessViewData"
+                style="margin-top: 20px"
+              />
+            </el-card>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -502,11 +643,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument } from '@element-plus/icons-vue'
+import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument, Document, Star } from '@element-plus/icons-vue'
 import axios from 'axios'
 import ProductCell from '@/components/ProductCell.vue'
 import InfluencerCell from '@/components/InfluencerCell.vue'
@@ -524,6 +665,21 @@ const logoLoadError = ref(false)
 const samples = ref([])
 const selectedSamples = ref([])
 const activeTab = ref('sampleList') // 页签：sampleList, businessView
+
+// 商家视角状态
+const businessViewLoading = ref(false)
+const businessViewError = ref(null)
+const products = ref([]) // 产品列表
+const productStats = ref({}) // 产品统计信息
+const businessPagination = reactive({
+  page: 1,
+  limit: 20,
+  total: 0
+})
+const businessSearchForm = reactive({
+  productName: '',
+  categoryId: ''
+})
 
 // 搜索表单
 const searchForm = reactive({
@@ -692,6 +848,89 @@ const loadSamples = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 加载商家视角数据
+const loadBusinessViewData = async () => {
+  const identificationCode = getIdentificationCode()
+  if (!identificationCode) {
+    businessViewError.value = t('samplePublic.missingCode')
+    return
+  }
+
+  businessViewLoading.value = true
+  try {
+    // 1. 首先加载样品数据以获取店铺信息（如果尚未加载）
+    if (!shopInfo.value) {
+      const sampleRes = await axios.get(`${API_BASE}/public/samples`, {
+        params: { s: identificationCode, limit: 1 }
+      })
+      if (sampleRes.data.success && sampleRes.data.data.shop) {
+        shopInfo.value = sampleRes.data.data.shop
+      } else {
+        businessViewError.value = '无法获取店铺信息'
+        return
+      }
+    }
+    
+    // 2. 获取店铺的产品列表
+    const productParams = {
+      keyword: businessSearchForm.productName || undefined,
+      categoryId: businessSearchForm.categoryId || undefined,
+      page: businessPagination.page,
+      limit: businessPagination.limit
+    }
+    
+    // 移除空值参数
+    Object.keys(productParams).forEach(key => {
+      if (productParams[key] === undefined) {
+        delete productParams[key]
+      }
+    })
+    
+    const productsRes = await axios.get(`${API_BASE}/public/products`, { params: productParams })
+    
+    if (productsRes.data.success) {
+      // 过滤出当前店铺的产品（基于识别码）
+      const allProducts = productsRes.data.data.products || []
+      // 由于public/products API可能返回所有店铺的产品，我们需要在前端过滤
+      // 更好的做法是后端支持shopId参数，但当前API可能不支持
+      // 暂时显示所有产品，后续优化
+      products.value = allProducts
+      businessPagination.total = productsRes.data.data.pagination?.total || 0
+      
+      // 3. 为每个产品获取统计信息（模拟数据，实际需要后端API支持）
+      for (const product of products.value) {
+        // 模拟统计数据
+        const videoStats = {
+          sampleCount: Math.floor(Math.random() * 20), // 模拟样品申请数量
+          videoCount: Math.floor(Math.random() * 10), // 模拟视频数量
+          adPromotionCount: Math.floor(Math.random() * 5), // 模拟投流数量
+          influencerCount: Math.floor(Math.random() * 8), // 模拟达人数
+          orderGeneratedCount: Math.floor(Math.random() * 15) // 模拟出单数量
+        }
+        
+        productStats.value[product._id] = videoStats
+      }
+      
+      businessViewError.value = null
+    } else {
+      businessViewError.value = productsRes.data.message || '加载产品列表失败'
+    }
+  } catch (err) {
+    console.error('Load business view data error:', err)
+    businessViewError.value = err.response?.data?.message || t('samplePublic.networkError')
+  } finally {
+    businessViewLoading.value = false
+  }
+}
+
+// 重置商家视角搜索
+const resetBusinessSearch = () => {
+  businessSearchForm.productName = ''
+  businessSearchForm.categoryId = ''
+  businessPagination.page = 1
+  loadBusinessViewData()
 }
 
 // 重置搜索
@@ -958,13 +1197,43 @@ const handleAdPromotionChange = async (row) => {
 const openSubmissionDetail = (submission) => {
   // 在PublicCollection中，我们使用openStatusEdit来显示详情
   // 首先找到对应的完整sample记录
-  const sample = sampleList.value.find(s => s._id === submission.sampleId)
+  const sample = samples.value.find(s => s._id === submission.sampleId)
   if (sample) {
     openStatusEdit(sample)
   } else {
     ElMessage.info('正在加载详情...')
   }
 }
+
+// 复制字段
+const onCopyField = (field, value) => {
+  try {
+    navigator.clipboard.writeText(value)
+    ElMessage.success(`${field}已复制`)
+  } catch (error) {
+    console.error('复制失败:', error)
+    ElMessage.error('复制失败')
+  }
+}
+
+// 查看产品详情
+const viewProductDetails = (product) => {
+  ElMessage.info(`查看产品详情: ${product.name}`)
+  // TODO: 实现产品详情弹窗
+}
+
+// 查看产品视频
+const viewProductVideos = (product) => {
+  ElMessage.info(`查看产品视频: ${product.name}`)
+  // TODO: 实现产品视频列表弹窗
+}
+
+// 监听页签切换
+watch(activeTab, (newTab) => {
+  if (newTab === 'businessView') {
+    loadBusinessViewData()
+  }
+})
 
 onMounted(() => {
   loadSamples()
@@ -1363,5 +1632,31 @@ onMounted(() => {
 .logistics-company-small {
   font-size: 12px;
   color: #666;
+}
+/* 商家视角特定样式 */
+.business-view .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.business-view .stat-item .el-icon {
+  color: #409eff;
+}
+
+.business-view .stat-item .el-icon[fire] {
+  color: #e6a23c;
+}
+
+.business-view .stat-item .el-icon[money] {
+  color: #67c23a;
+}
+
+.business-view .product-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>

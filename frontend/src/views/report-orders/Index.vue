@@ -173,7 +173,7 @@
           <el-table-column type="selection" width="50" fixed="left" />
         <el-table-column
           label="Influencer"
-          width="160"
+          width="260"
           fixed="left"
           prop="influencerUsername"
           sortable

@@ -75,7 +75,7 @@
       <!-- 达人列表 -->
       <el-table :data="influencers" stripe @selection-change="handleSelectionChange" :row-class-name="getRowClassName">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="tiktokId" label="Influencer" min-width="160" fixed="left">
+        <el-table-column prop="tiktokId" label="Influencer" min-width="260" fixed="left">
           <template #default="{ row }">
             <InfluencerCell :influencer="row" />
           </template>
@@ -165,7 +165,7 @@
 
           <!-- 黑名单列表 -->
           <el-table :data="blacklistInfluencers" stripe v-loading="blacklistLoading" :row-class-name="getRowClassName">
-            <el-table-column prop="tiktokId" label="Influencer" min-width="160" fixed="left">
+            <el-table-column prop="tiktokId" label="Influencer" min-width="260" fixed="left">
               <template #default="{ row }">
                 <InfluencerCell :influencer="row" />
               </template>

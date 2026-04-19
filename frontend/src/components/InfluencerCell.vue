@@ -7,22 +7,30 @@
       </el-icon>
     </div>
     <div class="influencer-stats">
-      <div class="stat-item" v-if="showGmv && influencer.latestGmv">
-        <span class="stat-label">{{ $t('influencer.gmv') }}</span>
-        <span class="stat-value">{{ formatNumber(influencer.latestGmv) }}</span>
-      </div>
-      <div class="stat-item" v-if="showFollowers && influencer.latestFollowers">
-        <span class="stat-label">{{ $t('influencer.followers') }}</span>
-        <span class="stat-value">{{ formatNumber(influencer.latestFollowers) }}</span>
-      </div>
-      <div class="stat-item" v-if="showAvgViews && influencer.avgVideoViews">
-        <span class="stat-label">{{ $t('influencer.avgViews') }}</span>
-        <span class="stat-value">{{ formatNumber(influencer.avgVideoViews) }}</span>
-      </div>
-      <div class="stat-item" v-if="showMonthlySales && influencer.monthlySalesCount">
-        <span class="stat-label">{{ $t('influencer.monthlySales') }}</span>
-        <span class="stat-value">{{ formatNumber(influencer.monthlySalesCount) }}</span>
-      </div>
+      <el-tooltip :content="$t('influencer.gmv')" placement="top" :show-after="300">
+        <div class="stat-item" v-if="showGmv && influencer.latestGmv">
+          <span class="stat-label">GMV</span>
+          <span class="stat-value">{{ formatNumber(influencer.latestGmv) }}</span>
+        </div>
+      </el-tooltip>
+      <el-tooltip :content="$t('influencer.followers')" placement="top" :show-after="300">
+        <div class="stat-item" v-if="showFollowers && influencer.latestFollowers">
+          <span class="stat-label">FV</span>
+          <span class="stat-value">{{ formatNumber(influencer.latestFollowers) }}</span>
+        </div>
+      </el-tooltip>
+      <el-tooltip :content="$t('influencer.avgViews')" placement="top" :show-after="300">
+        <div class="stat-item" v-if="showAvgViews && influencer.avgVideoViews">
+          <span class="stat-label">APV</span>
+          <span class="stat-value">{{ formatNumber(influencer.avgVideoViews) }}</span>
+        </div>
+      </el-tooltip>
+      <el-tooltip :content="$t('influencer.monthlySales')" placement="top" :show-after="300">
+        <div class="stat-item" v-if="showMonthlySales && influencer.monthlySalesCount">
+          <span class="stat-label">MSS</span>
+          <span class="stat-value">{{ formatNumber(influencer.monthlySalesCount) }}</span>
+        </div>
+      </el-tooltip>
     </div>
   </div>
 </template>
@@ -38,7 +46,6 @@ const props = defineProps({
     required: true,
     default: () => ({})
   },
-  // 控制显示哪些统计项
   showGmv: {
     type: Boolean,
     default: true
@@ -76,11 +83,9 @@ const copyId = async () => {
 
 const formatNumber = (num) => {
   if (num === undefined || num === null) return '--'
-  // 如果数字大于等于10000，显示为"1.2万"格式
   if (num >= 10000) {
     return (num / 10000).toFixed(1) + '万'
   }
-  // 添加千位分隔符
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 </script>
@@ -90,6 +95,7 @@ const formatNumber = (num) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 240px;
 }
 
 .influencer-id-row {
@@ -130,6 +136,7 @@ const formatNumber = (num) => {
   background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
   border-radius: 4px;
   font-size: 11px;
+  cursor: default;
 }
 
 .stat-label {

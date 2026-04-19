@@ -60,7 +60,7 @@
       >
         <el-table-column
           label="Influencer"
-          width="160"
+          width="260"
           fixed="left"
           prop="influencerAccount"
           sortable
