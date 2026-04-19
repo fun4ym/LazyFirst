@@ -37,9 +37,9 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // ★ 重构后：用shopId查Product的_id列表（不再是tiktokProductId）
+    // ★ 获取店铺的所有产品
     const products = await Product.find({ shopId: shop._id }).select('_id tiktokProductId name images productImages');
-
+    
     if (products.length === 0) {
       return res.json({
         success: true,
@@ -51,13 +51,43 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // ★ 用Product._id列表查询样品
-    const productIds = products.map(p => p._id);
+    // ★ 用Product._id和tiktokProductId列表查询样品（SampleManagement.productId存储为ObjectId，但模式定义为String）
+    const mongoose = require('mongoose');
+    // product._id 本身就是 ObjectId，直接使用
+    const productObjectIds = products.map(p => p._id).filter(Boolean);
+    const productIdsByTikTokId = products.map(p => p.tiktokProductId).filter(Boolean);
+    
+    console.log(`[DEBUG] public-samples.js: productObjectIds count=${productObjectIds.length}, productIdsByTikTokId count=${productIdsByTikTokId.length}`);
+    console.log(`[DEBUG] public-samples.js: first few productObjectIds:`, productObjectIds.slice(0,5).map(id => id.toString()));
+    console.log(`[DEBUG] public-samples.js: first few productIdsByTikTokId:`, productIdsByTikTokId.slice(0,5));
 
     const { page = 1, limit = 20, sampleStatus, isOrderGenerated, date, productName, influencerAccount } = req.query;
 
-    // ★ productId 现在是 ObjectId
-    const query = { productId: { $in: productIds } };
+    // ★ 构建查询：样品可以通过 productId 匹配店铺产品，或通过 shopId 直接匹配店铺
+    const query = { companyId: shop.companyId };
+    const orConditions = [];
+    
+    // 条件1：通过 productId 匹配店铺产品（ObjectId 或 TikTok ID）
+    if (productObjectIds.length > 0) {
+      orConditions.push({ productId: { $in: productObjectIds } });
+    }
+    if (productIdsByTikTokId.length > 0) {
+      orConditions.push({ productId: { $in: productIdsByTikTokId } });
+    }
+    
+    // 条件2：通过 shopId 直接匹配店铺（ObjectId）
+    orConditions.push({ shopId: shop._id });  // 匹配 ObjectId 类型的 shopId
+    // 注意：shop.shopNumber 是字符串，不能直接匹配 ObjectId 类型的 shopId 字段
+    // 如果需要匹配 shopNumber，需要将 shopId 字段类型改为 String 或 Mixed
+    
+    if (orConditions.length > 0) {
+      query.$or = orConditions;
+    } else {
+      // 如果没有有效的ID，则确保查询不返回任何结果
+      query.productId = { $in: [] };
+    }
+    
+    console.log(`[DEBUG] public-samples.js: shop._id=${shop._id}, shop.shopNumber=${shop.shopNumber}`);
 
     if (sampleStatus) query.sampleStatus = sampleStatus;
     if (isOrderGenerated !== undefined) query.isOrderGenerated = isOrderGenerated === 'true';
@@ -66,10 +96,11 @@ router.get('/', async (req, res) => {
     // ★ 商品名称筛选 → 先查Product获取_ids
     if (productName) {
       const matchedProducts = await Product.find({
-        _id: { $in: productIds },
+        shopId: shop._id,
         name: { $regex: productName, $options: 'i' }
       }).select('_id').lean();
-      query.productId = matchedProducts.length > 0 ? { $in: matchedProducts.map(p => p._id) } : { $in: [] };
+      const matchedIds = matchedProducts.map(p => p._id.toString()).filter(Boolean);
+      query.productId = matchedIds.length > 0 ? { $in: matchedIds } : { $in: [] };
     }
 
     // ★ 达人账号筛选 → 先查Influencer获取_ids
@@ -86,6 +117,7 @@ router.get('/', async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    console.log(`[DEBUG] public-samples.js: final query=`, JSON.stringify(query, null, 2));
     // ★ populate关联查询
     const samples = await SampleManagement.find(query)
       .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv')
@@ -98,39 +130,54 @@ router.get('/', async (req, res) => {
 
     // 获取样品的Videos
     const sampleIds = samples.map(s => s._id);
-    const videos = sampleIds.length > 0 ? await Video.find({ sampleId: { $in: sampleIds } }).lean() : [];
+    console.log(`[DEBUG] public-samples.js: shop.companyId=${shop.companyId}, sampleIds count=${sampleIds.length}`);
+    const videos = sampleIds.length > 0 ? await Video.find({ companyId: shop.companyId, sampleId: { $in: sampleIds } }).lean() : [];
+    console.log(`[DEBUG] public-samples.js: videos found=${videos.length}`);
     const videoMap = {};
     videos.forEach(v => {
       if (!videoMap[v.sampleId.toString()]) videoMap[v.sampleId.toString()] = [];
       videoMap[v.sampleId.toString()].push(v);
     });
 
-    // 构建商品信息映射
-    const productMap = {};
+    // 构建商品信息映射（同时支持_id和tiktokProductId作为键）
+    const productMapById = {};
+    const productMapByTikTokId = {};
     products.forEach(p => {
-      productMap[p._id.toString()] = {
+      const productInfo = {
         name: p.name,
         tiktokProductId: p.tiktokProductId,
-        image: p.images?.[0] || p.productImages?.[0] || ''
+        image: p.images?.[0] || p.productImages?.[0] || '',
+        _id: p._id
       };
+      productMapById[p._id.toString()] = productInfo;
+      if (p.tiktokProductId) {
+        productMapByTikTokId[p.tiktokProductId] = productInfo;
+      }
     });
 
     // 组装返回数据（带兼容字段）
     const samplesData = samples.map(sample => {
       const sampleVideos = videoMap[sample._id.toString()] || [];
       const latestVideo = sampleVideos[0] || null;
+      
+      // 从商品映射获取产品信息（优先按_id查找，找不到再按tiktokProductId查找）
+      const productInfo = productMapById[sample.productId] || productMapByTikTokId[sample.productId] || {};
+      const productName = productInfo.name || '';
+      const productImage = productInfo.image || '';
+      const displayProductId = productInfo.tiktokProductId || sample.productId || '';
 
       return {
         _id: sample._id,
         date: sample.date,
         // 兼容字段
-        productName: sample.productId?.name || '',
-        productId: sample.productId?.tiktokProductId || '',       // TikTok ID用于展示
-        productImage: sample.productId?.images?.[0] || sample.productId?.productImages?.[0] || '',
-        influencerAccount: sample.influencerId?.tiktokId || '',
+        productName: productName,
+        productId: displayProductId,       // TikTok ID用于展示
+        productImage: productImage,
+        shopName: shop.shopName,           // 添加店铺名称
+        influencerAccount: sample.influencerId?.tiktokId || sample.influencerAccount || '',
         followerCount: sample.influencerId?.latestFollowers || 0,
         gmv: sample.influencerId?.latestGmv || 0,
-        salesman: sample.salesmanId?.realName || sample.salesmanId?.username || '',
+        salesman: sample.salesmanId?.realName || sample.salesmanId?.username || sample.salesman || '',
         shippingInfo: sample.shippingInfo,
         isSampleSent: sample.isSampleSent,
         sampleStatus: sample.sampleStatus,
@@ -140,8 +187,8 @@ router.get('/', async (req, res) => {
         isOrderGenerated: sample.isOrderGenerated,
         orderCount: sample.orderCount,
         // Video信息
-        videoLink: latestVideo?.videoLink || '',
-        videoStreamCode: latestVideo?.videoStreamCode || '',
+        videoLink: latestVideo?.videoLink || sample.videoLink || '',
+        videoStreamCode: latestVideo?.videoStreamCode || sample.videoStreamCode || '',
         isAdPromotion: sampleVideos.some(v => v.isAdPromotion) || sample.isAdPromotion || false,
         adPromotionTime: latestVideo?.adPromotionTime || sample.adPromotionTime,
         duplicateCount: sample.duplicateCount || 0,
@@ -189,11 +236,15 @@ router.put('/batch', async (req, res) => {
     const shop = await Shop.findOne({ identificationCode });
     if (!shop) return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
 
-    // ★ 重构后用Product._id匹配
+    // ★ 获取店铺产品的_id列表进行匹配（样本的productId存储的是Product._id的字符串表示）
     const products = await Product.find({ shopId: shop._id }).select('_id');
-    const productObjectIdList = products.map(p => p._id);
+    const productObjectIds = products.map(p => p._id.toString()).filter(Boolean);
+    
+    if (productObjectIds.length === 0) {
+      return res.json({ success: false, message: '该店铺没有有效的产品ID' });
+    }
 
-    const query = { _id: { $in: idsArray }, productId: { $in: productObjectIdList } };
+    const query = { _id: { $in: idsArray }, productId: { $in: productObjectIds } };
     const { logisticsCompany, trackingNumber } = req.query;
     const updateData = {};
 

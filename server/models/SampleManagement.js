@@ -18,6 +18,13 @@ const sampleManagementSchema = new mongoose.Schema({
     required: true,
     comment: '商品ID（存TikTok商品ID）'
   },
+  // ★ 店铺ID（ObjectId引用Shop），可选，用于直接关联样品与店铺
+  shopId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Shop',
+    required: false,
+    comment: '店铺ID（ObjectId引用Shop）'
+  },
   // ★ 新增，替换原来的 influencerAccount (String)
   influencerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -25,11 +32,23 @@ const sampleManagementSchema = new mongoose.Schema({
     required: false,
     comment: '达人ID（ObjectId引用Influencer）'
   },
+  // ★ 兼容旧字段 influencerAccount (String)，仅用于读取
+  influencerAccount: {
+    type: String,
+    select: true,
+    comment: '兼容旧字段：达人账号（TikTok ID）'
+  },
   // ★ 替换原来的 salesman (String/ObjectId混合)
   salesmanId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     comment: '归属业务员ID'
+  },
+  // ★ 兼容旧字段 salesman (String)，仅用于读取
+  salesman: {
+    type: String,
+    select: true,
+    comment: '兼容旧字段：业务员姓名或ID'
   },
   shippingInfo: {
     type: String,
@@ -172,6 +191,7 @@ sampleManagementSchema.index({ companyId: 1, productId: 1 });
 sampleManagementSchema.index({ companyId: 1, isSampleSent: 1 });
 sampleManagementSchema.index({ companyId: 1, isOrderGenerated: 1 });
 sampleManagementSchema.index({ companyId: 1, salesmanId: 1 });
+sampleManagementSchema.index({ companyId: 1, shopId: 1 });
 
 const SampleManagement = mongoose.model('SampleManagement', sampleManagementSchema);
 

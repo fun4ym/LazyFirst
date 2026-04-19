@@ -34,7 +34,7 @@ const upload = multer({
  * @access  Private
  * @notes   支持 samples:read (管理员) 和 samples-bd:read (BD) 两种权限
  */
-router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesmanId', deptField: 'deptId', ownerValue: (req) => req.user.username }), async (req, res) => {
+router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filterByDataScope({ module: 'samples', ownerField: 'salesmanId', deptField: 'deptId', ownerValue: (req) => req.user._id }), async (req, res) => {
   try {
     const {
       page = 1,
@@ -160,19 +160,42 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       }
     }
 
-    // 店铺筛选
+    // 店铺筛选：样品可以通过 shopId 直接匹配，或通过 productId 匹配店铺产品
     if (shopId) {
-      const shopProducts = await Product.find({ shopId: mongoose.Types.ObjectId(shopId) })
-        .select('tiktokProductId').lean();
+      const shopObjectId = mongoose.Types.ObjectId(shopId);
+      const shopProducts = await Product.find({ shopId: shopObjectId })
+        .select('tiktokProductId _id').lean();
 
-      if (shopProducts && shopProducts.length > 0) {
+      // 构建 $or 条件：shopId 直接匹配 或 productId 匹配店铺产品
+      const shopOrConditions = [];
+      
+      // 条件1：直接通过 shopId 匹配样品
+      shopOrConditions.push({ shopId: shopObjectId });
+      
+      // 条件2：通过 productId 匹配店铺产品（TikTok ID 或 Product._id）
+      if (shopProducts.length > 0) {
         const tiktokIds = shopProducts.map(p => p.tiktokProductId).filter(Boolean);
+        const productObjectIds = shopProducts.map(p => p._id).filter(Boolean);
+        
         if (tiktokIds.length > 0) {
-          query.productId = { $in: tiktokIds };
+          shopOrConditions.push({ productId: { $in: tiktokIds } });
+        }
+        if (productObjectIds.length > 0) {
+          shopOrConditions.push({ productId: { $in: productObjectIds } });
+        }
+      }
+      
+      // 将 $or 条件添加到主查询
+      if (shopOrConditions.length > 0) {
+        // 如果已有 $or 条件，合并
+        if (query.$or) {
+          query.$and = [{ $or: query.$or }, { $or: shopOrConditions }];
+          delete query.$or;
         } else {
-          query.productId = { $in: [] };
+          query.$or = shopOrConditions;
         }
       } else {
+        // 如果没有匹配条件，确保不返回任何结果
         query.productId = { $in: [] };
       }
     }
@@ -189,20 +212,65 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ date: -1 });
 
-    // ★ 手动关联商品信息（通过tiktokProductId）
-    const productIds = [...new Set(samples.map(s => s.productId).filter(Boolean))];
-    const products = await Product.find({
+    // ★ 手动关联商品信息（productId可能是Product._id的字符串，也可能是tiktokProductId）
+    const productIdStrings = [...new Set(samples.map(s => s.productId).filter(Boolean))];
+    console.log(`[DEBUG] samples.js: productIdStrings count=${productIdStrings.length}, first few=`, productIdStrings.slice(0,5));
+    
+    // 尝试两种查找方式：先按ObjectId查找，再按tiktokProductId查找
+    const productObjectIds = productIdStrings.map(id => {
+      try {
+        return new mongoose.Types.ObjectId(id);
+      } catch (e) {
+        return null;
+      }
+    }).filter(Boolean);
+    
+    // 查询商品：按_id查找
+    let products = await Product.find({
       companyId: req.companyId,
-      tiktokProductId: { $in: productIds }
+      _id: { $in: productObjectIds }
     }).select('name tiktokProductId images productImages shopId').lean();
-    const productMap = {};
+    
+    // 如果按_id没找到所有商品，尝试按tiktokProductId查找剩余的商品ID
+    const foundProductIds = new Set(products.map(p => p._id.toString()));
+    const foundTikTokIds = new Set(products.map(p => p.tiktokProductId));
+    const missingIds = productIdStrings.filter(id => {
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+      if (isObjectId) {
+        return !foundProductIds.has(id);
+      } else {
+        return !foundTikTokIds.has(id);
+      }
+    });
+    
+    if (missingIds.length > 0) {
+      console.log(`[DEBUG] samples.js: missing product IDs, trying tiktokProductId lookup:`, missingIds);
+      // 尝试按tiktokProductId查找
+      const additionalProducts = await Product.find({
+        companyId: req.companyId,
+        tiktokProductId: { $in: missingIds }
+      }).select('name tiktokProductId images productImages shopId').lean();
+      products = products.concat(additionalProducts);
+    }
+    
+    console.log(`[DEBUG] samples.js: total products found=${products.length}`);
+    
+    const productMapById = {};
+    const productMapByTikTokId = {};
     products.forEach(p => {
-      productMap[p.tiktokProductId] = p;
+      productMapById[p._id.toString()] = p;
+      if (p.tiktokProductId) {
+        productMapByTikTokId[p.tiktokProductId] = p;
+      }
     });
 
     // ★ 查询每个样品的Videos
     const sampleIds = samples.map(s => s._id);
-    const videos = await Video.find({ sampleId: { $in: sampleIds } }).sort({ createdAt: -1 });
+    console.log(`[DEBUG] samples.js: companyId=${req.companyId}, sampleIds count=${sampleIds.length}`);
+    console.log(`[DEBUG] samples.js: sampleIds first few=`, sampleIds.slice(0,5));
+    const videos = await Video.find({ companyId: req.companyId, sampleId: { $in: sampleIds } }).sort({ createdAt: -1 });
+    console.log(`[DEBUG] samples.js: videos found=${videos.length}`);
+    console.log(`[DEBUG] samples.js: videos sampleIds=`, videos.map(v => v.sampleId));
     const videoMap = {};
     videos.forEach(v => {
       if (!videoMap[v.sampleId.toString()]) {
@@ -211,11 +279,15 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       videoMap[v.sampleId.toString()].push(v.toObject());
     });
 
-    // 查shopName
+    // 查shopName：收集所有shopId（来自样品本身的shopId和商品关联的shopId）
+    const shopIdsFromSamples = [...new Set(samples.map(s => s.shopId).filter(Boolean))];
     const shopIdsFromProducts = [...new Set(products.map(p => p.shopId).filter(Boolean))];
-    const shops = await Shop.find({ _id: { $in: shopIdsFromProducts } }).select('_id shopName').lean();
+    const allShopIds = [...new Set([...shopIdsFromSamples, ...shopIdsFromProducts])];
+    console.log(`[DEBUG] samples.js: shopIdsFromSamples=${shopIdsFromSamples.length}, shopIdsFromProducts=${shopIdsFromProducts.length}, allShopIds=${allShopIds.length}`);
+    const shops = await Shop.find({ _id: { $in: allShopIds } }).select('_id shopName').lean();
     const shopMap = {};
     shops.forEach(s => { shopMap[s._id.toString()] = s.shopName; });
+    console.log(`[DEBUG] samples.js: shopMap size=${Object.keys(shopMap).length}, first few entries:`, Object.entries(shopMap).slice(0, 5));
 
     // 组装返回数据，带兼容字段供前端过渡使用
     const samplesData = samples.map(sample => {
@@ -226,19 +298,21 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       return {
         ...obj,
         // ===== 兼容字段（前端逐步迁移后可移除）=====
-        productName: productMap[obj.productId]?.name || '',
-        productId_display: productMap[obj.productId]?.tiktokProductId || obj.productId || '',
-        influencerAccount: obj.influencerId?.tiktokId || '',
+        productName: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.name || '',
+        productId_display: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.tiktokProductId || obj.productId || '',
+        productId: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.tiktokProductId || obj.productId || '', // TikTok ID
+        productImage: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.images?.[0] || (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.productImages?.[0] || '',
+        sampleImage: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.images?.[0] || (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.productImages?.[0] || '',
+        influencerAccount: obj.influencerId?.tiktokId || obj.influencerAccount || '',
         followerCount: obj.influencerId?.latestFollowers || 0,
         monthlySalesCount: obj.influencerId?.monthlySalesCount || 0,
         avgVideoViews: obj.influencerId?.avgVideoViews || 0,
-        sampleImage: productMap[obj.productId]?.images?.[0] || productMap[obj.productId]?.productImages?.[0] || '',
-        salesman: obj.salesmanId?.realName || obj.salesmanId?.username || '',
-        shopName: shopMap[productMap[obj.productId]?.shopId?.toString()] || '',
+        salesman: obj.salesmanId?.realName || obj.salesmanId?.username || obj.salesman || '',
+        shopName: shopMap[obj.shopId?.toString()] || shopMap[(productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.shopId?.toString()] || '',
         // ===== Video信息 =====
         videos: sampleVideos,
-        videoLink: latestVideo?.videoLink || '',
-        videoStreamCode: latestVideo?.videoStreamCode || '',
+        videoLink: latestVideo?.videoLink || obj.videoLink || '',
+        videoStreamCode: latestVideo?.videoStreamCode || obj.videoStreamCode || '',
         // 如果任一video已投流则标记为已投流
         isAdPromotion: sampleVideos.some(v => v.isAdPromotion) || obj.isAdPromotion || false,
         // 黑名单信息从influencer直接获取
@@ -253,6 +327,14 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
     });
 
     const total = await SampleManagement.countDocuments(query);
+
+    // 调试：打印前几个样品的商品信息
+    if (samplesData.length > 0) {
+      console.log(`[DEBUG] samples.js: first ${Math.min(3, samplesData.length)} samples product info:`);
+      samplesData.slice(0, 3).forEach((s, idx) => {
+        console.log(`  Sample ${idx}: productName="${s.productName}", productId="${s.productId}", productImage="${s.productImage}", shopName="${s.shopName}"`);
+      });
+    }
 
     res.json({
       success: true,

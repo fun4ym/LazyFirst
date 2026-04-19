@@ -86,21 +86,33 @@ curl -s -o /dev/null -w "%{http_code}" https://tap.lazyfirst.com
 
 ## 五、数据库备份
 
-### 备份命令
+### 备份命令（正确密码）
 ```bash
+# 使用root用户备份（密码来自docker-compose.yml）
 sshpass -p 'IT8vuP53MB6LbjP2Htvp' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 \
-  "sudo docker exec tap-mongodb mongodump --db tap_system --archive --gzip > /home/ubuntu/backups/tapdb_backup_$(date +%Y%m%d_%H%M%S).archive.gz"
+  "sudo docker exec tap-mongodb mongodump --archive --gzip --db=tap_system --authenticationDatabase=admin -u tapadmin -p s0MxUUtrWwdjfX70W2gf > /home/ubuntu/backups/tapdb_backup_$(date +%Y%m%d_%H%M%S).archive"
+
+# 或者使用tapsystem用户备份（需要认证数据库）
+sshpass -p 'IT8vuP53MB6LbjP2Htvp' ssh -o StrictHostKeyChecking=no ubuntu@150.109.183.29 \
+  "sudo docker exec tap-mongodb mongodump --archive --gzip --db=tap_system --username tapsystem --password 5Qb0Q9WqztimCNuzfVoX --authenticationDatabase tap_system > /home/ubuntu/backups/tapdb_backup_$(date +%Y%m%d_%H%M%S).archive"
 ```
 
 ### 定时备份
 - 脚本位置: `/home/ubuntu/backups/backup-db.sh`
 - 备份位置: `/home/ubuntu/backups/tapdb_*.archive`
-- 执行时间: 每天东八区 00:00（UTC 16:00）
+- 执行时间: 每天东八区 16:00（UTC 08:00）
 - 保留期限: 30天
+- **注意事项**: 脚本已更新为正确的root密码 `s0MxUUtrWwdjfX70W2gf`
 
 ### 手动备份命令
 ```bash
+# 方法1: 执行更新后的备份脚本
 /home/ubuntu/backups/backup-db.sh
+
+# 方法2: 直接执行备份命令
+sudo docker exec tap-mongodb mongodump --archive=/tmp/tapdb_backup_$(date +%Y%m%d_%H%M%S).archive --gzip --db=tap_system --authenticationDatabase=admin -u tapadmin -p s0MxUUtrWwdjfX70W2gf
+sudo docker cp tap-mongodb:/tmp/tapdb_backup_*.archive /home/ubuntu/backups/
+sudo docker exec tap-mongodb rm -f /tmp/tapdb_backup_*.archive
 ```
 
 ---

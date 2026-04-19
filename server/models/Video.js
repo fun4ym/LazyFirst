@@ -16,13 +16,13 @@ const videoSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true,
+    required: false,
     comment: '关联商品（冗余，方便直接查）'
   },
   influencerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Influencer',
-    required: true,
+    required: false,
     comment: '关联达人（冗余，方便直接查）'
   },
   videoLink: {
