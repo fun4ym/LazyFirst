@@ -54,7 +54,8 @@ export default {
     endDate: '结束日期',
     dash: '-',
     doubleDash: '--',
-    countUnit: '条'
+    countUnit: '条',
+    copy: '复制'
   },
   menu: {
     dashboard: '仪表盘',
@@ -320,7 +321,11 @@ export default {
     maintenanceNeeded: '待维护',
     atRisk: '将流失',
     aboutToRelease: '即将释放',
-    released: '已释放'
+    released: '已释放',
+    avgViews: '视频均播',
+    monthlySales: '月销',
+    gmv: 'GMV',
+    noTiktokIdToCopy: '无可用TikTok ID可复制'
   },
   product: {
     productList: '商品列表',

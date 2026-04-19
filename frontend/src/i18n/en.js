@@ -54,7 +54,8 @@ export default {
     endDate: 'End Date',
     dash: '-',
     doubleDash: '--',
-    countUnit: 'items'
+    countUnit: 'items',
+    copy: 'Copy'
   },
   menu: {
     dashboard: 'Dashboard',
@@ -319,7 +320,11 @@ export default {
     maintenanceNeeded: 'Needs Maintenance',
     atRisk: 'At Risk',
     aboutToRelease: 'About to Release',
-    released: 'Released'
+    released: 'Released',
+    avgViews: 'Avg Views',
+    monthlySales: 'Monthly Sales',
+    gmv: 'GMV',
+    noTiktokIdToCopy: 'No TikTok ID available to copy'
   },
   product: {
     productList: 'Product List',

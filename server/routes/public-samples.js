@@ -120,7 +120,7 @@ router.get('/', async (req, res) => {
     console.log(`[DEBUG] public-samples.js: final query=`, JSON.stringify(query, null, 2));
     // ★ populate关联查询
     const samples = await SampleManagement.find(query)
-      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv')
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
       .populate('salesmanId', 'realName username')
       .limit(parseInt(limit))
       .skip(skip)

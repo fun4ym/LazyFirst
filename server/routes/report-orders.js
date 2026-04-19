@@ -126,7 +126,7 @@ router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ modu
 
     const orders = await ReportOrder.find(query)
       .populate('userId', 'realName')
-      .populate('influencerId', 'tiktokInfo.displayName')
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort(sortOptions);
@@ -443,13 +443,14 @@ router.get('/debug/orders', authenticate, authorize('orders:read'), async (req, 
 
 /**
  * @route   POST /api/report-orders/match-bd
- * @desc    BD匹配：根据样品管理表匹配归属BD
+ * @desc    BD匹配：根据视频记录验证订单与达人关联，再通过样品管理表匹配归属BD
  * @access  Private
  */
 router.post('/match-bd', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const ReportOrder = require('../models/ReportOrder');
     const SampleManagement = require('../models/SampleManagement');
+    const Video = require('../models/Video');
     const User = require('../models/User');
 
     // 获取所有订单记录
@@ -463,6 +464,19 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
     // 获取所有样品记录，建立索引
     const samples = await SampleManagement.find({ companyId: req.companyId });
     console.log(`找到 ${samples.length} 条样品记录`);
+
+    // 获取所有视频记录，建立 productId + influencerId 关联索引
+    const videos = await Video.find({ companyId: req.companyId });
+    console.log(`找到 ${videos.length} 条视频记录`);
+    
+    // 建立视频关联索引：productId + influencerId -> true
+    const videoIndex = new Set();
+    videos.forEach(video => {
+      if (video.productId && video.influencerId) {
+        const key = `${video.productId}_${video.influencerId.toString()}`;
+        videoIndex.add(key);
+      }
+    });
 
     // 获取用户ID到名字的映射
     const users = await User.find({ companyId: req.companyId });
@@ -487,12 +501,28 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
       }
     });
 
-    // 匹配订单
+    // 匹配订单：只有存在视频关联的订单才进行BD匹配
     for (const order of orders) {
-      const key = `${order.productId}_${order.influencerUsername || ''}`;
-
-      if (sampleIndex.has(key)) {
-        const bdName = sampleIndex.get(key);
+      // 检查订单是否有必要的关联信息
+      if (!order.productId || !order.influencerId) {
+        unmatchedCount++;
+        continue;
+      }
+      
+      // 构建视频关联键
+      const videoKey = `${order.productId}_${order.influencerId.toString()}`;
+      
+      // 如果不存在视频关联，跳过该订单
+      if (!videoIndex.has(videoKey)) {
+        unmatchedCount++;
+        continue;
+      }
+      
+      // 存在视频关联，使用样品索引匹配BD
+      const sampleKey = `${order.productId}_${order.influencerUsername || ''}`;
+      
+      if (sampleIndex.has(sampleKey)) {
+        const bdName = sampleIndex.get(sampleKey);
         // 只有当BD不为空时才更新
         if (bdName && order.bdName !== bdName) {
           updates.push({
@@ -518,14 +548,15 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
       totalOrders: orders.length,
       matchedCount,
       unmatchedCount,
-      updatedCount: updates.length
+      updatedCount: updates.length,
+      videoAssociatedOrders: matchedCount + unmatchedCount // 有视频关联的订单总数
     };
 
     console.log('BD匹配结果:', result);
 
     res.json({
       success: true,
-      message: `BD匹配完成`,
+      message: `BD匹配完成（基于视频关联验证）`,
       data: result
     });
 

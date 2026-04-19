@@ -16,7 +16,7 @@ const router = express.Router();
  * @desc    获取视频登记列表
  * @access  Private
  */
-router.get('/', authenticate, authorize('videos:read', 'videos:create'), filterByDataScope({ module: 'videos', ownerField: 'createdBy' }), async (req, res) => {
+router.get('/', authenticate, authorize('videos:read', 'videos:create', 'samplesBd:read'), filterByDataScope({ module: 'videos', ownerField: 'createdBy' }), async (req, res) => {
   try {
     const {
       page = 1,
@@ -126,7 +126,7 @@ router.get('/', authenticate, authorize('videos:read', 'videos:create'), filterB
     const videos = await Video.find(query)
       .populate('sampleId', 'date isOrderGenerated')
       .populate('productId', 'name tiktokProductId images productImages shopId')
-      .populate('influencerId', 'tiktokId tiktokName latestFollowers')
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
       .populate('createdBy', 'realName username')
       .populate('updatedBy', 'realName username')
       .limit(parseInt(limit))
@@ -162,7 +162,7 @@ router.get('/', authenticate, authorize('videos:read', 'videos:create'), filterB
  * @desc    新建视频登记
  * @access  Private
  */
-router.post('/', authenticate, authorize('videos:create'), async (req, res) => {
+router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), async (req, res) => {
   try {
     const { sampleId, productId, influencerId, videoLink, videoStreamCode, isAdPromotion, adPromotionTime, createdBy } = req.body;
 
@@ -339,7 +339,7 @@ router.get('/:id', authenticate, authorize('videos:read'), async (req, res) => {
  * @desc    更新视频登记信息
  * @access  Private
  */
-router.put('/:id', authenticate, authorize('videos:update'), async (req, res) => {
+router.put('/:id', authenticate, authorize('videos:update', 'samplesBd:update'), async (req, res) => {
   try {
     const { sampleId, productId, influencerId, createdBy, videoLink, videoStreamCode, isAdPromotion, adPromotionTime } = req.body;
     const updateData = {};
@@ -486,7 +486,7 @@ router.put('/:id', authenticate, authorize('videos:update'), async (req, res) =>
  * @desc    删除视频登记
  * @access  Private
  */
-router.delete('/:id', authenticate, authorize('videos:delete'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('videos:delete', 'samplesBd:delete'), async (req, res) => {
   try {
     const video = await Video.findOneAndDelete({
       _id: req.params.id,

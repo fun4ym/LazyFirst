@@ -75,22 +75,9 @@
       <!-- 达人列表 -->
       <el-table :data="influencers" stripe @selection-change="handleSelectionChange" :row-class-name="getRowClassName">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="tiktokId" :label="$t('influencer.tiktokId')" min-width="160" fixed="left">
+        <el-table-column prop="tiktokId" label="Influencer" min-width="160" fixed="left">
           <template #default="{ row }">
-            <div class="tiktok-id-wrapper">
-              <span class="tiktok-id-cell clickable" @click="viewDetail(row)">{{ row.tiktokId }}</span>
-              <div class="order-badges" v-if="influencerOrderStats[row._id] !== undefined">
-                <span v-if="influencerOrderStats[row._id]?.lastWeekCount > 0" class="order-badge week" title="最近一周成单">
-                  📦 {{ influencerOrderStats[row._id].lastWeekCount }}
-                </span>
-                <span v-if="influencerOrderStats[row._id]?.lastMonthCount >= 10" class="order-badge month-10" title="最近一个月成单10个以上">
-                  📊 10+
-                </span>
-                <span v-if="influencerOrderStats[row._id]?.lastMonthCount >= 100" class="order-badge month-100" title="最近一个月成单100个以上">
-                  ⭐ 100+
-                </span>
-              </div>
-            </div>
+            <InfluencerCell :influencer="row" />
           </template>
         </el-table-column>
         <el-table-column :label="$t('influencer.bd')" width="80" fixed="left">
@@ -100,18 +87,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
-        <el-table-column :label="$t('influencer.influencerParams')" width="200">
-          <template #default="{ row }">
-            <div>{{ $t('influencer.followers') }}: {{ formatFollowers(row.latestFollowers) }}</div>
-            <div>
-              <el-tooltip content="月销金额" placement="top">
-                <span>GMV: {{ row.latestGmv || 0 }}</span>
-              </el-tooltip>
-            </div>
-            <div>{{ $t('influencer.monthlySalesCount') }}: {{ row.monthlySalesCount || 0 }}</div>
-            <div>{{ $t('influencer.avgVideoViews') }}: {{ row.avgVideoViews || 0 }}</div>
-          </template>
-        </el-table-column>
+
         <el-table-column :label="$t('influencer.suitableCategories')" width="150">
           <template #default="{ row }">
             <el-tag v-for="cat in row.suitableCategories" :key="cat._id" size="small" type="success">{{ cat.name }}</el-tag>
@@ -189,9 +165,9 @@
 
           <!-- 黑名单列表 -->
           <el-table :data="blacklistInfluencers" stripe v-loading="blacklistLoading" :row-class-name="getRowClassName">
-            <el-table-column prop="tiktokId" :label="$t('influencer.tiktokId')" min-width="160" fixed="left">
+            <el-table-column prop="tiktokId" label="Influencer" min-width="160" fixed="left">
               <template #default="{ row }">
-                <span class="tiktok-id-cell clickable" @click="viewDetail(row)">{{ row.tiktokId }}</span>
+                <InfluencerCell :influencer="row" />
               </template>
             </el-table-column>
             <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
@@ -649,6 +625,7 @@ import { Search, Plus, Delete, User } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
+import InfluencerCell from '@/components/InfluencerCell.vue'
 
 const { t } = useI18n()
 

@@ -172,7 +172,7 @@
         <el-table ref="orderTableRef" :data="orders" v-loading="loading" stripe border row-key="_id" @sort-change="handleSortChange" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" fixed="left" />
         <el-table-column
-          :label="$t('reportOrders.tiktokId')"
+          label="Influencer"
           width="160"
           fixed="left"
           prop="influencerUsername"
@@ -187,7 +187,13 @@
             >
               <template #reference>
                 <div class="tiktok-id-wrapper">
-                  <span class="tiktok-id-cell clickable" @click="viewDetail(row)">{{ row.influencerUsername || '--' }}</span>
+                  <InfluencerCell :influencer="{
+                    tiktokId: row.influencerUsername,
+                    latestFollowers: row.followerCount,
+                    latestGmv: row.gmv,
+                    avgVideoViews: row.avgVideoViews,
+                    monthlySalesCount: row.monthlySalesCount
+                  }" :showGmv="!!row.gmv" :showFollowers="!!row.followerCount" :showAvgViews="!!row.avgVideoViews" :showMonthlySales="!!row.monthlySalesCount" />
                   <el-tag v-if="row.isBlacklistedInfluencer" type="danger" size="small" style="margin-left: 4px">{{ $t('reportOrders.blacklist') }}</el-tag>
                 </div>
               </template>
@@ -254,23 +260,13 @@
           sortable
         >
           <template #default="{ row }">
-            <div class="product-cell">
-              <el-image v-if="row.productImage" :src="row.productImage" fit="cover" class="product-thumb" :preview-src-list="[row.productImage]" />
-              <div v-else class="product-thumb-placeholder"></div>
-              <div class="product-info">
-                <div class="product-id purple">{{ row.productId || '--' }}</div>
-                <el-tooltip :content="row.productName" placement="top">
-                  <div class="product-name">
-                    {{ truncateText(row.productName, 50) }}
-                  </div>
-                </el-tooltip>
-                <div class="shop-name" v-if="row.shopName">
-                <svg t="1776483244387" class="shop-svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="32239" width="32" height="32"><path d="M 469.3 793.7 H 305.6 c -18.6 0 -33.6 -15 -33.6 -33.6 V 575.3 c 34.5 8.1 70.8 0.2 98.7 -21.6 20.5 16 45.8 0.8 -0.6 1.4 -1.4 1.4 h -83.6 c -0.8 0 -1.4 -0.6 -1.4 -1.4 V 648.4 c 0 -0.8 0.6 -1.4 1.4 -1.4 h 83.6 m 0 -17.3 h -83.6 c -10.3 0 -18.7 8.4 -18.7 18.7 v 134.9 c 0 10.3 8.4 18.7 18.7 18.7 h 83.6 c 10.3 0 18.7 -8.4 18.7 -18.7 V 648.4 c 0.1 -10.3 -8.3 -18.7 -18.7 -18.7 z" p-id="32245"></path><path d="m -12.4 -18.6 -12.4 -29.9 V 575.2 c 0 -2.6 1.2 -5.1 3.3 -6.8 2.1 -1.6 4.8 -2.2 7.4 -1.6 32.1 7.6 65.4 0.3 91.4 -20 3.1 -2.4 7.5 -2.4 10.6 0 18.8 14.7 42.3 22.8 66.2 22.8 h 0.3 c 23.9 0 47.4 -8.1 66.3 -22.8 3.1 -2.5 7.5 -2.5 10.7 0 18.8 14.7 42.3 22.8 66.2 22.8 h 0.2 c 28 0 54.6 -10.7 74.8 -30.1 a 8.7 8.7 0 0 1 12 0 c 22.1 21.3 52.4 32.2 83 29.7 2.4 -0.2 4.8 0.6 6.6 2.3 s 2.8 3.9 2.8 6.4 v 182 c 0 11.3 -4.4 21.9 -12.4 29.9 -8.1 8.1 -18.7 12.5 -30 12.5 zM 469.3 785 H 722.7 c 6.7 0 12.9 -2.6 17.6 -7.3 4.7 -4.7 7.3 -11 7.3 -17.6 v -173 h -0.4 c -29.5 0 -58.1 -10.5 -80.6 -29.5 -22.6 19.1 -50.9 29.5 -80.7 29.5 h -0.2 c -25.5 0 -50.7 -8 -71.6 -22.6 -20.9 14.6 -46 22.6 -71.6 22.6 h -0.4 c -25.5 0 -50.7 -8 -71.6 -22.6 -26.3 18.4 -58.4 25.9 -90 21.3 v 174.3 c 0 6.7 2.6 12.9 7.3 17.6 4.7 4.7 11 7.3 17.6 7.3 h 163.9 z" p-id="32241"></path><path d="M 685.2 219.6 c 19 0 36.5 10 46.2 26.3 L 817 389.6 h -0.2 c 23.2 45.9 4.9 101.9 -41 125.1 -38 19.2 -84.1 10.3 -112.1 -21.7 -19.2 20.3 -45.9 31.9 -73.8 31.8 -29.2 0 -56.9 -12.5 -76.2 -34.4 -19.3 21.9 -47 34.4 -76.2 34.4 -27.9 0 -54.6 -11.5 -73.8 -31.8 -33.9 38.6 -92.8 42.4 -131.4 8.5 -34.8 -30.6 -41.8 -82.2 -16.4 -121 l 72 -132.7 c 9.4 -17.4 27.6 -28.2 47.3 -28.2 h 350 z" fill="#99E5E2" p-id="32242"></path><path d="M 685.2 237.1 c 12.7 0 24.7 6.8 31.2 17.7 l 83.8 140.6 1 2 c 18.8 37.2 3.9 82.7 -33.3 101.6 -10.5 5.3 -22.3 8.2 -34.1 8.2 -21.8 0 -42.6 -9.4 -56.9 -25.8 l -12.7 -14.5 L 651 481 c -15.7 16.7 -37.9 26.3 -60.9 26.3 H 589.8 c -24.1 0 -47 -10.4 -62.9 -28.4 l -13.2 -15 -13.2 15 c -15.9 18.1 -38.8 28.4 -62.9 28.4 h -0.2 c -23 0 -45.2 -9.6 -60.9 -26.3 l -13.2 -14 -12.7 14.5 c -14.3 16.3 -35.1 25.7 -56.8 25.7 -18.3 0 -36 -6.7 -49.8 -18.8 -13.7 -12 -22.6 -28.6 -25 -46.6 -2.4 -18 1.7 -36.4 11.7 -51.6 l 0.4 -0.6 0.3 -0.6 72 -132.7 c 6.4 -11.7 18.6 -19 31.9 -19 h 349.9 m 0 -17.7 h -350 c -19.7 0 -37.9 10.8 -47.3 28.2 l -72 132.7 c -25.4 38.8 -18.4 90.4 16.4 121 17.7 15.5 39.6 23.2 61.4 23.2 25.9 0 51.6 -10.7 70 -31.7 19.1 20.3 45.8 31.8 73.7 31.8 h 0.2 c 29.1 0 56.8 -12.5 76.1 -34.4 19.2 21.9 46.9 34.4 76.1 34.4 H 590.1 c 27.9 0 54.5 -11.5 73.6 -31.8 18.1 20.7 43.9 31.8 70.1 31.8 14.3 0 28.7 -3.3 42 -10.1 45.9 -23.2 64.2 -79.3 41 -125.1 h 0.2 l -85.6 -143.7 c -9.7 -16.3 -27.3 -26.3 -46.2 -26.3 z" p-id="32243"></path><path d="M 555.9 802.1 h -83.6 c -10.3 0 -18.7 -8.4 -18.7 -18.7 v -135 c 0 -10.3 8.4 -18.7 18.7 -18.7 h 83.6 c 10.3 0 18.7 8.4 18.7 18.7 v 134.9 c 0.1 10.4 -8.3 18.8 -18.7 18.8 z" fill="#FF9999" p-id="32244"></path><path d="M 555.9 647 c 0.8 0 1.4 0.6 1.4 1.4 v 134.9 c 0 0.8 -0.6 1.4 -1.4 1.4 h -83.6 c -0.8 0 -1.4 -0.6 -1.4 -1.4 V 648.4 c 0 -0.8 0.6 -1.4 1.4 -1.4 h 83.6 m 0 -17.3 h -83.6 c -10.3 0 -18.7 8.4 -18.7 18.7 v 134.9 c 0 10.3 8.4 18.7 18.7 18.7 h 83.6 c 10.3 0 18.7 8.4 18.7 18.7 V 648.4 c 0.1 -10.3 -8.3 -18.7 -18.7 -18.7 z" p-id="32245"></path></svg>
-                  {{ row.shopName }}
-                </div>
-                <div class="shop-name" v-else>--</div>
-              </div>
-            </div>
+            <ProductCell :product="{
+              id: row.productId,
+              name: row.productName,
+              image: row.productImage,
+              shopName: row.shopName,
+              tiktokProductId: row.productId
+            }" @copy-field="onCopyField" @click="onProductClick(row.productId)" />
           </template>
         </el-table-column>
 
@@ -834,6 +830,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 import request from '@/utils/request'
 import { Upload, UploadFilled, CircleCheck, Clock, Connection, Loading, Tickets, Plus } from '@element-plus/icons-vue'
+import ProductCell from '@/components/ProductCell.vue'
+import InfluencerCell from '@/components/InfluencerCell.vue'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 
@@ -1669,6 +1667,24 @@ onMounted(() => {
   loadCurrencySymbol()
   loadOrders()
 })
+
+// 复制字段处理
+const onCopyField = (fieldValue) => {
+  if (!fieldValue) return
+  navigator.clipboard.writeText(fieldValue).then(() => {
+    ElMessage.success(t('common.copySuccess'))
+  }).catch(() => {
+    ElMessage.error(t('common.copyFailed'))
+  })
+}
+
+// 商品点击处理
+const onProductClick = (productId) => {
+  if (!productId) return
+  // 可以跳转到商品详情页，暂时先控制台打印
+  console.log('点击商品:', productId)
+  // router.push({ path: '/products', query: { id: productId } })
+}
 </script>
 
 <style scoped>

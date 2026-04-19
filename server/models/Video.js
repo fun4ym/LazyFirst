@@ -13,11 +13,18 @@ const videoSchema = new mongoose.Schema({
     default: null,
     comment: '所属样品记录（可选）'
   },
+  // ★ 商品引用（ObjectId，指向Product表）
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     required: false,
-    comment: '关联商品（冗余，方便直接查）'
+    comment: '商品引用（ObjectId）'
+  },
+  // TikTok商品ID（原始字符串，冗余存储）
+  tiktokProductId: {
+    type: String,
+    required: false,
+    comment: 'TikTok商品ID（原始字符串）'
   },
   influencerId: {
     type: mongoose.Schema.Types.ObjectId,

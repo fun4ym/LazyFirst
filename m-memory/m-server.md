@@ -148,3 +148,50 @@ docker network connect tap-system_default <container-name>
 2. **服务器操作需授权**：除非紧急情况，否则先询问主人
 3. **重启服务后告知主人**：有权限自主重启前后端
 4. **严禁边想边做**：必须先确认再执行
+
+---
+## 九、历史更新记录
+
+### 2026-04-19 服务器三地同步更新
+**更新日期**: 2026年4月19日
+**执行人**: 小垃圾
+**授权人**: 主人
+
+#### 更新背景
+1. 样品管理页面商品信息列显示"--"（productId、productName、productImage、shop字段缺失）
+2. 本地、GitHub、服务器三地代码存在差异，需要同步
+3. 上次更新后问题未解决，需要彻底修复
+
+#### 修复的核心问题
+1. **数据模型不一致**: `SampleManagement.productId`在服务器上可能仍为ObjectId类型，而前端需要TikTok商品ID（String）
+2. **API字段缺失**: 后端API未返回`productImage`、`shopName`等兼容字段
+3. **数据未迁移**: 历史数据中的productId仍为ObjectId，未转换为TikTok商品ID
+
+#### 已实施的修复
+- ✅ `SampleManagement.js`: 将`productId`类型从ObjectId改为String，添加shopId字段
+- ✅ `samples.js`: 添加`productImage`、`productId`（TikTok ID）、`shopName`字段映射
+- ✅ `public-samples.js`: 添加`shopName`字段，优化查询逻辑
+- ✅ `m-server.md`: 更新数据库备份命令（使用正确的root密码）
+- ✅ 数据迁移: 执行`migrate_sample_productId_fixed.js`，跳过重复键错误
+
+#### 部署验证结果
+- ✅ 网站可访问性: HTTP 200 正常
+- ✅ 前端构建: 成功
+- ✅ 后端API: 可访问（需要认证的API返回401/403，正常）
+- ✅ 数据迁移: 393条成功迁移，2708条仍需匹配或商品信息缺失
+
+#### 经验教训
+1. **唯一索引冲突**: 索引`companyId_1_date_1_influencerId_1_productId_1`导致重复键错误，迁移脚本需添加错误处理
+2. **向后兼容**: API需同时支持ObjectId和TikTok ID两种格式，确保平滑过渡
+3. **数据匹配**: 商品名称不精确匹配导致迁移失败，需要更灵活的匹配策略
+4. **部署铁律**: 必须严格遵守：不执行`docker compose down`，不exclude `dist`目录，docker build加`--no-cache`
+
+#### 后续建议
+1. 优化商品名称匹配算法（去除特殊字符、忽略大小写、近似匹配）
+2. 定期清理无效的商品关联（迁移失败的记录）
+3. 加强数据导入验证，确保productId直接存储为TikTok ID
+4. 考虑将唯一索引改为普通索引，避免数据重复冲突
+
+---
+*文档更新日期: 2026-04-19*
+*更新人: 小垃圾*

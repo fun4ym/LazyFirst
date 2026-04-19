@@ -213,6 +213,7 @@ const menuNameMap = computed(() => ({
   bdWorkspace: t('menu.bdWorkspace'),
   influencers: t('menu.influencerList'),
   samplesBd: '样品申请(BD)',
+  videos: t('menu.videoRegister'),
   supplyChain: t('menu.supplyChain'),
   products: t('menu.products'),
   activities: t('menu.activities'),
@@ -344,6 +345,17 @@ const menuTree = ref([
           { code: 'btn-add', name: '新增样品' },
           { code: 'btn-edit', name: '编辑样品' },
           { code: 'btn-delete', name: '删除样品' }
+        ]
+      },
+      {
+        name: '视频登记',
+        code: 'videos',
+        operations: ['read', 'create', 'update', 'delete'],
+        controls: [
+          { code: 'btn-view', name: '查看详情' },
+          { code: 'btn-add', name: '新增视频' },
+          { code: 'btn-edit', name: '编辑视频' },
+          { code: 'btn-delete', name: '删除视频' }
         ]
       }
     ]

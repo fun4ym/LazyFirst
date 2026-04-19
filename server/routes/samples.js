@@ -468,7 +468,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       date: new Date(date),
       productId: productId,
       influencerId: influencerId,
-      salesmanId: salesmanId || undefined,
+      salesmanId: salesmanId || req.user._id,
       shippingInfo: shippingInfo || '',
       isSampleSent: isSampleSent || false,
       trackingNumber: trackingNumber || '',
@@ -727,7 +727,7 @@ router.get('/:id/videos', authenticate, async (req, res) => {
  * @desc    为样品添加视频记录
  * @access  Private
  */
-router.post('/:id/videos', authenticate, authorize('videos:create'), [
+router.post('/:id/videos', authenticate, authorize('videos:create', 'samplesBd:create'), [
   body('videoLink').optional(),
 ], async (req, res) => {
   try {

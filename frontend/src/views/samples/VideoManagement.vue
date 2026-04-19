@@ -107,6 +107,19 @@
           </template>
         </el-table-column>
 
+        <el-table-column label="Influencer" width="200">
+          <template #default="{ row }">
+            <InfluencerCell :influencer="{
+              tiktokId: row.influencerId?.tiktokId,
+              tiktokUsername: row.influencerId?.tiktokName,
+              latestFollowers: row.influencerId?.latestFollowers,
+              latestGmv: row.influencerId?.latestGmv,
+              avgVideoViews: row.influencerId?.avgVideoViews,
+              monthlySalesCount: row.influencerId?.monthlySalesCount
+            }" :showGmv="!!row.influencerId?.latestGmv" :showFollowers="!!row.influencerId?.latestFollowers" :showAvgViews="!!row.influencerId?.avgVideoViews" :showMonthlySales="!!row.influencerId?.monthlySalesCount" />
+          </template>
+        </el-table-column>
+
         <el-table-column :label="$t('samples.videoLink')" min-width="180">
           <template #default="{ row }">
             <div class="text-truncate">
@@ -296,6 +309,7 @@ import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import AuthManager from '@/utils/auth'
+import InfluencerCell from '@/components/InfluencerCell.vue'
 
 const { t } = useI18n()
 

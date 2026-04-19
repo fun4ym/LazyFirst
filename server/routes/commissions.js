@@ -38,7 +38,7 @@ router.get('/', authenticate, authorize('commissions:read'), async (req, res) =>
 
     const commissions = await Commission.find(query)
       .populate('bdId', 'realName phone')
-      .populate('influencerId', 'tiktokInfo.displayName')
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
       .populate('orderId', 'orderNo totalAmount')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
