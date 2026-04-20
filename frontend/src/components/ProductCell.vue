@@ -1,11 +1,11 @@
 <template>
   <div class="product-cell">
     <el-image
-      v-if="product.image"
-      :src="product.image"
+      v-if="imageSrc"
+      :src="imageSrc"
       fit="cover"
       class="product-thumb"
-      :preview-src-list="[product.image]"
+      :preview-src-list="[imageSrc]"
       :initial-index="0"
       hide-on-click-modal
     />
@@ -56,6 +56,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click'])
+
+const imageSrc = computed(() => {
+  if (props.product.image) return props.product.image
+  if (Array.isArray(props.product.images) && props.product.images.length > 0) return props.product.images[0]
+  if (Array.isArray(props.product.productImages) && props.product.productImages.length > 0) return props.product.productImages[0]
+  return ''
+})
 
 const displayId = computed(() => {
   // 优先显示tiktokProductId，否则显示productId
