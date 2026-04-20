@@ -70,10 +70,10 @@
         <!-- 投流开关 (仅只读模式) -->
         <el-switch
           v-if="!editable"
-          v-model="video.isAdPromotion"
+          :model-value="video.isAdPromotion"
           size="small"
           style="margin-left: 8px;"
-          @change="$emit('adPromotionChange', video)"
+          @change="(val) => $emit('adPromotionChange', video, val)"
         />
       </div>
     </template>

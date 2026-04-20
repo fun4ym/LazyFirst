@@ -247,7 +247,7 @@
               <FulfillmentVideoCell
                 :videos="[{ videoLink: row.videoLink, videoStreamCode: row.videoStreamCode, isAdPromotion: row.isAdPromotion }]"
                 :editable="false"
-                @adPromotionChange="(video) => handleAdPromotionChange(row)"
+                @adPromotionChange="(video, val) => handleAdPromotionChange(row, val)"
               />
             </template>
           </el-table-column>
@@ -1299,29 +1299,28 @@ const handleBatchAdCommand = async (isAdPromotion) => {
 }
 
 // 单个投流开关变化
-const handleAdPromotionChange = async (row) => {
+const handleAdPromotionChange = async (row, newValue) => {
   try {
     const identificationCode = getIdentificationCode()
 
     const res = await axios.put(`${API_BASE}/public/samples/batch`, null, {
       params: {
         s: identificationCode,
-        isAdPromotion: row.isAdPromotion,
+        isAdPromotion: newValue,
         sampleIds: row._id
       }
     })
 
     if (res.data.success) {
+      row.isAdPromotion = newValue
       ElMessage.success(t('samplePublic.updateSuccess'))
     } else {
       ElMessage.error(res.data.message)
-      // 回滚状态
-      row.isAdPromotion = !row.isAdPromotion
     }
   } catch (err) {
-    ElMessage.error(err.response?.data?.message || t('samplePublic.updateFailed'))
-    // 回滚状态
-    row.isAdPromotion = !row.isAdPromotion
+    if (err !== 'cancel') {
+      ElMessage.error(err.response?.data?.message || t('samplePublic.updateFailed'))
+    }
   }
 }
 
