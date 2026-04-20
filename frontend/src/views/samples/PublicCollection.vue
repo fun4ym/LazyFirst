@@ -241,39 +241,14 @@
             </template>
           </el-table-column>
 
-          <!-- 视频信息 -->
-          <el-table-column :label="$t('samplePublic.video')" width="200">
+          <!-- 履约视频 -->
+          <el-table-column :label="$t('samplePublic.fulfillmentVideo') || '履约视频'" width="280">
             <template #default="{ row }">
-              <div class="video-info">
-                <div v-if="row.videoLink || row.sampleImage">
-                  <a v-if="row.videoLink" :href="row.videoLink" target="_blank" class="video-link">
-                    <el-icon><VideoCamera /></el-icon>
-                    {{ $t('samplePublic.viewVideo') }}
-                  </a>
-                  <el-image 
-                    v-if="row.sampleImage" 
-                    :src="row.sampleImage" 
-                    :preview-src-list="[row.sampleImage]"
-                    fit="cover"
-                    class="sample-thumb"
-                  >
-                    <template #error>
-                      <div class="image-error"><el-icon><Picture /></el-icon></div>
-                    </template>
-                  </el-image>
-                </div>
-                <div class="video-ad-info" v-if="row.videoStreamCode || row.isAdPromotion !== undefined">
-                  <span class="stream-code" v-if="row.videoStreamCode">{{ row.videoStreamCode }}</span>
-                  <el-switch
-                    v-if="row.isAdPromotion !== undefined"
-                    v-model="row.isAdPromotion"
-                    @change="handleAdPromotionChange(row)"
-                    size="small"
-                    style="margin-left: 8px;"
-                  />
-                </div>
-                <span v-if="!row.videoLink && !row.sampleImage && !row.videoStreamCode && row.isAdPromotion === undefined" class="no-video">--</span>
-              </div>
+              <FulfillmentVideoCell
+                :videos="[{ videoLink: row.videoLink, videoStreamCode: row.videoStreamCode, isAdPromotion: row.isAdPromotion }]"
+                :editable="false"
+                @adPromotionChange="(video) => handleAdPromotionChange(row)"
+              />
             </template>
           </el-table-column>
 
@@ -300,7 +275,7 @@
         />
       </el-card>
         </el-tab-pane>
-        <el-tab-pane label="商家视角" name="businessView">
+        <el-tab-pane :label="$t('samplePublic.productStats')" name="businessView">
           <div class="business-view">
             <!-- 搜索筛选 -->
             <el-card class="search-card">
@@ -370,66 +345,36 @@
                 </el-table-column>
                 
                 <!-- 样品申请数量 -->
-                <el-table-column :label="$t('samplePublic.sampleApplications')" width="140">
+                <el-table-column :label="$t('samplePublic.productStatsTable.sampleCount')" width="140">
                   <template #default="{ row }">
                     <div class="stat-item">
                       <el-icon><Document /></el-icon>
-                      <span>{{ productStats[row._id]?.sampleCount || 0 }}</span>
+                      <span>{{ row.sampleCount || 0 }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                
+                <!-- 通过率 -->
+                <el-table-column :label="$t('samplePublic.productStatsTable.passRate')" width="120">
+                  <template #default="{ row }">
+                    <div class="stat-item">
+                      <el-icon><Check /></el-icon>
+                      <span>{{ row.passRate || '0%' }}</span>
                     </div>
                   </template>
                 </el-table-column>
                 
                 <!-- 视频数量 -->
-                <el-table-column :label="$t('samplePublic.videoCount')" width="120">
+                <el-table-column :label="$t('samplePublic.productStatsTable.videoCount')" width="120">
                   <template #default="{ row }">
                     <div class="stat-item">
                       <el-icon><VideoCamera /></el-icon>
-                      <span>{{ productStats[row._id]?.videoCount || 0 }}</span>
+                      <span>{{ row.videoCount || 0 }}</span>
                     </div>
                   </template>
                 </el-table-column>
                 
-                <!-- 投流视频数量 -->
-                <el-table-column :label="$t('samplePublic.adPromotionCount')" width="140">
-                  <template #default="{ row }">
-                    <div class="stat-item">
-                      <el-icon><Star /></el-icon>
-                      <span>{{ productStats[row._id]?.adPromotionCount || 0 }}</span>
-                    </div>
-                  </template>
-                </el-table-column>
-                
-                <!-- 达人数 -->
-                <el-table-column :label="$t('samplePublic.influencerCount')" width="120">
-                  <template #default="{ row }">
-                    <div class="stat-item">
-                      <el-icon><User /></el-icon>
-                      <span>{{ productStats[row._id]?.influencerCount || 0 }}</span>
-                    </div>
-                  </template>
-                </el-table-column>
-                
-                <!-- 出单情况 -->
-                <el-table-column :label="$t('samplePublic.orderGenerated')" width="120">
-                  <template #default="{ row }">
-                    <div class="stat-item">
-                      <el-icon><Money /></el-icon>
-                      <span>{{ productStats[row._id]?.orderGeneratedCount || 0 }}</span>
-                    </div>
-                  </template>
-                </el-table-column>
-                
-                <!-- 操作 -->
-                <el-table-column :label="$t('samplePublic.operations')" width="180" fixed="right">
-                  <template #default="{ row }">
-                    <el-button type="primary" size="small" @click="viewProductDetails(row)">
-                      {{ $t('samplePublic.viewDetails') }}
-                    </el-button>
-                    <el-button type="info" size="small" @click="viewProductVideos(row)">
-                      {{ $t('samplePublic.viewVideos') }}
-                    </el-button>
-                  </template>
-                </el-table-column>
+
               </el-table>
               
               <!-- 分页 -->
@@ -441,6 +386,139 @@
                 layout="total, sizes, prev, pager, next, jumper"
                 @size-change="loadBusinessViewData"
                 @current-change="loadBusinessViewData"
+                style="margin-top: 20px"
+              />
+            </el-card>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane :label="$t('samplePublic.videoList')" name="videoList">
+          <div class="video-list">
+            <!-- 搜索筛选 -->
+            <el-card class="search-card">
+              <el-form :model="videoSearchForm" inline class="search-form">
+                <el-form-item :label="$t('samplePublic.filter.productName')">
+                  <el-input
+                    v-model="videoSearchForm.productName"
+                    :placeholder="$t('samplePublic.filter.productName')"
+                    clearable
+                    style="width: 150px"
+                    @keyup.enter="loadVideos"
+                  />
+                </el-form-item>
+                <el-form-item :label="$t('samplePublic.filter.influencerAccount')">
+                  <el-input
+                    v-model="videoSearchForm.influencerAccount"
+                    :placeholder="$t('samplePublic.filter.influencerAccount')"
+                    clearable
+                    style="width: 150px"
+                    @keyup.enter="loadVideos"
+                  />
+                </el-form-item>
+                <el-form-item :label="$t('samplePublic.filter.isAdPromotion')">
+                  <el-select
+                    v-model="videoSearchForm.isAdPromotion"
+                    :placeholder="$t('samplePublic.filter.isAdPromotion')"
+                    clearable
+                    style="width: 150px"
+                    @change="loadVideos"
+                  >
+                    <el-option :label="$t('samplePublic.filter.all')" :value="null" />
+                    <el-option :label="$t('samplePublic.filter.promoted')" :value="true" />
+                    <el-option :label="$t('samplePublic.filter.notPromoted')" :value="false" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="loadVideos">{{ $t('samplePublic.search') }}</el-button>
+                  <el-button @click="resetVideoSearch">{{ $t('samplePublic.reset') }}</el-button>
+                </el-form-item>
+              </el-form>
+            </el-card>
+            
+            <!-- 视频列表表格 -->
+            <el-card class="table-card">
+              <el-table
+                :data="videoList"
+                v-loading="videoLoading"
+                stripe
+                border
+              >
+                <!-- 商品信息 -->
+                <el-table-column :label="$t('samplePublic.videoTable.productInfo')" min-width="280">
+                  <template #default="{ row }">
+                    <div v-if="row.productInfo" class="product-info">
+                      <el-image
+                        v-if="row.productInfo.image"
+                        :src="row.productInfo.image"
+                        :preview-src-list="[row.productInfo.image]"
+                        fit="cover"
+                        style="width: 40px; height: 40px; border-radius: 4px; margin-right: 10px;"
+                      />
+                      <div class="product-details">
+                        <div class="product-name">{{ row.productInfo.name || '-' }}</div>
+                        <div class="product-id">ID: {{ row.productInfo.tiktokProductId || row.productInfo._id }}</div>
+                      </div>
+                    </div>
+                    <span v-else>-</span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 视频链接 -->
+                <el-table-column :label="$t('samplePublic.videoTable.videoLink')" min-width="200">
+                  <template #default="{ row }">
+                    <a v-if="row.videoLink" :href="row.videoLink" target="_blank" class="video-link">
+                      {{ $t('samplePublic.videoTable.viewVideo') }}
+                    </a>
+                    <span v-else>-</span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 达人信息 -->
+                <el-table-column :label="$t('samplePublic.videoTable.influencerInfo')" min-width="200">
+                  <template #default="{ row }">
+                    <div v-if="row.influencerInfo" class="influencer-info">
+                      <div class="influencer-account">{{ row.influencerInfo.tiktokId || '-' }}</div>
+                      <div class="influencer-followers">{{ row.influencerInfo.latestFollowers ? formatNumber(row.influencerInfo.latestFollowers) + '粉丝' : '-' }}</div>
+                    </div>
+                    <span v-else>-</span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 投流状态 -->
+                <el-table-column :label="$t('samplePublic.videoTable.adPromotion')" width="120">
+                  <template #default="{ row }">
+                    <el-tag :type="row.isAdPromotion ? 'success' : 'info'" size="small">
+                      {{ row.isAdPromotion ? $t('samplePublic.filter.promoted') : $t('samplePublic.filter.notPromoted') }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <!-- 更新时间 -->
+                <el-table-column :label="$t('samplePublic.videoTable.updatedAt')" width="160">
+                  <template #default="{ row }">
+                    {{ formatDateTime(row.updatedAt) }}
+                  </template>
+                </el-table-column>
+                
+                <!-- 样品状态 -->
+                <el-table-column :label="$t('samplePublic.videoTable.sampleStatus')" width="120">
+                  <template #default="{ row }">
+                    <el-tag v-if="row.sampleInfo" :type="getSampleStatusType(row.sampleInfo.sampleStatus)" size="small">
+                      {{ getSampleStatusText(row.sampleInfo.sampleStatus) }}
+                    </el-tag>
+                    <span v-else>-</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <!-- 分页 -->
+              <el-pagination
+                v-model:current-page="videoPagination.page"
+                v-model:page-size="videoPagination.limit"
+                :total="videoPagination.total"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next, jumper"
+                @size-change="loadVideos"
+                @current-change="loadVideos"
                 style="margin-top: 20px"
               />
             </el-card>
@@ -651,6 +729,7 @@ import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, Co
 import axios from 'axios'
 import ProductCell from '@/components/ProductCell.vue'
 import InfluencerCell from '@/components/InfluencerCell.vue'
+import FulfillmentVideoCell from '@/components/FulfillmentVideoCell.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -664,7 +743,7 @@ const shopInfo = ref(null)
 const logoLoadError = ref(false)
 const samples = ref([])
 const selectedSamples = ref([])
-const activeTab = ref('sampleList') // 页签：sampleList, businessView
+const activeTab = ref('sampleList') // 页签：sampleList, businessView, videoList
 
 // 商家视角状态
 const businessViewLoading = ref(false)
@@ -679,6 +758,16 @@ const businessPagination = reactive({
 const businessSearchForm = reactive({
   productName: '',
   categoryId: ''
+})
+
+// 视频列表状态
+const videoList = ref([])
+const videoLoading = ref(false)
+const videoPagination = reactive({ page: 1, limit: 20, total: 0 })
+const videoSearchForm = reactive({
+  productName: '',
+  influencerAccount: '',
+  isAdPromotion: null
 })
 
 // 搜索表单
@@ -850,7 +939,7 @@ const loadSamples = async () => {
   }
 }
 
-// 加载商家视角数据
+// 加载商家视角数据（产品统计）
 const loadBusinessViewData = async () => {
   const identificationCode = getIdentificationCode()
   if (!identificationCode) {
@@ -873,55 +962,97 @@ const loadBusinessViewData = async () => {
       }
     }
     
-    // 2. 获取店铺的产品列表
-    const productParams = {
-      keyword: businessSearchForm.productName || undefined,
-      categoryId: businessSearchForm.categoryId || undefined,
+    // 2. 调用新的产品统计接口
+    const params = {
+      s: identificationCode,
       page: businessPagination.page,
-      limit: businessPagination.limit
+      limit: businessPagination.limit,
+      keyword: businessSearchForm.productName || undefined,
+      categoryId: businessSearchForm.categoryId || undefined
     }
     
     // 移除空值参数
-    Object.keys(productParams).forEach(key => {
-      if (productParams[key] === undefined) {
-        delete productParams[key]
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined) {
+        delete params[key]
       }
     })
     
-    const productsRes = await axios.get(`${API_BASE}/public/products`, { params: productParams })
+    const res = await axios.get(`${API_BASE}/public/products/statistics`, { params })
     
-    if (productsRes.data.success) {
-      // 过滤出当前店铺的产品（基于识别码）
-      const allProducts = productsRes.data.data.products || []
-      // 由于public/products API可能返回所有店铺的产品，我们需要在前端过滤
-      // 更好的做法是后端支持shopId参数，但当前API可能不支持
-      // 暂时显示所有产品，后续优化
-      products.value = allProducts
-      businessPagination.total = productsRes.data.data.pagination?.total || 0
+    if (res.data.success) {
+      const data = res.data.data
+      // 转换数据结构，将stats合并到product对象中
+      products.value = data.products.map(product => ({
+        _id: product._id,
+        name: product.name,
+        tiktokProductId: product.tiktokProductId,
+        image: product.image,
+        sampleCount: product.stats?.sampleCount || 0,
+        sentCount: product.stats?.sentCount || 0,
+        passRate: product.stats?.passRate || '0%',
+        videoCount: product.stats?.videoCount || 0,
+        adPromotionCount: product.stats?.adPromotionCount || 0,
+        orderGeneratedCount: product.stats?.orderGeneratedCount || 0
+      }))
       
-      // 3. 为每个产品获取统计信息（模拟数据，实际需要后端API支持）
-      for (const product of products.value) {
-        // 模拟统计数据
-        const videoStats = {
-          sampleCount: Math.floor(Math.random() * 20), // 模拟样品申请数量
-          videoCount: Math.floor(Math.random() * 10), // 模拟视频数量
-          adPromotionCount: Math.floor(Math.random() * 5), // 模拟投流数量
-          influencerCount: Math.floor(Math.random() * 8), // 模拟达人数
-          orderGeneratedCount: Math.floor(Math.random() * 15) // 模拟出单数量
-        }
-        
-        productStats.value[product._id] = videoStats
-      }
-      
+      businessPagination.total = data.pagination?.total || 0
       businessViewError.value = null
+      
+      // 清理旧的productStats对象，数据已合并到products中
+      productStats.value = {}
     } else {
-      businessViewError.value = productsRes.data.message || '加载产品列表失败'
+      businessViewError.value = res.data.message || '加载产品统计数据失败'
     }
   } catch (err) {
     console.error('Load business view data error:', err)
     businessViewError.value = err.response?.data?.message || t('samplePublic.networkError')
   } finally {
     businessViewLoading.value = false
+  }
+}
+
+// 加载视频列表
+const loadVideos = async () => {
+  const identificationCode = getIdentificationCode()
+  if (!identificationCode) {
+    // 如果没有识别码，不清空数据，因为可能是在其他页签
+    return
+  }
+
+  videoLoading.value = true
+  try {
+    const params = {
+      s: identificationCode,
+      page: videoPagination.page,
+      limit: videoPagination.limit,
+      productName: videoSearchForm.productName || undefined,
+      influencerAccount: videoSearchForm.influencerAccount || undefined,
+      isAdPromotion: videoSearchForm.isAdPromotion !== null ? videoSearchForm.isAdPromotion.toString() : undefined
+    }
+
+    // 移除空值参数
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined || params[key] === '') {
+        delete params[key]
+      }
+    })
+
+    const res = await axios.get(`${API_BASE}/public/videos`, { params })
+
+    if (res.data.success) {
+      videoList.value = res.data.data.videos || []
+      videoPagination.total = res.data.data.pagination?.total || 0
+    } else {
+      videoList.value = []
+      videoPagination.total = 0
+    }
+  } catch (err) {
+    console.error('Load videos error:', err)
+    videoList.value = []
+    videoPagination.total = 0
+  } finally {
+    videoLoading.value = false
   }
 }
 
@@ -1216,22 +1347,16 @@ const onCopyField = (field, value) => {
   }
 }
 
-// 查看产品详情
-const viewProductDetails = (product) => {
-  ElMessage.info(`查看产品详情: ${product.name}`)
-  // TODO: 实现产品详情弹窗
-}
 
-// 查看产品视频
-const viewProductVideos = (product) => {
-  ElMessage.info(`查看产品视频: ${product.name}`)
-  // TODO: 实现产品视频列表弹窗
-}
+
+
 
 // 监听页签切换
 watch(activeTab, (newTab) => {
   if (newTab === 'businessView') {
     loadBusinessViewData()
+  } else if (newTab === 'videoList') {
+    loadVideos()
   }
 })
 

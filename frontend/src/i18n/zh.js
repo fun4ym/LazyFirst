@@ -1637,6 +1637,7 @@ export default {
     productImage: '图片',
     influencerInfo: '达人信息',
     video: '视频',
+    fulfillmentVideo: '履约视频',
     orderGenerated: '是否出单',
     // 样品状态
     pending: '待审核',
@@ -1706,7 +1707,39 @@ export default {
     streamCodeDetail: '投流码',
     shippingDate: '寄出日期',
     currentLogisticsInfo: '当前物流信息',
-    bd: 'BD'
+    bd: 'BD',
+    // 新增页签
+    videoList: '相关视频',
+    productStats: '商品统计',
+    // 视频列表
+    videoTable: {
+      productInfo: '商品信息',
+      videoLink: '视频链接',
+      influencerInfo: '达人信息',
+      adPromotion: '投流状态',
+      updatedAt: '更新时间',
+      sampleStatus: '样品状态',
+      viewVideo: '观看视频'
+    },
+    // 商品统计
+    productStatsTable: {
+      sampleCount: '申样数',
+      sentCount: '已寄样',
+      passRate: '通过率',
+      videoCount: '视频数',
+      adPromotionCount: '投流数',
+      influencerCount: '达人数',
+      orderGeneratedCount: '出单数'
+    },
+    // 筛选标签
+    filter: {
+      productName: '商品名称',
+      influencerAccount: '达人账号',
+      isAdPromotion: '投流状态',
+      all: '全部',
+      promoted: '已投流',
+      notPromoted: '未投流'
+    }
   },
   // BD工作台-样品申请
   sampleBD: {
@@ -2002,6 +2035,9 @@ export default {
     linkSampleRecord: '关联申样记录',
     sampleFilteredOptions: '筛选样品记录',
     sampleSelectionPlaceholder: '请选择样品记录',
-    sampleDateAndStatus: '{date} - {status}'
+    sampleDateAndStatus: '{date} - {status}',
+    influencer: '达人',
+    clickToJump: '点击跳转',
+    clickToView: '点击查看'
   }
 }

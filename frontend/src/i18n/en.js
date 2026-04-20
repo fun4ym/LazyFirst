@@ -1454,6 +1454,7 @@ export default {
     productImage: 'Image',
     influencerInfo: 'Influencer Info',
     video: 'Video',
+    fulfillmentVideo: 'Fulfillment Video',
     orderGenerated: 'Order Generated',
     // Sample status
     pending: 'Pending',
@@ -1523,7 +1524,39 @@ export default {
     streamCodeDetail: 'Stream Code',
     shippingDate: 'Shipping Date',
     currentLogisticsInfo: 'Current Logistics Info',
-    bd: 'BD'
+    bd: 'BD',
+    // New tabs
+    videoList: 'Related Videos',
+    productStats: 'Product Statistics',
+    // Video list
+    videoTable: {
+      productInfo: 'Product Info',
+      videoLink: 'Video Link',
+      influencerInfo: 'Influencer Info',
+      adPromotion: 'Ad Status',
+      updatedAt: 'Updated At',
+      sampleStatus: 'Sample Status',
+      viewVideo: 'Watch Video'
+    },
+    // Product statistics
+    productStatsTable: {
+      sampleCount: 'Sample Count',
+      sentCount: 'Sent',
+      passRate: 'Pass Rate',
+      videoCount: 'Video Count',
+      adPromotionCount: 'Ad Count',
+      influencerCount: 'Influencer Count',
+      orderGeneratedCount: 'Order Count'
+    },
+    // Filter labels
+    filter: {
+      productName: 'Product Name',
+      influencerAccount: 'Influencer Account',
+      isAdPromotion: 'Ad Status',
+      all: 'All',
+      promoted: 'Ad Promoted',
+      notPromoted: 'Not Ad Promoted'
+    }
   },
   // BD Workspace - Sample Request
   sampleBD: {
@@ -1820,6 +1853,9 @@ export default {
     linkSampleRecord: 'Link Sample Record',
     sampleFilteredOptions: 'Filtered Sample Records',
     sampleSelectionPlaceholder: 'Please select sample record',
-    sampleDateAndStatus: '{date} - {status}'
+    sampleDateAndStatus: '{date} - {status}',
+    influencer: 'Influencer',
+    clickToJump: 'Click to jump',
+    clickToView: 'Click to view'
   }
 }
