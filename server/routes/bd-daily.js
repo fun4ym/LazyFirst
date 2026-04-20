@@ -334,6 +334,8 @@ router.post('/generate', authenticate, authorize('bdDaily:create'), [], async (r
     let allResults = [];
     let totalCreated = 0;
     let totalUpdated = 0;
+    let unassignedCount = 0;
+    let assignedCount = 0;
 
     for (const targetDate of datesToProcess) {
       const singleDateResults = await generateSingleDate(
@@ -345,16 +347,28 @@ router.post('/generate', authenticate, authorize('bdDaily:create'), [], async (r
       totalCreated += singleDateResults.filter(r => r.action === 'created').length;
       totalUpdated += singleDateResults.filter(r => r.action === 'updated').length;
     }
+    
+    // 统计已分配和未分配的数量
+    allResults.forEach(r => {
+      if (r.data.salesman === '未分配') {
+        unassignedCount++;
+      } else {
+        assignedCount++;
+      }
+    });
 
     res.json({
       success: true,
-      message: `成功生成 ${allResults.length} 条BD统计数据`,
+      message: `成功生成 ${allResults.length} 条统计数据（${assignedCount} 条已分配，${unassignedCount} 条未分配）`,
       data: {
         results: allResults,
         summary: {
           totalDays: datesToProcess.length,
           createdCount: totalCreated,
-          updatedCount: totalUpdated
+          updatedCount: totalUpdated,
+          assignedCount,
+          unassignedCount,
+          totalRecords: allResults.length
         }
       }
     });
@@ -388,12 +402,48 @@ async function generateSingleDate(targetDate, companyId, userId) {
     const ReportOrder = require('../models/ReportOrder');
     const User = require('../models/User');
 
-    // 获取用户ID到名字的映射
+    // 获取用户映射：ID->真实姓名，用户名->真实姓名
     const users = await User.find({ companyId: companyId });
-    const userMap = {};
+    const userMapById = {};
+    const userMapByUsername = {};
     users.forEach(u => {
-      userMap[u._id.toString()] = u.name || u.username || u._id.toString();
+      const name = u.realName || u.username || u._id.toString();
+      userMapById[u._id.toString()] = name;
+      if (u.username) {
+        userMapByUsername[u.username] = name;
+      }
     });
+    
+    // 辅助函数：获取销售人员姓名
+    const getSalesmanName = (identifier) => {
+      if (!identifier || identifier === '未分配') {
+        return '未分配';
+      }
+      // 转换为字符串处理
+      const idStr = identifier.toString ? identifier.toString() : String(identifier);
+      
+      // 如果是有效的ObjectId字符串，尝试按ID查找
+      if (idStr.match(/^[0-9a-fA-F]{24}$/)) {
+        return userMapById[idStr] || idStr;
+      }
+      // 尝试按用户名查找（不区分大小写）
+      const lowerIdentifier = idStr.toLowerCase();
+      // 先尝试精确匹配
+      if (userMapByUsername[idStr]) {
+        return userMapByUsername[idStr];
+      }
+      // 再尝试小写匹配
+      if (userMapByUsername[lowerIdentifier]) {
+        return userMapByUsername[lowerIdentifier];
+      }
+      // 最后尝试不区分大小写的匹配
+      for (const username in userMapByUsername) {
+        if (username.toLowerCase() === lowerIdentifier) {
+          return userMapByUsername[username];
+        }
+      }
+      return idStr;
+    };
 
     // 获取所有样品记录
     const samples = await SampleManagement.find({
@@ -404,9 +454,9 @@ async function generateSingleDate(targetDate, companyId, userId) {
     // 按BD分组统计样品
     const bdStats = {};
     samples.forEach(sample => {
-      const salesmanId = sample.salesman || '未分配';
-      // 将ID转换为名字
-      const salesman = userMap[salesmanId] || salesmanId;
+      // 优先使用salesmanId（ObjectId），其次使用salesman（兼容字段）
+      const salesmanIdentifier = sample.salesmanId || sample.salesman;
+      const salesman = getSalesmanName(salesmanIdentifier);
       if (!bdStats[salesman]) {
         bdStats[salesman] = {
           sampleCount: 0,
@@ -440,7 +490,9 @@ async function generateSingleDate(targetDate, companyId, userId) {
       createTime: { $gte: startDate, $lte: endDate }
     });
     orderRecords.forEach(order => {
-      const salesman = order.bdName || '未分配';
+      // 使用bdName字段，如果为空则标记为'未分配'
+      const salesmanIdentifier = order.bdName || '未分配';
+      const salesman = getSalesmanName(salesmanIdentifier);
       if (!orderStats[salesman]) {
         orderStats[salesman] = {
           gmvTotal: 0,
@@ -475,9 +527,9 @@ async function generateSingleDate(targetDate, companyId, userId) {
     const samplePaymentMap = new Map();
     sampleWithPayment.forEach(sample => {
       const key = `${sample.productId}_${sample.influencerAccount}`;
-      // 将ID转换为名字
-      const salesmanId = sample.salesman || '未分配';
-      const salesman = userMap[salesmanId] || salesmanId;
+      // 将ID转换为名字，优先使用salesmanId
+      const salesmanIdentifier = sample.salesmanId || sample.salesman;
+      const salesman = getSalesmanName(salesmanIdentifier);
       samplePaymentMap.set(key, {
         productId: sample.productId,
         influencerAccount: sample.influencerAccount,

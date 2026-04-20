@@ -894,11 +894,19 @@ const handleGenerate = async () => {
     // 如果是单日，直接调用单日生成
     if (startDate === endDate) {
       const res = await request.post('/bd-daily/generate', { date: startDate })
+      // 计算有效的BD数量（排除'未分配'）
+      const uniqueSalesmen = new Set();
+      res.results.forEach(r => {
+        if (r.data.salesman && r.data.salesman !== '未分配') {
+          uniqueSalesmen.add(r.data.salesman);
+        }
+      });
+      
       generateResult.value = {
         totalDays: 1,
         createdCount: res.results.filter(r => r.action === 'created').length,
         updatedCount: res.results.filter(r => r.action === 'updated').length,
-        bdCount: res.results.length,
+        bdCount: uniqueSalesmen.size,
         details: res.results.map(r => ({
           salesman: r.data.salesman,
           action: r.action,
@@ -934,11 +942,19 @@ const handleGenerate = async () => {
         })))
       }
 
+      // 计算有效的BD数量（排除'未分配'）
+      const uniqueSalesmen = new Set();
+      allDetails.forEach(d => {
+        if (d.salesman && d.salesman !== '未分配') {
+          uniqueSalesmen.add(d.salesman);
+        }
+      });
+      
       generateResult.value = {
         totalDays: days.length,
         createdCount,
         updatedCount,
-        bdCount: new Set(allDetails.map(d => d.salesman)).size,
+        bdCount: uniqueSalesmen.size,
         details: allDetails
       }
     }

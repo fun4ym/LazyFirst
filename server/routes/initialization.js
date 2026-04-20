@@ -3,6 +3,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const Shop = require('../models/Shop');
@@ -12,6 +13,7 @@ const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const SampleManagement = require('../models/SampleManagement');
 const User = require('../models/User');
+const Video = require('../models/Video');
 
 const router = express.Router();
 
@@ -287,13 +289,21 @@ async function importInfluencers(data, companyId) {
 // 解析Excel日期
 function parseExcelDate(value) {
   if (!value) return null;
-  if (value instanceof Date) return value;
+  if (value instanceof Date) {
+    value.setHours(0, 0, 0, 0);
+    return value;
+  }
   if (typeof value === 'number') {
-    return new Date((value - 25569) * 86400 * 1000);
+    const date = new Date((value - 25569) * 86400 * 1000);
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
   if (typeof value === 'string') {
     const date = new Date(value);
-    if (!isNaN(date.getTime())) return date;
+    if (!isNaN(date.getTime())) {
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
   }
   return null;
 }
@@ -308,6 +318,8 @@ async function importSamples(data, companyId, creatorId) {
   let addedCount = 0;
   let updatedCount = 0;
   let failedCount = 0;
+  let videoCreatedCount = 0;
+  let videoUpdatedCount = 0;
   const errors = [];
 
   for (let i = 0; i < data.length; i++) {
@@ -352,7 +364,7 @@ async function importSamples(data, companyId, creatorId) {
         continue;
       }
 
-      // 查找商品
+      // 1. 查找商品
       let productObj = null;
       const productIdInput = String(row['商品ID'] || '').trim();
       
@@ -383,12 +395,42 @@ async function importSamples(data, companyId, creatorId) {
         continue;
       }
 
-      // productId 存 TikTok 商品 ID（纯数字），用于前端展示
-      const productIdObj = productObj.tiktokProductId || productObj._id.toString();
+      // 2. 查找或创建达人（根据达人账号获取Influencer ObjectId）
+      const influencerAccount = String(row['达人账号'] || '').trim();
+      let influencerObj = null;
+      if (influencerAccount) {
+        influencerObj = await Influencer.findOne({ 
+          companyId: companyId,
+          tiktokId: influencerAccount 
+        });
+        // 达人不存在时自动新增
+        if (!influencerObj) {
+          // 先查找业务员（需要在创建达人时绑定BD）
+          const salesmanNameForInfluencer = row['归属业务员'] || '';
+          let assignedTo = null;
+          if (salesmanNameForInfluencer && typeof salesmanNameForInfluencer === 'string') {
+            const bdUser = await User.findOne({ username: salesmanNameForInfluencer });
+            if (bdUser) {
+              assignedTo = bdUser._id;
+            }
+          }
 
-      // salesman 匹配 user 表的 username 获取 ID
+          influencerObj = await Influencer.create({
+            companyId: companyId,
+            tiktokId: influencerAccount,
+            tiktokName: row['达人名称'] || influencerAccount,
+            latestFollowers: parseInt(row['粉丝数']) || 0,
+            status: 'enabled',
+            poolType: assignedTo ? 'private' : 'public',
+            assignedTo: assignedTo
+          });
+          console.log(`新增达人: ${influencerAccount}, BD: ${salesmanNameForInfluencer || '无'}, _id: ${influencerObj._id}`);
+        }
+      }
+
+      // 3. 查找业务员（根据用户名获取User ObjectId）
       const salesmanName = row['归属业务员'] || '';
-      let salesmanId = salesmanName;
+      let salesmanId = null;
       
       if (salesmanName && typeof salesmanName === 'string') {
         const user = await User.findOne({ username: salesmanName });
@@ -397,28 +439,34 @@ async function importSamples(data, companyId, creatorId) {
         }
       }
 
-      // 构建唯一键：日期 + 达人账号 + 商品ID
+      // 4. productId 存 TikTok 商品 ID（纯数字），用于前端展示
+      const productIdForSample = productObj.tiktokProductId || productIdInput;
+
+      // 5. 构建唯一键：日期 + influencerId + productId
       const uniqueKey = {
         date: date,
-        influencerAccount: row['达人账号'],
-        productId: productIdObj
+        influencerId: influencerObj._id,
+        productId: productIdForSample
       };
 
-      // 检查记录是否已存在
+      // 6. 检查记录是否已存在
       const existing = await SampleManagement.findOne({
         companyId: companyId,
         ...uniqueKey
       });
 
-      const sampleData = {
+      // 7. 准备样品数据（新增时用全部字段，更新时排除不应覆盖的字段）
+      const sampleDataForCreate = {
         companyId: companyId,
         creatorId: creatorId,
         date: date,
         productName: row['商品名称'] || '',
-        productId: productIdObj,
-        influencerAccount: row['达人账号'],
+        productId: productIdForSample,
+        influencerId: influencerObj._id,
+        influencerAccount: influencerAccount, // 保留兼容字段
         followerCount: parseInt(row['粉丝数']) || 0,
-        salesman: salesmanId,
+        salesmanId: salesmanId,
+        salesman: salesmanName, // 保留兼容字段
         shippingInfo: row['收货信息'] || '',
         sampleImage: row['样品图片'] || '',
         isSampleSent: row['是否寄样'] === '是' || row['是否寄样'] === true,
@@ -427,19 +475,67 @@ async function importSamples(data, companyId, creatorId) {
         logisticsCompany: row['物流公司'] || '',
         receivedDate: receivedDate,
         fulfillmentTime: row['履约时间'] || '',
-        videoLink: row['达人视频链接'] || '',
-        videoStreamCode: row['视频推流码'] || '',
         isAdPromotion: row['是否投流'] === '是' || row['是否投流'] === true,
         adPromotionTime: adPromotionTime,
         isOrderGenerated: row['是否出单'] === '是' || row['是否出单'] === true
       };
 
+      // 更新时不覆盖的字段
+      const protectedFields = [
+        'isSampleSent', 'sampleStatus', 'refusalReason',
+        'sampleStatusUpdatedBy', 'sampleStatusUpdatedAt',
+        'trackingNumber', 'shippingDate', 'logisticsCompany', 'receivedDate',
+        'fulfillmentTime', 'isAdPromotion', 'adPromotionTime', 'isOrderGenerated',
+        'fulfillmentUpdatedBy', 'fulfillmentUpdatedAt',
+        'adPromotionUpdatedBy', 'adPromotionUpdatedAt'
+      ];
+      const sampleDataForUpdate = { ...sampleDataForCreate };
+      for (const field of protectedFields) {
+        delete sampleDataForUpdate[field];
+      }
+
+      let sampleRecord;
       if (existing) {
-        await SampleManagement.updateOne({ _id: existing._id }, sampleData);
+        await SampleManagement.updateOne({ _id: existing._id }, sampleDataForUpdate);
+        sampleRecord = existing;
         updatedCount++;
       } else {
-        await SampleManagement.create(sampleData);
+        sampleRecord = await SampleManagement.create(sampleDataForCreate);
         addedCount++;
+      }
+
+      // 8. 处理视频数据（如果存在视频链接）
+      const videoLink = row['达人视频链接'] || '';
+      const videoStreamCode = row['视频推流码'] || '';
+      
+      if (videoLink) {
+        // 检查是否已存在视频记录
+        const existingVideo = await Video.findOne({
+          companyId: companyId,
+          sampleId: sampleRecord._id,
+          videoLink: videoLink
+        });
+
+        const videoData = {
+          companyId: companyId,
+          sampleId: sampleRecord._id,
+          productId: productObj._id,
+          tiktokProductId: productIdForSample,
+          influencerId: influencerObj._id,
+          videoLink: videoLink,
+          videoStreamCode: videoStreamCode || '',
+          isAdPromotion: row['是否投流'] === '是' || row['是否投流'] === true,
+          adPromotionTime: adPromotionTime,
+          createdBy: salesmanId || creatorId
+        };
+
+        if (existingVideo) {
+          await Video.updateOne({ _id: existingVideo._id }, videoData);
+          videoUpdatedCount++;
+        } else {
+          await Video.create(videoData);
+          videoCreatedCount++;
+        }
       }
 
     } catch (err) {
@@ -449,15 +545,18 @@ async function importSamples(data, companyId, creatorId) {
     }
   }
 
-  console.log(`导入完成: 新增 ${addedCount}, 更新 ${updatedCount}, 失败 ${failedCount}`);
+  console.log(`导入完成: 样品新增 ${addedCount}, 更新 ${updatedCount}, 失败 ${failedCount}`);
+  console.log(`视频处理: 创建 ${videoCreatedCount}, 更新 ${videoUpdatedCount}`);
 
   return {
     success: true,
-    message: `导入完成：新增 ${addedCount} 条，更新 ${updatedCount} 条，失败 ${failedCount} 条`,
+    message: `导入完成：样品新增 ${addedCount} 条，更新 ${updatedCount} 条，失败 ${failedCount} 条；视频创建 ${videoCreatedCount} 条，更新 ${videoUpdatedCount} 条`,
     count: addedCount + updatedCount,
     added: addedCount,
     updated: updatedCount,
     failed: failedCount,
+    videoCreated: videoCreatedCount,
+    videoUpdated: videoUpdatedCount,
     errors: errors
   };
 }
