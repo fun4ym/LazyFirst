@@ -45,12 +45,12 @@ router.get('/', authenticate, authorize('videos:read', 'videos:create', 'samples
 
     // 登记人筛选
     if (createdBy) {
-      query.createdBy = mongoose.Types.ObjectId(createdBy);
+      query.createdBy = new mongoose.Types.ObjectId(createdBy);
     }
 
     // 样品记录筛选
     if (sampleId) {
-      query.sampleId = mongoose.Types.ObjectId(sampleId);
+      query.sampleId = new mongoose.Types.ObjectId(sampleId);
     }
 
     // 投流状态筛选
@@ -125,7 +125,14 @@ router.get('/', authenticate, authorize('videos:read', 'videos:create', 'samples
 
     const videos = await Video.find(query)
       .populate('sampleId', 'date isOrderGenerated')
-      .populate('productId', 'name tiktokProductId images productImages shopId')
+      .populate({
+        path: 'productId',
+        select: 'name tiktokProductId images productImages shopId',
+        populate: {
+          path: 'shopId',
+          select: 'shopName'
+        }
+      })
       .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
       .populate('createdBy', 'realName username')
       .populate('updatedBy', 'realName username')
@@ -311,7 +318,14 @@ router.get('/:id', authenticate, authorize('videos:read'), async (req, res) => {
       companyId: req.companyId
     })
       .populate('sampleId', 'date isOrderGenerated sampleStatus shippingInfo')
-      .populate('productId', 'name tiktokProductId images productImages shopId')
+      .populate({
+        path: 'productId',
+        select: 'name tiktokProductId images productImages shopId',
+        populate: {
+          path: 'shopId',
+          select: 'shopName'
+        }
+      })
       .populate('influencerId', 'tiktokId tiktokName latestFollowers monthlySalesCount avgVideoViews')
       .populate('createdBy', 'realName username')
       .populate('updatedBy', 'realName username');

@@ -4,6 +4,8 @@ const Product = require('../models/Product');
 const Shop = require('../models/Shop');
 const BaseData = require('../models/BaseData');
 const PageVisit = require('../models/PageVisit');
+const SampleManagement = require('../models/SampleManagement');
+const Video = require('../models/Video');
 
 const router = express.Router();
 
@@ -158,6 +160,173 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({
       success: false,
       message: '获取统计数据失败'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/public/products/statistics
+ * @desc    获取商品统计数据（公开接口，无需登录）
+ * @access  Public
+ * @notes   每行统计商品（product）有多少申样、通过率多少、视频多少个
+ */
+router.get('/statistics', async (req, res) => {
+  try {
+    const { s: identificationCode, page = 1, limit = 20, keyword, categoryId } = req.query;
+
+    if (!identificationCode) {
+      return res.status(400).json({ success: false, message: '缺少识别码参数' });
+    }
+
+    // 1. 通过识别码查找店铺
+    const shop = await Shop.findOne({ identificationCode });
+    if (!shop) {
+      return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
+    }
+
+    // 2. 获取店铺的所有商品（基础查询）
+    const productQuery = { shopId: shop._id, status: 'active' };
+    if (keyword) {
+      productQuery.$or = [
+        { name: { $regex: keyword, $options: 'i' } },
+        { tiktokProductId: { $regex: keyword, $options: 'i' } }
+      ];
+    }
+    if (categoryId) {
+      productQuery.categoryId = categoryId;
+    }
+
+    // 分页参数
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const products = await Product.find(productQuery)
+      .select('_id name tiktokProductId images')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(skip)
+      .lean();
+
+    const total = await Product.countDocuments(productQuery);
+
+    if (products.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          products: [],
+          pagination: { total: 0, page: parseInt(page), limit: parseInt(limit), pages: 0 }
+        }
+      });
+    }
+
+    // 3. 对每个商品进行统计计算
+    const productIds = products.map(p => p._id.toString());
+    const productTikTokIds = products.map(p => p.tiktokProductId).filter(Boolean);
+
+    // 申样统计（SampleManagement）
+    const sampleAggregation = await SampleManagement.aggregate([
+      {
+        $match: {
+          companyId: shop.companyId,
+          $or: [
+            { productId: { $in: productIds } },
+            { productId: { $in: productTikTokIds } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: '$productId',
+          sampleCount: { $sum: 1 },
+          sentCount: {
+            $sum: { $cond: [{ $eq: ['$sampleStatus', 'sent'] }, 1, 0] }
+          },
+          orderGeneratedCount: {
+            $sum: { $cond: [{ $eq: ['$isOrderGenerated', true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // 视频统计（Video）
+    const videoAggregation = await Video.aggregate([
+      {
+        $match: {
+          companyId: shop.companyId,
+          $or: [
+            { productId: { $in: products.map(p => p._id) } },
+            { tiktokProductId: { $in: productTikTokIds } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: { $ifNull: ['$productId', '$tiktokProductId'] },
+          videoCount: { $sum: 1 },
+          adPromotionCount: {
+            $sum: { $cond: [{ $eq: ['$isAdPromotion', true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // 转换为映射方便查找
+    const sampleMap = {};
+    sampleAggregation.forEach(item => {
+      sampleMap[item._id] = item;
+    });
+
+    const videoMap = {};
+    videoAggregation.forEach(item => {
+      videoMap[item._id] = item;
+    });
+
+    // 4. 组装响应数据
+    const productsData = products.map(product => {
+      const productIdStr = product._id.toString();
+      const tiktokId = product.tiktokProductId;
+      
+      // 查找申样统计（优先按TikTok ID，其次按ObjectId）
+      const sampleStats = sampleMap[tiktokId] || sampleMap[productIdStr] || { sampleCount: 0, sentCount: 0, orderGeneratedCount: 0 };
+      const videoStats = videoMap[tiktokId] || videoMap[productIdStr] || { videoCount: 0, adPromotionCount: 0 };
+      
+      // 计算通过率
+      const passRate = sampleStats.sampleCount > 0 
+        ? ((sampleStats.sentCount / sampleStats.sampleCount) * 100).toFixed(1) + '%'
+        : '0%';
+
+      return {
+        _id: product._id,
+        name: product.name,
+        tiktokProductId: product.tiktokProductId,
+        image: product.images?.[0] || '',
+        stats: {
+          sampleCount: sampleStats.sampleCount || 0,
+          sentCount: sampleStats.sentCount || 0,
+          passRate,
+          videoCount: videoStats.videoCount || 0,
+          adPromotionCount: videoStats.adPromotionCount || 0,
+          orderGeneratedCount: sampleStats.orderGeneratedCount || 0
+        }
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        products: productsData,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Public products statistics API error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取商品统计数据失败'
     });
   }
 });

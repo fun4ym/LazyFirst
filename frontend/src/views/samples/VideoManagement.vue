@@ -97,9 +97,9 @@
                     {{ row.productId?.name || $t('common.dash') }}
                   </div>
                 </el-tooltip>
-                <div class="shop-name" v-if="row.productId?.shopName || row.productId?.shop?.shopName">
-<ShopIcon :size="32" />
-                  {{ row.productId?.shopName || row.productId?.shop?.shopName }}
+                <div class="shop-name" v-if="getShopName(row.productId)">
+                  <ShopIcon :size="16" />
+                  {{ getShopName(row.productId) }}
                 </div>
                 <div class="shop-name" v-else>{{ $t('common.doubleDash') }}</div>
               </div>
@@ -107,33 +107,47 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Influencer" width="280">
+        <el-table-column :label="$t('videos.influencer')" width="280">
           <template #default="{ row }">
-            <InfluencerCell :influencer="{
-              tiktokId: row.influencerId?.tiktokId,
-              tiktokUsername: row.influencerId?.tiktokName,
-              latestFollowers: row.influencerId?.latestFollowers,
-              latestGmv: row.influencerId?.latestGmv,
-              avgVideoViews: row.influencerId?.avgVideoViews,
-              monthlySalesCount: row.influencerId?.monthlySalesCount
-            }" :showGmv="!!row.influencerId?.latestGmv" :showFollowers="!!row.influencerId?.latestFollowers" :showAvgViews="!!row.influencerId?.avgVideoViews" :showMonthlySales="!!row.influencerId?.monthlySalesCount" />
+            <div v-if="row.influencerId">
+              <InfluencerCell :influencer="{
+                tiktokId: row.influencerId?.tiktokId,
+                tiktokUsername: row.influencerId?.tiktokName,
+                latestFollowers: row.influencerId?.latestFollowers,
+                latestGmv: row.influencerId?.latestGmv,
+                avgVideoViews: row.influencerId?.avgVideoViews,
+                monthlySalesCount: row.influencerId?.monthlySalesCount
+              }" :showGmv="!!row.influencerId?.latestGmv" :showFollowers="!!row.influencerId?.latestFollowers" :showAvgViews="!!row.influencerId?.avgVideoViews" :showMonthlySales="!!row.influencerId?.monthlySalesCount" />
+            </div>
+            <span v-else>{{ $t('common.dash') }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column :label="$t('samples.videoLink')" min-width="180">
+        <el-table-column :label="$t('samples.videoLink')" min-width="120">
           <template #default="{ row }">
-            <div class="text-truncate">
-              <a v-if="row.videoLink" :href="row.videoLink" target="_blank" class="video-link">
-                {{ row.videoLink }}
-              </a>
-              <span v-else>{{ $t('common.dash') }}</span>
+            <div v-if="row.videoLink" class="link-actions">
+              <el-button link type="primary" size="small" @click="openVideoLink(row.videoLink)">
+                {{ $t('videos.clickToJump') }}
+              </el-button>
+              <el-icon class="copy-icon" @click="copyToClipboard(row.videoLink)">
+                <CopyDocument />
+              </el-icon>
             </div>
+            <span v-else>{{ $t('common.dash') }}</span>
           </template>
         </el-table-column>
 
         <el-table-column :label="$t('samples.videoStreamCode')" width="120">
           <template #default="{ row }">
-            {{ row.videoStreamCode || $t('common.dash') }}
+            <div v-if="row.videoStreamCode" class="stream-code-actions">
+              <el-button link type="primary" size="small" @click="viewStreamCode(row.videoStreamCode)">
+                {{ $t('videos.clickToView') }}
+              </el-button>
+              <el-icon class="copy-icon" @click="copyToClipboard(row.videoStreamCode)">
+                <CopyDocument />
+              </el-icon>
+            </div>
+            <span v-else>{{ $t('common.dash') }}</span>
           </template>
         </el-table-column>
 
@@ -305,8 +319,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, CopyDocument } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import AuthManager from '@/utils/auth'
 import InfluencerCell from '@/components/InfluencerCell.vue'
@@ -383,6 +397,61 @@ const canSelectOtherOperator = computed(() => {
   const userDataScope = AuthManager.getUserDataScope?.('videos') || 'all'
   return userDataScope !== 'self'
 })
+
+// 打开视频链接
+function openVideoLink(link) {
+  window.open(link, '_blank')
+}
+
+// 复制到剪贴板
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success(t('common.copySuccess'))
+  } catch (err) {
+    console.error('复制失败:', err)
+    ElMessage.error(t('common.copyFailed'))
+  }
+}
+
+// 查看投流码（弹窗显示）
+function viewStreamCode(code) {
+  ElMessageBox.alert(code, t('samples.videoStreamCode'), {
+    confirmButtonText: t('common.close'),
+    customClass: 'stream-code-modal',
+    dangerouslyUseHTMLString: true,
+    // 允许复制
+    beforeClose: (action, instance, done) => {
+      if (action === 'confirm') {
+        done()
+      }
+    }
+  })
+}
+
+// 获取店铺名称
+function getShopName(product) {
+  if (!product) return ''
+  // 优先从populate后的shopId对象获取店铺名称
+  if (product.shopId && typeof product.shopId === 'object' && product.shopId.shopName) {
+    return product.shopId.shopName
+  }
+  // 其次从product.shopName获取（可能在某些API中直接注入）
+  if (product.shopName) return product.shopName
+  // 尝试其他可能的路径
+  if (product.shopId?.name) return product.shopId.name
+  if (product.shopId?.title) return product.shopId.title
+  if (product.shop?.shopName) return product.shop.shopName
+  if (product.shop?.name) return product.shop.name
+  if (product.shop?.title) return product.shop.title
+  if (product.shop?.storeName) return product.shop.storeName
+  if (product.shop?.shopTitle) return product.shop.shopTitle
+  if (product.shop?.displayName) return product.shop.displayName
+  if (product.storeName) return product.storeName
+  if (product.store?.name) return product.store.name
+  // 如果shopId是字符串（未populate），不显示ObjectId，返回空
+  return ''
+}
 
 // 加载用户列表
 async function loadUsers() {
@@ -857,5 +926,22 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+
+/* 链接操作按钮 */
+.link-actions,
+.stream-code-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-icon {
+  color: #7b1fa2;
+  cursor: pointer;
+  font-size: 14px;
+}
+.copy-icon:hover {
+  color: #5a0f7a;
 }
 </style>

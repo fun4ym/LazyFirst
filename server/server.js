@@ -110,6 +110,7 @@ app.use('/api/init-import', initImportRoutes);
 app.use('/api/recruitments', recruitmentRoutes);
 app.use('/api/public/recruitment', publicRecruitmentRoutes);
 app.use('/api/public/products', publicProductsRoutes);
+app.use('/api/public/videos', require('./routes/public-videos'));
 app.use('/api/videos', videoRoutes);
 
 // 错误处理

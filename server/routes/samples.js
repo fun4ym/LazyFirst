@@ -102,7 +102,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
 
     // ★ 业务员筛选（重构后salesmanId是ObjectId）
     if (salesmanId) {
-      query.salesmanId = mongoose.Types.ObjectId(salesmanId);
+      query.salesmanId = new mongoose.Types.ObjectId(salesmanId);
     } else if (salesman) {
       // 模糊搜索：按realName或username查User再取_id
       const users = await User.find({
@@ -162,7 +162,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
 
     // 店铺筛选：样品可以通过 shopId 直接匹配，或通过 productId 匹配店铺产品
     if (shopId) {
-      const shopObjectId = mongoose.Types.ObjectId(shopId);
+      const shopObjectId = new mongoose.Types.ObjectId(shopId);
       const shopProducts = await Product.find({ shopId: shopObjectId })
         .select('tiktokProductId _id').lean();
 
@@ -424,12 +424,16 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       }
     }
 
-    // 检查当天是否已有相同记录（date + influencerId + productId）
+    // ★ 检查当天是否已有相同记录（date + influencerId + productId）
+    // 同时检查 ObjectId 和 TikTok商品ID 两种格式
     const sameDayRecord = await SampleManagement.findOne({
       companyId: req.companyId,
       date: new Date(date),
       influencerId: influencerId,
-      productId: productId
+      $or: [
+        { productId: productId }, // ObjectId 格式
+        { productId: product.tiktokProductId } // TikTok商品ID 格式
+      ]
     });
 
     if (sameDayRecord) {
@@ -439,11 +443,15 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       });
     }
 
-    // 检查历史重复记录
+    // ★ 检查历史重复记录
+    // 同时检查 ObjectId 和 TikTok商品ID 两种格式
     const previousRecords = await SampleManagement.find({
       companyId: req.companyId,
       influencerId: influencerId,
-      productId: productId,
+      $or: [
+        { productId: productId }, // ObjectId 格式
+        { productId: product.tiktokProductId } // TikTok商品ID 格式
+      ],
       $or: [
         { date: { $lt: new Date(date) } },
         { date: new Date(date), createdAt: { $lt: new Date() } }
@@ -461,12 +469,12 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       createdAt: record.createdAt
     }));
 
-    // 构建数据（★ 不再存冗余字段）
+    // ★ 构建数据（存储 TikTok 商品 ID）
     const sampleData = {
       companyId: req.companyId,
       creatorId: req.user._id,
       date: new Date(date),
-      productId: productId,
+      productId: product.tiktokProductId || productId, // 优先使用 TikTok 商品 ID
       influencerId: influencerId,
       salesmanId: salesmanId || req.user._id,
       shippingInfo: shippingInfo || '',
@@ -494,7 +502,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       const videoData = {
         companyId: req.companyId,
         sampleId: sample._id,
-        productId: productId,
+        productId: product.tiktokProductId || productId, // 优先使用 TikTok 商品 ID
         influencerId: influencerId,
         videoLink: videoLink || '',
         videoStreamCode: videoStreamCode || '',
@@ -554,6 +562,9 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
  */
 router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update'), async (req, res) => {
   try {
+    console.log('[Update Sample] 请求数据:', JSON.stringify(req.body));
+    console.log('[Update Sample] 样品ID:', req.params.id);
+    
     const { sampleStatus, refusalReason, ...restBody } = req.body;
     const updateData = { ...restBody };
 
@@ -572,10 +583,26 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
           updateData.trackingNumber = req.body.trackingNumber;
         }
         if (req.body.shippingDate !== undefined) {
-          updateData.shippingDate = new Date(req.body.shippingDate);
+          try {
+            updateData.shippingDate = new Date(req.body.shippingDate);
+          } catch (dateError) {
+            console.error('[Update Sample] 发货日期格式错误:', req.body.shippingDate, dateError);
+            return res.status(400).json({
+              success: false,
+              message: '发货日期格式无效'
+            });
+          }
         }
         if (req.body.receivedDate !== undefined) {
-          updateData.receivedDate = new Date(req.body.receivedDate);
+          try {
+            updateData.receivedDate = new Date(req.body.receivedDate);
+          } catch (dateError) {
+            console.error('[Update Sample] 收样日期格式错误:', req.body.receivedDate, dateError);
+            return res.status(400).json({
+              success: false,
+              message: '收样日期格式无效'
+            });
+          }
         }
       }
     }
@@ -586,13 +613,117 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
     }
 
     // 基础信息更新（date/salesmanId/shippingInfo/isOrderGenerated等）
-    if (updateData.salesmanId) {
-      updateData.salesmanId = mongoose.Types.ObjectId(updateData.salesmanId);
+    console.log('[Update Sample] salesmanId原始值:', JSON.stringify(updateData.salesmanId), '类型:', typeof updateData.salesmanId);
+    console.log('[Update Sample] 完整updateData:', JSON.stringify(Object.keys(updateData)));
+    
+    // 处理salesmanId：如果不存在于updateData中，跳过；如果为空值，设为null
+    if (updateData.salesmanId !== undefined) {
+      if (updateData.salesmanId && updateData.salesmanId.toString().trim() !== '') {
+        try {
+          // 检查是否为有效ObjectId
+          console.log('[Update Sample] 检查salesmanId有效性:', updateData.salesmanId);
+          if (mongoose.Types.ObjectId.isValid(updateData.salesmanId)) {
+            const convertedId = new mongoose.Types.ObjectId(updateData.salesmanId);
+            console.log('[Update Sample] salesmanId转换为ObjectId成功:', convertedId);
+            updateData.salesmanId = convertedId;
+          } else {
+            console.error('[Update Sample] 无效的salesmanId:', updateData.salesmanId);
+            return res.status(400).json({
+              success: false,
+              message: '业务员ID格式无效'
+            });
+          }
+        } catch (idError) {
+          console.error('[Update Sample] salesmanId转换错误:', updateData.salesmanId, idError.message);
+          return res.status(400).json({
+            success: false,
+            message: '业务员ID处理失败: ' + idError.message
+          });
+        }
+      } else {
+        // 空字符串或null，设置为null
+        console.log('[Update Sample] salesmanId为空，设置为null');
+        updateData.salesmanId = null;
+      }
+    } else {
+      // 字段不存在，从updateData中删除，避免覆盖
+      delete updateData.salesmanId;
+      console.log('[Update Sample] salesmanId未提供，跳过');
+    }
+
+    // ★ 处理productId字段：智能转换
+    if (updateData.productId !== undefined) {
+      const productIdValue = String(updateData.productId);
+      
+      // 检查是否为ObjectId格式
+      if (/^[0-9a-fA-F]{24}$/.test(productIdValue)) {
+        // 如果是ObjectId格式，尝试查找对应的Product获取tiktokProductId
+        try {
+          const product = await Product.findOne({
+            _id: productIdValue,
+            companyId: req.companyId
+          }).select('tiktokProductId').lean();
+          
+          if (product && product.tiktokProductId) {
+            // 找到对应的TikTok商品ID，存储它
+            updateData.productId = product.tiktokProductId;
+            console.log('[Update Sample] 转换Product ObjectId为TikTok ID:', {
+              input: productIdValue,
+              output: product.tiktokProductId
+            });
+          } else {
+            // 没找到对应商品，保持原值（可能是早期数据）
+            updateData.productId = productIdValue;
+            console.log('[Update Sample] 未找到对应Product，保持原值:', productIdValue);
+          }
+        } catch (productError) {
+          console.error('[Update Sample] 查询Product失败:', productError);
+          updateData.productId = productIdValue;
+        }
+      } else {
+        // 不是ObjectId格式，直接作为字符串存储（可能是TikTok商品ID）
+        updateData.productId = productIdValue;
+        console.log('[Update Sample] 使用原始productId（非ObjectId格式）:', productIdValue);
+      }
+    }
+
+    // ★ 处理influencerId字段：验证ObjectId
+    if (updateData.influencerId !== undefined) {
+      if (updateData.influencerId && updateData.influencerId.toString().trim() !== '') {
+        try {
+          if (mongoose.Types.ObjectId.isValid(updateData.influencerId)) {
+            updateData.influencerId = new mongoose.Types.ObjectId(updateData.influencerId);
+            console.log('[Update Sample] influencerId转换为ObjectId:', updateData.influencerId);
+          } else {
+            console.error('[Update Sample] 无效的influencerId:', updateData.influencerId);
+            return res.status(400).json({
+              success: false,
+              message: '达人ID格式无效'
+            });
+          }
+        } catch (idError) {
+          console.error('[Update Sample] influencerId转换错误:', updateData.influencerId, idError.message);
+          return res.status(400).json({
+            success: false,
+            message: '达人ID处理失败: ' + idError.message
+          });
+        }
+      } else {
+        // 空字符串或null，设置为null
+        updateData.influencerId = null;
+        console.log('[Update Sample] influencerId为空，设置为null');
+      }
+    } else {
+      // 字段不存在，从updateData中删除
+      delete updateData.influencerId;
+      console.log('[Update Sample] influencerId未提供，跳过');
     }
 
     // ★ 注意：videoLink/videoStreamCode/isAdPromotion 的更新现在通过 Video API 完成
     // 这里只保留样品级别的快捷标记同步
 
+    console.log('[Update Sample] 更新数据:', JSON.stringify(updateData));
+    
     const sample = await SampleManagement.findOneAndUpdate(
       { _id: req.params.id, companyId: req.companyId },
       updateData,
@@ -600,12 +731,15 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
     );
 
     if (!sample) {
+      console.error('[Update Sample] 样品不存在:', req.params.id);
       return res.status(404).json({
         success: false,
         message: '样品申请不存在'
       });
     }
 
+    console.log('[Update Sample] 更新成功:', sample._id);
+    
     res.json({
       success: true,
       message: '更新样品申请成功',
@@ -613,10 +747,11 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
     });
 
   } catch (error) {
-    console.error('Update sample error:', error);
+    console.error('[Update Sample] 错误详情:', error);
+    console.error('[Update Sample] 错误堆栈:', error.stack);
     res.status(500).json({
       success: false,
-      message: '更新样品申请失败'
+      message: '更新样品申请失败: ' + error.message
     });
   }
 });
@@ -745,10 +880,43 @@ router.post('/:id/videos', authenticate, authorize('videos:create', 'samplesBd:c
 
     const { videoLink, videoStreamCode, isAdPromotion, adPromotionTime } = req.body;
 
+    // 查找正确的product ObjectId
+    let productObjectId = null;
+    const sampleProductId = sample.productId;
+    
+    // 先尝试按tiktokProductId查找
+    let product = await Product.findOne({
+      companyId: req.companyId,
+      tiktokProductId: sampleProductId
+    });
+    
+    if (product) {
+      productObjectId = product._id;
+    } else {
+      // 如果不是tiktokProductId，尝试按_id查找（可能是早期导入的ObjectId字符串）
+      if (mongoose.Types.ObjectId.isValid(sampleProductId)) {
+        product = await Product.findOne({
+          companyId: req.companyId,
+          _id: sampleProductId
+        });
+        if (product) {
+          productObjectId = product._id;
+        }
+      }
+    }
+    
+    if (!productObjectId) {
+      return res.status(400).json({
+        success: false,
+        message: `无法找到对应的商品记录，商品ID: ${sampleProductId}`
+      });
+    }
+
     const videoData = {
       companyId: req.companyId,
       sampleId: sample._id,
-      productId: sample.productId,
+      productId: productObjectId,
+      tiktokProductId: sampleProductId, // 冗余存储TikTok商品ID方便查询
       influencerId: sample.influencerId,
       videoLink: videoLink || '',
       videoStreamCode: videoStreamCode || '',

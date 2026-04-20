@@ -1363,11 +1363,12 @@ const handleSubmit = async () => {
       creating.value = true
       try {
         // 编辑时只传样品级字段，视频相关字段通过Video API操作
+        // 清理无效的ObjectId：空字符串、null、undefined不发送，让后端保留原值
         const updatePayload = {
           date: createForm.date,
-          productId: createForm.productId,
-          influencerId: createForm.influencerId,
-          salesmanId: createForm.salesmanId,
+          productId: createForm.productId || undefined,
+          influencerId: createForm.influencerId || undefined,
+          salesmanId: createForm.salesmanId || undefined,
           shippingInfo: createForm.shippingInfo,
           isSampleSent: createForm.isSampleSent,
           trackingNumber: createForm.trackingNumber,
@@ -1375,6 +1376,8 @@ const handleSubmit = async () => {
           logisticsCompany: createForm.logisticsCompany,
           isOrderGenerated: createForm.isOrderGenerated
         }
+        // 移除undefined的字段，避免发送无效值
+        Object.keys(updatePayload).forEach(key => updatePayload[key] === undefined && delete updatePayload[key])
         await request.put(`/samples/${editingSample.value._id}`, updatePayload)
         ElMessage.success(t('samples.saveSuccess'))
         createDialogVisible.value = false

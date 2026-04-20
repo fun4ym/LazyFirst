@@ -1780,7 +1780,10 @@ export default {
     linkSampleRecord: 'เชื่อมโยงบันทึกตัวอย่าง',
     sampleFilteredOptions: 'บันทึกตัวอย่างที่กรองแล้ว',
     sampleSelectionPlaceholder: 'กรุณาเลือกบันทึกตัวอย่าง',
-    sampleDateAndStatus: '{date} - {status}'
+    sampleDateAndStatus: '{date} - {status}',
+    influencer: 'มีเดียร์',
+    clickToJump: 'คลิกเพื่อข้ามไป',
+    clickToView: 'คลิกเพื่อดู'
   },
   // แดชบอร์ด
   dashboard: {
