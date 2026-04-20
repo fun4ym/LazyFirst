@@ -236,16 +236,27 @@ router.put('/batch', async (req, res) => {
     const shop = await Shop.findOne({ identificationCode });
     if (!shop) return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
 
-    // ★ 获取店铺产品的_id列表进行匹配（样本的productId存储的是Product._id的字符串表示）
-    const products = await Product.find({ shopId: shop._id }).select('_id');
+    // ★ 获取店铺产品的_id和tiktokProductId列表进行匹配
+    const products = await Product.find({ shopId: shop._id }).select('_id tiktokProductId');
     const productObjectIds = products.map(p => p._id.toString()).filter(Boolean);
-    
-    if (productObjectIds.length === 0) {
+    const productTikTokIds = products.map(p => p.tiktokProductId).filter(Boolean);
+
+    // ★ 构建查询条件：与GET接口保持一致，支持productId(ObjectId/TikTokID)和shopId匹配
+    const orConditions = [];
+    if (productObjectIds.length > 0) {
+      orConditions.push({ productId: { $in: productObjectIds } });
+    }
+    if (productTikTokIds.length > 0) {
+      orConditions.push({ productId: { $in: productTikTokIds } });
+    }
+    orConditions.push({ shopId: shop._id });
+
+    if (orConditions.length === 0) {
       return res.json({ success: false, message: '该店铺没有有效的产品ID' });
     }
 
-    const query = { _id: { $in: idsArray }, productId: { $in: productObjectIds } };
-    const { logisticsCompany, trackingNumber } = req.query;
+    const query = { _id: { $in: idsArray }, $or: orConditions };
+    const { logisticsCompany, trackingNumber, refusalReason } = req.query;
     const updateData = {};
 
     if (sampleStatus !== undefined) {
@@ -255,6 +266,9 @@ router.put('/batch', async (req, res) => {
       if (sampleStatus === 'sent') {
         if (logisticsCompany !== undefined) updateData.logisticsCompany = logisticsCompany;
         if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber;
+      }
+      if (sampleStatus === 'refused') {
+        if (refusalReason !== undefined) updateData.refusalReason = refusalReason;
       }
     }
 
