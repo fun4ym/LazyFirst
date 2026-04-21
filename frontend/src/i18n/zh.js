@@ -55,7 +55,8 @@ export default {
     dash: '-',
     doubleDash: '--',
     countUnit: '条',
-    copy: '复制'
+    copy: '复制',
+    fuzzySearch: '模糊搜索'
   },
   menu: {
     dashboard: '仪表盘',
@@ -241,6 +242,7 @@ export default {
     viewOrders: '查订单',
     // 新增
     categoryTag: '归类标签',
+    poolType: '达人池类型',
     publicSea: '公海',
     privateSea: '私海',
     batchClaim: '批量领取',
@@ -709,7 +711,9 @@ export default {
     loadBillDetailFailed: '加载账单详情失败',
     selectBDTip: '请选择BD',
     enterBankFlowNoTip: '请输入银行流水号',
-    addAtLeastOne: '请至少添加一条结算记录'
+    addAtLeastOne: '请至少添加一条结算记录',
+    completed: '已完成',
+    inProgress: '进行中'
   },
   shop: {
     shopList: '店铺列表',
@@ -1050,7 +1054,9 @@ export default {
     noData: '暂无数据',
     bdOnly: '数据概览仅对BD用户开放',
     passRate: '通过率',
-    loadFailed: '加载数据概览失败'
+    loadFailed: '加载数据概览失败',
+    publicRecruitment: '公开招募',
+    noPublicRecruitment: '暂无公开招募'
   },
   bdDaily: {
     title: 'BD每日统计',
@@ -1979,7 +1985,24 @@ export default {
     squareRate: '广场佣金率',
     promoRate: '推广收益',
     extraPromo: '推广加成',
-    disabled: '该招募已停用'
+    disabled: '该招募已停用',
+    pageStyle: '页面样式',
+    identificationCode: '识别码',
+    refresh: '刷新',
+    // 页面样式
+    styleWarm: '温暖风',
+    styleSweet: '甜美风',
+    styleTech: '科技风',
+    themeColor: '主题色',
+    // 预设配色
+    colorRomanticPurple: '浪漫紫',
+    colorVibrantOrange: '活力橙',
+    colorFreshGreen: '清新绿',
+    colorGirlPink: '少女粉',
+    colorSkyBlue: '天空蓝',
+    colorRoseGold: '玫瑰金',
+    colorMintGreen: '薄荷绿',
+    colorSunsetOrange: '日落橙'
   },
   // 视频登记
   videos: {

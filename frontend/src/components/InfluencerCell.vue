@@ -7,26 +7,26 @@
       </el-icon>
     </div>
     <div class="influencer-stats">
-      <el-tooltip :content="$t('influencer.gmv')" placement="top" :show-after="300">
-        <div class="stat-item" v-if="showGmv && influencer.latestGmv">
+      <el-tooltip v-if="showGmv && influencer.latestGmv" :content="$t('influencer.gmv')" placement="top" :show-after="300">
+        <div class="stat-item">
           <span class="stat-label">GMV</span>
           <span class="stat-value">{{ formatNumber(influencer.latestGmv) }}</span>
         </div>
       </el-tooltip>
-      <el-tooltip :content="$t('influencer.followers')" placement="top" :show-after="300">
-        <div class="stat-item" v-if="showFollowers && influencer.latestFollowers">
+      <el-tooltip v-if="showFollowers && influencer.latestFollowers" :content="$t('influencer.followers')" placement="top" :show-after="300">
+        <div class="stat-item">
           <span class="stat-label">FV</span>
           <span class="stat-value">{{ formatNumber(influencer.latestFollowers) }}</span>
         </div>
       </el-tooltip>
-      <el-tooltip :content="$t('influencer.avgViews')" placement="top" :show-after="300">
-        <div class="stat-item" v-if="showAvgViews && influencer.avgVideoViews">
+      <el-tooltip v-if="showAvgViews && influencer.avgVideoViews" :content="$t('influencer.avgViews')" placement="top" :show-after="300">
+        <div class="stat-item">
           <span class="stat-label">APV</span>
           <span class="stat-value">{{ formatNumber(influencer.avgVideoViews) }}</span>
         </div>
       </el-tooltip>
-      <el-tooltip :content="$t('influencer.monthlySales')" placement="top" :show-after="300">
-        <div class="stat-item" v-if="showMonthlySales && influencer.monthlySalesCount">
+      <el-tooltip v-if="showMonthlySales && influencer.monthlySalesCount" :content="$t('influencer.monthlySales')" placement="top" :show-after="300">
+        <div class="stat-item">
           <span class="stat-label">MSS</span>
           <span class="stat-value">{{ formatNumber(influencer.monthlySalesCount) }}</span>
         </div>

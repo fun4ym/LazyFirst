@@ -36,7 +36,7 @@
             </el-table-column>
             <el-table-column prop="ref" label="关联表" width="120">
               <template #default="{ row }">
-                <el-link v-if="row.ref" type="primary" :underline="false">
+                <el-link v-if="row.ref" type="primary" underline="never">
                   {{ row.ref }}
                 </el-link>
                 <span v-else>-</span>

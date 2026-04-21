@@ -83,7 +83,7 @@
         <el-table-column :label="$t('influencer.bd')" width="80" fixed="left">
           <template #default="{ row }">
             <el-tag v-if="row.poolType === 'public'" type="info">{{ $t('influencer.publicSea') }}</el-tag>
-            <el-tag v-else type="success">{{ row.assignedTo?.realName || row.assignedTo?.username }}</el-tag>
+            <el-tag v-else type="success">{{ row.assignedTo?.realName || row.assignedTo?.username || '-' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
@@ -662,10 +662,10 @@ const filters = reactive({
   status: '',
   categoryTag: '',
   keyword: '',
-  gmvFrom: '',
-  monthlySalesFrom: '',
+  gmvFrom: null,
+  monthlySalesFrom: null,
   followersFrom: '',
-  avgViewsFrom: ''
+  avgViewsFrom: null
 })
 
 const pagination = reactive({

@@ -55,7 +55,8 @@ export default {
     dash: '-',
     doubleDash: '--',
     countUnit: 'items',
-    copy: 'Copy'
+    copy: 'Copy',
+    fuzzySearch: 'Fuzzy Search'
   },
   menu: {
     dashboard: 'Dashboard',
@@ -240,6 +241,7 @@ export default {
     viewOrders: 'View Orders',
     // New
     categoryTag: 'Category Tag',
+    poolType: 'Pool Type',
     publicSea: 'Public Pool',
     privateSea: 'Private Pool',
     batchClaim: 'Batch Claim',
@@ -842,7 +844,9 @@ export default {
     noData: 'No Data',
     bdOnly: 'Data overview is only available for BD users',
     passRate: 'Pass Rate',
-    loadFailed: 'Failed to load data overview'
+    loadFailed: 'Failed to load data overview',
+    publicRecruitment: 'Public Recruitment',
+    noPublicRecruitment: 'No Public Recruitment'
   },
   bdDaily: {
     title: 'BD Daily Statistics',
@@ -978,7 +982,9 @@ export default {
     importTip: 'Imported orders will be merged with existing data',
     importSuccess: 'Import successful',
     importFailed: 'Import failed',
-    noPermission: 'Only admin and BD roles can import orders'
+    noPermission: 'Only admin and BD roles can import orders',
+    completed: 'Completed',
+    inProgress: 'In Progress'
   },
   mobile: {
     profile: {
@@ -1797,7 +1803,12 @@ export default {
     squareRate: 'Square Rate',
     promoRate: 'Promo Rate',
     extraPromo: 'Extra Promo',
-    disabled: 'This recruitment has been disabled'
+    disabled: 'This recruitment has been disabled',
+    // Page Style
+    styleWarm: 'Warm Style',
+    styleSweet: 'Sweet Style',
+    styleTech: 'Tech Style',
+    themeColor: 'Theme Color'
   },
   // Video Register
   videos: {

@@ -22,11 +22,13 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
     // 搜索关键词（支持商品名称、TikTok商品ID、SKU、店铺名称搜索）
     const searchKeyword = search || req.query.keyword;
     if (searchKeyword) {
+      console.log('[商品管理] 搜索关键词:', searchKeyword);
       // 先查找匹配的店铺ID
       const matchingShops = await Shop.find({
         shopName: { $regex: searchKeyword, $options: 'i' }
       }).select('_id').lean();
       const keywordShopIds = matchingShops.map(s => s._id);
+      console.log('[商品管理] 匹配店铺ID:', keywordShopIds);
 
       query.$or = [
         { name: { $regex: searchKeyword, $options: 'i' } },
@@ -34,6 +36,7 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
         { tiktokProductId: { $regex: searchKeyword, $options: 'i' } },
         ...(keywordShopIds.length > 0 ? [{ shopId: { $in: keywordShopIds } }] : [])
       ];
+      console.log('[商品管理] 查询条件:', JSON.stringify(query.$or, null, 2));
     }
 
     if (status) {
@@ -53,6 +56,9 @@ router.get('/', authenticate, authorize('products:read'), filterByDataScope({ mo
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ createdAt: -1 });
+    
+    console.log('[商品管理] 查询结果数量:', products.length);
+    console.log('[商品管理] 查询结果详情:', JSON.stringify(products.map(p => ({ _id: p._id, name: p.name, tiktokProductId: p.tiktokProductId, productImages: p.productImages })), null, 2));
 
     // 获取所有商品关联的店铺ID
     const shopIds = products.filter(p => p.shopId).map(p => p.shopId._id || p.shopId);

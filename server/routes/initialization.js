@@ -227,6 +227,34 @@ async function importInfluencers(data, companyId) {
 
   for (const row of data) {
     const originalId = String(row.id);
+    
+    // 查找业务员（BD）用户ID
+    let assignedTo = null;
+    // 优先使用 remark 列，然后 create_by，最后 update_by
+    const remarkVal = row.remark;
+    const createByVal = row.create_by;
+    const updateByVal = row.update_by;
+    
+    if (remarkVal !== undefined && remarkVal !== null && remarkVal !== '') {
+      const user = await User.findOne({ username: String(remarkVal) }).lean();
+      if (user) {
+        assignedTo = user._id;
+      }
+    } else if (createByVal !== undefined && createByVal !== null && createByVal !== '') {
+      const user = await User.findOne({ username: String(createByVal) }).lean();
+      if (user) {
+        assignedTo = user._id;
+      }
+    } else if (updateByVal !== undefined && updateByVal !== null && updateByVal !== '') {
+      const user = await User.findOne({ username: String(updateByVal) }).lean();
+      if (user) {
+        assignedTo = user._id;
+      }
+    }
+    
+    // poolType 根据是否有 assignedTo 决定
+    const poolType = assignedTo ? 'private' : 'public';
+    
     // 达人数据
     const influencer = {
       _id: originalId,
@@ -234,7 +262,9 @@ async function importInfluencers(data, companyId) {
       tiktokId: String(row.expert_account || ''),
       tiktokName: row.expert_name || '',
       status: 'enabled',
-      poolType: 'private',
+      poolType: poolType,
+      assignedTo: assignedTo,
+      assignedAt: assignedTo ? new Date() : null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -249,8 +279,8 @@ async function importInfluencers(data, companyId) {
         influencerId: originalId,
         followers: parseInt(row.fans_num) || 0,
         gmv: parseFloat(row.month_gmv) || 0,
-        poolType: 'private',
-        assignedTo: row.update_by || null,
+        poolType: poolType,
+        assignedTo: assignedTo,
         latestMaintainerId: row.remark || null,
         latestMaintainerName: row.remark || '',
         remark: row.remark || '',

@@ -1724,7 +1724,24 @@ export default {
     squareRate: 'อัตราค่าคอมสแควร์',
     promoRate: 'อัตราโปรโมชั่น',
     extraPromo: 'โปรโมชั่นเพิ่ม',
-    disabled: 'การรับสมัครนี้ถูกปิดใช้งาน'
+    disabled: 'การรับสมัครนี้ถูกปิดใช้งาน',
+    pageStyle: 'รูปแบบหน้า',
+    identificationCode: 'รหัสระบุ',
+    refresh: 'รีเฟรช',
+    // รูปแบบหน้า
+    styleWarm: 'สไตล์อบอุ่น',
+    styleSweet: 'สไตล์หวาน',
+    styleTech: 'สไตล์เทคโนโลยี',
+    themeColor: 'สีธีม',
+    // สีที่กำหนดไว้ล่วงหน้า
+    colorRomanticPurple: 'สีม่วงโรแมนติก',
+    colorVibrantOrange: 'สีส้มสดใส',
+    colorFreshGreen: 'สีเขียวสดชื่น',
+    colorGirlPink: 'สีชมพูสาว',
+    colorSkyBlue: 'สีฟ้าท้องฟ้า',
+    colorRoseGold: 'สีโรสโกลด์',
+    colorMintGreen: 'สีเขียวมินต์',
+    colorSunsetOrange: 'สีส้มตะวันตกดิน'
   },
   // ลงทะเบียนวิดีโอ
   videos: {
@@ -1820,7 +1837,9 @@ export default {
     noData: 'ไม่มีข้อมูล',
     bdOnly: 'ภาพรวมข้อมูลเฉพาะผู้ใช้ BD เท่านั้น',
     passRate: 'อัตราผ่าน',
-    loadFailed: 'โหลดภาพรวมข้อมูลล้มเหลว'
+    loadFailed: 'โหลดภาพรวมข้อมูลล้มเหลว',
+    publicRecruitment: 'การสรรหาสาธารณะ',
+    noPublicRecruitment: 'ไม่มีงานสรรหาสาธารณะ'
   },
   // สถานะ
   status: {

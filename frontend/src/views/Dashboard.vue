@@ -1,5 +1,67 @@
 <template>
   <div class="dashboard">
+    <!-- 公开招募卡片 -->
+    <el-card shadow="hover" class="public-recruitment-card" style="margin-bottom: 20px;">
+      <template #header>
+        <div class="card-header-title">
+          <span>{{ $t('dashboard.publicRecruitment') }}</span>
+        </div>
+      </template>
+      <div class="public-recruitment-list">
+        <div 
+          v-for="rec in publicRecruitments" 
+          :key="rec._id" 
+          class="recruitment-item"
+          :style="{ borderColor: rec.pageStyle?.themeColor || '#775999' }"
+          @click="openPublicRecruitment(rec.identificationCode)"
+        >
+          <div class="recruitment-header">
+            <div class="recruitment-name">{{ rec.name }}</div>
+            <div class="recruitment-products-count">
+              <el-icon><Box /></el-icon>
+              <span>{{ rec.products?.length || 0 }} 产品</span>
+            </div>
+          </div>
+          
+          <div v-if="rec.description" class="recruitment-description">
+            {{ rec.description }}
+          </div>
+          
+          <div class="recruitment-requirements">
+            <el-tooltip v-if="rec.requirementGmv" :content="$t('recruitment.requirementGmv')" placement="top" :show-after="300">
+              <div class="requirement-item">
+                <el-icon><Money /></el-icon>
+                <span class="requirement-label">GMV</span>
+                <span class="requirement-value">฿{{ formatMoney(rec.requirementGmv) }}</span>
+              </div>
+            </el-tooltip>
+            <el-tooltip v-if="rec.requirementFollowers" :content="$t('recruitment.requirementFollowers')" placement="top" :show-after="300">
+              <div class="requirement-item">
+                <el-icon><User /></el-icon>
+                <span class="requirement-label">FV</span>
+                <span class="requirement-value">{{ formatNumber(rec.requirementFollowers) }}K</span>
+              </div>
+            </el-tooltip>
+            <el-tooltip v-if="rec.requirementMonthlySales" :content="$t('recruitment.requirementMonthlySales')" placement="top" :show-after="300">
+              <div class="requirement-item">
+                <el-icon><ShoppingCart /></el-icon>
+                <span class="requirement-label">MSS</span>
+                <span class="requirement-value">{{ formatNumber(rec.requirementMonthlySales) }}</span>
+              </div>
+            </el-tooltip>
+            <el-tooltip v-if="rec.requirementAvgViews" :content="$t('recruitment.requirementAvgViews')" placement="top" :show-after="300">
+              <div class="requirement-item">
+                <el-icon><VideoPlay /></el-icon>
+                <span class="requirement-label">APV</span>
+                <span class="requirement-value">{{ formatNumber(rec.requirementAvgViews) }}</span>
+              </div>
+            </el-tooltip>
+          </div>
+        </div>
+        <el-empty v-if="publicRecruitments.length === 0" :description="$t('dashboard.noPublicRecruitment')" />
+      </div>
+    </el-card>
+
     <!-- BD数据概览 -->
     <template v-if="isBD && bdStats">
       <!-- 统计日期提示 -->
@@ -206,7 +268,7 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 import request from '@/utils/request'
-import { Box, ShoppingCart, Money, Calendar } from '@element-plus/icons-vue'
+import { Box, ShoppingCart, Money, Calendar, User, VideoPlay } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import AuthManager from '@/utils/auth'
 
@@ -214,6 +276,26 @@ const isBD = ref(false)
 const bdStats = ref(null)
 const sampleTrendRange = ref('7days')
 const orderTrendRange = ref('7days')
+const publicRecruitments = ref([])
+
+// 加载公开招募列表
+const loadPublicRecruitments = async () => {
+  try {
+    const res = await request.get('/recruitments', {
+      params: { enabled: true }
+    });
+    // 过滤callableUsers为null的招募
+    publicRecruitments.value = res.filter(rec => !rec.callableUsers || rec.callableUsers.length === 0);
+  } catch (error) {
+    console.error('加载公开招募失败:', error);
+    ElMessage.error('加载公开招募信息失败');
+  }
+}
+
+// 打开公开招募页面
+const openPublicRecruitment = (identificationCode) => {
+  window.open(`/recruitments/public?y=${identificationCode}`, '_blank')
+}
 
 // 调试日志
 const debugInfo = computed(() => {
@@ -298,6 +380,13 @@ const formatMoney = (value) => {
   return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
+  })
+}
+
+const formatNumber = (value) => {
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   })
 }
 
@@ -536,6 +625,9 @@ onMounted(() => {
   const user = AuthManager.getUser()
   console.log('[Dashboard] User info:', user)
   if (user) {
+    // 加载公开招募列表（对所有登录用户）
+    loadPublicRecruitments()
+    
     const role = user.role
     console.log('[Dashboard] Role:', role, 'Type:', typeof role, 'IsArray:', Array.isArray(role))
     let hasBDRole = false
@@ -564,6 +656,100 @@ onMounted(() => {
 <style scoped>
 .dashboard {
   padding: 0;
+}
+
+.public-recruitment-card {
+  border-radius: 12px;
+  border: 1px solid #e8ecef;
+}
+
+.public-recruitment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recruitment-item {
+  padding: 16px 20px;
+  border: 2px solid;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recruitment-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.recruitment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recruitment-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.recruitment-products-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #546e7a;
+  background-color: #f8f9fa;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.recruitment-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recruitment-requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.requirement-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #546e7a;
+  background-color: #f8f9fa;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.requirement-item .el-icon {
+  font-size: 12px;
+  color: #667eea;
+}
+
+.requirement-label {
+  font-weight: 500;
+}
+
+.requirement-value {
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .stats-date-info {

@@ -48,22 +48,30 @@
               {{ row.isStrict ? '✅' : '❌' }} {{ $t('recruitment.isStrictShort') }}
             </div>
             <div class="req-grid">
-              <div class="req-item">
-                <div class="req-label">GMV</div>
-                <div class="req-value">{{ row.requirementGmv > 0 ? row.requirementGmv.toLocaleString() : '-' }}</div>
-              </div>
-              <div class="req-item">
-                <div class="req-label">{{ $t('recruitment.requirementFollowersShort') }}</div>
-                <div class="req-value">{{ row.requirementFollowers > 0 ? row.requirementFollowers + 'K' : '-' }}</div>
-              </div>
-              <div class="req-item">
-                <div class="req-label">{{ $t('recruitment.requirementMonthlySales') }}</div>
-                <div class="req-value">{{ row.requirementMonthlySales > 0 ? row.requirementMonthlySales.toLocaleString() : '-' }}</div>
-              </div>
-              <div class="req-item">
-                <div class="req-label">{{ $t('recruitment.requirementAvgViews') }}</div>
-                <div class="req-value">{{ row.requirementAvgViews > 0 ? row.requirementAvgViews.toLocaleString() : '-' }}</div>
-              </div>
+              <el-tooltip :content="$t('recruitment.requirementGmv')" placement="top" :show-after="300">
+                <div class="req-item">
+                  <div class="req-label">GMV</div>
+                  <div class="req-value">{{ row.requirementGmv > 0 ? row.requirementGmv.toLocaleString() : '-' }}</div>
+                </div>
+              </el-tooltip>
+              <el-tooltip :content="$t('recruitment.requirementFollowers')" placement="top" :show-after="300">
+                <div class="req-item">
+                  <div class="req-label">FV</div>
+                  <div class="req-value">{{ row.requirementFollowers > 0 ? row.requirementFollowers + 'K' : '-' }}</div>
+                </div>
+              </el-tooltip>
+              <el-tooltip :content="$t('recruitment.requirementMonthlySales')" placement="top" :show-after="300">
+                <div class="req-item">
+                  <div class="req-label">MSS</div>
+                  <div class="req-value">{{ row.requirementMonthlySales > 0 ? row.requirementMonthlySales.toLocaleString() : '-' }}</div>
+                </div>
+              </el-tooltip>
+              <el-tooltip :content="$t('recruitment.requirementAvgViews')" placement="top" :show-after="300">
+                <div class="req-item">
+                  <div class="req-label">APV</div>
+                  <div class="req-value">{{ row.requirementAvgViews > 0 ? row.requirementAvgViews.toLocaleString() : '-' }}</div>
+                </div>
+              </el-tooltip>
             </div>
           </template>
         </el-table-column>
@@ -218,22 +226,30 @@
             </el-tag>
           </div>
           <div class="req-grid" style="grid-template-columns: 1fr 1fr">
-            <div class="req-item">
-              <div class="req-label">GMV</div>
-              <div class="req-value">{{ detailData.requirementGmv > 0 ? detailData.requirementGmv.toLocaleString() : '-' }}</div>
-            </div>
-            <div class="req-item">
-              <div class="req-label">{{ $t('recruitment.requirementFollowersShort') }}</div>
-              <div class="req-value">{{ detailData.requirementFollowers > 0 ? detailData.requirementFollowers + 'K' : '-' }}</div>
-            </div>
-            <div class="req-item">
-              <div class="req-label">{{ $t('recruitment.requirementMonthlySales') }}</div>
-              <div class="req-value">{{ detailData.requirementMonthlySales > 0 ? detailData.requirementMonthlySales.toLocaleString() : '-' }}</div>
-            </div>
-            <div class="req-item">
-              <div class="req-label">{{ $t('recruitment.requirementAvgViews') }}</div>
-              <div class="req-value">{{ detailData.requirementAvgViews > 0 ? detailData.requirementAvgViews.toLocaleString() : '-' }}</div>
-            </div>
+            <el-tooltip :content="$t('recruitment.requirementGmv')" placement="top" :show-after="300">
+              <div class="req-item">
+                <div class="req-label">GMV</div>
+                <div class="req-value">{{ detailData.requirementGmv > 0 ? detailData.requirementGmv.toLocaleString() : '-' }}</div>
+              </div>
+            </el-tooltip>
+            <el-tooltip :content="$t('recruitment.requirementFollowers')" placement="top" :show-after="300">
+              <div class="req-item">
+                <div class="req-label">FV</div>
+                <div class="req-value">{{ detailData.requirementFollowers > 0 ? detailData.requirementFollowers + 'K' : '-' }}</div>
+              </div>
+            </el-tooltip>
+            <el-tooltip :content="$t('recruitment.requirementMonthlySales')" placement="top" :show-after="300">
+              <div class="req-item">
+                <div class="req-label">MSS</div>
+                <div class="req-value">{{ detailData.requirementMonthlySales > 0 ? detailData.requirementMonthlySales.toLocaleString() : '-' }}</div>
+              </div>
+            </el-tooltip>
+            <el-tooltip :content="$t('recruitment.requirementAvgViews')" placement="top" :show-after="300">
+              <div class="req-item">
+                <div class="req-label">APV</div>
+                <div class="req-value">{{ detailData.requirementAvgViews > 0 ? detailData.requirementAvgViews.toLocaleString() : '-' }}</div>
+              </div>
+            </el-tooltip>
           </div>
         </div>
 
@@ -267,24 +283,36 @@
         <!-- 识别码 -->
         <div class="code-section" :style="{ borderColor: pageStyleConfig.themeColor }">
           <div class="code-header">
-            <span class="code-label">识别码</span>
-            <el-button size="small" type="primary" plain @click="refreshCode" :loading="codeLoading" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: #fff">刷新</el-button>
+            <span class="code-label">{{ $t('recruitment.identificationCode') }}</span>
+            <el-button size="small" type="primary" plain @click="refreshCode" :loading="codeLoading" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: #fff">{{ $t('recruitment.refresh') }}</el-button>
           </div>
           <div class="code-value">{{ detailData.identificationCode || '-' }}</div>
 
           <!-- 页面样式设置 -->
           <div class="style-config">
             <div class="style-config-item">
-              <span class="style-config-label">页面样式</span>
-              <el-select v-model="pageStyleConfig.layoutStyle" size="small" style="width: 100px" @change="savePageStyle">
-                <el-option label="样式一" value="style1" />
-                <el-option label="样式二" value="style2" />
-                <el-option label="样式三" value="style3" />
+              <span class="style-config-label">{{ $t('recruitment.pageStyle') }}</span>
+              <el-select v-model="pageStyleConfig.layoutStyle" size="small" style="width: 120px" @change="savePageStyle">
+                <el-option :label="$t('recruitment.styleWarm')" value="warm" />
+                <el-option :label="$t('recruitment.styleSweet')" value="sweet" />
+                <el-option :label="$t('recruitment.styleTech')" value="tech" />
               </el-select>
             </div>
+          </div>
+          <div class="style-config">
             <div class="style-config-item">
-              <span class="style-config-label">主题色</span>
+              <span class="style-config-label">{{ $t('recruitment.themeColor') }}</span>
               <el-color-picker v-model="pageStyleConfig.themeColor" size="small" @change="savePageStyle" />
+            </div>
+            <div class="preset-colors">
+              <span
+                v-for="color in presetColors"
+                :key="color.value"
+                class="preset-color-dot"
+                :style="{ background: color.value }"
+                :title="$t(color.i18nKey)"
+                @click="pageStyleConfig.themeColor = color.value; savePageStyle()"
+              ></span>
             </div>
           </div>
 
@@ -312,6 +340,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import AuthManager from '@/utils/auth'
 import { Plus, Link, CopyDocument } from '@element-plus/icons-vue'
+import { presetColors } from './components/recruitmentStyles'
 
 const { t } = useI18n()
 const hasPermission = (perm) => AuthManager.hasPermission(perm)
@@ -559,7 +588,7 @@ const showDetail = (row) => {
     pageStyleConfig.layoutStyle = row.pageStyle.layoutStyle || 'style1'
     pageStyleConfig.themeColor = row.pageStyle.themeColor || '#775999'
   } else {
-    pageStyleConfig.layoutStyle = 'style1'
+    pageStyleConfig.layoutStyle = 'warm'
     pageStyleConfig.themeColor = '#775999'
   }
   drawerVisible.value = true
@@ -833,6 +862,26 @@ onMounted(() => {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
+}
+
+.preset-colors {
+  display: flex;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.preset-color-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.preset-color-dot:hover {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .code-actions {

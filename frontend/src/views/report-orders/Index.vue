@@ -260,10 +260,27 @@
           sortable
         >
           <template #default="{ row }">
+            <!-- 调试：输出商品数据 -->
+            {{ 
+              (() => {
+                const debugData = { 
+                  productId: row.productId, 
+                  productName: row.productName, 
+                  productImage: row.productImage,
+                  productImages: row.productImages,
+                  images: row.images,
+                  shopName: row.shopName 
+                };
+                console.log('[ReportOrders] 商品数据:', JSON.stringify(debugData, null, 2));
+                return '';
+              })()
+            }}
             <ProductCell :product="{
               id: row.productId,
               name: row.productName,
-              image: row.productImage,
+              image: row.productImage || row.images?.[0] || row.productImages?.[0],
+              images: row.images,
+              productImages: row.productImages,
               shopName: row.shopName,
               tiktokProductId: row.productId
             }" @copy-field="onCopyField" @click="onProductClick(row.productId)" />

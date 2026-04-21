@@ -544,7 +544,7 @@
               <div class="video-section" v-if="currentSample.videoLink">
                 <h4 class="section-title">{{ $t('samples.videoSection') }}</h4>
                 <div class="video-info">
-                  <el-link :href="currentSample.videoLink" target="_blank" type="primary">
+                  <el-link :href="currentSample.videoLink" target="_blank" type="primary" underline="hover">
                     {{ $t('samples.viewVideo') }}
                   </el-link>
                 </div>
