@@ -216,7 +216,7 @@
                 image: row.productImage,
                 shopName: row.shopName,
                 tiktokProductId: row.productId
-              }" @copy-field="onCopyField" />
+              }" :disable-auto-fetch="true" @copy-field="onCopyField" />
             </template>
           </el-table-column>
 
@@ -340,7 +340,7 @@
                       image: row.images?.[0] || row.productImages?.[0],
                       shopName: shopInfo?.shopName,
                       tiktokProductId: row.tiktokProductId
-                    }" @copy-field="onCopyField" />
+                    }" :disable-auto-fetch="true" @copy-field="onCopyField" />
                   </template>
                 </el-table-column>
                 

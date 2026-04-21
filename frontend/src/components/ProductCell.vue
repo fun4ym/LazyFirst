@@ -38,6 +38,14 @@ import { CopyDocument } from '@element-plus/icons-vue'
 import ShopIcon from './ShopIcon.vue'
 import request from '@/utils/request'
 
+// 公开页面列表（无需登录）
+const publicPages = ['/samples/public', '/recruitments/public', '/products/public']
+
+// 检查当前路由是否为公开页面
+const isPublicPage = () => {
+  return publicPages.some(page => window.location.pathname.startsWith(page))
+}
+
 const props = defineProps({
   product: {
     type: Object,
@@ -53,6 +61,11 @@ const props = defineProps({
   onClick: {
     type: Function,
     default: null
+  },
+  // 是否禁止自动获取图片（公开页面使用）
+  disableAutoFetch: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -70,7 +83,13 @@ const fetchProductImage = async () => {
     console.log('[ProductCell] 没有tiktokProductId，跳过获取图片')
     return ''
   }
-  
+
+  // ★ 公开页面或禁用自动获取时，不请求API
+  if (isPublicPage() || props.disableAutoFetch) {
+    console.log('[ProductCell] 公开页面/已禁用，跳过API请求')
+    return ''
+  }
+
   console.log('[ProductCell] 开始获取商品图片，tiktokProductId:', tiktokProductId)
   
   // 如果缓存中已有，直接返回
@@ -155,7 +174,7 @@ const fetchProductImage = async () => {
 // 监听 product.tiktokProductId 变化
 watch(() => props.product.tiktokProductId || props.product.productId, async (newId) => {
   console.log('[ProductCell] watch触发，newId:', newId)
-  if (newId) {
+  if (newId && !props.disableAutoFetch) {
     await fetchProductImage()
   }
 })
@@ -163,7 +182,7 @@ watch(() => props.product.tiktokProductId || props.product.productId, async (new
 // 组件挂载时尝试获取图片
 onMounted(async () => {
   console.log('[ProductCell] onMounted触发，product:', props.product)
-  if (props.product.tiktokProductId || props.product.productId) {
+  if ((props.product.tiktokProductId || props.product.productId) && !props.disableAutoFetch) {
     await fetchProductImage()
   }
 })

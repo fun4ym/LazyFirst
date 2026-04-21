@@ -2,6 +2,14 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import AuthManager from '@/utils/auth'
 
+// 公开页面列表（无需登录）
+const publicPages = ['/login', '/terms', '/privacy', '/samples/public', '/recruitments/public', '/products/public']
+
+// 检查当前路由是否为公开页面
+const isPublicPage = () => {
+  return publicPages.some(page => window.location.pathname.startsWith(page))
+}
+
 // 创建axios实例
 const request = axios.create({
   baseURL: '/api',
@@ -11,13 +19,18 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    const token = AuthManager.getToken()
-    const queryString = config.params ? '?' + new URLSearchParams(config.params).toString() : ''
-    console.log('[Request] 发送请求:', config.method?.toUpperCase(), config.url + queryString)
-    console.log('[Request] Token长度:', token?.length || 0, token ? '有值' : '无')
-    console.log('[Request] Params:', config.params)
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // 公开页面不添加 Authorization 头
+    if (!isPublicPage()) {
+      const token = AuthManager.getToken()
+      const queryString = config.params ? '?' + new URLSearchParams(config.params).toString() : ''
+      console.log('[Request] 发送请求:', config.method?.toUpperCase(), config.url + queryString)
+      console.log('[Request] Token长度:', token?.length || 0, token ? '有值' : '无')
+      console.log('[Request] Params:', config.params)
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } else {
+      console.log('[Request] 公开页面请求，不添加token:', config.method?.toUpperCase(), config.url)
     }
     return config
   },
@@ -65,9 +78,15 @@ request.interceptors.response.use(
     console.error('[Request] 错误详情:', error)
     if (error.response) {
       const { status, data } = error.response
-      console.error('[Request] 401错误:', status, data?.message)
+      console.error('[Request] 错误:', status, data?.message)
 
-      // 401 未授权
+      // 公开页面：只显示错误消息，不自动登出
+      if (isPublicPage()) {
+        ElMessage.error(data?.message || error.message || '请求失败')
+        return Promise.reject(error)
+      }
+
+      // 401 未授权（仅非公开页面）
       if (status === 401) {
         ElMessage.error(data?.message || '登录已过期，请重新登录')
         AuthManager.logout()
