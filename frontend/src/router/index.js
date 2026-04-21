@@ -101,7 +101,6 @@ const routes = [
         component: () => import('@/views/products/Index.vue'),
         meta: { title: '店铺管理', activeTab: 'shops' }
       },
-      // 合作产品已合并到产品管理中
       {
         path: 'activities',
         name: 'Activities',

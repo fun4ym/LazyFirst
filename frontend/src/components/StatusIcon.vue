@@ -80,7 +80,3 @@ const iconConfig = computed(() => {
 const iconComponent = computed(() => iconConfig.value.icon)
 const iconColor = computed(() => props.color || iconConfig.value.color)
 </script>
-
-<style scoped>
-/* 无额外样式，仅使用Element Plus图标 */
-</style>

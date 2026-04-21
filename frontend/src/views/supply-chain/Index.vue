@@ -310,7 +310,7 @@ const formatDate = (date) => {
 
 const loadSuppliers = () => {
   loading.value = true
-  // TODO: 实际调用API
+  // TODO: API未实现，当前使用mock数据 - 需要后端提供 /suppliers 接口
   setTimeout(() => {
     suppliers.value = [
       {
@@ -365,7 +365,7 @@ const handleSubmit = async () => {
 
     submitting.value = true
     try {
-      // TODO: 实际调用API
+      // TODO: API未实现 - 需要后端提供 POST /suppliers 接口
       ElMessage.success(isEdit.value ? t('common.updateSuccess') : t('common.addSuccess'))
       dialogVisible.value = false
       loadSuppliers()
@@ -384,7 +384,7 @@ const deleteSupplier = async (row) => {
   })
 
   try {
-    // TODO: 实际调用API
+    // TODO: API未实现 - 需要后端提供 DELETE /suppliers/:id 接口
     ElMessage.success(t('common.deleteSuccess'))
     loadSuppliers()
   } catch (error) {

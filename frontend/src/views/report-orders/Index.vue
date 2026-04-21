@@ -260,21 +260,6 @@
           sortable
         >
           <template #default="{ row }">
-            <!-- 调试：输出商品数据 -->
-            {{ 
-              (() => {
-                const debugData = { 
-                  productId: row.productId, 
-                  productName: row.productName, 
-                  productImage: row.productImage,
-                  productImages: row.productImages,
-                  images: row.images,
-                  shopName: row.shopName 
-                };
-                console.log('[ReportOrders] 商品数据:', JSON.stringify(debugData, null, 2));
-                return '';
-              })()
-            }}
             <ProductCell :product="{
               id: row.productId,
               name: row.productName,
@@ -1004,7 +989,7 @@ const loadInfluencerPopover = async (row) => {
         limit: 10
       }
     })
-    console.log('达人搜索结果:', res)
+
     const influencers = res.influencers || res.data || []
     const matched = influencers.find(i => i.tiktokId === row.influencerUsername)
     popoverInfluencer.value = matched || null
@@ -1080,7 +1065,6 @@ const handleMatchBD = async () => {
 const handleSelectionChange = (selection) => {
   // 如果正在恢复选中状态，跳过处理
   if (isRestoringSelection) {
-    console.log('[翻页选] 恢复中跳过, selection:', selection.length)
     return
   }
   
@@ -1091,7 +1075,6 @@ const handleSelectionChange = (selection) => {
   if (currentIds.size === 0) {
     // 如果之前有选择，说明是翻页触发的空选择，保留之前的选择
     if (selectedOrderIds.value.size > 0) {
-      console.log('[翻页选] 空选择跳过, 保留之前选择:', selectedOrderIds.value.size)
       return
     }
     // 之前没有选择，说明是初始状态
@@ -1120,7 +1103,7 @@ const handleSelectionChange = (selection) => {
   selectedOrderIds.value = newIds
   selectedOrders.value = selection
   
-  console.log('[翻页选] 选中变化, 已选数量:', selectedOrderIds.value.size, '取消选中:', deselected.length, 'IDs:', Array.from(selectedOrderIds.value))
+
 }
 
 // 恢复表格选中状态 - 使用标志位避免重复触发
@@ -1412,7 +1395,6 @@ const onBdChange = async (bdName) => {
     let bdInfo = bdList.find(b => b.bdName === bdName)
     if (bdInfo?.bankAccount) {
       addSettlementForm.bankAccount = bdInfo.bankAccount
-      console.log('从bdList获取bankAccount:', bdInfo.bankAccount)
       return
     }
     
@@ -1421,20 +1403,16 @@ const onBdChange = async (bdName) => {
     bdInfo = orderDetails.find(b => b.bdName === bdName)
     if (bdInfo?.bankAccount) {
       addSettlementForm.bankAccount = bdInfo.bankAccount
-      console.log('从orderDetails获取bankAccount:', bdInfo.bankAccount)
       return
     }
     
     // 如果本地数据都没有，调用API查询User表
-    console.log('本地数据没有bankAccount，调用API查询')
     try {
       const res = await request.get('/users', {
         params: { search: bdName, limit: 100 }
       })
-      console.log('API返回:', res)
       const users = res.users || []
       let user = users.find(u => u.realName === bdName || u.username === bdName)
-      console.log('找到用户:', user)
       addSettlementForm.bankAccount = user?.bankAccount || ''
     } catch (error) {
       console.error('查询用户银行账号失败:', error)
@@ -1520,7 +1498,6 @@ const loadOrders = async () => {
       setTimeout(() => {
         const table = orderTableRef.value
         const savedIds = selectedOrderIds.value
-        console.log('[翻页选] loadOrders完成后, table:', !!table, '已选IDs:', savedIds.size, Array.from(savedIds))
         
         // 将savedIds转换为Set用于快速查找（处理字符串和ObjectId混合情况）
         const savedIdsSet = new Set()
@@ -1530,9 +1507,6 @@ const loadOrders = async () => {
         })
         
         if (table && savedIdsSet.size > 0) {
-          console.log('[翻页选] 开始恢复, 当前页订单数:', orders.value.length)
-          console.log('[翻页选] 当前页订单IDs:', orders.value.map(o => o._id))
-          
           // 设置标志位，避免恢复过程中触发selection-change
           // 注意：必须在clearSelection之前设置，防止clearSelection触发selection-change
           isRestoringSelection = true
@@ -1546,7 +1520,6 @@ const loadOrders = async () => {
             const orderIdStr = String(order._id)
             const shouldSelect = savedIdsSet.has(orderIdStr) || savedIdsSet.has(order._id)
             if (shouldSelect) {
-              console.log('[翻页选] 选中订单:', order._id)
               table.toggleRowSelection(order, true)
             }
           }
@@ -1566,7 +1539,6 @@ const loadOrders = async () => {
           // 合并当前页选中ID到selectedOrderIds
           currentPageIds.forEach(id => savedIds.add(id))
           selectedOrderIds.value = new Set(savedIds)
-          console.log('[翻页选] 恢复后同步, selectedOrderIds:', selectedOrderIds.value.size, Array.from(selectedOrderIds.value))
           
           // 使用较长延迟清除标志位
           setTimeout(() => {
@@ -1574,10 +1546,9 @@ const loadOrders = async () => {
             if (thisGeneration === restoreGeneration) {
               isRestoringSelection = false
             }
-            console.log('[翻页选] 恢复完成, savedIds保持:', savedIds.size, Array.from(savedIds))
           }, 500)
         } else {
-          console.log('[翻页选] 跳过恢复, table:', !!table, 'savedIds.size:', savedIds?.size)
+          // 跳过恢复
         }
       }, 100)
     })
@@ -1698,8 +1669,7 @@ const onCopyField = (fieldValue) => {
 // 商品点击处理
 const onProductClick = (productId) => {
   if (!productId) return
-  // 可以跳转到商品详情页，暂时先控制台打印
-  console.log('点击商品:', productId)
+  // 可以跳转到商品详情页
   // router.push({ path: '/products', query: { id: productId } })
 }
 </script>
