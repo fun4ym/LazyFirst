@@ -124,6 +124,7 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" width="180" fixed="right">
           <template #default="{ row }">
+            <el-button link type="info" @click="viewDetail(row)">{{ $t('influencer.detail') }}</el-button>
             <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="primary" @click="editInfluencer(row)">{{ $t('influencer.edit') }}</el-button>
             <el-button v-if="row.isBlacklisted" link type="info" disabled>{{ $t('influencer.frozen') }}</el-button>
             <el-button v-if="hasPermission('orders:read')" link type="success" @click="goToOrders(row)">{{ $t('influencer.viewOrders') }}</el-button>
