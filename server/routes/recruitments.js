@@ -12,7 +12,7 @@ const router = express.Router();
  * @desc    获取招募列表
  * @access  Private
  */
-router.get('/', authenticate, authorize('recruitments:read'), async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { keyword, enabled } = req.query;
     

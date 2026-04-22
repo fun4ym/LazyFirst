@@ -8,8 +8,11 @@ const { authenticate, authorize, filterByDataScope } = require('../middleware/au
 // 获取达人列表
 router.get('/', authenticate, authorize('influencers:read'), filterByDataScope({ module: 'influencers', ownerField: 'assignedTo', deptField: 'deptId' }), async (req, res) => {
   try {
-    const { companyId, poolType, status, categoryTag, keyword, page = 1, limit = 20, gmvFrom, monthlySalesFrom, followersFrom, avgViewsFrom } = req.query;
+    const { companyId, poolType, status, categoryTag, keyword, page = 1, limit = 20, gmvFrom, monthlySalesFrom, followersFrom, avgViewsFrom, ignoreDataScope } = req.query;
     const userId = req.user._id;
+
+    // 如果ignoreDataScope为true，则忽略数据权限过滤，允许查看所有达人
+    const ignoreScope = ignoreDataScope === 'true';
 
     // 公海达人：无论权限都能看到（不受数据权限限制）
     // 私海达人：按数据权限过滤
@@ -25,12 +28,16 @@ router.get('/', authenticate, authorize('influencers:read'), filterByDataScope({
       // 公海：不需要数据权限过滤
       query.poolType = 'public';
     } else if (poolType === 'private') {
-      // 私海：使用数据权限过滤
-      query = { ...req.dataScope.query, poolType: 'private' };
+      // 私海：使用数据权限过滤，除非ignoreScope为true
+      if (ignoreScope) {
+        query = { poolType: 'private', companyId: req.companyId };
+      } else {
+        query = { ...req.dataScope.query, poolType: 'private' };
+      }
     } else {
       // 未指定poolType：公海全部 + 私海按数据权限
       // 使用 $or 组合：公海(所有) OR 私海(按数据权限)
-      const dataScopeQuery = req.dataScope.query;
+      const dataScopeQuery = ignoreScope ? { companyId: req.companyId } : req.dataScope.query;
       // 移除dataScopeQuery中的companyId，避免重复
       delete dataScopeQuery.companyId;
 

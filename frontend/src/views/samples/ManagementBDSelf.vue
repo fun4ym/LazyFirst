@@ -623,25 +623,33 @@
         </el-form-item>
 
         <el-form-item :label="$t('sampleBD.tiktokIdField')" prop="influencerId" class="tiktok-label">
-          <el-select
-            v-model="createForm.influencerId"
-            filterable
-            remote
-            :placeholder="$t('sampleBD.tiktokIdPlaceholder')"
-            :remote-method="searchInfluencers"
-            :loading="influencerLoading"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="inf in influencerOptions"
-              :key="inf._id"
-              :label="`${inf.tiktokId} (${inf.tiktokName || '-'})`"
-              :value="inf._id"
+          <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+            <el-select
+              v-model="createForm.influencerId"
+              filterable
+              remote
+              :placeholder="$t('sampleBD.tiktokIdPlaceholder')"
+              :remote-method="searchInfluencers"
+              :loading="influencerLoading"
+              style="flex: 1;"
             >
-              <span>{{ inf.tiktokId }}</span>
-              <span style="color: #999; font-size: 12px; margin-left: 8px;">{{ inf.tiktokName || '' }}</span>
-            </el-option>
-          </el-select>
+              <el-option
+                v-for="inf in influencerOptions"
+                :key="inf._id"
+                :label="`${inf.tiktokId} (${inf.tiktokName || '-'})`"
+                :value="inf._id"
+              >
+                <span>{{ inf.tiktokId }}</span>
+                <span style="color: #999; font-size: 12px; margin-left: 8px;">{{ inf.tiktokName || '' }}</span>
+              </el-option>
+            </el-select>
+            <span v-if="selectedInfluencer" style="font-size: 12px; white-space: nowrap;">
+              <span :style="{ color: isCurrentUserMaintainer(selectedInfluencer) ? '#67c23a' : '#e6a23c' }">
+                {{ selectedInfluencer.latestMaintainerId?.realName || selectedInfluencer.latestMaintainerId?.username || '无' }}
+              </span>
+              <span style="color: #666;"> ({{ selectedInfluencer.poolType === 'public' ? 'public' : 'private' }})</span>
+            </span>
+          </div>
         </el-form-item>
 
         <!-- 移除了粉丝数/GMV/月销量/均播等冗余字段，数据从达人表populate自动获取 -->
@@ -687,7 +695,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
@@ -927,23 +935,52 @@ const handleProductSelect = (productId) => {
   }
 }
 
+// 选中的达人信息
+const selectedInfluencer = computed(() => {
+  if (!createForm.influencerId) return null
+  return influencerOptions.value.find(inf => inf._id === createForm.influencerId) || null
+})
+
 // ★ 搜索达人（重构后：远程搜索选择器）
+let searchTimeout = null
 const searchInfluencers = async (query) => {
+  // 清除之前的定时器
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+    searchTimeout = null
+  }
+
+  // 空查询时清空选项
   if (!query) {
     influencerOptions.value = []
     return
   }
-  influencerLoading.value = true
-  try {
-    const res = await request.get('/influencer-managements', {
-      params: { companyId: userStore.companyId, keyword: query, limit: 20 }
-    })
-    influencerOptions.value = res.influencers || []
-  } catch (error) {
-    console.error('搜索达人失败:', error)
-  } finally {
-    influencerLoading.value = false
+
+  // 最小长度验证（至少2个字符）
+  if (query.length < 2) {
+    influencerOptions.value = []
+    return
   }
+
+  // 防抖：延迟300ms执行搜索
+  searchTimeout = setTimeout(async () => {
+    influencerLoading.value = true
+    try {
+      const res = await request.get('/influencer-managements', {
+        params: {
+          companyId: userStore.companyId,
+          keyword: query,
+          limit: 20,
+          ignoreDataScope: true  // 放开maintainerId限制，允许查看所有达人
+        }
+      })
+      influencerOptions.value = res.influencers || []
+    } catch (error) {
+      console.error('搜索达人失败:', error)
+    } finally {
+      influencerLoading.value = false
+    }
+  }, 300)
 }
 
 const showCreateDialog = () => {
@@ -1228,7 +1265,13 @@ const openSubmissionDetail = (submission) => {
   }
 }
 
-
+// 判断维护者是否为当前用户
+const isCurrentUserMaintainer = (influencer) => {
+  if (!influencer || !userStore.user) return false
+  const maintainerId = influencer.latestMaintainerId?._id || influencer.latestMaintainerId
+  const currentUserId = userStore.user._id
+  return maintainerId === currentUserId
+}
 
 onMounted(() => {
   loadSamples()
