@@ -443,13 +443,14 @@ router.get('/debug/orders', authenticate, authorize('orders:read'), async (req, 
 
 /**
  * @route   POST /api/report-orders/match-bd
- * @desc    BD匹配：根据样品管理表匹配订单的归属BD（基于productId + influencerUsername）
+ * @desc    BD匹配：根据视频和样品管理表匹配订单的归属BD（基于productId + influencerUsername）
  * @access  Private
  */
 router.post('/match-bd', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const ReportOrder = require('../models/ReportOrder');
     const SampleManagement = require('../models/SampleManagement');
+    const Video = require('../models/Video');
     const User = require('../models/User');
 
     // 获取所有订单记录
@@ -460,18 +461,84 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
     let unmatchedCount = 0;
     const updates = [];
 
-    // 获取所有样品记录，并填充influencerId和salesmanId
-    const samples = await SampleManagement.find({ companyId: req.companyId })
-      .populate('influencerId', 'tiktokId')
-      .populate('salesmanId', 'realName username');
-    console.log(`找到 ${samples.length} 条样品记录`);
-
     // 获取用户ID到名字的映射（用于salesman字段转换）
     const users = await User.find({ companyId: req.companyId });
     const userIdToName = {};
     users.forEach(u => {
       userIdToName[u._id.toString()] = u.realName || u.username || u._id.toString();
     });
+
+    // 方法1：通过视频匹配（新逻辑） - 订单和视频匹配出BD
+    console.log('=== 开始通过视频匹配BD（订单+视频匹配出BD） ===');
+    
+    // 获取所有视频记录，并填充sampleId和influencerId
+    const videos = await Video.find({ companyId: req.companyId })
+      .populate('sampleId', 'productId influencerAccount salesman salesmanId')
+      .populate('influencerId', 'tiktokId')
+      .populate('productId', 'tiktokProductId');
+    console.log(`找到 ${videos.length} 条视频记录`);
+
+    // 建立视频索引：productId + influencerTiktokId -> BD名字
+    const videoIndex = new Map();
+    videos.forEach(video => {
+      // 获取商品ID：优先使用视频中的productId（ObjectId或TikTok ID），其次从sampleId获取
+      let productIdStr = '';
+      if (video.productId) {
+        // 如果productId是ObjectId，尝试获取其tiktokProductId，否则使用_id
+        if (video.productId._id) {
+          // 已populate，有tiktokProductId字段
+          productIdStr = video.productId.tiktokProductId || video.productId._id.toString();
+        } else {
+          // 未populate，可能是字符串或ObjectId
+          productIdStr = String(video.productId);
+        }
+      } else if (video.tiktokProductId) {
+        productIdStr = video.tiktokProductId;
+      } else if (video.sampleId && video.sampleId.productId) {
+        productIdStr = String(video.sampleId.productId);
+      }
+      
+      if (!productIdStr) return;
+
+      // 获取达人TikTok ID：优先从influencerId.tiktokId，其次从sampleId.influencerAccount
+      let influencerTiktokId = '';
+      if (video.influencerId && video.influencerId.tiktokId) {
+        influencerTiktokId = video.influencerId.tiktokId;
+      } else if (video.sampleId && video.sampleId.influencerAccount) {
+        influencerTiktokId = video.sampleId.influencerAccount;
+      }
+      
+      if (!influencerTiktokId) return;
+
+      const key = `${productIdStr}_${influencerTiktokId}`;
+
+      // 获取BD名字：优先从sampleId.salesmanId.realName，其次从sampleId.salesman字段转换
+      let bdName = '';
+      if (video.sampleId) {
+        if (video.sampleId.salesmanId && video.sampleId.salesmanId.realName) {
+          bdName = video.sampleId.salesmanId.realName;
+        } else if (video.sampleId.salesman) {
+          const salesmanId = typeof video.sampleId.salesman === 'object' ? 
+            video.sampleId.salesman.toString() : video.sampleId.salesman;
+          bdName = userIdToName[salesmanId] || video.sampleId.salesman;
+        }
+      }
+      
+      if (!bdName) return;
+
+      videoIndex.set(key, bdName);
+    });
+
+    console.log(`视频索引建立完成，共 ${videoIndex.size} 条有效映射`);
+
+    // 方法2：通过样品直接匹配（原逻辑，作为后备）
+    console.log('=== 开始通过样品直接匹配BD（后备方案） ===');
+    
+    // 获取所有样品记录，并填充influencerId和salesmanId
+    const samples = await SampleManagement.find({ companyId: req.companyId })
+      .populate('influencerId', 'tiktokId')
+      .populate('salesmanId', 'realName username');
+    console.log(`找到 ${samples.length} 条样品记录`);
 
     // 建立样品索引：productId + influencerTiktokId -> BD名字
     const sampleIndex = new Map();
@@ -505,7 +572,7 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
 
     console.log(`样品索引建立完成，共 ${sampleIndex.size} 条有效映射`);
 
-    // 匹配订单：基于 productId + influencerUsername
+    // 匹配订单：优先使用视频索引，其次使用样品索引
     for (const order of orders) {
       // 检查订单是否有必要的关联信息
       if (!order.productId || !order.influencerUsername) {
@@ -513,11 +580,23 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
         continue;
       }
       
-      const sampleKey = `${order.productId}_${order.influencerUsername}`;
+      const orderKey = `${order.productId}_${order.influencerUsername}`;
+      let bdName = null;
+      let matchedBy = '';
       
-      if (sampleIndex.has(sampleKey)) {
-        const bdName = sampleIndex.get(sampleKey);
-        // 只有当BD不为空时才更新
+      // 优先尝试视频匹配
+      if (videoIndex.has(orderKey)) {
+        bdName = videoIndex.get(orderKey);
+        matchedBy = 'video';
+      }
+      // 视频匹配失败，尝试样品匹配
+      else if (sampleIndex.has(orderKey)) {
+        bdName = sampleIndex.get(orderKey);
+        matchedBy = 'sample';
+      }
+      
+      if (bdName) {
+        // 只有当BD不为空且与当前不同时才更新
         if (bdName && order.bdName !== bdName) {
           updates.push({
             updateOne: {
@@ -526,6 +605,7 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
             }
           });
           matchedCount++;
+          console.log(`订单 ${order._id} 匹配成功 (${matchedBy}): ${bdName}`);
         } else {
           // BD名字相同或为空，视为已匹配但不更新
           matchedCount++;
