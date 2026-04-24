@@ -788,7 +788,7 @@ const loadCurrencies = async () => {
 // 获取当前默认货币符号
 const currentDefaultCurrencySymbol = computed(() => {
   const defaultCurrency = currencyList.value.find(c => c.isDefault)
-  return defaultCurrency?.symbol || '¥'
+  return defaultCurrency?.symbol || '฿'
 })
 
 // 批量更新物流公司弹窗

@@ -18,6 +18,7 @@ export const MODULES = {
   SUPPLY_CHAIN: { code: 'supplyChain', name: '供应链', dataScope: false },
   PRODUCTS: { code: 'products', name: '产品管理', parent: 'supplyChain' },
   ACTIVITIES: { code: 'activities', name: '活动管理', parent: 'supplyChain' },
+  SUPPLIERS: { code: 'suppliers', name: '供应商管理', parent: 'supplyChain' },
 
   // 数据采集
   DATA_COLLECTION: { code: 'dataCollection', name: '数据采集', dataScope: false },
@@ -117,6 +118,7 @@ export const PERMISSION_MAP = {
   // 供应链
   '/products': [makePermission('products', 'read')],
   '/activities': [makePermission('activities', 'read')],
+  '/supply-chain': [makePermission('suppliers', 'read'), makePermission('suppliers', 'create'), makePermission('suppliers', 'update'), makePermission('suppliers', 'delete')],
 
   // 数据采集
   '/samples': [makePermission('samples', 'read')],
@@ -154,4 +156,5 @@ export const MODULE_DATA_SCOPE = {
   bdDaily: { ownerField: 'userId', label: '日报' },
   performance: { ownerField: 'userId', label: '业绩' },
   recruitments: { ownerField: 'creatorId', label: '招募' },
+  suppliers: { ownerField: 'companyId', label: '供应商' },
 }

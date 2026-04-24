@@ -13,6 +13,7 @@ const Shop = require('./Shop');
 const ShopContact = require('./ShopContact');
 const ShopRating = require('./ShopRating');
 const ShopTracking = require('./ShopTracking');
+const Supplier = require('./Supplier');
 
 module.exports = {
   User,
@@ -29,5 +30,6 @@ module.exports = {
   Shop,
   ShopContact,
   ShopRating,
-  ShopTracking
+  ShopTracking,
+  Supplier
 };

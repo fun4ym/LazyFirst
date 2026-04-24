@@ -81,29 +81,14 @@
 
         <el-table-column :label="$t('videos.productInfo')" min-width="320">
           <template #default="{ row }">
-            <div class="product-cell">
-              <el-image
-                v-if="row.productId?.images?.[0]"
-                :src="row.productId.images[0]"
-                fit="cover"
-                class="product-thumb"
-                :preview-src-list="[row.productId.images[0]]"
-              />
-              <div v-else class="product-thumb-placeholder"></div>
-              <div class="product-info">
-                <div class="product-id purple">{{ row.productId?.tiktokProductId || $t('common.dash') }}</div>
-                <el-tooltip :content="row.productId?.name" placement="top">
-                  <div class="product-name">
-                    {{ row.productId?.name || $t('common.dash') }}
-                  </div>
-                </el-tooltip>
-                <div class="shop-name" v-if="getShopName(row.productId)">
-                  <ShopIcon :size="16" />
-                  {{ getShopName(row.productId) }}
-                </div>
-                <div class="shop-name" v-else>{{ $t('common.doubleDash') }}</div>
-              </div>
-            </div>
+            <ProductCell :product="{
+              tiktokProductId: row.productId?.tiktokProductId,
+              productId: row.productId?.tiktokProductId,
+              id: row.productId?.tiktokProductId,
+              name: row.productId?.name,
+              image: row.productId?.images?.[0],
+              shopName: getShopName(row.productId)
+            }" />
           </template>
         </el-table-column>
 
@@ -324,6 +309,7 @@ import { Plus, CopyDocument } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import AuthManager from '@/utils/auth'
 import InfluencerCell from '@/components/InfluencerCell.vue'
+import ProductCell from '@/components/ProductCell.vue'
 import ShopIcon from '@/components/ShopIcon.vue'
 
 const { t } = useI18n()

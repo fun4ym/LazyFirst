@@ -33,6 +33,7 @@ const recruitmentRoutes = require('./routes/recruitments');
 const publicRecruitmentRoutes = require('./routes/public-recruitment');
 const publicProductsRoutes = require('./routes/public-products');
 const videoRoutes = require('./routes/videos');
+const supplierRoutes = require('./routes/suppliers');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -102,6 +103,7 @@ app.use('/api/base-data', baseDataRoutes);
 app.use('/api/bd-daily', bdDailyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/shops', shopRoutes);
+app.use('/api/suppliers', supplierRoutes);
 app.use('/api/product-stats', productStatsRoutes);
 app.use('/api/public/samples', publicSampleRoutes);
 app.use('/api/public/base-data', baseDataRoutes);  // 公开的基础数据接口

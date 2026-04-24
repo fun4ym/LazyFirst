@@ -242,6 +242,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import request from '@/utils/request'
 
 const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -308,26 +309,33 @@ const formatDate = (date) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const loadSuppliers = () => {
+const loadSuppliers = async () => {
   loading.value = true
-  // TODO: API未实现，当前使用mock数据 - 需要后端提供 /suppliers 接口
-  setTimeout(() => {
-    suppliers.value = [
-      {
-        _id: '1',
-        name: '广州样品供应商',
-        type: 'sample',
-        contact: '张三',
-        phone: '13800138000',
-        email: 'zhangsan@example.com',
-        address: '广州市天河区xx路xx号',
-        remarks: '主要提供样品',
-        createdAt: new Date()
-      }
-    ]
-    pagination.total = 1
+  try {
+    const params = {
+      page: pagination.page,
+      limit: pagination.limit
+    }
+    
+    // 添加搜索条件
+    if (searchForm.name) params.name = searchForm.name
+    if (searchForm.contact) params.contact = searchForm.contact
+    if (searchForm.type) params.type = searchForm.type
+    
+    const response = await request.get('/suppliers', { params })
+    if (response.success) {
+      suppliers.value = response.suppliers
+      pagination.total = response.total
+      pagination.page = response.page
+    } else {
+      ElMessage.error(response.message || t('common.operateFailed'))
+    }
+  } catch (error) {
+    console.error('加载供应商列表失败:', error)
+    ElMessage.error(t('common.operateFailed'))
+  } finally {
     loading.value = false
-  }, 500)
+  }
 }
 
 const resetSearch = () => {
@@ -365,13 +373,35 @@ const handleSubmit = async () => {
 
     submitting.value = true
     try {
-      // TODO: API未实现 - 需要后端提供 POST /suppliers 接口
-      ElMessage.success(isEdit.value ? t('common.updateSuccess') : t('common.addSuccess'))
-      dialogVisible.value = false
-      loadSuppliers()
+      const supplierData = {
+        name: form.name,
+        type: form.type,
+        contact: form.contact,
+        phone: form.phone,
+        email: form.email || '',
+        address: form.address || '',
+        remarks: form.remarks || ''
+      }
+      
+      let response
+      if (isEdit.value) {
+        // 更新供应商
+        response = await request.put(`/suppliers/${form._id}`, supplierData)
+      } else {
+        // 创建供应商
+        response = await request.post('/suppliers', supplierData)
+      }
+      
+      if (response.success) {
+        ElMessage.success(isEdit.value ? t('common.updateSuccess') : t('common.addSuccess'))
+        dialogVisible.value = false
+        loadSuppliers()
+      } else {
+        ElMessage.error(response.message || t('common.operateFailed'))
+      }
     } catch (error) {
-      console.error('Submit error:', error)
-      ElMessage.error(t('common.operateFailed'))
+      console.error('提交失败:', error)
+      ElMessage.error(error.response?.data?.message || t('common.operateFailed'))
     } finally {
       submitting.value = false
     }
@@ -379,17 +409,23 @@ const handleSubmit = async () => {
 }
 
 const deleteSupplier = async (row) => {
-  await ElMessageBox.confirm(t('supplyChain.confirmDelete'), t('supplyChain.deleteConfirm'), {
-    type: 'warning'
-  })
-
   try {
-    // TODO: API未实现 - 需要后端提供 DELETE /suppliers/:id 接口
-    ElMessage.success(t('common.deleteSuccess'))
-    loadSuppliers()
+    await ElMessageBox.confirm(t('supplyChain.confirmDelete'), t('supplyChain.deleteConfirm'), {
+      type: 'warning'
+    })
+    
+    const response = await request.delete(`/suppliers/${row._id}`)
+    if (response.success) {
+      ElMessage.success(t('common.deleteSuccess'))
+      loadSuppliers()
+    } else {
+      ElMessage.error(response.message || t('common.deleteFailed'))
+    }
   } catch (error) {
-    console.error('Delete error:', error)
-    ElMessage.error(t('common.deleteFailed'))
+    console.error('删除失败:', error)
+    if (error.response?.status !== 400) { // 用户点击取消也会触发错误，但不显示错误消息
+      ElMessage.error(error.response?.data?.message || t('common.deleteFailed'))
+    }
   }
 }
 

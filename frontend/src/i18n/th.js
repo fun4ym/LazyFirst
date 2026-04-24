@@ -112,6 +112,7 @@ export default {
     initialization: 'เริ่มต้น',
     bdWorkspace: 'พื้นที่ทำงาน BD',
     shops: 'ร้านค้า',
+    suppliers: 'ผู้จัดหา',
     bdDashboard: 'แดชบอร์ด BD',
     initImport: 'นำเข้าเริ่มต้น',
     marketWorkspace: 'พื้นที่ทำงานตลาด',

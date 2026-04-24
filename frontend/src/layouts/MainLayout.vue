@@ -46,9 +46,6 @@
           <el-menu-item v-if="menuPermissions.activities()" index="/activities">
             <span>{{ $t('menu.activities') }}</span>
           </el-menu-item>
-          <el-menu-item v-if="menuPermissions.shops()" index="/shops">
-            <span>{{ $t('menu.shops') }}</span>
-          </el-menu-item>
           <!-- 合作产品已合并到产品管理中 -->
         </el-sub-menu>
 
@@ -230,15 +227,16 @@ const menuPermissions = {
   videoRegister: () => hasAnyPermission(['videos:read', 'videos:create', 'videos:update', 'videos:delete']),
   samplesBd: () => hasAnyPermission(['samplesBd:read', 'samplesBd:create']),
 
-  // 供应链 - 需要产品或活动或店铺权限
-  supplyChain: () => hasAnyPermission(['products:read', 'products:create', 'activities:read', 'activities:create', 'shops:read', 'shops:create']),
+  // 供应链 - 需要产品或活动或店铺或供应商权限（隐藏店铺和供应商管理）
+  supplyChain: () => hasAnyPermission(['products:read', 'products:create', 'activities:read', 'activities:create']),
   products: () => hasPermission('products:read'),
   activities: () => hasPermission('activities:read'),
-  shops: () => hasPermission('shops:read'),
+  shops: () => false, // 隐藏店铺管理
+  suppliers: () => false, // 隐藏供应商管理
   // 合作产品已合并到产品管理，使用 products 权限
 
-  // 数据采集 - 需要样品管理或订单或店铺权限（样品管理和样品申请是分开的）
-  dataCollection: () => hasAnyPermission(['samples:read', 'orders:read', 'shops:read']),
+  // 数据采集 - 需要样品管理或订单权限（隐藏店铺管理）
+  dataCollection: () => hasAnyPermission(['samples:read', 'orders:read']),
   samples: () => hasPermission('samples:read'),
   orders: () => hasPermission('orders:read'),
 

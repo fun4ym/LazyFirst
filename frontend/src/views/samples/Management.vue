@@ -297,7 +297,7 @@
               image: row.productImage,
               id: row.productId_display || row.productId,
               productId: row.productId,
-              tiktokProductId: row.tiktokProductId,
+              tiktokProductId: row.productId,
               name: row.productName,
               shopName: row.shopName
             }" />
@@ -854,7 +854,7 @@ const loadCurrencies = async () => {
 // 获取当前默认货币符号
 const currentDefaultCurrencySymbol = computed(() => {
   const defaultCurrency = currencyList.value.find(c => c.isDefault)
-  return defaultCurrency?.symbol || '¥'
+  return defaultCurrency?.symbol || '฿'
 })
 
 // 加载店铺列表

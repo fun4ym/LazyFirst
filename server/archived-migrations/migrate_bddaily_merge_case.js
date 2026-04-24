@@ -18,7 +18,7 @@ async function mergeBdDailyCaseDuplicates() {
     console.log('✅ 数据库连接成功');
 
     // 获取BdDaily模型
-    const BdDaily = require('./models/BdDaily');
+    const BdDaily = require('../models/BdDaily');
 
     // 1. 首先查看当前的大小写分布情况
     console.log('\n📊 当前大小写分布情况：');

@@ -117,6 +117,7 @@ export default {
     initialization: '初始化',
     bdWorkspace: 'BD工作台',
     shops: '店铺管理',
+    suppliers: '供应商管理',
     bdDashboard: 'BD仪表盘',
     initImport: '初始化导入',
     marketWorkspace: '市场工作台',

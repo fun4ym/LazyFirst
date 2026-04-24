@@ -18,7 +18,7 @@ async function fixBdDailyDuplicates() {
     console.log('✅ 数据库连接成功');
 
     // 获取BdDaily模型
-    const BdDaily = require('./models/BdDaily');
+    const BdDaily = require('../models/BdDaily');
 
     // 1. 查找所有大小写冲突
     console.log('\n🔍 查找所有大小写冲突...');

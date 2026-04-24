@@ -24,6 +24,23 @@ router.get('/list', async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
+    // 为货币单位添加符号
+    if (type === 'priceUnit') {
+      const symbolMap = {
+        'THB': '฿',
+        'CNY': '¥',
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'VND': '₫',
+        'MYR': 'RM',
+        'SGD': 'S$'
+      };
+      data.forEach(item => {
+        item.symbol = symbolMap[item.code] || item.code;
+      });
+    }
+
     res.json({ success: true, data });
   } catch (error) {
     console.error('Get public base data error:', error);
@@ -92,6 +109,23 @@ router.get('/', authenticate, authorize('baseData:read'), async (req, res) => {
       .sort({ createdAt: -1 });
 
     const total = await BaseData.countDocuments(query);
+
+    // 为货币单位添加符号
+    if (type === 'priceUnit') {
+      const symbolMap = {
+        'THB': '฿',
+        'CNY': '¥',
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'VND': '₫',
+        'MYR': 'RM',
+        'SGD': 'S$'
+      };
+      baseData.forEach(item => {
+        item.symbol = symbolMap[item.code] || item.code;
+      });
+    }
 
     res.json({
       success: true,

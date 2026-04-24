@@ -116,6 +116,7 @@ export default {
     systemModels: 'System Models',
     bdWorkspace: 'BD Workspace',
     shops: 'Shops',
+    suppliers: 'Suppliers',
     bdDashboard: 'BD Dashboard',
     initImport: 'Initial Import',
     marketWorkspace: 'Market Workspace',

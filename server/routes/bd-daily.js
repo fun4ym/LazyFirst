@@ -155,11 +155,11 @@ router.post('/', authenticate, authorize('bdDaily:create'), [
       remark
     } = req.body;
 
-    // 检查是否已存在同日期同BD的记录
+    // 检查是否已存在同日期同BD的记录（不区分大小写）
     const existing = await BdDaily.findOne({
       companyId: req.companyId,
       date: new Date(date),
-      salesman
+      salesman: { $regex: new RegExp(`^${salesman.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
     });
 
     if (existing) {
@@ -172,7 +172,7 @@ router.post('/', authenticate, authorize('bdDaily:create'), [
     const bdDaily = await BdDaily.create({
       companyId: req.companyId,
       date: new Date(date),
-      salesman,
+      salesman: salesman === '未分配' ? '未分配' : salesman.toLowerCase(),
       sampleCount: sampleCount || 0,
       sampleIds: sampleIds || '',
       revenue: revenue || 0,
@@ -414,7 +414,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
       }
     });
     
-    // 辅助函数：获取销售人员姓名
+    // 辅助函数：获取销售人员姓名（统一返回小写）
     const getSalesmanName = (identifier) => {
       if (!identifier || identifier === '未分配') {
         return '未分配';
@@ -424,25 +424,27 @@ async function generateSingleDate(targetDate, companyId, userId) {
       
       // 如果是有效的ObjectId字符串，尝试按ID查找
       if (idStr.match(/^[0-9a-fA-F]{24}$/)) {
-        return userMapById[idStr] || idStr;
+        const name = userMapById[idStr] || idStr;
+        return name === '未分配' ? '未分配' : name.toLowerCase();
       }
       // 尝试按用户名查找（不区分大小写）
       const lowerIdentifier = idStr.toLowerCase();
       // 先尝试精确匹配
       if (userMapByUsername[idStr]) {
-        return userMapByUsername[idStr];
+        return userMapByUsername[idStr].toLowerCase();
       }
       // 再尝试小写匹配
       if (userMapByUsername[lowerIdentifier]) {
-        return userMapByUsername[lowerIdentifier];
+        return userMapByUsername[lowerIdentifier].toLowerCase();
       }
       // 最后尝试不区分大小写的匹配
       for (const username in userMapByUsername) {
         if (username.toLowerCase() === lowerIdentifier) {
-          return userMapByUsername[username];
+          return userMapByUsername[username].toLowerCase();
         }
       }
-      return idStr;
+      // 默认返回小写
+      return idStr.toLowerCase();
     };
 
     // 获取所有样品记录
@@ -572,11 +574,11 @@ async function generateSingleDate(targetDate, companyId, userId) {
       const orderData = orderStats[salesman] || { gmvTotal: 0, estimatedCommissionTotal: 0, orderGeneratedCount: 0, orderCount: 0, orderIds: [] };
       const commissionData = commissionStats[salesman] || { commissionTotal: 0, revenueIds: [], orderCount: 0 };
 
-      // 检查是否已存在
+      // 检查是否已存在（不区分大小写）
       const existing = await BdDaily.findOne({
         companyId: companyId,
         date: normalizedDate,
-        salesman
+        salesman: { $regex: new RegExp(`^${salesman.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
       });
 
       const bdDailyData = {
@@ -711,10 +713,10 @@ router.post('/recalculate-commission', authenticate, authorize('bdDaily:update')
         const nextDate = new Date(recordDate);
         nextDate.setDate(nextDate.getDate() + 1);
 
-        // 查询该日期的订单
+        // 查询该日期的订单（不区分大小写）
         const orders = await ReportOrder.find({
           companyId,
-          bdName: record.salesman,
+          bdName: { $regex: new RegExp(`^${record.salesman.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
           createTime: { $gte: recordDate, $lt: nextDate }
         });
 
