@@ -650,6 +650,42 @@
           </div>
         </div>
         
+        <!-- 寄样状态编辑 -->
+        <div class="status-edit-section">
+          <div class="section-title" style="margin-bottom: 12px; font-weight: 600;">{{ $t('samplePublic.modifyShippingStatus') }}</div>
+          <el-form :model="sampleStatusForm" label-width="100px">
+            <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
+              <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
+                <el-option :label="$t('samplePublic.pending')" value="pending" />
+                <el-option :label="$t('samplePublic.sent')" value="sent" />
+                <el-option :label="$t('samplePublic.refused')" value="refused" />
+              </el-select>
+            </el-form-item>
+            <!-- 已寄样时显示物流信息 -->
+            <template v-if="sampleStatusForm.sampleStatus === 'sent'">
+              <el-form-item :label="$t('samplePublic.logisticsCompany')">
+                <el-select v-model="sampleStatusForm.logisticsCompany" :placeholder="$t('samplePublic.selectLogistics')" style="width: 100%">
+                  <el-option
+                    v-for="opt in logisticsCompanyOptions"
+                    :key="opt._id"
+                    :label="opt.name"
+                    :value="opt.code"
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item :label="$t('samplePublic.trackingNumber')">
+                <el-input
+                  v-model="sampleStatusForm.trackingNumber"
+                  :placeholder="$t('samplePublic.enterTrackingNumber')"
+                />
+              </el-form-item>
+            </template>
+            <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samplePublic.refusalReason')">
+              <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samplePublic.enterRefusalReason')" />
+            </el-form-item>
+          </el-form>
+        </div>
+
         <!-- 操作按钮 -->
         <div class="dialog-footer">
           <el-button @click="statusDialogVisible = false">{{ $t('samplePublic.cancel') }}</el-button>

@@ -5,6 +5,8 @@ export default {
     add: 'เพิ่ม',
     edit: 'แก้ไข',
     delete: 'ลบ',
+    create: 'สร้าง',
+    update: 'อัปเดต',
     save: 'บันทึก',
     cancel: 'ยกเลิก',
     confirm: 'ยืนยัน',

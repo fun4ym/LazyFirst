@@ -277,10 +277,10 @@
           <el-input v-model="formData.videoStreamCode" :placeholder="$t('videos.enterStreamCode')" />
         </el-form-item>
 
-        <el-form-item :label="$t('videos.isAdPromotion')">
+        <!-- 是否投流：隐藏，新增时默认false提交 -->
+        <!-- <el-form-item :label="$t('videos.isAdPromotion')">
           <el-switch v-model="formData.isAdPromotion" />
         </el-form-item>
-
         <el-form-item v-if="formData.isAdPromotion" :label="$t('videos.adTime')">
           <el-date-picker
             v-model="formData.adPromotionTime"
@@ -289,7 +289,7 @@
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
           />
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
 
       <template #footer>
@@ -378,9 +378,7 @@ const filteredSampleOptions = ref([])
 
 // 计算属性：是否可以选其他操作员（基于数据权限）
 const canSelectOtherOperator = computed(() => {
-  // 这里需要根据实际的数据权限逻辑实现
-  // 暂时假设如果用户数据范围是"只看自己"，则不能选择其他操作员
-  const userDataScope = AuthManager.getUserDataScope?.('videos') || 'all'
+  const userDataScope = AuthManager.getUserDataScope('videos')
   return userDataScope !== 'self'
 })
 
@@ -439,12 +437,10 @@ function getShopName(product) {
   return ''
 }
 
-// 加载用户列表
+// 加载用户列表（BD下拉框，根据数据权限过滤）
 async function loadUsers() {
   try {
-    // 添加limit参数获取更多用户，避免数据不全
-    const params = new URLSearchParams({ limit: '1000' })
-    const res = await fetch(`/api/users?${params}`, {
+    const res = await fetch(`/api/videos/bd-users`, {
       headers: { Authorization: `Bearer ${AuthManager.getToken()}` }
     })
     const json = await res.json()
@@ -457,7 +453,6 @@ async function loadUsers() {
     if (currentUser && currentUser._id) {
       const userExists = users.some(user => user._id === currentUser._id)
       if (!userExists) {
-        // 将当前用户添加到列表前面
         users.unshift({
           _id: currentUser._id,
           realName: currentUser.realName,
@@ -650,13 +645,14 @@ function openAddDialog() {
   formData.influencerId = ''
   // 默认选中当前登录用户作为BD
   const currentUser = AuthManager.getUser()
-  formData.operator = currentUser?._id || ''
+  formData.operator = currentUser?._id || currentUser?.id || ''
   // 确保当前用户存在于用户列表中
-  if (currentUser && currentUser._id) {
-    const exists = userList.value.some(user => user._id === currentUser._id)
+  if (currentUser && (currentUser._id || currentUser.id)) {
+    const currentUserId = currentUser._id || currentUser.id
+    const exists = userList.value.some(user => user._id === currentUserId)
     if (!exists) {
       userList.value.unshift({
-        _id: currentUser._id,
+        _id: currentUserId,
         realName: currentUser.realName,
         username: currentUser.username
       })
@@ -672,8 +668,8 @@ function openEditDialog(row) {
   formData.linkSampleRecord = !!row.sampleId
   formData.videoLink = row.videoLink || ''
   formData.videoStreamCode = row.videoStreamCode || ''
-  formData.isAdPromotion = row.isAdPromotion || false
-  formData.adPromotionTime = row.adPromotionTime ? row.adPromotionTime.slice(0, 19).replace('T', ' ') : ''
+  formData.isAdPromotion = false
+  formData.adPromotionTime = ''
   
   formData.productId = row.productId?._id || ''
   formData.influencerId = row.influencerId?._id || ''
@@ -720,22 +716,24 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    // 构建请求体（独立模式）
+    // 构建请求体
     let body = {
       videoLink: formData.videoLink,
       videoStreamCode: formData.videoStreamCode,
-      isAdPromotion: formData.isAdPromotion,
-      adPromotionTime: formData.adPromotionTime || undefined,
+      isAdPromotion: false,
       productId: formData.productId,
       influencerId: formData.influencerId,
-      sampleId: formData.sampleId || undefined
     }
     
+    // 关联申样记录
+    if (formData.sampleId) {
+      body.sampleId = formData.sampleId
+    }
+    
+    // BD操作员
     if (formData.operator) {
       body.createdBy = formData.operator
     }
-    
-    // 编辑时不需要特殊处理，因为所有字段都已包含
 
     const url = isEditing.value ? `${API_BASE}/${editingId.value}` : API_BASE
     const method = isEditing.value ? 'PUT' : 'POST'

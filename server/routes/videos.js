@@ -4,12 +4,106 @@ const { body, validationResult } = require('express-validator');
 const { authenticate, authorize, filterByDataScope } = require('../middleware/auth');
 const Video = require('../models/Video');
 const SampleManagement = require('../models/SampleManagement');
+const User = require('../models/User');
 
 const router = express.Router();
+
+/**
+ * 解析productId：如果不是有效的ObjectId，尝试按tiktokProductId查找
+ * @param {string} id - 可能是MongoDB ObjectId或TikTok商品ID
+ * @param {string} companyId - 公司ID
+ * @returns {ObjectId|null} - Product的MongoDB ObjectId
+ */
+async function resolveProductId(id, companyId) {
+  if (!id) return null;
+  const Product = require('../models/Product');
+  
+  // 先尝试按ObjectId查找
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    try {
+      const product = await Product.findOne({ _id: id, companyId });
+      if (product) return product._id;
+    } catch (e) {
+      // ObjectId格式虽然合法但查询失败，继续尝试tiktokProductId
+    }
+  }
+  
+  // 再尝试按tiktokProductId查找
+  const product = await Product.findOne({ tiktokProductId: String(id), companyId });
+  return product ? product._id : null;
+}
 
 // ==========================================
 // 视频登记管理相关路由
 // ==========================================
+
+/**
+ * @route   GET /api/videos/bd-users
+ * @desc    获取BD下拉框用户列表（根据数据权限过滤）
+ * @access  Private
+ */
+router.get('/bd-users', authenticate, authorize('videos:read', 'videos:create'), async (req, res) => {
+  try {
+    // 获取当前用户的数据权限
+    let dataScope = 'self';
+    let moduleDataScopes = {};
+    let isSuperAdmin = false;
+
+    if (req.user.roleId) {
+      const userWithRole = await User.findById(req.user._id).populate('roleId', 'name dataScope moduleDataScopes permissions');
+      if (userWithRole && userWithRole.roleId) {
+        const roleName = userWithRole.roleId.name || '';
+        if (roleName === '超级管理员' || roleName === 'admin' || userWithRole.roleId.permissions?.includes('*')) {
+          isSuperAdmin = true;
+        }
+        dataScope = userWithRole.roleId.dataScope || 'self';
+        if (userWithRole.roleId.moduleDataScopes) {
+          if (userWithRole.roleId.moduleDataScopes instanceof Map) {
+            moduleDataScopes = Object.fromEntries(userWithRole.roleId.moduleDataScopes);
+          } else {
+            moduleDataScopes = userWithRole.roleId.moduleDataScopes || {};
+          }
+        }
+      }
+    }
+
+    // 获取videos模块的数据权限
+    const videoScope = isSuperAdmin ? 'all' : (moduleDataScopes.videos || dataScope);
+
+    const query = { companyId: req.companyId, status: 'active' };
+
+    if (videoScope === 'self') {
+      // 只看自己：只返回当前用户
+      query._id = req.user._id;
+    } else if (videoScope === 'dept') {
+      // 看本部门：返回同部门的用户
+      if (req.user.deptId) {
+        query.deptId = req.user.deptId;
+      } else {
+        // 没有部门则只返回自己
+        query._id = req.user._id;
+      }
+    }
+    // videoScope === 'all' 则不额外过滤
+
+    const users = await User.find(query)
+      .select('_id realName username')
+      .sort({ realName: 1, username: 1 })
+      .limit(500);
+
+    res.json({
+      success: true,
+      data: { users }
+    });
+
+  } catch (error) {
+    console.error('Get BD users error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取BD用户列表失败'
+    });
+  }
+});
 
 /**
  * @route   GET /api/videos
@@ -178,7 +272,7 @@ router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), a
     let finalCreatedBy = req.user._id;
     
     // 验证操作员（createdBy）是否存在且属于该公司
-    if (createdBy && createdBy !== req.user._id) {
+    if (createdBy && createdBy !== String(req.user._id)) {
       const User = require('../models/User');
       const operator = await User.findOne({
         _id: createdBy,
@@ -190,8 +284,6 @@ router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), a
           message: '操作员不存在'
         });
       }
-      // 这里可以添加权限检查：用户是否有权指定其他操作员
-      // 暂时允许
       finalCreatedBy = createdBy;
     }
     
@@ -210,7 +302,8 @@ router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), a
       }
       
       finalSampleId = sample._id;
-      finalProductId = sample.productId;
+      // productId需要解析为Product的ObjectId
+      finalProductId = await resolveProductId(sample.productId, req.companyId);
       finalInfluencerId = sample.influencerId;
     } else {
       // 模式2：独立创建，必须提供商品和达人
@@ -221,13 +314,9 @@ router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), a
         });
       }
       
-      // 验证商品存在且属于该公司
-      const Product = require('../models/Product');
-      const product = await Product.findOne({
-        _id: productId,
-        companyId: req.companyId
-      });
-      if (!product) {
+      // 解析productId为Product的ObjectId
+      finalProductId = await resolveProductId(productId, req.companyId);
+      if (!finalProductId) {
         return res.status(400).json({
           success: false,
           message: '商品不存在'
@@ -247,7 +336,6 @@ router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), a
         });
       }
       
-      finalProductId = productId;
       finalInfluencerId = influencerId;
     }
 
@@ -259,29 +347,21 @@ router.post('/', authenticate, authorize('videos:create', 'samplesBd:create'), a
       influencerId: finalInfluencerId,
       videoLink: videoLink || '',
       videoStreamCode: videoStreamCode || '',
-      isAdPromotion: isAdPromotion || false,
+      isAdPromotion: false,
       createdBy: finalCreatedBy,
       updatedBy: req.user._id
     };
 
-    if (adPromotionTime) {
-      videoData.adPromotionTime = new Date(adPromotionTime);
-    }
-    if (isAdPromotion && !adPromotionTime) {
-      videoData.adPromotionTime = new Date();
+    // 冗余存储tiktokProductId
+    if (finalProductId) {
+      const Product = require('../models/Product');
+      const product = await Product.findById(finalProductId).select('tiktokProductId');
+      if (product && product.tiktokProductId) {
+        videoData.tiktokProductId = product.tiktokProductId;
+      }
     }
 
     const video = await Video.create(videoData);
-
-    // 如果投流了，且有关联样品，同步更新样品的快捷标记
-    if (isAdPromotion && finalSampleId) {
-      await SampleManagement.findByIdAndUpdate(finalSampleId, {
-        isAdPromotion: true,
-        adPromotionTime: videoData.adPromotionTime,
-        adPromotionUpdatedBy: req.user._id,
-        adPromotionUpdatedAt: new Date()
-      });
-    }
 
     // 如果有视频链接，且有关联样品，更新履约信息
     if (videoLink && finalSampleId) {
@@ -374,7 +454,8 @@ router.put('/:id', authenticate, authorize('videos:update', 'samplesBd:update'),
           });
         }
         updateData.sampleId = sample._id;
-        updateData.productId = sample.productId;
+        // productId需要解析为Product的ObjectId
+        updateData.productId = await resolveProductId(sample.productId, req.companyId);
         updateData.influencerId = sample.influencerId;
       } else {
         // sampleId为空，表示解除样品关联，必须提供productId和influencerId
@@ -385,24 +466,19 @@ router.put('/:id', authenticate, authorize('videos:update', 'samplesBd:update'),
           });
         }
         updateData.sampleId = null;
-        updateData.productId = productId;
+        updateData.productId = await resolveProductId(productId, req.companyId);
+        if (!updateData.productId) {
+          return res.status(400).json({ success: false, message: '商品不存在' });
+        }
         updateData.influencerId = influencerId;
       }
     } else if (productId !== undefined || influencerId !== undefined) {
       // 如果更新了productId或influencerId，但未提供sampleId，则保持现有sampleId（可能为null）
       if (productId !== undefined) {
-        const Product = require('../models/Product');
-        const product = await Product.findOne({
-          _id: productId,
-          companyId: req.companyId
-        });
-        if (!product) {
-          return res.status(400).json({
-            success: false,
-            message: '商品不存在'
-          });
+        updateData.productId = await resolveProductId(productId, req.companyId);
+        if (!updateData.productId) {
+          return res.status(400).json({ success: false, message: '商品不存在' });
         }
-        updateData.productId = productId;
       }
       if (influencerId !== undefined) {
         const Influencer = require('../models/Influencer');
@@ -421,7 +497,7 @@ router.put('/:id', authenticate, authorize('videos:update', 'samplesBd:update'),
     }
 
     // 处理操作员更新
-    if (createdBy !== undefined && createdBy !== req.user._id) {
+    if (createdBy !== undefined && String(createdBy) !== String(req.user._id)) {
       const User = require('../models/User');
       const operator = await User.findOne({
         _id: createdBy,
@@ -445,12 +521,9 @@ router.put('/:id', authenticate, authorize('videos:update', 'samplesBd:update'),
     }
     if (isAdPromotion !== undefined) {
       updateData.isAdPromotion = isAdPromotion;
-      if (isAdPromotion) {
-        updateData.adPromotionTime = adPromotionTime ? new Date(adPromotionTime) : new Date();
-      }
     }
     if (adPromotionTime !== undefined) {
-      updateData.adPromotionTime = new Date(adPromotionTime);
+      updateData.adPromotionTime = adPromotionTime;
     }
 
     const video = await Video.findOneAndUpdate(
@@ -467,7 +540,7 @@ router.put('/:id', authenticate, authorize('videos:update', 'samplesBd:update'),
     }
 
     // 同步更新样品的快捷标记（仅当有关联样品时）
-    if (video.sampleId && (isAdPromotion !== undefined || videoStreamCode !== undefined)) {
+    if (video.sampleId && videoStreamCode !== undefined) {
       const allVideosOfSample = await Video.find({ sampleId: video.sampleId });
       const anyAdPromoted = allVideosOfSample.some(v => v.isAdPromotion);
       

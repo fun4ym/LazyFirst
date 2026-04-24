@@ -66,6 +66,22 @@ const AuthManager = {
     return permissions.some(p => userPermissions.includes(p))
   },
 
+  // 获取用户对指定模块的数据权限
+  // 返回值: 'self' | 'dept' | 'all'
+  getUserDataScope(module) {
+    const user = this.getUser()
+    if (!user) return 'all'
+    // 超级管理员拥有全部权限
+    const role = user.role
+    if (!role) return 'all'
+    if (role.name === '超级管理员' || role.name === 'admin' || role.permissions?.includes('*')) {
+      return 'all'
+    }
+    // 从 moduleDataScopes 获取指定模块的数据权限
+    const moduleDataScopes = role.moduleDataScopes || {}
+    return moduleDataScopes[module] || role.dataScope || 'self'
+  },
+
   // 检查是否已登录
   isLoggedIn() {
     const token = this.getToken()
