@@ -56,7 +56,9 @@ export default {
     doubleDash: '--',
     countUnit: 'items',
     copy: 'Copy',
-    fuzzySearch: 'Fuzzy Search'
+    fuzzySearch: 'Fuzzy Search',
+    optional: 'Optional',
+    selectedCount: 'Selected {count} items'
   },
   menu: {
     dashboard: 'Dashboard',
@@ -219,6 +221,7 @@ export default {
   },
   influencer: {
     tiktokId: 'TikTok ID',
+    detail: 'Detail',
     tiktokName: 'Name',
     followers: 'Followers (K)',
     latestFollowers: 'Latest Followers (K)',
@@ -252,6 +255,7 @@ export default {
     maintenanceStatus: 'Maintenance Status',
     maintenanceRecord: 'Maintenance Record',
     addMaintenanceRecord: 'Add Maintenance Record',
+    addRecord: 'Add Record',
     submitRecord: 'Submit Record',
     claim: 'Claim',
     release: 'Release',
@@ -259,6 +263,7 @@ export default {
     frozen: 'Frozen',
     // Form
     tiktokInfo: 'TikTok Info',
+    categoryInfo: 'Category Info',
     influencerPlatformInfo: 'Influencer Platform Basic Info',
     formerNames: 'Former Names',
     formerIds: 'Former IDs',
@@ -266,6 +271,9 @@ export default {
     formerIdsTip: 'Separate multiple with commas',
     originalTiktokId: 'Original TikTok ID',
     originalTiktokIdTip: 'Optional, platform original ID',
+    basicInfo: 'Basic Info',
+    contactInfo: 'Contact Info',
+    personalInfo: 'Personal Info',
     realName: 'Real Name',
     realNameTip: 'Optional, influencer real name',
     nickname: 'Nickname',
@@ -323,10 +331,24 @@ export default {
     atRisk: 'At Risk',
     aboutToRelease: 'About to Release',
     released: 'Released',
+    // Maintenance record categories
+    maintenance: {
+      category: {
+        import: 'Data Import',
+        create: 'Create/Manual Maintenance',
+        sample_application: 'Sample Application',
+        blacklist: 'Blacklist Mark'
+      }
+    },
     avgViews: 'Avg Views',
     monthlySales: 'Monthly Sales',
     gmv: 'GMV',
-    noTiktokIdToCopy: 'No TikTok ID available to copy'
+    noTiktokIdToCopy: 'No TikTok ID available to copy',
+    basicInfoTab: 'Basic Info',
+    deepDiveTab: 'Deep Dive',
+    historyTab: 'History',
+    historyInfo: 'History',
+    monthlySalesAmount: 'Monthly Sales Amount'
   },
   product: {
     productList: 'Product List',
@@ -1247,6 +1269,7 @@ export default {
     noVideoLinkToCopy: 'No video link to copy',
     noStreamCodeToCopy: 'No stream code to copy',
     copyStreamCodeSuccess: 'Stream code copied',
+    sampleResult: 'Sample Result',
     copyStreamCodeFailed: 'Failed to copy stream code'
   },
   // TikTok Activities
@@ -1554,6 +1577,7 @@ export default {
       influencerCount: 'Influencer Count',
       orderGeneratedCount: 'Order Count'
     },
+    sampleResult: 'Sample Result',
     // Filter labels
     filter: {
       productName: 'Product Name',
@@ -1717,6 +1741,7 @@ export default {
     copyStreamCodeSuccess: 'Stream code copied',
     copyStreamCodeSuccess: 'Stream code copied',
     copyStreamCodeFailed: 'Failed to copy stream code',
+    sampleResult: 'Sample Result',
     confirmDeleteVideo: 'Are you sure to delete this video?',
     deleteSuccess: 'Deleted successfully',
     deleteFailed: 'Failed to delete video'

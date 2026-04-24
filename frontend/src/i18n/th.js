@@ -1487,6 +1487,7 @@ export default {
     streamCodeDetail: 'รหัสสตรีม',
     shippingDate: 'วันที่จัดส่ง',
     currentLogisticsInfo: 'ข้อมูลขนส่งปัจจุบัน',
+    sampleResult: 'ผลการสมัครตัวอย่าง',
     bd: 'BD'
   },
   // พื้นที่ทำงาน BD - คำขอตัวอย่าง
@@ -1640,7 +1641,8 @@ export default {
     noVideoLinkToCopy: 'ไม่มีลิงก์วิดีโอให้คัดลอก',
     noStreamCodeToCopy: 'ไม่มีรหัสสตรีมให้คัดลอก',
     copyStreamCodeSuccess: 'คัดลอกรหัสสตรีมสำเร็จ',
-    copyStreamCodeFailed: 'คัดลอกรหัสสตรีมล้มเหลว'
+    copyStreamCodeFailed: 'คัดลอกรหัสสตรีมล้มเหลว',
+    sampleResult: 'ผลการสมัครตัวอย่าง'
   },
   // พื้นที่ทำงานตลาด - ตั้งค่าการรับสมัคร
   recruitment: {

@@ -53,6 +53,12 @@ const influencerMaintenanceSchema = new mongoose.Schema({
     enum: ['maintenance', 'sample_application'],
     default: 'maintenance'
   },
+  // 分类：import-数据导入, create-新增/手动维护, sample_application-样品申请, blacklist-标记黑名单
+  category: {
+    type: String,
+    enum: ['import', 'create', 'sample_application', 'blacklist'],
+    default: 'create'
+  },
   // 关联的样品ID（当recordType为sample_application时）
   sampleId: {
     type: mongoose.Schema.Types.ObjectId,

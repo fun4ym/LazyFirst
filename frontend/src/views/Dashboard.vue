@@ -32,7 +32,7 @@
               <div class="requirement-item">
                 <el-icon><Money /></el-icon>
                 <span class="requirement-label">GMV</span>
-                <span class="requirement-value">฿{{ formatMoney(rec.requirementGmv) }}</span>
+                <span class="requirement-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(rec.requirementGmv) }}</span>
               </div>
             </el-tooltip>
             <el-tooltip v-if="rec.requirementFollowers" :content="$t('recruitment.requirementFollowers')" placement="top" :show-after="300">
@@ -107,7 +107,7 @@
                 <el-icon><Money /></el-icon>
               </div>
               <div class="stat-content">
-                <div class="stat-value">฿{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
+                <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
                 <div class="stat-label">{{ $t('dashboard.yesterdayCommission') }}</div>
               </div>
             </div>
@@ -121,7 +121,7 @@
                 <el-icon><Money /></el-icon>
               </div>
               <div class="stat-content">
-                <div class="stat-value">฿{{ formatMoney(bdStats.monthlyCommission.estimated) }}</div>
+                <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(bdStats.monthlyCommission.estimated) }}</div>
                 <div class="stat-label">{{ $t('dashboard.monthCommission') }}</div>
               </div>
             </div>
@@ -277,6 +277,19 @@ const bdStats = ref(null)
 const sampleTrendRange = ref('7days')
 const orderTrendRange = ref('7days')
 const publicRecruitments = ref([])
+const currencyList = ref([])
+
+// 加载货币列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('加载货币单位失败:', error)
+  }
+}
 
 // 加载公开招募列表
 const loadPublicRecruitments = async () => {
@@ -374,6 +387,11 @@ const orderPieData = computed(() => {
     { name: t('dashboard.personal'), value: user, itemStyle: { color: '#0288d1' } },
     { name: t('dashboard.teamOthers'), value: others, itemStyle: { color: '#e8e4ef' } }
   ]
+})
+
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || ''
 })
 
 const formatMoney = (value) => {
@@ -622,6 +640,7 @@ const TrendChart = defineComponent({
 })
 
 onMounted(() => {
+  loadCurrencies()
   const user = AuthManager.getUser()
   console.log('[Dashboard] User info:', user)
   if (user) {

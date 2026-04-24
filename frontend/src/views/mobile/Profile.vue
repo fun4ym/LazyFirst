@@ -54,7 +54,7 @@
             💰
           </div>
           <div class="stat-content">
-            <div class="stat-value">฿{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
             <div class="stat-label">{{ $t('mobile.profile.yesterdayCommission') }}</div>
           </div>
         </div>
@@ -64,7 +64,7 @@
             📈
           </div>
           <div class="stat-content">
-            <div class="stat-value">฿{{ formatMoney(bdStats.monthlyCommission?.estimated || 0) }}</div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(bdStats.monthlyCommission?.estimated || 0) }}</div>
             <div class="stat-label">{{ $t('mobile.profile.monthCommission') }}</div>
           </div>
         </div>
@@ -194,8 +194,25 @@ const router = useRouter()
 const userInfo = ref({})
 const bdStats = ref(null)
 const loading = ref(false)
+const currencyList = ref([])
 
 const isEnglish = computed(() => locale.value === 'en')
+
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || ''
+})
+
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+  }
+}
 
 const toggleLanguage = () => {
   locale.value = locale.value === 'en' ? 'zh' : 'en'
@@ -247,6 +264,7 @@ const logout = async () => {
 }
 
 onMounted(() => {
+  loadCurrencies()
   const user = AuthManager.getUser()
   if (user) {
     userInfo.value = user

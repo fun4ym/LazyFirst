@@ -527,157 +527,128 @@
       </el-tabs>
     </div>
 
-    <!-- 样品申请详情弹窗 - 重新设计为商务感 -->
+    <!-- 样品申请详情弹窗 - 参照达人详情弹层重新设计 -->
     <el-dialog
       v-model="statusDialogVisible"
       :title="currentEditRow ? $t('samplePublic.sampleDetail') : $t('samplePublic.modifyShippingStatus')"
-      width="700px"
+      width="900px"
       :close-on-click-modal="false"
       class="business-detail-dialog"
     >
-      <div v-if="currentEditRow">
-        <el-tabs v-model="detailActiveTab" class="business-tabs">
-          <!-- 基础信息标签页 -->
-          <el-tab-pane :label="$t('samplePublic.basicInfo')" name="basic">
-            <div class="info-grid">
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('samplePublic.tiktokIdDetail') || $t('samplePublic.tiktokId') }}：</span>
-                  <span class="cell-value tiktok-id-text">{{ currentEditRow.influencerAccount || '-' }}</span>
-                </div>
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('samplePublic.applicationDate') }}：</span>
-                  <span class="cell-value">{{ currentEditRow.date ? formatDate(currentEditRow.date) : '-' }}</span>
-                </div>
-              </div>
-              
-              <div class="info-row">
-                <div class="info-cell wide">
-                  <span class="cell-label">{{ $t('samplePublic.productNameDetail') || $t('samplePublic.productName') }}：</span>
-                  <span class="cell-value product-name">{{ currentEditRow.productName || '-' }}</span>
-                </div>
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('samplePublic.productIdDetail') || $t('samplePublic.productId') }}：</span>
-                  <span class="cell-value">{{ currentEditRow.productId || '-' }}</span>
-                </div>
-              </div>
-              
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('samplePublic.productImage') }}：</span>
-                  <div class="cell-value">
-                    <el-image 
-                      v-if="currentEditRow.productImage" 
-                      :src="currentEditRow.productImage" 
-                      style="width: 60px; height: 60px" 
-                      fit="cover" 
-                      :preview-src-list="[currentEditRow.productImage]" 
-                    />
-                    <span v-else>-</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 投流信息 -->
-              <div class="ad-promotion-section">
-                <h4 class="section-title">{{ $t('samplePublic.adInfo') || '投流信息' }}</h4>
-                <div class="ad-grid">
-                  <div class="ad-item">
-                    <span class="ad-label">{{ $t('samplePublic.adStatusDetail') || $t('samplePublic.adStatus') }}：</span>
-                    <span class="ad-value">
-                      <el-tag :type="currentEditRow.isAdPromotion ? 'success' : 'info'" size="large">
-                        {{ currentEditRow.isAdPromotion ? $t('samplePublic.adPromoted') : $t('samplePublic.noAdPromoted') }}
-                      </el-tag>
-                    </span>
-                  </div>
-                  <div class="ad-item wide">
-                    <span class="ad-label">{{ $t('samplePublic.streamCodeDetail') || $t('samplePublic.streamCode') }}：</span>
-                    <span class="ad-value">{{ currentEditRow.videoStreamCode || '-' }}</span>
-                  </div>
-                </div>
-              </div>
+      <div v-if="currentEditRow" class="sample-detail-content">
+        <!-- 头部区域 -->
+        <div class="detail-header">
+          <div class="detail-avatar">
+            <el-image 
+              v-if="currentEditRow.productImage" 
+              :src="currentEditRow.productImage" 
+              style="width: 64px; height: 64px; border-radius: 12px;" 
+              fit="cover" 
+              :preview-src-list="[currentEditRow.productImage]" 
+            />
+            <el-icon v-else :size="48"><Box /></el-icon>
+          </div>
+          <div class="detail-title">
+            <div class="detail-id-row">
+              <span class="detail-tiktok-id">{{ currentEditRow.influencerAccount || '-' }}</span>
+              <el-tag :type="getSampleStatusType(currentEditRow.sampleStatus)" size="small">
+                {{ getSampleStatusText(currentEditRow.sampleStatus) }}
+              </el-tag>
+              <el-tag v-if="currentEditRow.isAdPromotion" type="success" size="small">{{ $t('samplePublic.adPromoted') }}</el-tag>
+              <el-tag v-if="currentEditRow.isOrderGenerated" type="warning" size="small">{{ $t('samplePublic.orderGenerated') }}</el-tag>
             </div>
-          </el-tab-pane>
+            <div class="detail-name">{{ currentEditRow.productName || '-' }}</div>
+            <div class="detail-bd">
+              <span class="bd-label">商品ID:</span>
+              <span>{{ currentEditRow.productId || '-' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 核心指标卡片 -->
+        <div class="detail-stats">
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('samplePublic.followers')" placement="top" :show-after="300">
+                <span>FV</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ formatNumber(currentEditRow.followerCount || 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('samplePublic.gmv')" placement="top" :show-after="300">
+                <span>GMV</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatNumber(currentEditRow.gmv || 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('samplePublic.monthlySales')" placement="top" :show-after="300">
+                <span>MSS</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ formatNumber(currentEditRow.monthlySalesCount || 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('samplePublic.avgViews')" placement="top" :show-after="300">
+                <span>APV</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ formatNumber(currentEditRow.avgVideoViews || 0) }}</div>
+          </div>
+        </div>
+
+        <!-- 双卡片布局 -->
+        <div class="detail-info-grid">
+          <!-- 达人信息卡片 -->
+          <div class="info-section">
+            <div class="section-title">{{ $t('samplePublic.influencerInfo') }}</div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('samplePublic.tiktokId') }}</span>
+              <span class="info-value">{{ currentEditRow.influencerAccount || '-' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">BD</span>
+              <span class="info-value">{{ currentEditRow.bd || '-' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('samplePublic.shippingInfo') }}</span>
+              <span class="info-value">{{ currentEditRow.shippingInfo || '-' }}</span>
+            </div>
+          </div>
           
-          <!-- 寄样状态标签页 -->
-          <el-tab-pane :label="$t('samplePublic.shippingStatus')" name="shipping">
-            <div class="info-grid">
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('samplePublic.currentStatus') || '当前状态' }}：</span>
-                  <span class="cell-value">
-                    <el-tag :type="getSampleStatusType(currentEditRow.sampleStatus)" size="large">
-                      {{ getSampleStatusText(currentEditRow.sampleStatus) }}
-                    </el-tag>
-                  </span>
-                </div>
-              </div>
-              
-              <!-- 状态编辑表单 -->
-              <div class="status-edit-section">
-                <h4 class="section-title">{{ $t('samplePublic.modifyShippingStatus') }}</h4>
-                <el-form :model="sampleStatusForm" label-width="100px">
-                  <el-form-item :label="$t('samplePublic.shippingStatusLabel')">
-                    <el-select v-model="sampleStatusForm.sampleStatus" style="width: 100%" @change="handleStatusChange">
-                      <el-option :label="$t('samplePublic.pending')" value="pending" />
-                      <el-option :label="$t('samplePublic.sent')" value="sent" />
-                      <el-option :label="$t('samplePublic.refused')" value="refused" />
-                    </el-select>
-                  </el-form-item>
-                  <!-- 已寄样时显示物流信息 -->
-                  <template v-if="sampleStatusForm.sampleStatus === 'sent'">
-                    <el-form-item :label="$t('samplePublic.logisticsCompany')">
-                      <el-select v-model="sampleStatusForm.logisticsCompany" :placeholder="$t('samplePublic.selectLogistics')" style="width: 100%">
-                        <el-option
-                          v-for="opt in logisticsCompanyOptions"
-                          :key="opt._id"
-                          :label="opt.name"
-                          :value="opt.code"
-                        />
-                      </el-select>
-                    </el-form-item>
-                    <el-form-item :label="$t('samplePublic.trackingNumber')">
-                      <el-input 
-                        v-model="sampleStatusForm.trackingNumber" 
-                        :placeholder="$t('samplePublic.enterTrackingNumber')" 
-                      />
-                    </el-form-item>
-                  </template>
-                  <el-form-item v-if="sampleStatusForm.sampleStatus === 'refused'" :label="$t('samplePublic.refusalReason')">
-                    <el-input v-model="sampleStatusForm.refusalReason" type="textarea" :rows="3" :placeholder="$t('samplePublic.enterRefusalReason')" />
-                  </el-form-item>
-                </el-form>
-              </div>
-              
-              <!-- 当前物流信息（如果已寄样） -->
-              <div class="current-shipping-info" v-if="currentEditRow.sampleStatus === 'sent'">
-                <h4 class="section-title">{{ $t('samplePublic.currentShippingInfo') || '当前物流信息' }}</h4>
-                <div class="details-grid">
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('samplePublic.logisticsCompany') }}：</span>
-                    <span class="detail-value">{{ currentEditRow.logisticsCompany || '-' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('samplePublic.trackingNumber') || $t('samplePublic.trackingNumberDetail') || '运单号' }}：</span>
-                    <span class="detail-value">{{ currentEditRow.trackingNumber || '-' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('samplePublic.shippingDate') || $t('samplePublic.shippingDateDetail') || '寄出日期' }}：</span>
-                    <span class="detail-value">{{ currentEditRow.shippingDate ? formatDate(currentEditRow.shippingDate) : '-' }}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 拒绝原因（如果已拒绝） -->
-              <div class="current-refusal-info" v-if="currentEditRow.sampleStatus === 'refused' && currentEditRow.refusalReason">
-                <h4 class="section-title">{{ $t('samplePublic.currentRefusalReason') || '当前拒绝原因' }}</h4>
-                <div class="refusal-reason">
-                  {{ currentEditRow.refusalReason }}
-                </div>
-              </div>
+          <!-- 申样结果卡片 -->
+          <div class="info-section">
+            <div class="section-title">{{ $t('samplePublic.sampleResult') }}</div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('samplePublic.applicationDate') }}</span>
+              <span class="info-value">{{ currentEditRow.date ? formatDate(currentEditRow.date) : '-' }}</span>
             </div>
-          </el-tab-pane>
-        </el-tabs>
+            <div class="info-row">
+              <span class="info-label">{{ $t('samplePublic.sampleStatus') }}</span>
+              <span class="info-value">
+                <el-tag :type="getSampleStatusType(currentEditRow.sampleStatus)" size="small">
+                  {{ getSampleStatusText(currentEditRow.sampleStatus) }}
+                </el-tag>
+              </span>
+            </div>
+            <div class="info-row" v-if="currentEditRow.videoLink">
+              <span class="info-label">{{ $t('samplePublic.video') }}</span>
+              <span class="info-value">
+                <el-link :href="currentEditRow.videoLink" target="_blank" type="primary" underline="hover">
+                  {{ $t('samplePublic.viewVideo') }}
+                </el-link>
+              </span>
+            </div>
+            <div class="info-row" v-if="currentEditRow.videoStreamCode">
+              <span class="info-label">{{ $t('samplePublic.streamCode') }}</span>
+              <span class="info-value">{{ currentEditRow.videoStreamCode }}</span>
+            </div>
+          </div>
+        </div>
         
         <!-- 操作按钮 -->
         <div class="dialog-footer">
@@ -721,7 +692,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -780,6 +751,9 @@ const searchForm = reactive({
   productId: ''           // 商品ID
 })
 
+// 货币单位列表
+const currencyList = ref([])
+
 // 分页
 const pagination = reactive({
   page: 1,
@@ -799,6 +773,23 @@ const sampleStatusForm = reactive({
 })
 const statusUpdateLoading = ref(false)
 const logisticsCompanyOptions = ref([])  // 物流公司选项列表
+
+// 加载货币单位列表
+const loadCurrencies = async () => {
+  try {
+    const res = await axios.get(`${API_BASE}/public/base-data/list`, { params: { type: 'priceUnit', limit: 100 } })
+    currencyList.value = res.data.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+    currencyList.value = []
+  }
+}
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
 
 // 批量更新物流公司弹窗
 const batchLogisticsDialogVisible = ref(false)
@@ -928,6 +919,8 @@ const loadSamples = async () => {
       samples.value = res.data.data.samples
       pagination.total = res.data.data.pagination.total
       error.value = null
+      // 加载货币单位
+      await loadCurrencies()
     } else {
       error.value = res.data.message || '加载失败'
     }
@@ -1361,6 +1354,7 @@ watch(activeTab, (newTab) => {
 
 onMounted(() => {
   loadSamples()
+  loadCurrencies()
 })
 </script>
 
@@ -1782,5 +1776,219 @@ onMounted(() => {
 .business-view .product-actions {
   display: flex;
   gap: 8px;
+}
+
+/* ========================================
+   样品申请详情弹层新样式 - 商务高级版
+   ======================================== */
+
+/* 对话框头部样式 */
+.business-detail-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 20px 24px;
+  margin: 0;
+}
+
+.business-detail-dialog :deep(.el-dialog__title) {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.business-detail-dialog :deep(.el-dialog__body) {
+  padding: 24px;
+  background: #f8f9fc;
+}
+
+.sample-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 头部区域 */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 16px;
+}
+
+.detail-avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #7b1fa2 0%, #9c4dcc 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.detail-title {
+  flex: 1;
+}
+
+.detail-id-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.detail-tiktok-id {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6DAD19;
+}
+
+.detail-name {
+  font-size: 16px;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.detail-bd {
+  font-size: 13px;
+  color: #606266;
+}
+
+.bd-label {
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+/* 核心指标卡片 */
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid #e8e8e8;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 标签页样式 */
+.detail-tabs {
+  margin-top: 16px;
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin: 0 0 16px 0;
+}
+
+.detail-tabs :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background-color: #ebeef5;
+}
+
+.detail-tabs :deep(.el-tabs__item) {
+  font-weight: 500;
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.detail-tabs :deep(.el-tabs__item.is-active) {
+  color: #6DAD19;
+}
+
+.detail-tabs :deep(.el-tabs__active-bar) {
+  background-color: #6DAD19;
+}
+
+/* 信息网格布局 */
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 4px;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.info-label {
+  color: #909399;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.info-value {
+  color: #303133;
+  word-break: break-all;
+}
+
+/* 拒绝原因样式 */
+.refusal-reason {
+  font-size: 13px;
+  color: #f56c6c;
+  background: #fef0f0;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #f56c6c;
+  margin-top: 8px;
+}
+
+/* 创建时间信息 */
+.created-info {
+  text-align: right;
+  padding-top: 12px;
+  border-top: 1px solid #ebeef5;
+  color: #909399;
+  font-size: 12px;
+  margin-top: 16px;
+}
+
+.created-label {
+  margin-right: 8px;
+}
+
+.created-value {
+  font-weight: 500;
 }
 </style>

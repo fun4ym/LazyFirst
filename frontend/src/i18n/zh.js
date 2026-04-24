@@ -56,7 +56,9 @@ export default {
     doubleDash: '--',
     countUnit: '条',
     copy: '复制',
-    fuzzySearch: '模糊搜索'
+    fuzzySearch: '模糊搜索',
+    optional: '选填',
+    selectedCount: '已选择 {count} 条'
   },
   menu: {
     dashboard: '仪表盘',
@@ -220,6 +222,7 @@ export default {
   },
   influencer: {
     tiktokId: 'TikTok ID',
+    detail: '详情',
     tiktokName: '昵称',
     followers: '粉丝数(K)',
     latestFollowers: '最新粉丝(K)',
@@ -253,6 +256,7 @@ export default {
     maintenanceStatus: '维护状态',
     maintenanceRecord: '维护记录',
     addMaintenanceRecord: '添加维护记录',
+    addRecord: '添加记录',
     submitRecord: '提交维护记录',
     claim: '领取',
     release: '释放',
@@ -260,6 +264,7 @@ export default {
     frozen: '已冻结',
     // 表单
     tiktokInfo: 'TikTok 信息',
+    categoryInfo: '分类信息',
     influencerPlatformInfo: '达人平台基本信息',
     formerNames: '曾用名称',
     formerIds: '曾用ID',
@@ -267,6 +272,9 @@ export default {
     formerIdsTip: '多个用逗号分隔',
     originalTiktokId: 'TikTok原始ID',
     originalTiktokIdTip: '可选，平台原始ID',
+    basicInfo: '基础信息',
+    contactInfo: '联系方式',
+    personalInfo: '个人信息',
     realName: '真实姓名',
     realNameTip: '可选，达人真实姓名',
     nickname: '常用昵称',
@@ -324,10 +332,24 @@ export default {
     atRisk: '将流失',
     aboutToRelease: '即将释放',
     released: '已释放',
+    // 维护记录分类
+    maintenance: {
+      category: {
+        import: '数据导入',
+        create: '新增/手动维护',
+        sample_application: '样品申请',
+        blacklist: '标记黑名单'
+      }
+    },
     avgViews: '视频均播',
     monthlySales: '月销',
     gmv: 'GMV',
-    noTiktokIdToCopy: '无可用TikTok ID可复制'
+    noTiktokIdToCopy: '无可用TikTok ID可复制',
+    basicInfoTab: '基础信息',
+    deepDiveTab: '深度挖掘',
+    historyTab: '历史档案',
+    historyInfo: '历史档案',
+    monthlySalesAmount: '月销金额'
   },
   product: {
     productList: '商品列表',
@@ -1428,6 +1450,7 @@ export default {
     noVideoLinkToCopy: '没有可复制的视频链接',
     noStreamCodeToCopy: '没有可复制的投流码',
     copyStreamCodeSuccess: '投流码复制成功',
+    sampleResult: '申样结果',
     copyStreamCodeFailed: '投流码复制失败'
   },
   // TikTok活动
@@ -1737,6 +1760,7 @@ export default {
       influencerCount: '达人数',
       orderGeneratedCount: '出单数'
     },
+    sampleResult: '申样结果',
     // 筛选标签
     filter: {
       productName: '商品名称',
@@ -1899,6 +1923,7 @@ export default {
     noStreamCodeToCopy: '没有可复制的投流码',
     copyStreamCodeSuccess: '投流码复制成功',
     copyStreamCodeFailed: '投流码复制失败',
+    sampleResult: '申样结果',
     confirmDeleteVideo: '确定删除该视频？',
     deleteSuccess: '删除成功',
     deleteFailed: '删除视频失败'

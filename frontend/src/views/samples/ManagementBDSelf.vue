@@ -287,14 +287,15 @@
       />
     </el-card>
 
-    <!-- 详情对话框 - 重新设计为商务感 -->
+    <!-- 详情对话框 - 参照达人详情弹层重新设计 -->
     <el-dialog
       v-model="detailDialogVisible"
       :title="currentSample?.isBlacklistedInfluencer ? $t('sampleBD.influencerBlacklisted') : $t('sampleBD.sampleDetail')"
       width="900px"
+      :class="currentSample?.isBlacklistedInfluencer ? 'detail-dialog-blacklist' : ''"
       class="business-detail-dialog"
     >
-      <div v-if="currentSample" class="detail-content">
+      <div v-if="currentSample" :class="currentSample.isBlacklistedInfluencer ? 'detail-content-blacklist' : 'detail-content'">
         <!-- 黑名单警告 -->
         <el-alert
           v-if="currentSample.isBlacklistedInfluencer"
@@ -305,264 +306,119 @@
           style="margin-bottom: 24px"
         />
 
-        <!-- 标签页导航 -->
-        <el-tabs v-model="detailActiveTab" class="business-tabs">
-          <!-- 基础信息标签页 -->
-          <el-tab-pane :label="$t('sampleBD.basicInfo')" name="basic">
-            <div class="info-grid">
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.tiktokIdDetail') }}</span>
-                  <span class="cell-value tiktok-id-text">{{ currentSample.influencerAccount || '-' }}</span>
-                </div>
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.applyDateDetail') }}</span>
-                  <span class="cell-value">{{ currentSample.date ? formatDate(currentSample.date) : '-' }}</span>
-                </div>
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.productNameDetail') }}</span>
-                  <span class="cell-value product-name">{{ currentSample.productName || '-' }}</span>
-                </div>
-              </div>
-              
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.productIdDetail') }}</span>
-                  <span class="cell-value">{{ currentSample.productId || '-' }}</span>
-                </div>
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.sampleImage') }}</span>
-                  <div class="cell-value">
-                    <el-image 
-                      v-if="currentSample.sampleImage" 
-                      :src="currentSample.sampleImage" 
-                      style="width: 60px; height: 60px" 
-                      fit="cover" 
-                      :preview-src-list="[currentSample.sampleImage]" 
-                    />
-                    <span v-else>-</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 达人数据统计 -->
-              <div class="statistics-section">
-                <h4 class="section-title">{{ $t('sampleBD.influencerStats') }}</h4>
-                <div class="stats-grid">
-                  <div class="stat-item">
-                    <span class="stat-label">{{ $t('sampleBD.followerCount') }}</span>
-                    <span class="stat-value highlight-value">{{ formatNumber(currentSample.followerCount) }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">{{ $t('sampleBD.gmv') }}</span>
-                    <span class="stat-value">{{ currentSample.gmv || '-' }}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 收货地址 -->
-              <div class="shipping-section">
-                <h4 class="section-title">{{ $t('sampleBD.shippingInfoDetail') }}</h4>
-                <div class="shipping-info">
-                  <span class="shipping-value">{{ currentSample.shippingInfo || '-' }}</span>
-                </div>
-              </div>
+        <!-- 头部区域 -->
+        <div class="detail-header">
+          <div class="detail-avatar">
+            <el-image 
+              v-if="currentSample.sampleImage" 
+              :src="currentSample.sampleImage" 
+              style="width: 64px; height: 64px; border-radius: 12px;" 
+              fit="cover" 
+              :preview-src-list="[currentSample.sampleImage]" 
+            />
+            <el-icon v-else :size="48"><Box /></el-icon>
+          </div>
+          <div class="detail-title">
+            <div class="detail-id-row">
+              <span class="detail-tiktok-id">{{ currentSample.influencerAccount || '-' }}</span>
+              <el-tag :type="getSampleStatusType(currentSample.sampleStatus)" size="small">
+                {{ getSampleStatusText(currentSample.sampleStatus) }}
+              </el-tag>
+              <el-tag v-if="currentSample.isAdPromotion" type="success" size="small">{{ $t('sampleBD.adPromoted') }}</el-tag>
+              <el-tag v-if="currentSample.isOrderGenerated" type="warning" size="small">{{ $t('sampleBD.orderGenerated') }}</el-tag>
             </div>
-          </el-tab-pane>
+            <div class="detail-name">{{ currentSample.productName || '-' }}</div>
+            <div class="detail-bd">
+              <span class="bd-label">商品ID:</span>
+              <span>{{ currentSample.productId || '-' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 核心指标卡片 -->
+        <div class="detail-stats">
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('sampleBD.followerCountLabel')" placement="top" :show-after="300">
+                <span>FV</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ formatNumber(currentSample.followerCount || 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('sampleBD.gmvLabel')" placement="top" :show-after="300">
+                <span>GMV</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatNumber(currentSample.gmv || 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('sampleBD.monthlySalesLabel')" placement="top" :show-after="300">
+                <span>MSS</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ formatNumber(currentSample.monthlySalesCount || 0) }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <el-tooltip :content="$t('sampleBD.avgViewsLabel')" placement="top" :show-after="300">
+                <span>APV</span>
+              </el-tooltip>
+            </div>
+            <div class="stat-value">{{ formatNumber(currentSample.avgVideoViews || 0) }}</div>
+          </div>
+        </div>
+
+        <!-- 双卡片布局 -->
+        <div class="detail-info-grid">
+          <!-- 达人信息卡片 -->
+          <div class="info-section">
+            <div class="section-title">{{ $t('sampleBD.influencerInfo') }}</div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('sampleBD.tiktokIdLabel') }}</span>
+              <span class="info-value">{{ currentSample.influencerAccount || '-' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">BD</span>
+              <span class="info-value">{{ currentSample.bd || '-' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('sampleBD.shippingInfoSection') }}</span>
+              <span class="info-value">{{ currentSample.shippingInfo || '-' }}</span>
+            </div>
+          </div>
           
-          <!-- 寄样状态标签页 -->
-          <el-tab-pane :label="$t('sampleBD.shippingInfo')" name="shipping">
-            <div class="info-grid">
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.shippingStatusDetail') }}</span>
-                  <span class="cell-value">
-                    <el-tag :type="getSampleStatusType(currentSample.sampleStatus)" size="large">
-                      {{ getSampleStatusText(currentSample.sampleStatus) }}
-                    </el-tag>
-                  </span>
-                </div>
-              </div>
-              
-              <!-- 拒绝时的原因 -->
-              <div class="refusal-section" v-if="currentSample.sampleStatus === 'refused' && currentSample.refusalReason">
-                <h4 class="section-title">{{ $t('sampleBD.refusalReasonTitle') }}</h4>
-                <div class="refusal-reason">
-                  {{ currentSample.refusalReason }}
-                </div>
-              </div>
-              
-              <!-- 已寄样时的物流信息 -->
-              <div class="shipping-details" v-if="currentSample.sampleStatus === 'sent'">
-                <h4 class="section-title">{{ $t('sampleBD.logisticsInfo') }}</h4>
-                <div class="details-grid">
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('sampleBD.shippingDateDetail') }}</span>
-                    <span class="detail-value">{{ currentSample.shippingDate ? formatDate(currentSample.shippingDate) : '-' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('sampleBD.logisticsCompany') }}</span>
-                    <span class="detail-value">{{ currentSample.logisticsCompany || '-' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('sampleBD.trackingNumberDetail') }}</span>
-                    <span class="detail-value">{{ currentSample.trackingNumber || '-' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">{{ $t('sampleBD.receivedDateDetail') }}</span>
-                    <span class="detail-value">{{ currentSample.receivedDate ? formatDate(currentSample.receivedDate) : '-' }}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 状态更新信息 -->
-              <div class="update-info-section" v-if="currentSample.sampleStatusUpdatedAt">
-                <div class="update-item">
-                  <span class="update-label">{{ $t('sampleBD.statusUpdateTime') }}</span>
-                  <span class="update-value">
-                    {{ currentSample.sampleStatusUpdatedBy?.realName || currentSample.sampleStatusUpdatedBy?.username || '-' }}
-                    <span>{{ formatDateTime(currentSample.sampleStatusUpdatedAt) }}</span>
-                  </span>
-                </div>
-              </div>
+          <!-- 申样结果卡片 -->
+          <div class="info-section">
+            <div class="section-title">{{ $t('sampleBD.sampleResult') }}</div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('sampleBD.applyDateLabel') }}</span>
+              <span class="info-value">{{ currentSample.date ? formatDate(currentSample.date) : '-' }}</span>
             </div>
-          </el-tab-pane>
-          
-          <!-- 履约信息标签页 -->
-          <el-tab-pane :label="$t('sampleBD.fulfillmentInfo')" name="fulfillment">
-            <div class="info-grid">
-              <div class="info-row">
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.orderGeneratedDetail') }}</span>
-                  <span class="cell-value">
-                    <el-tag :type="currentSample.isOrderGenerated ? 'success' : 'warning'" size="large">
-                      {{ currentSample.isOrderGenerated ? $t('sampleBD.orderGenerated') : $t('sampleBD.noOrder') }}
-                    </el-tag>
-                  </span>
-                </div>
-                <div class="info-cell">
-                  <span class="cell-label">{{ $t('sampleBD.fulfillmentTime') }}</span>
-                  <span class="cell-value">{{ currentSample.fulfillmentTime || '-' }}</span>
-                </div>
-              </div>
-              
-              <!-- 视频链接 -->
-              <div class="video-section" v-if="currentSample.videoLink">
-                <h4 class="section-title">{{ $t('sampleBD.videoLinkDetail') }}</h4>
-                <div class="video-info">
-                  <el-link :href="currentSample.videoLink" target="_blank" type="primary" underline="hover">
-                    {{ $t('sampleBD.viewVideo') }}
-                  </el-link>
-                </div>
-              </div>
-              
-              <!-- 投流信息 -->
-              <div class="ad-promotion-section">
-                <h4 class="section-title">{{ $t('sampleBD.adPromotionDetail') }}</h4>
-                <div class="ad-grid">
-                  <div class="ad-item">
-                    <span class="ad-label">{{ $t('sampleBD.adStatusDetail') }}</span>
-                    <span class="ad-value">
-                      <el-tag :type="currentSample.isAdPromotion ? 'success' : 'info'" size="large">
-                        {{ currentSample.isAdPromotion ? $t('sampleBD.adPromoted') : $t('sampleBD.noAdPromoted') }}
-                      </el-tag>
-                    </span>
-                  </div>
-                  <div class="ad-item">
-                    <span class="ad-label">{{ $t('sampleBD.adTimeDetail') }}</span>
-                    <span class="ad-value">{{ currentSample.adPromotionTime ? formatDate(currentSample.adPromotionTime) : '-' }}</span>
-                  </div>
-                  <div class="ad-item wide">
-                    <span class="ad-label">{{ $t('sampleBD.streamCodeDetail') }}</span>
-                    <span class="ad-value">{{ currentSample.videoStreamCode || '-' }}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 更新信息 -->
-              <div class="update-info-section">
-                <div class="update-item" v-if="currentSample.fulfillmentUpdatedAt">
-                  <span class="update-label">{{ $t('sampleBD.orderInfoUpdate') }}</span>
-                  <span class="update-value">
-                    {{ currentSample.fulfillmentUpdatedBy?.realName || currentSample.fulfillmentUpdatedBy?.username || '-' }}
-                    <span v-if="currentSample.fulfillmentUpdatedAt">{{ formatDateTime(currentSample.fulfillmentUpdatedAt) }}</span>
-                  </span>
-                </div>
-                <div class="update-item" v-if="currentSample.adPromotionUpdatedAt">
-                  <span class="update-label">{{ $t('sampleBD.adInfoUpdate') }}</span>
-                  <span class="update-value">
-                    {{ currentSample.adPromotionUpdatedBy?.realName || currentSample.adPromotionUpdatedBy?.username || '-' }}
-                    <span v-if="currentSample.adPromotionUpdatedAt">{{ formatDateTime(currentSample.adPromotionUpdatedAt) }}</span>
-                  </span>
-                </div>
-              </div>
+            <div class="info-row">
+              <span class="info-label">{{ $t('sampleBD.sampleStatusLabel') }}</span>
+              <span class="info-value">
+                <el-tag :type="getSampleStatusType(currentSample.sampleStatus)" size="small">
+                  {{ getSampleStatusText(currentSample.sampleStatus) }}
+                </el-tag>
+              </span>
             </div>
-          </el-tab-pane>
-          
-          <!-- 达人信息标签页 -->
-          <el-tab-pane :label="$t('sampleBD.influencerInfo')" name="influencer">
-            <div v-if="influencerDetail">
-              <div class="info-grid">
-                <div class="info-row">
-                  <div class="info-cell">
-                    <span class="cell-label">{{ $t('sampleBD.tiktokIdDetail') }}</span>
-                    <span class="cell-value tiktok-id-text">{{ influencerDetail.tiktokId }}</span>
-                  </div>
-                  <div class="info-cell">
-                    <span class="cell-label">{{ $t('sampleBD.tiktokName') }}</span>
-                    <span class="cell-value">{{ influencerDetail.tiktokName || '-' }}</span>
-                  </div>
-                </div>
-                
-                <div class="info-row">
-                  <div class="info-cell">
-                    <span class="cell-label">{{ $t('sampleBD.realName') }}</span>
-                    <span class="cell-value">{{ influencerDetail.realName || '-' }}</span>
-                  </div>
-                  <div class="info-cell">
-                    <span class="cell-label">{{ $t('sampleBD.nickname') }}</span>
-                    <span class="cell-value">{{ influencerDetail.nickname || '-' }}</span>
-                  </div>
-                </div>
-                
-                <!-- 达人统计数据 -->
-                <div class="influencer-stats">
-                  <h4 class="section-title">{{ $t('sampleBD.influencerStatsData') }}</h4>
-                  <div class="stats-grid">
-                    <div class="stat-item">
-                      <span class="stat-label">{{ $t('sampleBD.latestFollowers') }}</span>
-                      <span class="stat-value highlight-value">{{ formatNumber(influencerDetail.latestFollowers) }}</span>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-label">{{ $t('sampleBD.latestGmv') }}</span>
-                      <span class="stat-value">{{ influencerDetail.latestGmv || '-' }}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- 达人状态 -->
-                <div class="status-section">
-                  <div class="status-item">
-                    <span class="status-label">{{ $t('sampleBD.influencerStatus') }}</span>
-                    <span class="status-value">
-                      <el-tag :type="influencerDetail.status === 'enabled' ? 'success' : 'info'" size="large">
-                        {{ influencerDetail.status === 'enabled' ? $t('sampleBD.enabled') : $t('sampleBD.disabled') }}
-                      </el-tag>
-                    </span>
-                  </div>
-                  <div class="status-item">
-                    <span class="status-label">{{ $t('sampleBD.blacklistStatus') }}</span>
-                    <span class="status-value">
-                      <el-tag v-if="influencerDetail.isBlacklisted" type="danger" size="large">{{ $t('sampleBD.blacklist') }}</el-tag>
-                      <span v-else>{{ $t('sampleBD.normal') }}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div class="info-row" v-if="currentSample.videoLink">
+              <span class="info-label">{{ $t('sampleBD.videoLink') }}</span>
+              <span class="info-value">
+                <el-link :href="currentSample.videoLink" target="_blank" type="primary" underline="hover">
+                  {{ $t('sampleBD.viewVideo') }}
+                </el-link>
+              </span>
             </div>
-            <el-empty v-else :description="$t('sampleBD.influencerNotFound')" :image-size="80" />
-          </el-tab-pane>
-        </el-tabs>
+            <div class="info-row" v-if="currentSample.videoStreamCode">
+              <span class="info-label">{{ $t('sampleBD.streamCodeLabel') }}</span>
+              <span class="info-value">{{ currentSample.videoStreamCode }}</span>
+            </div>
+          </div>
+        </div>
         
         <!-- 创建时间信息 -->
         <div class="created-info">
@@ -790,6 +646,12 @@ const loadCurrencies = async () => {
     console.error('Load currencies error:', error)
   }
 }
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
 
 const createRules = {
   date: [{ required: true, message: t('common.select') + t('sampleBD.applyDate'), trigger: 'change' }],
@@ -1630,6 +1492,219 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* ========================================
+   样品申请详情弹层新样式 - 商务高级版
+   ======================================== */
+
+/* 头部区域 */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 16px;
+}
+
+.detail-avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #7b1fa2 0%, #9c4dcc 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.detail-title {
+  flex: 1;
+}
+
+.detail-id-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.detail-tiktok-id {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6DAD19;
+}
+
+.detail-name {
+  font-size: 16px;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.detail-bd {
+  font-size: 13px;
+  color: #606266;
+}
+
+.bd-label {
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+/* 核心指标卡片 */
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid #e8e8e8;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 标签页样式 */
+.detail-tabs {
+  margin-top: 16px;
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin: 0 0 16px 0;
+}
+
+.detail-tabs :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background-color: #ebeef5;
+}
+
+.detail-tabs :deep(.el-tabs__item) {
+  font-weight: 500;
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.detail-tabs :deep(.el-tabs__item.is-active) {
+  color: #6DAD19;
+}
+
+.detail-tabs :deep(.el-tabs__active-bar) {
+  background-color: #6DAD19;
+}
+
+/* 信息网格布局 */
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 4px;
+}
+
+.detail-info-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.detail-info-label {
+  color: #909399;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.detail-info-value {
+  color: #303133;
+  word-break: break-all;
+}
+
+/* 商务风格信息行样式 */
+.info-section .info-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.info-section .info-label {
+  color: #909399;
+  flex-shrink: 0;
+  min-width: 70px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.info-section .info-value {
+  color: #303133;
+  word-break: break-all;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 拒绝原因样式 */
+.refusal-reason {
+  font-size: 13px;
+  color: #f56c6c;
+  background: #fef0f0;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #f56c6c;
+  margin-top: 8px;
+}
+
+/* 创建时间信息 */
+.created-info {
+  text-align: right;
+  padding-top: 12px;
+  border-top: 1px solid #ebeef5;
+  color: #909399;
+  font-size: 12px;
+  margin-top: 16px;
+}
+
+.created-label {
+  margin-right: 8px;
+}
+
+.created-value {
+  font-weight: 500;
 }
 
 .info-card {

@@ -148,7 +148,7 @@
           prop="revenue"
         >
           <template #default="{ row }">
-            <div class="stat-value highlight">฿{{ formatMoney(row.revenue || 0) }}</div>
+            <div class="stat-value highlight">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.revenue || 0) }}</div>
           </template>
         </el-table-column>
 
@@ -159,7 +159,7 @@
           prop="estimatedCommission"
         >
           <template #default="{ row }">
-            <div class="stat-value">฿{{ formatMoney(row.estimatedCommission || 0) }}</div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.estimatedCommission || 0) }}</div>
           </template>
         </el-table-column>
 
@@ -170,7 +170,7 @@
           prop="commission"
         >
           <template #default="{ row }">
-            <div class="stat-value">฿{{ formatMoney(row.commission || 0) }}</div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.commission || 0) }}</div>
           </template>
         </el-table-column>
 
@@ -314,19 +314,19 @@
 
             <el-table-column label="成交金额" width="150" sortable prop="revenue">
               <template #default="{ row }">
-                <div class="stat-value highlight">฿{{ formatMoney(row.revenue || 0) }}</div>
+                <div class="stat-value highlight">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.revenue || 0) }}</div>
               </template>
             </el-table-column>
 
             <el-table-column label="预估服务费" width="150" sortable prop="estimatedCommission">
               <template #default="{ row }">
-                <div class="stat-value">฿{{ formatMoney(row.estimatedCommission || 0) }}</div>
+                <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.estimatedCommission || 0) }}</div>
               </template>
             </el-table-column>
 
             <el-table-column label="结算佣金" width="150" sortable prop="commission">
               <template #default="{ row }">
-                <div class="stat-value">฿{{ formatMoney(row.commission || 0) }}</div>
+                <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.commission || 0) }}</div>
               </template>
             </el-table-column>
 
@@ -376,13 +376,13 @@
               <el-col :span="6">
                 <div class="summary-card">
                   <div class="summary-label">总成交金额</div>
-                  <div class="summary-value">฿{{ formatMoney(monthlySummary.revenue) }}</div>
+                  <div class="summary-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(monthlySummary.revenue) }}</div>
                 </div>
               </el-col>
               <el-col :span="6">
                 <div class="summary-card">
                   <div class="summary-label">总结算佣金</div>
-                  <div class="summary-value">฿{{ formatMoney(monthlySummary.commission) }}</div>
+                  <div class="summary-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(monthlySummary.commission) }}</div>
                 </div>
               </el-col>
             </el-row>
@@ -456,13 +456,13 @@
               <el-table-column :label="$t('bdDaily.sampleCount')" prop="sampleCount" width="80" />
               <el-table-column :label="$t('bdDaily.orderCount')" prop="orderCount" width="80" />
               <el-table-column :label="$t('bdDaily.revenue')" prop="revenue" width="100">
-                <template #default="{ row }">฿{{ formatMoney(row.revenue || 0) }}</template>
+                <template #default="{ row }">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.revenue || 0) }}</template>
               </el-table-column>
               <el-table-column :label="$t('bdDaily.estimatedCommission')" prop="estimatedCommission" width="100">
-                <template #default="{ row }">฿{{ formatMoney(row.estimatedCommission || 0) }}</template>
+                <template #default="{ row }">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.estimatedCommission || 0) }}</template>
               </el-table-column>
               <el-table-column :label="$t('bdDaily.settlementCommission')" prop="commission" width="100">
-                <template #default="{ row }">฿{{ formatMoney(row.commission || 0) }}</template>
+                <template #default="{ row }">{{ currentDefaultCurrencySymbol }}{{ formatMoney(row.commission || 0) }}</template>
               </el-table-column>
             </el-table>
           </div>
@@ -576,7 +576,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -758,6 +758,12 @@ const loadCurrencies = async () => {
     console.error('Load currencies error:', error)
   }
 }
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || ''
+})
 
 const generateForm = reactive({
   dateRange: []

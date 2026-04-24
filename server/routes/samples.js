@@ -307,6 +307,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
         followerCount: obj.influencerId?.latestFollowers || 0,
         monthlySalesCount: obj.influencerId?.monthlySalesCount || 0,
         avgVideoViews: obj.influencerId?.avgVideoViews || 0,
+        gmv: obj.influencerId?.latestGmv || 0,
         salesman: obj.salesmanId?.realName || obj.salesmanId?.username || obj.salesman || '',
         shopName: shopMap[obj.shopId?.toString()] || shopMap[(productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.shopId?.toString()] || '',
         // ===== Video信息 =====
@@ -531,7 +532,8 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       maintainerId: req.user._id,
       maintainerName: req.user.realName || req.user.username,
       recordType: 'sample_application',
-      sampleId: sample._id
+      sampleId: sample._id,
+      category: 'sample_application'
     });
     await maintenance.save();
 

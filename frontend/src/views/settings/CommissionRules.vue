@@ -24,12 +24,12 @@
         <el-table :data="dept.rules" border style="margin-top: 10px">
           <el-table-column prop="rangeStart" :label="$t('commission.rangeStart')" width="130">
             <template #default="{ row }">
-              ¥{{ formatMoney(row.rangeStart) }}
+              {{ currentDefaultCurrencySymbol }}{{ formatMoney(row.rangeStart) }}
             </template>
           </el-table-column>
           <el-table-column prop="rangeEnd" :label="$t('commission.rangeEnd')" width="130">
             <template #default="{ row }">
-              {{ row.rangeEnd ? '฿' + formatMoney(row.rangeEnd) : $t('commission.above') }}
+              {{ row.rangeEnd ? currentDefaultCurrencySymbol + formatMoney(row.rangeEnd) : $t('commission.above') }}
             </template>
           </el-table-column>
           <el-table-column prop="commissionRate" :label="$t('commission.commissionRate')" width="120">
@@ -148,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -317,9 +317,30 @@ const saveAll = async () => {
   }
 }
 
+// 货币单位列表
+const currencyList = ref([])
+
+// 加载货币单位列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', { params: { type: 'priceUnit', limit: 100 } })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+    currencyList.value = []
+  }
+}
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
+
 onMounted(() => {
   loadDepartments()
   loadRules()
+  loadCurrencies()
 })
 </script>
 

@@ -286,7 +286,7 @@
         <el-table-column prop="bankFlowNo" :label="$t('user.bankFlowNo')" width="150" />
         <el-table-column prop="amount" :label="$t('user.amount')" width="100">
           <template #default="{ row }">
-            ¥{{ (row.amount || 0).toFixed(2) }}
+            {{ currentDefaultCurrencySymbol }}{{ (row.amount || 0).toFixed(2) }}
           </template>
         </el-table-column>
         <el-table-column prop="note" :label="$t('user.remark')" min-width="120" />
@@ -756,10 +756,31 @@ const handleDelete = async (row) => {
   }
 }
 
+// 货币单位列表
+const currencyList = ref([])
+
+// 加载货币单位列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', { params: { type: 'priceUnit', limit: 100 } })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+    currencyList.value = []
+  }
+}
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
+
 onMounted(() => {
   loadUsers()
   loadRoles()
   loadDepartments()
+  loadCurrencies()
 })
 </script>
 

@@ -59,7 +59,7 @@
           <div class="stat-label">สินค้า</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon"><span class="baht-symbol">฿</span></div>
+          <div class="stat-icon"><span class="baht-symbol">{{ currentDefaultCurrencySymbol }}</span></div>
           <div class="stat-value">{{ stats.maxCommissionRate }}%</div>
           <div class="stat-label">คอมมิชชันสูงสุด</div>
         </div>
@@ -67,7 +67,7 @@
           <div class="stat-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6DAD19" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
-          <div class="stat-value">฿{{ formatNumber(stats.maxSellingPrice) }}</div>
+          <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatNumber(stats.maxSellingPrice) }}</div>
           <div class="stat-label">ราคาสูงสุด</div>
         </div>
       </div>
@@ -213,6 +213,7 @@ const loading = ref(true)
 const loadingMore = ref(false)
 const page = ref(1)
 const pageSize = 20
+const currencyList = ref([])
 
 const stats = ref({
   totalProducts: 256,
@@ -233,6 +234,11 @@ const refUser = ref('')
 
 const hasActiveFilters = computed(() => {
   return filters.value.keyword || filters.value.productGrade || filters.value.shopId
+})
+
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || ''
 })
 
 function showToast(msg) {
@@ -263,8 +269,21 @@ onMounted(async () => {
     const stored = localStorage.getItem('ref_user')
     if (stored) refUser.value = stored
   }
-  await Promise.all([loadFilters(), loadProducts(), loadStats()])
+  await Promise.all([loadFilters(), loadProducts(), loadStats(), loadCurrencies()])
 })
+
+// 加载货币列表
+async function loadCurrencies() {
+  try {
+    const res = await fetch('/api/base-data/list?type=priceUnit&limit=100')
+    const data = await res.json()
+    if (data.success) {
+      currencyList.value = data.data || []
+    }
+  } catch (e) {
+    console.error('加载货币单位失败:', e)
+  }
+}
 
 async function loadStats() {
   try {
@@ -398,7 +417,7 @@ function formatNumber(num) {
 }
 
 function formatPrice(min, max, currency = 'THB') {
-  const symbol = currency === 'THB' ? '฿' : currency
+  const symbol = currentDefaultCurrencySymbol.value
   if (min && max && min !== max) {
     return `${symbol}${formatNumber(min)} - ${formatNumber(max)}`
   } else if (min || max) {

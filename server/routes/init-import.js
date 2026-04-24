@@ -796,18 +796,20 @@ router.post('/influencers', authenticate, verifyAdmin, upload.single('file'), as
           }
         }
 
-        const maintenance = {
-          companyId: companyId,
-          influencerId: savedInfluencer._id,
-          followers: item.followers,
-          gmv: item.gmv,
-          poolType: item.influencer.poolType,
-          maintainerId: maintainerId,
-          maintainerName: item.maintainerName,
-          createdAt: item.maintenanceTime,
-          updatedAt: item.updatedAt
-        };
-        maintenances.push(maintenance);
+        // 维护记录（已禁用，避免与后续操作产生重复记录）
+        // const maintenance = {
+        //   companyId: companyId,
+        //   influencerId: savedInfluencer._id,
+        //   followers: item.followers,
+        //   gmv: item.gmv,
+        //   poolType: item.influencer.poolType,
+        //   maintainerId: maintainerId,
+        //   maintainerName: item.maintainerName,
+        //   category: 'import',
+        //   createdAt: item.maintenanceTime,
+        //   updatedAt: item.updatedAt
+        // };
+        // maintenances.push(maintenance);
 
         // 记录ID映射
         mappings.push({

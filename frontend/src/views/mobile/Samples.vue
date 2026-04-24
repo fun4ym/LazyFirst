@@ -325,7 +325,7 @@
             </div>
             <div class="detail-row" v-if="currentRecord.orderAmount">
               <span class="label">{{ t2('orderAmount') }}</span>
-              <span class="value">¥{{ currentRecord.orderAmount }}</span>
+              <span class="value">{{ currentDefaultCurrencySymbol }}{{ currentRecord.orderAmount }}</span>
             </div>
           </div>
         </div>
@@ -561,8 +561,29 @@ const copyText = (text) => {
   })
 }
 
+// 货币单位列表
+const currencyList = ref([])
+
+// 加载货币单位列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', { params: { type: 'priceUnit', limit: 100 } })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+    currencyList.value = []
+  }
+}
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
+
 onMounted(() => {
   loadProducts()
+  loadCurrencies()
 })
 </script>
 

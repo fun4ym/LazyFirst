@@ -126,17 +126,31 @@ router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ modu
 
     const orders = await ReportOrder.find(query)
       .populate('userId', 'realName')
-      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews isBlacklisted')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort(sortOptions);
 
     const total = await ReportOrder.countDocuments(query);
 
+    // 映射字段供前端使用
+    const ordersData = orders.map(order => {
+      const obj = order.toObject();
+      return {
+        ...obj,
+        // 达人字段映射
+        followerCount: obj.influencerId?.latestFollowers || 0,
+        gmv: obj.influencerId?.latestGmv || 0,
+        avgVideoViews: obj.influencerId?.avgVideoViews || 0,
+        monthlySalesCount: obj.influencerId?.monthlySalesCount || 0,
+        isBlacklistedInfluencer: obj.influencerId?.isBlacklisted || false,
+      };
+    });
+
     res.json({
       success: true,
       data: {
-        orders,
+        orders: ordersData,
         pagination: {
           total,
           page: parseInt(page),

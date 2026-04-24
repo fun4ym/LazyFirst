@@ -76,7 +76,7 @@
                 <el-icon><Money /></el-icon>
               </div>
               <div class="stat-content">
-                <div class="stat-value">฿{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
+                <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(bdStats.yesterdayCommission?.estimated || 0) }}</div>
                 <div class="stat-label">{{ $t('dashboard.yesterdayCommission') }}</div>
               </div>
             </div>
@@ -90,7 +90,7 @@
                 <el-icon><Money /></el-icon>
               </div>
               <div class="stat-content">
-                <div class="stat-value">฿{{ formatMoney(bdStats.monthlyCommission.estimated) }}</div>
+                <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(bdStats.monthlyCommission.estimated) }}</div>
                 <div class="stat-label">{{ $t('dashboard.monthCommission') }}</div>
               </div>
             </div>
@@ -257,6 +257,20 @@ const selectedDate = ref(getDefaultDate())
 const selectedBDId = ref('')
 const bdUsers = ref([])
 const bdStats = ref(null)
+const currencyList = ref([])
+
+// 加载货币列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', {
+      params: { type: 'priceUnit', limit: 100 }
+    })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('加载货币单位失败:', error)
+  }
+}
+
 const sampleTrendRange = ref('7days')
 const orderTrendRange = ref('7days')
 
@@ -378,6 +392,11 @@ const orderPieData = computed(() => {
     { name: '个人', value: user, itemStyle: { color: '#0288d1' } },
     { name: '团队其他', value: others, itemStyle: { color: '#e8e4ef' } }
   ]
+})
+
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || ''
 })
 
 const formatMoney = (value) => {
@@ -588,6 +607,7 @@ const TrendChart = defineComponent({
 
 onMounted(() => {
   loadBDUsers()
+  loadCurrencies()
   // 默认加载全部（团队）数据
   loadBDStats(null, 'all')
 })

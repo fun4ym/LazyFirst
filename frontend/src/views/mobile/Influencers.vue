@@ -68,7 +68,7 @@
         <div class="card-footer">
           <div class="data-stats">
             <div class="stat-item">
-              <span class="stat-value" :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">¥{{ formatNumber(item.latestGmv) }}</span>
+              <span class="stat-value" :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">{{ currentDefaultCurrencySymbol }}{{ formatNumber(item.latestGmv) }}</span>
               <span class="stat-label">{{ isEnglish ? 'Month GMV' : '月GMV' }}</span>
             </div>
             <div class="stat-divider"></div>
@@ -147,7 +147,7 @@
             </div>
             <div class="detail-row">
               <span class="label">{{ isEnglish ? 'Month GMV:' : '月销金额:' }}</span>
-              <span class="value" :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">¥{{ formatNumber(currentInfluencer.latestGmv) }}</span>
+              <span class="value" :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">{{ currentDefaultCurrencySymbol }}{{ formatNumber(currentInfluencer.latestGmv) }}</span>
             </div>
             <div class="detail-row">
               <span class="label">{{ isEnglish ? 'Monthly Sales:' : '月销件数:' }}</span>
@@ -183,7 +183,7 @@
                 </div>
                 <div class="m-stats">
                   <span>{{ isEnglish ? 'Followers: ' : '粉丝: ' }}{{ formatFollowers(m.followers) }}</span>
-                  <span :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">GMV: ¥{{ formatNumber(m.gmv) }}</span>
+                  <span :title="isEnglish ? 'Monthly Sales Amount' : '月销金额'">GMV: {{ currentDefaultCurrencySymbol }}{{ formatNumber(m.gmv) }}</span>
                 </div>
                 <div class="m-remark" v-if="m.remark">{{ m.remark }}</div>
               </div>
@@ -206,7 +206,7 @@
             <input v-model="displayFollowers" type="number" :placeholder="isEnglish ? 'Enter followers in K' : '请输入粉丝数(K)'" />
           </div>
           <div class="form-item">
-            <label>{{ isEnglish ? 'Month GMV (月销金额)' : '月销金额(฿)' }}</label>
+            <label>{{ isEnglish ? 'Month GMV (月销金额)' : `月销金额(${currentDefaultCurrencySymbol})` }}</label>
             <input v-model="maintenanceForm.gmv" type="number" :placeholder="isEnglish ? 'Enter GMV' : '请输入月销金额'" />
           </div>
           <div class="form-item">
@@ -580,8 +580,29 @@ const copyId = (id) => {
   })
 }
 
+// 货币单位列表
+const currencyList = ref([])
+
+// 加载货币单位列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', { params: { type: 'priceUnit', limit: 100 } })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+    currencyList.value = []
+  }
+}
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
+
 onMounted(() => {
   loadInfluencers()
+  loadCurrencies()
 })
 </script>
 

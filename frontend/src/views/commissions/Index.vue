@@ -12,25 +12,25 @@
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-label">{{ $t('commission.totalCommission') }}</div>
-            <div class="stat-value">฿{{ formatMoney(statistics.totalCommission || 0) }}</div>
+            <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatMoney(statistics.totalCommission || 0) }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-label">{{ $t('commission.pendingCommission') }}</div>
-            <div class="stat-value pending">฿{{ formatMoney(statistics.pendingCommission || 0) }}</div>
+            <div class="stat-value pending">{{ currentDefaultCurrencySymbol }}{{ formatMoney(statistics.pendingCommission || 0) }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-label">{{ $t('commission.paidCommission') }}</div>
-            <div class="stat-value paid">฿{{ formatMoney(statistics.paidCommission || 0) }}</div>
+            <div class="stat-value paid">{{ currentDefaultCurrencySymbol }}{{ formatMoney(statistics.paidCommission || 0) }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-label">{{ $t('commission.settledCommission') }}</div>
-            <div class="stat-value settled">฿{{ formatMoney(statistics.settledCommission || 0) }}</div>
+            <div class="stat-value settled">{{ currentDefaultCurrencySymbol }}{{ formatMoney(statistics.settledCommission || 0) }}</div>
           </div>
         </el-col>
       </el-row>
@@ -69,7 +69,7 @@
         <el-table-column prop="orderId.orderNo" :label="$t('commission.orderNo')" width="180" />
         <el-table-column prop="orderAmount" :label="$t('commission.orderAmount')" width="120">
           <template #default="{ row }">
-            ¥{{ formatMoney(row.orderAmount) }}
+            {{ currentDefaultCurrencySymbol }}{{ formatMoney(row.orderAmount) }}
           </template>
         </el-table-column>
         <el-table-column prop="commissionRate" :label="$t('commission.commissionRate')" width="100">
@@ -79,7 +79,7 @@
         </el-table-column>
         <el-table-column prop="commissionAmount" :label="$t('commission.commissionAmount')" width="120">
           <template #default="{ row }">
-            ฿{{ formatMoney(row.commissionAmount) }}
+            {{ currentDefaultCurrencySymbol }}{{ formatMoney(row.commissionAmount) }}
           </template>
         </el-table-column>
         <el-table-column prop="calculatedDate" :label="$t('commission.calculatedDate')" width="120">
@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -207,9 +207,30 @@ const resetSearch = () => {
   loadCommissions()
 }
 
+// 货币单位列表
+const currencyList = ref([])
+
+// 加载货币单位列表
+const loadCurrencies = async () => {
+  try {
+    const res = await request.get('/base-data/list', { params: { type: 'priceUnit', limit: 100 } })
+    currencyList.value = res.data || []
+  } catch (error) {
+    console.error('Load currencies error:', error)
+    currencyList.value = []
+  }
+}
+
+// 获取当前默认货币符号
+const currentDefaultCurrencySymbol = computed(() => {
+  const defaultCurrency = currencyList.value.find(c => c.isDefault)
+  return defaultCurrency?.symbol || '¥'
+})
+
 onMounted(() => {
   loadCommissions()
   loadUsers()
+  loadCurrencies()
 })
 </script>
 

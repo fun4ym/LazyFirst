@@ -272,24 +272,25 @@ async function importInfluencers(data, companyId) {
     if (influencer.tiktokId || influencer.tiktokName) {
       influencers.push(influencer);
 
-      // 达人维护记录
-      const maintenance = {
-        _id: originalId + '_maintenance',
-        companyId: companyId,
-        influencerId: originalId,
-        followers: parseInt(row.fans_num) || 0,
-        gmv: parseFloat(row.month_gmv) || 0,
-        poolType: poolType,
-        assignedTo: assignedTo,
-        latestMaintainerId: row.remark || null,
-        latestMaintainerName: row.remark || '',
-        remark: row.remark || '',
-        maintainerId: row.update_by || null,
-        maintainerName: row.remark || '系统导入',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      maintenances.push(maintenance);
+      // 达人维护记录（已禁用，避免与后续操作产生重复记录）
+      // const maintenance = {
+      //   _id: originalId + '_maintenance',
+      //   companyId: companyId,
+      //   influencerId: originalId,
+      //   followers: parseInt(row.fans_num) || 0,
+      //   gmv: parseFloat(row.month_gmv) || 0,
+      //   poolType: poolType,
+      //   assignedTo: assignedTo,
+      //   latestMaintainerId: row.remark || null,
+      //   latestMaintainerName: row.remark || '',
+      //   remark: row.remark || '',
+      //   maintainerId: row.update_by || null,
+      //   maintainerName: row.remark || '系统导入',
+      //   category: 'import',
+      //   createdAt: new Date(),
+      //   updatedAt: new Date()
+      // };
+      // maintenances.push(maintenance);
     }
   }
 

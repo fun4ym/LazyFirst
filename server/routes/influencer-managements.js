@@ -208,6 +208,22 @@ router.post('/', authenticate, authorize('influencers:create'), async (req, res)
 
     await influencer.save();
 
+    // 创建初始维护记录
+    const maintenance = new InfluencerMaintenance({
+      companyId: influencer.companyId,
+      influencerId: influencer._id,
+      followers: 0,
+      gmv: 0,
+      monthlySalesCount: monthlySalesCount || 0,
+      avgVideoViews: avgVideoViews || 0,
+      poolType: 'public',
+      remark: '新增达人',
+      maintainerId: userId,
+      maintainerName: req.user.realName || req.user.username,
+      category: 'create'
+    });
+    await maintenance.save();
+
     res.json({ success: true, influencer });
   } catch (error) {
     console.error('创建达人失败 - 详细错误:', error);
@@ -313,7 +329,8 @@ router.post('/:id/maintenance', authenticate, async (req, res) => {
       avgVideoViews: avgVideoViews || 0,
       remark: remark || '',
       maintainerId: userId,
-      maintainerName: req.user.realName || req.user.username
+      maintainerName: req.user.realName || req.user.username,
+      category: 'create'
     });
 
     await maintenance.save();
@@ -480,6 +497,7 @@ router.post('/:id/blacklist', authenticate, authorize('influencers:btn-add-black
       remark: reason || '拉黑',
       maintainerId: req.user.id,
       maintainerName: req.user.realName || req.user.username,
+      category: 'blacklist',
       createdAt: new Date(),
       updatedAt: new Date()
     };

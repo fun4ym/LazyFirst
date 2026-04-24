@@ -854,7 +854,7 @@ const uploadFile = ref(null)
 const createTimeRange = ref([])
 const paymentTimeRange = ref([])
 const currentDetail = ref(null)
-const currencySymbol = ref('฿')
+const currencySymbol = ref('')
 const sortBy = ref('')
 const sortOrder = ref('')
 const popoverInfluencer = ref(null)
@@ -1003,13 +1003,13 @@ const loadInfluencerPopover = async (row) => {
 
 const loadCurrencySymbol = async () => {
   try {
-    const res = await request.get('/base-data', {
-      params: { page: 1, limit: 100, type: 'currency' }
+    const res = await request.get('/base-data/list', {
+      params: { type: 'priceUnit', limit: 100 }
     })
-    // 查找泰国泰铢的符号
-    const thaiBaht = res.data?.find(c => c.name === '泰铢' || c.code === 'THB')
-    if (thaiBaht) {
-      currencySymbol.value = thaiBaht.symbol || '฿'
+    // 查找默认货币单位
+    const defaultCurrency = (res.data || []).find(c => c.isDefault)
+    if (defaultCurrency) {
+      currencySymbol.value = defaultCurrency.symbol || ''
     }
   } catch (error) {
     console.error('Load currency error:', error)
