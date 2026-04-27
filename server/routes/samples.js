@@ -298,7 +298,7 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       return {
         ...obj,
         // ===== 兼容字段（前端逐步迁移后可移除）=====
-        productName: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.name || '',
+        productName: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.name || obj.productName || '',
         productId_display: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.tiktokProductId || obj.productId || '',
         productId: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.tiktokProductId || obj.productId || '', // TikTok ID
         productImage: (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.images?.[0] || (productMapById[obj.productId] || productMapByTikTokId[obj.productId])?.productImages?.[0] || '',
