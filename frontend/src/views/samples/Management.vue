@@ -1658,7 +1658,7 @@ const handleImportFile = async (file) => {
 
 const openSubmissionDetail = (submission) => {
   // 找到对应的完整sample记录
-  const sample = sampleList.value.find(s => s._id === submission.sampleId)
+  const sample = samples.value.find(s => s._id === submission.sampleId)
   if (sample) {
     viewSampleDetail(sample)
   } else {

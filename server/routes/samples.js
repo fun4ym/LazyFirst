@@ -449,13 +449,15 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     const previousRecords = await SampleManagement.find({
       companyId: req.companyId,
       influencerId: influencerId,
-      $or: [
-        { productId: productId }, // ObjectId 格式
-        { productId: product.tiktokProductId } // TikTok商品ID 格式
-      ],
-      $or: [
-        { date: { $lt: new Date(date) } },
-        { date: new Date(date), createdAt: { $lt: new Date() } }
+      $and: [
+        { $or: [
+          { productId: productId }, // ObjectId 格式
+          { productId: product.tiktokProductId } // TikTok商品ID 格式
+        ]},
+        { $or: [
+          { date: { $lt: new Date(date) } },
+          { date: new Date(date), createdAt: { $lt: new Date() } }
+        ]}
       ]
     }).sort({ date: -1, createdAt: -1 }).limit(10);
 
@@ -1146,11 +1148,17 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           }
         } else {
           // 新增时计算重复提交
+          // 同时检查 ObjectId 和 TikTok商品ID 两种格式
           const prevRecords = await SampleManagement.find({
             companyId: req.companyId,
             influencerId: influencerObj._id,
-            productId: productObj._id,
-            date: { $lt: date }
+            $and: [
+              { $or: [
+                { productId: productObj._id }, // ObjectId 格式
+                { productId: productObj.tiktokProductId } // TikTok商品ID 格式
+              ]},
+              { date: { $lt: date } }
+            ]
           }).sort({ date: -1 }).limit(10);
 
           sampleData.duplicateCount = prevRecords.length;
