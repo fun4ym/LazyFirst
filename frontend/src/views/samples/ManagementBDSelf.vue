@@ -218,14 +218,16 @@
           sortable
         >
           <template #default="{ row }">
-            <ProductCell :product="{
-              image: row.productImage,
-              id: row.productId_display || row.productId,
-              productId: row.productId,
-              tiktokProductId: row.productId,
-              name: row.productName,
-              shopName: row.shopName
-            }" />
+            <div style="display: flex; flex-direction: column;">
+              <ProductCell :product="{
+                image: row.productImage,
+                id: row.productId_display || row.productId,
+                productId: row.productId,
+                tiktokProductId: row.productId,
+                name: row.productName,
+                shopName: row.shopName
+              }" />
+            </div>
           </template>
         </el-table-column>
 
@@ -559,13 +561,13 @@ import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 import InfluencerCell from '@/components/InfluencerCell.vue'
 import FulfillmentVideoCell from '@/components/FulfillmentVideoCell.vue'
+import ProductCell from '@/components/ProductCell.vue'
 
 const userStore = useUserStore()
 
 // 权限检查
 const hasPermission = (perm) => {
   const result = AuthManager.hasPermission(perm)
-  console.log(`[hasPermission] ${perm} => ${result}`)
   return result
 }
 
@@ -941,14 +943,7 @@ const openEditDialog = async (sample) => {
     }
   }
   
-  // 调试日志
-  console.log('[Edit Dialog] 样品数据:', {
-    sampleId: sample._id,
-    sampleProductId: sample.productId,
-    productObjectIdFound: productObjectId,
-    cooperationProductsCount: cooperationProducts.value.length,
-    createFormProductId: createForm.productId
-  })
+
   
   createDialogVisible.value = true
 }
@@ -1281,11 +1276,6 @@ onMounted(() => {
   // 调试权限
   const user = AuthManager.getUser()
   const perms = AuthManager.getPermissions()
-  console.log('[ManagementBDSelf] 当前用户:', user?.username)
-  console.log('[ManagementBDSelf] 用户角色:', user?.role?.name)
-  console.log('[ManagementBDSelf] 用户权限列表:', perms)
-  console.log('[ManagementBDSelf] samplesBd:update 权限:', perms.includes('samplesBd:update'))
-  console.log('[ManagementBDSelf] samplesBd:delete 权限:', perms.includes('samplesBd:delete'))
   
   loadSamples()
   loadCurrencies()

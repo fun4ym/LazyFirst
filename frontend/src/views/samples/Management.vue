@@ -1219,14 +1219,7 @@ const openEditDialog = async (sample) => {
     }
   }
   
-  // 调试日志
-  console.log('[Edit Dialog] 样品数据:', {
-    sampleId: sample._id,
-    sampleProductId: sample.productId,
-    productObjectIdFound: productObjectId,
-    cooperationProductsCount: cooperationProducts.value.length,
-    createFormProductId: createForm.productId
-  })
+
   
   createDialogVisible.value = true
 }

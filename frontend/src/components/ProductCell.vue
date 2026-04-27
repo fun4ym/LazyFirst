@@ -1,5 +1,6 @@
 <template>
   <div class="product-cell">
+
     <el-image
       v-if="imageSrc"
       :src="imageSrc"
@@ -80,42 +81,34 @@ const pendingRequests = ref({})
 const fetchProductImage = async () => {
   const tiktokProductId = props.product.tiktokProductId || props.product.productId
   if (!tiktokProductId) {
-    console.log('[ProductCell] 没有tiktokProductId，跳过获取图片')
     return ''
   }
 
   // ★ 公开页面或禁用自动获取时，不请求API
   if (isPublicPage() || props.disableAutoFetch) {
-    console.log('[ProductCell] 公开页面/已禁用，跳过API请求')
     return ''
   }
 
-  console.log('[ProductCell] 开始获取商品图片，tiktokProductId:', tiktokProductId)
   
   // 如果缓存中已有，直接返回
   if (productImageCache.value[tiktokProductId]) {
-    console.log('[ProductCell] 从缓存获取图片:', productImageCache.value[tiktokProductId])
     return productImageCache.value[tiktokProductId]
   }
   
   // 如果已经有正在进行的请求，等待它完成
   if (pendingRequests.value[tiktokProductId]) {
-    console.log('[ProductCell] 已有正在进行的请求，等待...')
     return pendingRequests.value[tiktokProductId]
   }
   
   // 创建新的请求
   const requestPromise = (async () => {
     try {
-      console.log('[ProductCell] 请求商品API，search参数:', tiktokProductId)
       const res = await request.get('/products', {
         params: {
           search: tiktokProductId,
           limit: 1
         }
       })
-      console.log('[ProductCell] 商品API响应:', res.data)
-      console.log('[ProductCell] 响应完整结构:', JSON.stringify(res.data, null, 2))
       // 处理不同的响应结构
       let productArray = []
       if (Array.isArray(res.data)) {
@@ -128,16 +121,13 @@ const fetchProductImage = async () => {
         // 商品格式 { products: [...], pagination: {...} }
         productArray = res.data.products
       }
-      console.log('[ProductCell] 处理后商品数组:', productArray)
       if (productArray.length > 0) {
         const product = productArray[0]
-        console.log('[ProductCell] 找到商品:', product)
         // 优先使用 image，否则使用 productImage、images[0] 或 productImages[0]
         const imageUrl = product.image || 
                         product.productImage ||
                         (Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : '') ||
                         (Array.isArray(product.productImages) && product.productImages.length > 0 ? product.productImages[0] : '')
-        console.log('[ProductCell] 提取的图片URL:', imageUrl)
         if (imageUrl) {
           // 处理图片URL
           const processedUrl = processImageUrl(imageUrl)
@@ -146,13 +136,10 @@ const fetchProductImage = async () => {
             ...productImageCache.value,
             [tiktokProductId]: processedUrl
           }
-          console.log('[ProductCell] 缓存图片URL:', tiktokProductId, '->', processedUrl)
           return processedUrl
         } else {
-          console.log('[ProductCell] 商品没有图片')
         }
       } else {
-        console.log('[ProductCell] 没有找到商品')
       }
     } catch (error) {
       console.error('[ProductCell] 获取商品图片失败:', error)
@@ -173,7 +160,6 @@ const fetchProductImage = async () => {
 
 // 监听 product.tiktokProductId 变化
 watch(() => props.product.tiktokProductId || props.product.productId, async (newId) => {
-  console.log('[ProductCell] watch触发，newId:', newId)
   if (newId && !props.disableAutoFetch) {
     await fetchProductImage()
   }
@@ -181,7 +167,6 @@ watch(() => props.product.tiktokProductId || props.product.productId, async (new
 
 // 组件挂载时尝试获取图片
 onMounted(async () => {
-  console.log('[ProductCell] onMounted触发，product:', props.product)
   if ((props.product.tiktokProductId || props.product.productId) && !props.disableAutoFetch) {
     await fetchProductImage()
   }
@@ -191,7 +176,6 @@ onMounted(async () => {
 const processImageUrl = (url) => {
   if (!url) return ''
   
-  console.log('[ProductCell] 处理图片URL:', url)
   
   // 如果是完整URL，直接返回
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
@@ -204,7 +188,6 @@ const processImageUrl = (url) => {
     // 避免重复添加基础URL
     if (baseUrl && !url.startsWith(baseUrl)) {
       const fullUrl = `${baseUrl}${url}`
-      console.log('[ProductCell] 转换为完整URL:', fullUrl)
       return fullUrl
     }
   }
@@ -218,24 +201,18 @@ const imageSrc = computed(() => {
   // 优先使用直接传递的图片
   if (props.product.image) {
     url = props.product.image
-    console.log('[ProductCell] imageSrc: 使用props.product.image:', url)
   } else if (props.product.productImage) {
     url = props.product.productImage
-    console.log('[ProductCell] imageSrc: 使用props.product.productImage:', url)
   } else if (Array.isArray(props.product.images) && props.product.images.length > 0) {
     url = props.product.images[0]
-    console.log('[ProductCell] imageSrc: 使用props.product.images[0]:', url)
   } else if (Array.isArray(props.product.productImages) && props.product.productImages.length > 0) {
     url = props.product.productImages[0]
-    console.log('[ProductCell] imageSrc: 使用props.product.productImages[0]:', url)
   } else {
     // 尝试从缓存中获取
     const tiktokProductId = props.product.tiktokProductId || props.product.productId
     if (tiktokProductId && productImageCache.value[tiktokProductId]) {
       url = productImageCache.value[tiktokProductId]
-      console.log('[ProductCell] imageSrc: 使用缓存图片:', url)
     } else {
-      console.log('[ProductCell] imageSrc: 没有找到图片，tiktokProductId:', tiktokProductId, '缓存:', productImageCache.value)
     }
   }
   
