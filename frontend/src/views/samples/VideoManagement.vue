@@ -147,7 +147,7 @@
             <el-button link type="primary" size="small" @click="openEditDialog(row)">
               {{ $t('common.edit') }}
             </el-button>
-            <el-popconfirm :title="$t('common.confirmDelete')" @confirm="handleDelete(row._id)">
+            <el-popconfirm :title="$t('common.deleteConfirm')" @confirm="handleDelete(row._id)">
               <template #reference>
                 <el-button link type="danger" size="small">{{ $t('common.delete') }}</el-button>
               </template>

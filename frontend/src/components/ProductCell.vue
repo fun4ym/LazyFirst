@@ -70,7 +70,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+const emit = defineEmits(['click', 'copy-field'])
 
 // 商品图片缓存（模块作用域，所有实例共享）
 const productImageCache = ref({})
@@ -230,13 +230,7 @@ const copyId = async () => {
     ElMessage.warning('无可用ID可复制')
     return
   }
-  try {
-    await navigator.clipboard.writeText(idToCopy)
-    ElMessage.success('已复制到剪贴板')
-  } catch (error) {
-    console.error('复制失败:', error)
-    ElMessage.error('复制失败')
-  }
+  emit('copy-field', props.copyField, idToCopy)
 }
 
 const handleProductClick = () => {

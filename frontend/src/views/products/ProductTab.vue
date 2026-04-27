@@ -1586,6 +1586,17 @@ const renderCharts = () => {
   console.log('renderCharts - 渲染完成')
 }
 
+// 复制字段处理
+const onCopyField = (field, value) => {
+  try {
+    navigator.clipboard.writeText(value)
+    ElMessage.success(`${field}已复制`)
+  } catch (error) {
+    console.error('复制失败:', error)
+    ElMessage.error('复制失败')
+  }
+}
+
 onMounted(() => {
   // 从URL查询参数读取活动筛选条件
   if (route.query.activityId) {

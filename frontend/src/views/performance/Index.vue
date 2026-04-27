@@ -278,6 +278,14 @@ const updateLineChart = (dates, sampleData, orderData, dailyStats) => {
     return
   }
 
+  // 检查日期数据是否为空
+  if (!dates || dates.length === 0) {
+    console.log('日期数据为空，跳过图表更新')
+    // 清空图表以避免错误
+    lineChartInstance.value.clear()
+    return
+  }
+
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -573,8 +581,16 @@ onMounted(() => {
   nextTick(() => {
     initCharts()
     window.addEventListener('resize', () => {
-      lineChartInstance.value?.resize()
-      pieChartInstance.value?.resize()
+      try {
+        lineChartInstance.value?.resize()
+      } catch (error) {
+        console.warn('折线图resize失败:', error)
+      }
+      try {
+        pieChartInstance.value?.resize()
+      } catch (error) {
+        console.warn('饼图resize失败:', error)
+      }
     })
   })
   // 再加载数据（延迟一点确保DOM渲染完成）

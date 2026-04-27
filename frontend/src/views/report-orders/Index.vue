@@ -1657,9 +1657,9 @@ onMounted(() => {
 })
 
 // 复制字段处理
-const onCopyField = (fieldValue) => {
-  if (!fieldValue) return
-  navigator.clipboard.writeText(fieldValue).then(() => {
+const onCopyField = (field, value) => {
+  if (!value) return
+  navigator.clipboard.writeText(value).then(() => {
     ElMessage.success(t('common.copySuccess'))
   }).catch(() => {
     ElMessage.error(t('common.copyFailed'))

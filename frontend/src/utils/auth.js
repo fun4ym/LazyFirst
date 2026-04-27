@@ -86,7 +86,7 @@ const AuthManager = {
   isLoggedIn() {
     const token = this.getToken()
     const logged = !!token && token.length > 0
-    console.log('[AuthManager] isLoggedIn:', logged)
+    console.log('[AuthManager] isLoggedIn:', logged, 'token length:', token?.length || 0, 'token prefix:', token ? token.substring(0, 10) + '...' : 'none')
     return logged
   },
 
