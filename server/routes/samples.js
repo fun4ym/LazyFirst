@@ -460,13 +460,22 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     }).sort({ date: -1, createdAt: -1 }).limit(10);
 
     const duplicateCount = previousRecords.length;
+    // 获取所有不重复的salesmanId
+    const salesmanIds = [...new Set(previousRecords.map(r => r.salesmanId).filter(id => id))];
+    const salesmanMap = new Map();
+    if (salesmanIds.length > 0) {
+      const users = await User.find({ _id: { $in: salesmanIds } }).select('username _id');
+      users.forEach(user => {
+        salesmanMap.set(user._id.toString(), user.username);
+      });
+    }
     const previousSubmissions = previousRecords.map(record => ({
       sampleId: record._id,
       date: record.date,
       productName: product.name,
       influencerAccount: influencer.tiktokId,
       sampleStatus: record.sampleStatus,
-      salesman: record.salesmanId,
+      salesman: record.salesmanId ? (salesmanMap.get(record.salesmanId.toString()) || record.salesmanId) : '',
       createdAt: record.createdAt
     }));
 
@@ -1145,10 +1154,21 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           }).sort({ date: -1 }).limit(10);
 
           sampleData.duplicateCount = prevRecords.length;
+          // 获取所有不重复的salesmanId
+          const salesmanIds = [...new Set(prevRecords.map(r => r.salesmanId).filter(id => id))];
+          const salesmanMap = new Map();
+          if (salesmanIds.length > 0) {
+            const users = await User.find({ _id: { $in: salesmanIds } }).select('username _id');
+            users.forEach(user => {
+              salesmanMap.set(user._id.toString(), user.username);
+            });
+          }
           sampleData.previousSubmissions = prevRecords.map(r => ({
             sampleId: r._id, date: r.date,
             productName: productObj.name, influencerAccount: influencerObj.tiktokId,
-            sampleStatus: r.sampleStatus, salesman: r.salesmanId, createdAt: r.createdAt
+            sampleStatus: r.sampleStatus,
+            salesman: r.salesmanId ? (salesmanMap.get(r.salesmanId.toString()) || r.salesmanId) : '',
+            createdAt: r.createdAt
           }));
 
           const newSample = await SampleManagement.create(sampleData);

@@ -160,11 +160,11 @@
                     <div class="summary-info" v-if="row.previousSubmissions && row.previousSubmissions.length > 0">
                       <div class="summary-item">
                         <span class="summary-label">{{ $t('samples.productNameColon') }}</span>
-                        <span class="summary-value">{{ row.previousSubmissions[0].productName || '-' }}</span>
+                        <span class="summary-value">{{ row.previousSubmissions[0].productName || row.productName || '-' }}</span>
                       </div>
                       <div class="summary-item">
                         <span class="summary-label">{{ $t('samples.tiktokIdColon') }}</span>
-                        <span class="summary-value">{{ row.previousSubmissions[0].influencerAccount || '-' }}</span>
+                        <span class="summary-value">{{ row.previousSubmissions[0].influencerAccount || row.influencerAccount || '-' }}</span>
                       </div>
                     </div>
                     
@@ -177,20 +177,12 @@
                         @click="openSubmissionDetail(sub)"
                         style="cursor: pointer; padding: 12px; border-bottom: 1px solid #f0f0f0;"
                       >
-                        <div class="submission-row">
-                          <div class="submission-cell">
-                            <span class="cell-label">{{ $t('samples.applyDateColon') }}</span>
-                            <span class="cell-value">{{ formatDate(sub.date) }}</span>
-                          </div>
-                          <div class="submission-cell">
-                            <span class="cell-label">{{ $t('samples.approvalStatusColon') }}</span>
-                            <span class="cell-value">
-                              <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
-                                {{ getSampleStatusText(sub.sampleStatus) }}
-                              </el-tag>
-                              <span class="salesman-text" v-if="sub.salesman">{{ sub.salesman }}</span>
-                            </span>
-                          </div>
+                        <div class="submission-row" style="display: flex; align-items: center; gap: 8px;">
+                          <span>{{ formatDate(sub.date) }}</span>
+                          <el-tag :type="getSampleStatusType(sub.sampleStatus)" size="small" class="status-tag">
+                            {{ getSampleStatusText(sub.sampleStatus) }}
+                          </el-tag>
+                          <span>{{ sub.salesman || sub.salesmanId || row.salesman || '--' }}</span>
                         </div>
                       </div>
                     </div>
