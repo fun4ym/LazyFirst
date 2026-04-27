@@ -1926,10 +1926,27 @@ export default {
     noStreamCodeToCopy: '没有可复制的投流码',
     copyStreamCodeSuccess: '投流码复制成功',
     copyStreamCodeFailed: '投流码复制失败',
+    // 新增国际化标签
+    influencer: '达人',
+    productIdLabel: '商品ID:',
+    bdLabel: 'BD',
+    followerAbbr: 'FV',
+    gmvAbbr: 'GMV',
+    monthlySalesAbbr: 'MSS',
+    avgViewsAbbr: 'APV',
     sampleResult: '申样结果',
     confirmDeleteVideo: '确定删除该视频？',
+    confirmDelete: '确定删除该样品申请吗？',
+    edit: '编辑',
+    delete: '删除',
+    confirm: '确认',
     deleteSuccess: '删除成功',
-    deleteFailed: '删除视频失败'
+    deleteFailed: '删除视频失败',
+    // 工具提示标签
+    followerCountLabel: '粉丝数',
+    gmvLabel: 'GMV',
+    monthlySalesLabel: '月销量',
+    avgViewsLabel: '平均播放'
   },
   // 市场工作台-招募配置
   recruitment: {

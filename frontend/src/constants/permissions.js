@@ -113,7 +113,7 @@ export const PERMISSION_MAP = {
   // BD工作台
   '/influencer-managements': [makePermission('influencers', 'read')],
   '/videos': [makePermission('videos', 'read'), makePermission('videos', 'create'), makePermission('videos', 'update'), makePermission('videos', 'delete')],
-  '/samples-bd': [makePermission('samplesBd', 'read'), makePermission('samplesBd', 'create')],
+  '/samples-bd': [makePermission('samplesBd', 'read'), makePermission('samplesBd', 'create'), makePermission('samplesBd', 'update'), makePermission('samplesBd', 'delete')],
 
   // 供应链
   '/products': [makePermission('products', 'read')],

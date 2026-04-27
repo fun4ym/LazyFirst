@@ -59,7 +59,7 @@
         :row-class-name="getSampleRowClassName"
       >
         <el-table-column
-          label="Influencer"
+          :label="$t('sampleBD.influencer')"
           width="260"
           fixed="left"
           prop="influencerAccount"
@@ -257,11 +257,13 @@
 
         <el-table-column
           :label="$t('sampleBD.operation')"
-          width="120"
+          width="150"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row)">{{ $t('sampleBD.detail') }}</el-button>
+            <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('samplesBd:read')">{{ $t('sampleBD.detail') }}</el-button>
+            <el-button link type="warning" @click="openEditDialog(row)" v-if="hasPermission('samplesBd:update')">{{ $t('sampleBD.edit') }}</el-button>
+            <el-button link type="danger" @click="deleteSample(row)" v-if="hasPermission('samplesBd:delete')">{{ $t('sampleBD.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -321,7 +323,7 @@
             </div>
             <div class="detail-name">{{ currentSample.productName || '-' }}</div>
             <div class="detail-bd">
-              <span class="bd-label">商品ID:</span>
+              <span class="bd-label">{{ $t('sampleBD.productIdLabel') }}</span>
               <span>{{ currentSample.productId || '-' }}</span>
             </div>
           </div>
@@ -332,7 +334,7 @@
           <div class="stat-card">
             <div class="stat-label">
               <el-tooltip :content="$t('sampleBD.followerCountLabel')" placement="top" :show-after="300">
-                <span>FV</span>
+                <span>{{ $t('sampleBD.followerAbbr') }}</span>
               </el-tooltip>
             </div>
             <div class="stat-value">{{ formatNumber(currentSample.followerCount || 0) }}</div>
@@ -340,7 +342,7 @@
           <div class="stat-card">
             <div class="stat-label">
               <el-tooltip :content="$t('sampleBD.gmvLabel')" placement="top" :show-after="300">
-                <span>GMV</span>
+                <span>{{ $t('sampleBD.gmvAbbr') }}</span>
               </el-tooltip>
             </div>
             <div class="stat-value">{{ currentDefaultCurrencySymbol }}{{ formatNumber(currentSample.gmv || 0) }}</div>
@@ -348,7 +350,7 @@
           <div class="stat-card">
             <div class="stat-label">
               <el-tooltip :content="$t('sampleBD.monthlySalesLabel')" placement="top" :show-after="300">
-                <span>MSS</span>
+                <span>{{ $t('sampleBD.monthlySalesAbbr') }}</span>
               </el-tooltip>
             </div>
             <div class="stat-value">{{ formatNumber(currentSample.monthlySalesCount || 0) }}</div>
@@ -356,7 +358,7 @@
           <div class="stat-card">
             <div class="stat-label">
               <el-tooltip :content="$t('sampleBD.avgViewsLabel')" placement="top" :show-after="300">
-                <span>APV</span>
+                <span>{{ $t('sampleBD.avgViewsAbbr') }}</span>
               </el-tooltip>
             </div>
             <div class="stat-value">{{ formatNumber(currentSample.avgVideoViews || 0) }}</div>
@@ -373,7 +375,7 @@
               <span class="info-value">{{ currentSample.influencerAccount || '-' }}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">BD</span>
+              <span class="info-label">{{ $t('sampleBD.bdLabel') }}</span>
               <span class="info-value">{{ currentSample.bd || '-' }}</span>
             </div>
             <div class="info-row">
@@ -420,11 +422,12 @@
       </div>
     </el-dialog>
 
-    <!-- 新增对话框 -->
+    <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="createDialogVisible"
-      :title="$t('sampleBD.addNewTitle')"
+      :title="editingSample ? $t('sampleBD.editSample') : $t('sampleBD.addNewTitle')"
       width="700px"
+      @close="createDialogVisible = false; editingSample = null"
     >
       <el-form
         :model="createForm"
@@ -560,10 +563,15 @@ import FulfillmentVideoCell from '@/components/FulfillmentVideoCell.vue'
 const userStore = useUserStore()
 
 // 权限检查
-const hasPermission = (perm) => AuthManager.hasPermission(perm)
+const hasPermission = (perm) => {
+  const result = AuthManager.hasPermission(perm)
+  console.log(`[hasPermission] ${perm} => ${result}`)
+  return result
+}
 
 const loading = ref(false)
 const creating = ref(false)
+const editingSample = ref(null)  // 正在编辑的样品
 const createDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const detailActiveTab = ref('basic')  // 详情弹层当前标签页
@@ -838,6 +846,7 @@ const searchInfluencers = async (query) => {
 }
 
 const showCreateDialog = () => {
+  editingSample.value = null  // 重置编辑状态
   // BD页面默认salesmanId由后端数据权限自动填充，前端不传或传当前用户_id
   Object.assign(createForm, {
     date: getTodayDate(),
@@ -854,19 +863,144 @@ const showCreateDialog = () => {
   loadCooperationProducts()
 }
 
+// 打开编辑对话框
+const openEditDialog = async (sample) => {
+  editingSample.value = sample
+  // 加载产品列表
+  await loadCooperationProducts()
+  
+  // ★ 关键修复：根据TikTok商品ID查找对应的Product ObjectId
+  let productObjectId = ''
+  const sampleProductId = sample.productId
+  
+  if (sampleProductId) {
+    // 情况1：sample.productId 已经是 Product ObjectId 字符串
+    if (/^[0-9a-fA-F]{24}$/.test(sampleProductId)) {
+      // 检查是否在cooperationProducts中存在
+      const productById = cooperationProducts.value.find(p => p._id === sampleProductId)
+      if (productById) {
+        productObjectId = sampleProductId
+      } else {
+        // 尝试按tiktokProductId查找
+        const productByTikTokId = cooperationProducts.value.find(p => p.tiktokProductId === sampleProductId)
+        if (productByTikTokId) {
+          productObjectId = productByTikTokId._id
+        }
+      }
+    } else {
+      // 情况2：sample.productId 是 TikTok商品ID（如 1731878167000352950）
+      const productByTikTokId = cooperationProducts.value.find(p => p.tiktokProductId === sampleProductId)
+      if (productByTikTokId) {
+        productObjectId = productByTikTokId._id
+      } else {
+        // 尝试按_id查找（可能是早期数据）
+        const productById = cooperationProducts.value.find(p => p._id === sampleProductId)
+        if (productById) {
+          productObjectId = sampleProductId
+        }
+      }
+    }
+  }
+  
+  // 填充表单数据（重构后：使用ObjectId引用字段）
+  Object.assign(createForm, {
+    date: sample.date || '',
+    productId: productObjectId || sample.productId || '',        // 使用找到的Product ObjectId
+    influencerId: sample.influencerId?._id || sample.influencerId || null, // 兼容populate，空值设为null
+    shippingInfo: sample.shippingInfo || '',
+    isSampleSent: sample.isSampleSent || false,
+    trackingNumber: sample.trackingNumber || '',
+    shippingDate: sample.shippingDate || '',
+    logisticsCompany: sample.logisticsCompany || '',
+    isOrderGenerated: sample.isOrderGenerated || false
+  })
+  
+  // ★ 修复：将当前选中的 influencer 添加到 influencerOptions 中，以便选择器正确显示 TikTok ID
+  if (sample.influencerId) {
+    let influencerObj = null
+    if (typeof sample.influencerId === 'object' && sample.influencerId.tiktokId) {
+      // 已 populate，直接使用
+      influencerObj = {
+        _id: sample.influencerId._id,
+        tiktokId: sample.influencerId.tiktokId,
+        tiktokName: sample.influencerId.tiktokName || ''
+      }
+    } else if (sample.influencerAccount) {
+      // 未 populate，但有 influencerAccount（TikTok ID）
+      influencerObj = {
+        _id: sample.influencerId, // 可能是字符串 ID
+        tiktokId: sample.influencerAccount,
+        tiktokName: sample.influencerName || ''
+      }
+    }
+    if (influencerObj) {
+      const exists = influencerOptions.value.some(opt => opt._id === influencerObj._id)
+      if (!exists) {
+        influencerOptions.value = [influencerObj, ...influencerOptions.value]
+      }
+    }
+  }
+  
+  // 调试日志
+  console.log('[Edit Dialog] 样品数据:', {
+    sampleId: sample._id,
+    sampleProductId: sample.productId,
+    productObjectIdFound: productObjectId,
+    cooperationProductsCount: cooperationProducts.value.length,
+    createFormProductId: createForm.productId
+  })
+  
+  createDialogVisible.value = true
+}
+
 const handleCreate = async () => {
   if (!createFormRef.value) return
 
   await createFormRef.value.validate(async (valid) => {
     if (!valid) return
 
-    // ★ 先检查黑名单达人（通过选中的influencerId查找）
+    // 如果是编辑模式，直接提交（只更新样品级别字段）
+    if (editingSample.value) {
+      creating.value = true
+      try {
+        // 编辑时只传样品级字段，视频相关字段通过Video API操作
+        // 清理无效的ObjectId：空字符串、null、undefined不发送，让后端保留原值
+        const updatePayload = {
+          date: createForm.date,
+          productId: createForm.productId || undefined,
+          influencerId: createForm.influencerId || undefined,
+          shippingInfo: createForm.shippingInfo,
+          isSampleSent: createForm.isSampleSent,
+          trackingNumber: createForm.trackingNumber,
+          shippingDate: createForm.shippingDate,
+          logisticsCompany: createForm.logisticsCompany,
+          isOrderGenerated: createForm.isOrderGenerated
+        }
+        // 移除undefined的字段，避免发送无效值
+        Object.keys(updatePayload).forEach(key => updatePayload[key] === undefined && delete updatePayload[key])
+        await request.put(`/samples/${editingSample.value._id}`, updatePayload)
+        ElMessage.success(t('sampleBD.saveSuccess'))
+        createDialogVisible.value = false
+        editingSample.value = null
+        loadSamples()
+      } catch (error) {
+        console.error('Update sample error:', error)
+        ElMessage.error(error.response?.data?.message || t('sampleBD.saveFailed'))
+      } finally {
+        creating.value = false
+      }
+      return
+    }
+
+    // ★ 新建模式（重构后：发送 ObjectId 引用）
+    // 先检查黑名单达人
     try {
       const selectedInf = influencerOptions.value.find(i => i._id === createForm.influencerId)
       if (selectedInf && selectedInf.isBlacklisted) {
         ElMessage.error(t('sampleBD.blacklistInfluencerWarning'))
         return
       }
+      // 也调用API二次确认
       if (selectedInf) {
         const blacklistRes = await request.get(`/influencer-managements/blacklist/check/${selectedInf.tiktokId}`, {
           params: { companyId: userStore.companyId }
@@ -880,6 +1014,7 @@ const handleCreate = async () => {
       console.error('检查黑名单失败:', blError)
     }
 
+    // 后端会做重复检查，这里仅做前端提示
     creating.value = true
     try {
       // ★ 构造新的请求体（只包含重构后需要的字段）
@@ -963,6 +1098,21 @@ const loadInfluencerPopover = async (row) => {
 
 const viewDetail = (sample) => {
   viewSampleDetail(sample)
+}
+
+const deleteSample = async (sample) => {
+  await ElMessageBox.confirm(t('sampleBD.confirmDelete'), t('common.warning'), {
+    type: 'warning'
+  })
+
+  try {
+    await request.delete(`/samples/${sample._id}`)
+    ElMessage.success(t('sampleBD.deleteSuccess'))
+    loadSamples()
+  } catch (error) {
+    console.error('Delete sample error:', error)
+    ElMessage.error(t('sampleBD.deleteError'))
+  }
 }
 
 // 复制视频链接到剪贴板
@@ -1128,6 +1278,15 @@ const isCurrentUserMaintainer = (influencer) => {
 }
 
 onMounted(() => {
+  // 调试权限
+  const user = AuthManager.getUser()
+  const perms = AuthManager.getPermissions()
+  console.log('[ManagementBDSelf] 当前用户:', user?.username)
+  console.log('[ManagementBDSelf] 用户角色:', user?.role?.name)
+  console.log('[ManagementBDSelf] 用户权限列表:', perms)
+  console.log('[ManagementBDSelf] samplesBd:update 权限:', perms.includes('samplesBd:update'))
+  console.log('[ManagementBDSelf] samplesBd:delete 权限:', perms.includes('samplesBd:delete'))
+  
   loadSamples()
   loadCurrencies()
 })

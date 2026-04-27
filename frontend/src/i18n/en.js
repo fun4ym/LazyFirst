@@ -1744,10 +1744,27 @@ export default {
     copyStreamCodeSuccess: 'Stream code copied',
     copyStreamCodeSuccess: 'Stream code copied',
     copyStreamCodeFailed: 'Failed to copy stream code',
+    // New i18n labels
+    influencer: 'Influencer',
+    productIdLabel: 'Product ID:',
+    bdLabel: 'BD',
+    followerAbbr: 'FV',
+    gmvAbbr: 'GMV',
+    monthlySalesAbbr: 'MSS',
+    avgViewsAbbr: 'APV',
     sampleResult: 'Sample Result',
     confirmDeleteVideo: 'Are you sure to delete this video?',
+    confirmDelete: 'Are you sure to delete this sample request?',
+    edit: 'Edit',
+    delete: 'Delete',
+    confirm: 'Confirm',
     deleteSuccess: 'Deleted successfully',
-    deleteFailed: 'Failed to delete video'
+    deleteFailed: 'Failed to delete video',
+    // Tooltip labels
+    followerCountLabel: 'Followers',
+    gmvLabel: 'GMV',
+    monthlySalesLabel: 'Monthly Sales',
+    avgViewsLabel: 'Average Views'
   },
   // Market Workspace - Recruitment Config
   recruitment: {
