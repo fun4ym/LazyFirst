@@ -3,7 +3,541 @@ const mongoose = require('mongoose');
 const ReportOrder = require('../models/ReportOrder');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const SampleManagement = require('../models/SampleManagement');
+const Influencer = require('../models/Influencer');
 const { authenticate, authorize } = require('../middleware/auth');
+
+// 获取商品统计概览
+router.get('/overview', authenticate, authorize('products:read'), async (req, res) => {
+  try {
+    let { companyId, startDate, endDate } = req.query;
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ success: false, message: '缺少或无效的companyId参数' });
+    }
+    
+    companyId = new mongoose.Types.ObjectId(companyId);
+    
+    // 默认查询过去30天
+    const now = new Date();
+    if (!endDate) endDate = now.toISOString().split('T')[0];
+    if (!startDate) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    console.log('商品统计概览 - 查询参数:', { companyId, startDate, endDate });
+    
+    // 查询订单数据
+    const orderQuery = {
+      companyId,
+      summaryDate: { $gte: startDate, $lte: endDate }
+    };
+    
+    const orders = await ReportOrder.find(orderQuery).select('orderNo productId productName gmv influencerUsername creatorId');
+    
+    // 计算概览数据
+    const totalOrders = orders.length;
+    const totalGMV = orders.reduce((sum, o) => sum + (o.gmv || 0), 0);
+    const uniqueProducts = new Set(orders.map(o => o.productId).filter(Boolean));
+    const totalProducts = uniqueProducts.size;
+    const avgOrderValue = totalOrders > 0 ? totalGMV / totalOrders : 0;
+    
+    // 查询申样数据
+    const sampleQuery = {
+      companyId,
+      createdAt: { 
+        $gte: new Date(startDate), 
+        $lte: new Date(endDate + 'T23:59:59.999Z') 
+      }
+    };
+    
+    const samples = await SampleManagement.find(sampleQuery).select('status');
+    const totalApplications = samples.length;
+    const totalShipped = samples.filter(s => s.status === 'shipped' || s.status === 'received').length;
+    const avgSampleRate = totalApplications > 0 ? ((totalShipped / totalApplications) * 100).toFixed(2) : 0;
+    
+    res.json({
+      success: true,
+      data: {
+        orders: {
+          totalOrders,
+          totalGMV,
+          totalProducts,
+          avgOrderValue: Math.round(avgOrderValue * 100) / 100
+        },
+        samples: {
+          totalApplications,
+          totalShipped,
+          avgSampleRate: parseFloat(avgSampleRate)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('获取商品统计概览失败:', error);
+    res.status(500).json({ success: false, message: '获取商品统计概览失败' });
+  }
+});
+
+// 获取商品成交排行
+router.get('/product-ranking', authenticate, authorize('products:read'), async (req, res) => {
+  try {
+    let { companyId, startDate, endDate, sortBy = 'orderCount' } = req.query;
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ success: false, message: '缺少或无效的companyId参数' });
+    }
+    
+    companyId = new mongoose.Types.ObjectId(companyId);
+    
+    // 默认查询过去30天
+    const now = new Date();
+    if (!endDate) endDate = now.toISOString().split('T')[0];
+    if (!startDate) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    console.log('商品成交排行 - 查询参数:', { companyId, startDate, endDate, sortBy });
+    
+    // 聚合查询：按productId分组统计
+    const pipeline = [
+      {
+        $match: {
+          companyId,
+          summaryDate: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$productId',
+          productName: { $first: '$productName' },
+          orderCount: { $sum: 1 },
+          gmv: { $sum: '$gmv' },
+          bdSet: { $addToSet: '$creatorId' },
+          influencerSet: { $addToSet: '$influencerUsername' }
+        }
+      },
+      {
+        $project: {
+          productId: '$_id',
+          productName: 1,
+          orderCount: 1,
+          gmv: 1,
+          bdCount: { $size: '$bdSet' },
+          influencerCount: { $size: '$influencerSet' }
+        }
+      }
+    ];
+    
+    // 排序
+    if (sortBy === 'orderCount') {
+      pipeline.push({ $sort: { orderCount: -1 } });
+    } else if (sortBy === 'gmv') {
+      pipeline.push({ $sort: { gmv: -1 } });
+    }
+    
+    pipeline.push({ $limit: 50 });
+    
+    const ranking = await ReportOrder.aggregate(pipeline);
+    
+    // 获取商品详细信息（从Product集合）
+    const tiktokProductIds = ranking.map(r => r.productId).filter(Boolean);
+    const products = await Product.find({ tiktokProductId: { $in: tiktokProductIds } }).select('_id tiktokProductId name productImages images');
+    
+    // 建立映射
+    const productMap = {};
+    const productImageMap = {};
+    products.forEach(p => {
+      productMap[p.tiktokProductId] = p._id.toString();
+      // 优先使用 productImages，其次 images
+      const firstImage = (p.productImages && p.productImages.length > 0) 
+        ? p.productImages[0] 
+        : ((p.images && p.images.length > 0) ? p.images[0] : '');
+      productImageMap[p.tiktokProductId] = firstImage;
+    });
+    
+    // 添加productObjectId和productImage字段
+    const result = ranking.map(r => ({
+      ...r,
+      productObjectId: productMap[r.productId] || null,
+      productImage: r.productId ? (productImageMap[r.productId] || '') : '',
+      productId: r.productId || ''
+    }));
+    
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('获取商品成交排行失败:', error);
+    res.status(500).json({ success: false, message: '获取商品成交排行失败' });
+  }
+});
+
+// 获取商品订单构成详情
+router.get('/product-detail/:productId', authenticate, authorize('products:read'), async (req, res) => {
+  try {
+    const { productId } = req.params;
+    let { companyId, startDate, endDate } = req.query;
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ success: false, message: '缺少或无效的companyId参数' });
+    }
+    
+    companyId = new mongoose.Types.ObjectId(companyId);
+    
+    // 默认查询过去30天
+    const now = new Date();
+    if (!endDate) endDate = now.toISOString().split('T')[0];
+    if (!startDate) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    console.log('商品订单构成详情 - 查询参数:', { productId, companyId, startDate, endDate });
+    
+    // 查询该商品的订单
+    const orders = await ReportOrder.find({
+      companyId,
+      productId,
+      summaryDate: { $gte: startDate, $lte: endDate }
+    }).select('influencerUsername bdName creatorId gmv');
+    
+    // 获取BD名称映射
+    const creatorIds = [...new Set(orders.map(o => o.creatorId).filter(Boolean))];
+    const bdMap = {};
+    if (creatorIds.length > 0) {
+      const bds = await User.find({ _id: { $in: creatorIds } }).select('username realName name');
+      bds.forEach(bd => {
+        bdMap[bd._id.toString()] = bd.realName || bd.name || bd.username || '未知';
+      });
+    }
+    
+    // 按达人和BD聚合
+    const detailMap = {};
+    orders.forEach(order => {
+      const key = `${order.influencerUsername}_${order.creatorId}`;
+      if (!detailMap[key]) {
+        detailMap[key] = {
+          influencerName: order.influencerUsername || '未知',
+          influencerUsername: order.influencerUsername || '未知',
+          bdName: order.bdName || (order.creatorId ? (bdMap[order.creatorId.toString()] || '未知') : '未知'),
+          orderCount: 0,
+          gmv: 0
+        };
+      }
+      detailMap[key].orderCount++;
+      detailMap[key].gmv += (order.gmv || 0);
+    });
+    
+    const detail = Object.values(detailMap);
+    
+    // 计算GMV占比
+    const totalGMV = detail.reduce((sum, d) => sum + d.gmv, 0);
+    detail.forEach(d => {
+      d.gmvPercent = totalGMV > 0 ? Math.round((d.gmv / totalGMV) * 100) : 0;
+    });
+    
+    // 按GMV排序
+    detail.sort((a, b) => b.gmv - a.gmv);
+    
+    res.json({ success: true, data: detail });
+  } catch (error) {
+    console.error('获取商品订单构成详情失败:', error);
+    res.status(500).json({ success: false, message: '获取商品订单构成详情失败' });
+  }
+});
+
+// 获取BD贡献排行
+router.get('/bd-ranking', authenticate, authorize('products:read'), async (req, res) => {
+  try {
+    let { companyId, startDate, endDate } = req.query;
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ success: false, message: '缺少或无效的companyId参数' });
+    }
+    
+    companyId = new mongoose.Types.ObjectId(companyId);
+    
+    // 默认查询过去30天
+    const now = new Date();
+    if (!endDate) endDate = now.toISOString().split('T')[0];
+    if (!startDate) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    console.log('BD贡献排行 - 查询参数:', { companyId, startDate, endDate });
+    
+    // 聚合查询：按creatorId分组统计
+    const pipeline = [
+      {
+        $match: {
+          companyId,
+          summaryDate: { $gte: startDate, $lte: endDate },
+          creatorId: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: '$creatorId',
+          orderCount: { $sum: 1 },
+          gmv: { $sum: '$gmv' },
+          productSet: { $addToSet: '$productId' },
+          influencerSet: { $addToSet: '$influencerUsername' }
+        }
+      },
+      {
+        $project: {
+          creatorId: '$_id',
+          orderCount: 1,
+          gmv: 1,
+          productCount: { $size: '$productSet' },
+          influencerCount: { $size: '$influencerSet' }
+        }
+      },
+      { $sort: { gmv: -1 } },
+      { $limit: 50 }
+    ];
+    
+    const ranking = await ReportOrder.aggregate(pipeline);
+    
+    // 获取BD名称
+    const creatorIds = ranking.map(r => r.creatorId);
+    const bds = await User.find({ _id: { $in: creatorIds } }).select('username realName name');
+    
+    const bdNameMap = {};
+    bds.forEach(bd => {
+      bdNameMap[bd._id.toString()] = bd.realName || bd.name || bd.username || '未知';
+    });
+    
+    // 计算总GMV用于占比
+    const totalGMV = ranking.reduce((sum, r) => sum + r.gmv, 0);
+    
+    const result = ranking.map(r => ({
+      ...r,
+      bdName: bdNameMap[r.creatorId.toString()] || '未知',
+      gmvPercent: totalGMV > 0 ? Math.round((r.gmv / totalGMV) * 100) : 0
+    }));
+    
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('获取BD贡献排行失败:', error);
+    res.status(500).json({ success: false, message: '获取BD贡献排行失败' });
+  }
+});
+
+// 获取达人销售排行
+router.get('/influencer-ranking', authenticate, authorize('products:read'), async (req, res) => {
+  try {
+    let { companyId, startDate, endDate } = req.query;
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ success: false, message: '缺少或无效的companyId参数' });
+    }
+    
+    companyId = new mongoose.Types.ObjectId(companyId);
+    
+    // 默认查询过去30天
+    const now = new Date();
+    if (!endDate) endDate = now.toISOString().split('T')[0];
+    if (!startDate) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    console.log('达人销售排行 - 查询参数:', { companyId, startDate, endDate });
+    
+    // 聚合查询：按influencerUsername分组统计
+    const pipeline = [
+      {
+        $match: {
+          companyId,
+          summaryDate: { $gte: startDate, $lte: endDate },
+          influencerUsername: { $exists: true, $ne: '' }
+        }
+      },
+      {
+        $group: {
+          _id: '$influencerUsername',
+          orderCount: { $sum: 1 },
+          gmv: { $sum: '$gmv' },
+          productSet: { $addToSet: '$productId' },
+          creatorId: { $first: '$creatorId' }
+        }
+      },
+      {
+        $project: {
+          influencerUsername: '$_id',
+          orderCount: 1,
+          gmv: 1,
+          productCount: { $size: '$productSet' },
+          creatorId: 1
+        }
+      },
+      { $sort: { gmv: -1 } },
+      { $limit: 50 }
+    ];
+    
+    const ranking = await ReportOrder.aggregate(pipeline);
+    
+    // 获取BD名称
+    const creatorIds = [...new Set(ranking.map(r => r.creatorId).filter(Boolean))];
+    const bdMap = {};
+    if (creatorIds.length > 0) {
+      const bds = await User.find({ _id: { $in: creatorIds } }).select('username realName name');
+      bds.forEach(bd => {
+        bdMap[bd._id.toString()] = bd.realName || bd.name || bd.username || '未知';
+      });
+    }
+    
+    // 获取达人详细信息
+    const usernames = ranking.map(r => r.influencerUsername);
+    const influencers = await Influencer.find({ tiktokId: { $in: usernames } }).select('tiktokId name');
+    const influencerNameMap = {};
+    influencers.forEach(inf => {
+      influencerNameMap[inf.tiktokId] = inf.name || inf.tiktokId;
+    });
+    
+    const result = ranking.map(r => ({
+      ...r,
+      influencerName: influencerNameMap[r.influencerUsername] || r.influencerUsername,
+      bdName: r.creatorId ? (bdMap[r.creatorId.toString()] || '未知') : '未知'
+    }));
+    
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('获取达人销售排行失败:', error);
+    res.status(500).json({ success: false, message: '获取达人销售排行失败' });
+  }
+});
+
+// 获取申样统计
+router.get('/sample-stats', authenticate, authorize('products:read'), async (req, res) => {
+  try {
+    let { companyId, startDate, endDate } = req.query;
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ success: false, message: '缺少或无效的companyId参数' });
+    }
+    
+    companyId = new mongoose.Types.ObjectId(companyId);
+    
+    // 默认查询过去30天
+    const now = new Date();
+    if (!endDate) endDate = now.toISOString().split('T')[0];
+    if (!startDate) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    
+    console.log('申样统计 - 查询参数:', { companyId, startDate, endDate });
+    
+    // 查询申样数据
+    const sampleQuery = {
+      companyId,
+      date: { 
+        $gte: new Date(startDate), 
+        $lte: new Date(endDate + 'T23:59:59.999Z') 
+      }
+    };
+    
+    const samples = await SampleManagement.find(sampleQuery).select('productId sampleStatus salesmanId');
+    
+    // 按商品统计
+    const productStatsMap = {};
+    samples.forEach(sample => {
+      const productId = sample.productId ? sample.productId.toString() : 'unknown';
+      if (!productStatsMap[productId]) {
+        productStatsMap[productId] = {
+          productId,
+          applicationCount: 0,
+          shippedCount: 0,
+          bdSet: new Set()
+        };
+      }
+      productStatsMap[productId].applicationCount++;
+      if (sample.sampleStatus === 'shipping' || sample.sampleStatus === 'sent') {
+        productStatsMap[productId].shippedCount++;
+      }
+      if (sample.salesmanId) {
+        productStatsMap[productId].bdSet.add(sample.salesmanId.toString());
+      }
+    });
+    
+    // 获取商品名称和图片
+    const productIds = Object.keys(productStatsMap).filter(id => id !== 'unknown');
+    const products = await Product.find({ tiktokProductId: { $in: productIds } }).select('name tiktokProductId productImages images');
+    const productNameMap = {};
+    const productImageMap = {};
+    products.forEach(p => {
+      productNameMap[p.tiktokProductId] = p.name;
+      // 优先使用 productImages，其次 images
+      const firstImage = (p.productImages && p.productImages.length > 0) 
+        ? p.productImages[0] 
+        : ((p.images && p.images.length > 0) ? p.images[0] : '');
+      productImageMap[p.tiktokProductId] = firstImage;
+    });
+    
+    const productStats = Object.values(productStatsMap).map(stat => ({
+      productId: stat.productId === 'unknown' ? '' : stat.productId,
+      productName: stat.productId === 'unknown' ? '未知商品' : (productNameMap[stat.productId] || '未知商品'),
+      productImage: stat.productId === 'unknown' ? '' : (productImageMap[stat.productId] || ''),
+      applicationCount: stat.applicationCount,
+      shippedCount: stat.shippedCount,
+      sampleRate: stat.applicationCount > 0 ? Math.round((stat.shippedCount / stat.applicationCount) * 100) : 0,
+      bdCount: stat.bdSet.size
+    })).sort((a, b) => b.applicationCount - a.applicationCount);
+    
+    // 按BD统计
+    const bdStatsMap = {};
+    samples.forEach(sample => {
+      const salesmanId = sample.salesmanId ? sample.salesmanId.toString() : 'unknown';
+      if (!bdStatsMap[salesmanId]) {
+        bdStatsMap[salesmanId] = {
+          salesmanId,
+          applicationCount: 0,
+          shippedCount: 0,
+          productSet: new Set()
+        };
+      }
+      bdStatsMap[salesmanId].applicationCount++;
+      if (sample.sampleStatus === 'shipping' || sample.sampleStatus === 'sent') {
+        bdStatsMap[salesmanId].shippedCount++;
+      }
+      if (sample.productId) {
+        bdStatsMap[salesmanId].productSet.add(sample.productId.toString());
+      }
+    });
+    
+    // 获取BD名称
+    const salesmanIds = Object.keys(bdStatsMap).filter(id => id !== 'unknown');
+    const bds = await User.find({ _id: { $in: salesmanIds } }).select('username realName name');
+    const bdNameMap = {};
+    bds.forEach(bd => {
+      bdNameMap[bd._id.toString()] = bd.realName || bd.name || bd.username || '未知';
+    });
+    
+    const bdStats = Object.values(bdStatsMap).map(stat => ({
+      bdName: stat.salesmanId === 'unknown' ? '未知' : (bdNameMap[stat.salesmanId] || '未知'),
+      applicationCount: stat.applicationCount,
+      shippedCount: stat.shippedCount,
+      sampleRate: stat.applicationCount > 0 ? Math.round((stat.shippedCount / stat.applicationCount) * 100) : 0,
+      productCount: stat.productSet.size
+    })).sort((a, b) => b.applicationCount - a.applicationCount);
+    
+    res.json({
+      success: true,
+      data: {
+        productStats: productStats.slice(0, 50),
+        bdStats: bdStats.slice(0, 50)
+      }
+    });
+  } catch (error) {
+    console.error('获取申样统计失败:', error);
+    console.error('错误详情:', error.message);
+    console.error('错误堆栈:', error.stack);
+    res.status(500).json({ success: false, message: '获取申样统计失败', error: error.message, stack: error.stack });
+  }
+});
 
 // 测试端点 - 不用认证
 router.get('/test-order-stats/:productId', async (req, res) => {
