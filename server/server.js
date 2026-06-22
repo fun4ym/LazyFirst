@@ -34,6 +34,9 @@ const publicRecruitmentRoutes = require('./routes/public-recruitment');
 const publicProductsRoutes = require('./routes/public-products');
 const videoRoutes = require('./routes/videos');
 const supplierRoutes = require('./routes/suppliers');
+const aiModelsRoutes = require('./routes/ai-models');
+const digitalHumansRoutes = require('./routes/digital-humans');
+const productMediaRoutes = require('./routes/product-media');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -106,7 +109,7 @@ app.use('/api/shops', shopRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/product-stats', productStatsRoutes);
 app.use('/api/public/samples', publicSampleRoutes);
-app.use('/api/public/base-data', baseDataRoutes);  // 公开的基础数据接口
+app.use('/api/public/base-data', require('./routes/public-base-data'));  // 公开的基础数据接口
 app.use('/api/initialization', initializationRoutes);
 app.use('/api/init-import', initImportRoutes);
 app.use('/api/recruitments', recruitmentRoutes);
@@ -114,6 +117,9 @@ app.use('/api/public/recruitment', publicRecruitmentRoutes);
 app.use('/api/public/products', publicProductsRoutes);
 app.use('/api/public/videos', require('./routes/public-videos'));
 app.use('/api/videos', videoRoutes);
+app.use('/api/ai-models', aiModelsRoutes);
+app.use('/api/digital-humans', digitalHumansRoutes);
+app.use('/api/product-media', productMediaRoutes);
 
 // 错误处理
 app.use(notFound);

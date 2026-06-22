@@ -76,6 +76,66 @@ const activityConfigSchema = new mongoose.Schema({
   }
 }, { _id: true });
 
+// 产品媒体文件子文档（图片、视频等）
+const mediaFileSchema = new mongoose.Schema({
+  // 文件类型：image, video
+  type: {
+    type: String,
+    enum: ['image', 'video'],
+    required: true
+  },
+  // 文件URL
+  url: {
+    type: String,
+    required: true
+  },
+  // 缩略图URL（视频用）
+  thumbnail: {
+    type: String,
+    default: ''
+  },
+  // 标题
+  title: {
+    type: String,
+    default: ''
+  },
+  // 描述
+  description: {
+    type: String,
+    default: ''
+  },
+  // 上传者
+  uploadedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  // 上传时间
+  uploadedAt: {
+    type: Date,
+    default: Date.now
+  },
+  // 文件大小（字节）
+  fileSize: {
+    type: Number,
+    default: 0
+  },
+  // 视频时长（秒）
+  duration: {
+    type: Number,
+    default: 0
+  },
+  // 分辨率（视频）
+  resolution: {
+    width: Number,
+    height: Number
+  },
+  // 排序权重
+  order: {
+    type: Number,
+    default: 0
+  }
+}, { _id: true });
+
 const productSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -172,6 +232,7 @@ const productSchema = new mongoose.Schema({
     default: 'ordinary'
   },
   productImages: [String],
+  mediaFiles: [mediaFileSchema],
   productIntro: {
     type: String,
     default: ''

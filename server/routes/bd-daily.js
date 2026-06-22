@@ -317,18 +317,42 @@ router.post('/generate', authenticate, authorize('bdDaily:create'), [], async (r
 
     const { date, startDate, endDate } = req.body;
 
+    // 验证日期参数
+    if (!date && (!startDate || !endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: '请提供日期或日期范围'
+      });
+    }
+
     // 支持单日或日期范围
     let datesToProcess = [];
     if (startDate && endDate) {
       // 日期范围
       const start = new Date(startDate);
       const end = new Date(endDate);
+      
+      // 验证日期有效性
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: '日期格式无效，请使用 YYYY-MM-DD 格式'
+        });
+      }
+      
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         datesToProcess.push(new Date(d));
       }
     } else {
       // 单日
-      datesToProcess.push(new Date(date));
+      const targetDate = new Date(date);
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: '日期格式无效，请使用 YYYY-MM-DD 格式'
+        });
+      }
+      datesToProcess.push(targetDate);
     }
 
     let allResults = [];
@@ -387,6 +411,11 @@ router.post('/generate', authenticate, authorize('bdDaily:create'), [], async (r
  */
 async function generateSingleDate(targetDate, companyId, userId) {
   try {
+    // 验证日期有效性
+    if (!(targetDate instanceof Date) || isNaN(targetDate.getTime())) {
+      throw new Error(`无效的日期: ${targetDate}`);
+    }
+    
     // 标准化日期：设置为当天的 00:00:00.000，确保唯一索引正确工作
     const normalizedDate = new Date(targetDate);
     normalizedDate.setHours(0, 0, 0, 0);
@@ -497,16 +526,16 @@ async function generateSingleDate(targetDate, companyId, userId) {
       const salesman = getSalesmanName(salesmanIdentifier);
       if (!orderStats[salesman]) {
         orderStats[salesman] = {
-          gmvTotal: 0,
+          amountTotal: 0,  // 成交额
           estimatedCommissionTotal: 0,
           orderGeneratedCount: 0,
           orderCount: 0,
           orderIds: []
         };
       }
-      // 成交金额 = gmv 或 productPrice * orderQuantity
-      const gmv = order.gmv || (order.productPrice || 0) * (order.orderQuantity || 0);
-      orderStats[salesman].gmvTotal += gmv;
+      // 成交额 = 商品价格 × 下单件数
+      const amount = (order.productPrice || 0) * (order.orderQuantity || 0);
+      orderStats[salesman].amountTotal += amount;
       // 预估佣金 = (estimatedAffiliatePartnerCommission + estimatedAffiliateServiceProviderShopAdPayment) * 0.2
       // 与仪表盘算法保持一致
       const partnerCommission = order.estimatedAffiliatePartnerCommission || 0;
@@ -571,7 +600,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
     const results = [];
     for (const salesman of allSalesmen) {
       const sampleData = bdStats[salesman] || { sampleCount: 0, sampleSentCount: 0, sampleRefusedCount: 0, videoPublishCount: 0, sampleIds: [] };
-      const orderData = orderStats[salesman] || { gmvTotal: 0, estimatedCommissionTotal: 0, orderGeneratedCount: 0, orderCount: 0, orderIds: [] };
+      const orderData = orderStats[salesman] || { amountTotal: 0, estimatedCommissionTotal: 0, orderGeneratedCount: 0, orderCount: 0, orderIds: [] };
       const commissionData = commissionStats[salesman] || { commissionTotal: 0, revenueIds: [], orderCount: 0 };
 
       // 检查是否已存在（不区分大小写）
@@ -590,7 +619,7 @@ async function generateSingleDate(targetDate, companyId, userId) {
         sampleRefusedCount: sampleData.sampleRefusedCount || 0,
         videoPublishCount: sampleData.videoPublishCount || 0,
         sampleIds: sampleData.sampleIds.join(','),
-        revenue: orderData.gmvTotal || 0,  // 本日收入（GMV）
+        revenue: orderData.amountTotal || 0,  // 本日收入（成交额）
         estimatedCommission: orderData.estimatedCommissionTotal || 0,  // 本日预估服务费
         revenueIds: orderData.orderIds.join(','),
         orderCount: orderData.orderCount,  // 订单数
@@ -722,13 +751,13 @@ router.post('/recalculate-commission', authenticate, authorize('bdDaily:update')
 
         // 重新计算预估服务费
         let estimatedCommissionTotal = 0;
-        let gmvTotal = 0;
+        let amountTotal = 0;
         let orderCount = 0;
         const orderIds = [];
 
         orders.forEach(order => {
           const gmv = order.gmv || (order.productPrice || 0) * (order.orderQuantity || 0);
-          gmvTotal += gmv;
+          amountTotal += gmv;
 
           const partnerCommission = order.estimatedAffiliatePartnerCommission || 0;
           const shopAdPayment = order.estimatedAffiliateServiceProviderShopAdPayment || 0;
@@ -741,7 +770,7 @@ router.post('/recalculate-commission', authenticate, authorize('bdDaily:update')
         // 更新记录
         await BdDaily.findByIdAndUpdate(record._id, {
           estimatedCommission: estimatedCommissionTotal,
-          revenue: gmvTotal,
+          revenue: amountTotal,
           orderCount: orderCount,
           revenueIds: orderIds.join(','),
           orderGeneratedCount: orderIds.length
