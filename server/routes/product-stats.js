@@ -28,51 +28,75 @@ router.get('/overview', authenticate, authorize('products:read'), async (req, re
     
     console.log('商品统计概览 - 查询参数:', { companyId, startDate, endDate });
     
-    // 查询订单数据
-    const orderQuery = {
-      companyId,
-      summaryDate: { $gte: startDate, $lte: endDate }
-    };
+    // 订单统计 - 只统计已成交的订单（有支付单号的订单）
+    const orderStats = await ReportOrder.aggregate([
+      {
+        $match: {
+          companyId,
+          summaryDate: { $gte: startDate, $lte: endDate },
+          paymentNo: { $ne: '' },  // 有支付单号表示已成交
+          creatorId: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalAmount: { $sum: { $multiply: ['$productPrice', '$orderQuantity'] } },
+          totalProducts: { $addToSet: '$productId' }
+        }
+      },
+      {
+        $project: {
+          totalOrders: 1,
+          totalAmount: 1,
+          totalProducts: { $size: '$totalProducts' },
+          avgOrderValue: {
+            $cond: [{ $eq: ['$totalOrders', 0] }, 0, { $divide: ['$totalAmount', '$totalOrders'] }]
+          }
+        }
+      }
+    ]);
     
-    const orders = await ReportOrder.find(orderQuery).select('orderNo productId productName gmv influencerUsername creatorId');
-    
-    // 计算概览数据
-    const totalOrders = orders.length;
-    const totalGMV = orders.reduce((sum, o) => sum + (o.gmv || 0), 0);
-    const uniqueProducts = new Set(orders.map(o => o.productId).filter(Boolean));
-    const totalProducts = uniqueProducts.size;
-    const avgOrderValue = totalOrders > 0 ? totalGMV / totalOrders : 0;
-    
-    // 查询申样数据
+    // 申样统计
     const sampleQuery = {
       companyId,
-      createdAt: { 
+      date: { 
         $gte: new Date(startDate), 
         $lte: new Date(endDate + 'T23:59:59.999Z') 
       }
     };
     
-    const samples = await SampleManagement.find(sampleQuery).select('status');
+    const samples = await SampleManagement.find(sampleQuery).select('sampleStatus productId');
     const totalApplications = samples.length;
-    const totalShipped = samples.filter(s => s.status === 'shipped' || s.status === 'received').length;
-    const avgSampleRate = totalApplications > 0 ? ((totalShipped / totalApplications) * 100).toFixed(2) : 0;
+    const totalShipped = samples.filter(s => s.sampleStatus === 'shipping' || s.sampleStatus === 'sent').length;
+    // 申样商品数 = 去重后的productId数量
+    const productIdSet = new Set(samples.map(s => s.productId?.toString()).filter(Boolean));
+    const totalProducts = productIdSet.size;
+    // 平均申样率 = 寄出数/申样数 * 100%，返回整数（如75表示75%）
+    const avgSampleRate = totalApplications > 0 ? Math.round((totalShipped / totalApplications) * 100) : 0;
     
-    res.json({
-      success: true,
-      data: {
-        orders: {
-          totalOrders,
-          totalGMV,
-          totalProducts,
-          avgOrderValue: Math.round(avgOrderValue * 100) / 100
-        },
-        samples: {
-          totalApplications,
-          totalShipped,
-          avgSampleRate: parseFloat(avgSampleRate)
-        }
+    const result = {
+      orders: orderStats.length > 0 ? {
+        totalOrders: orderStats[0].totalOrders,
+        totalAmount: Math.round(orderStats[0].totalAmount * 100) / 100,
+        totalProducts: orderStats[0].totalProducts,
+        avgOrderValue: Math.round(orderStats[0].avgOrderValue * 100) / 100
+      } : {
+        totalOrders: 0,
+        totalAmount: 0,
+        totalProducts: 0,
+        avgOrderValue: 0
+      },
+      samples: {
+        totalApplications,
+        totalShipped,
+        avgSampleRate,
+        totalProducts
       }
-    });
+    };
+    
+    res.json({ success: true, data: result });
   } catch (error) {
     console.error('获取商品统计概览失败:', error);
     res.status(500).json({ success: false, message: '获取商品统计概览失败' });
@@ -105,7 +129,9 @@ router.get('/product-ranking', authenticate, authorize('products:read'), async (
       {
         $match: {
           companyId,
-          summaryDate: { $gte: startDate, $lte: endDate }
+          summaryDate: { $gte: startDate, $lte: endDate },
+          paymentNo: { $ne: '' },  // 有支付单号表示已成交
+          creatorId: { $exists: true, $ne: null }  // 过滤creatorId为空的订单
         }
       },
       {
@@ -113,7 +139,8 @@ router.get('/product-ranking', authenticate, authorize('products:read'), async (
           _id: '$productId',
           productName: { $first: '$productName' },
           orderCount: { $sum: 1 },
-          gmv: { $sum: '$gmv' },
+          // 成交额 = 商品价格 × 下单件数
+          amount: { $sum: { $multiply: ['$productPrice', '$orderQuantity'] } },
           bdSet: { $addToSet: '$creatorId' },
           influencerSet: { $addToSet: '$influencerUsername' }
         }
@@ -123,7 +150,7 @@ router.get('/product-ranking', authenticate, authorize('products:read'), async (
           productId: '$_id',
           productName: 1,
           orderCount: 1,
-          gmv: 1,
+          amount: 1,  // 成交额
           bdCount: { $size: '$bdSet' },
           influencerCount: { $size: '$influencerSet' }
         }
@@ -133,8 +160,8 @@ router.get('/product-ranking', authenticate, authorize('products:read'), async (
     // 排序
     if (sortBy === 'orderCount') {
       pipeline.push({ $sort: { orderCount: -1 } });
-    } else if (sortBy === 'gmv') {
-      pipeline.push({ $sort: { gmv: -1 } });
+    } else if (sortBy === 'amount') {
+      pipeline.push({ $sort: { amount: -1 } });
     }
     
     pipeline.push({ $limit: 50 });
@@ -273,6 +300,7 @@ router.get('/bd-ranking', authenticate, authorize('products:read'), async (req, 
         $match: {
           companyId,
           summaryDate: { $gte: startDate, $lte: endDate },
+          paymentNo: { $ne: '' },  // 有支付单号表示已成交
           creatorId: { $exists: true, $ne: null }
         }
       },
@@ -280,7 +308,8 @@ router.get('/bd-ranking', authenticate, authorize('products:read'), async (req, 
         $group: {
           _id: '$creatorId',
           orderCount: { $sum: 1 },
-          gmv: { $sum: '$gmv' },
+          // 成交额 = 商品价格 × 下单件数
+          amount: { $sum: { $multiply: ['$productPrice', '$orderQuantity'] } },
           productSet: { $addToSet: '$productId' },
           influencerSet: { $addToSet: '$influencerUsername' }
         }
@@ -289,12 +318,12 @@ router.get('/bd-ranking', authenticate, authorize('products:read'), async (req, 
         $project: {
           creatorId: '$_id',
           orderCount: 1,
-          gmv: 1,
+          amount: 1,  // 成交额
           productCount: { $size: '$productSet' },
           influencerCount: { $size: '$influencerSet' }
         }
       },
-      { $sort: { gmv: -1 } },
+      { $sort: { amount: -1 } },
       { $limit: 50 }
     ];
     
@@ -309,13 +338,13 @@ router.get('/bd-ranking', authenticate, authorize('products:read'), async (req, 
       bdNameMap[bd._id.toString()] = bd.realName || bd.name || bd.username || '未知';
     });
     
-    // 计算总GMV用于占比
-    const totalGMV = ranking.reduce((sum, r) => sum + r.gmv, 0);
+    // 计算总成交额用于占比
+    const totalAmount = ranking.reduce((sum, r) => sum + r.amount, 0);
     
     const result = ranking.map(r => ({
       ...r,
       bdName: bdNameMap[r.creatorId.toString()] || '未知',
-      gmvPercent: totalGMV > 0 ? Math.round((r.gmv / totalGMV) * 100) : 0
+      amountPercent: totalAmount > 0 ? Math.round((r.amount / totalAmount) * 100) : 0
     }));
     
     res.json({ success: true, data: result });
@@ -352,14 +381,17 @@ router.get('/influencer-ranking', authenticate, authorize('products:read'), asyn
         $match: {
           companyId,
           summaryDate: { $gte: startDate, $lte: endDate },
-          influencerUsername: { $exists: true, $ne: '' }
+          influencerUsername: { $exists: true, $ne: '' },
+          paymentNo: { $ne: '' },  // 有支付单号表示已成交
+          creatorId: { $exists: true, $ne: null }  // 过滤creatorId为空的订单
         }
       },
       {
         $group: {
           _id: '$influencerUsername',
           orderCount: { $sum: 1 },
-          gmv: { $sum: '$gmv' },
+          // 成交额 = 商品价格 × 下单件数
+          amount: { $sum: { $multiply: ['$productPrice', '$orderQuantity'] } },
           productSet: { $addToSet: '$productId' },
           creatorId: { $first: '$creatorId' }
         }
@@ -368,12 +400,12 @@ router.get('/influencer-ranking', authenticate, authorize('products:read'), asyn
         $project: {
           influencerUsername: '$_id',
           orderCount: 1,
-          gmv: 1,
+          amount: 1,  // 成交额
           productCount: { $size: '$productSet' },
           creatorId: 1
         }
       },
-      { $sort: { gmv: -1 } },
+      { $sort: { amount: -1 } },
       { $limit: 50 }
     ];
     
@@ -624,10 +656,11 @@ router.get('/order-stats/:productId', authenticate, authorize('products:read'), 
 
     console.log('日期范围 - 7天:', sevenDaysAgoStr, '3个月:', threeMonthsAgoStr);
 
-    // 查询过去7天的订单 - 使用 ReportOrder 的 summaryDate 字段，productId 字符串匹配
+    // 查询过去7天的订单 - 使用 ReportOrder 的 summaryDate 字段，productId 字符串匹配（只统计已成交的订单）
     const query7days = {
       productId: tiktokProductId,
-      summaryDate: { $gte: sevenDaysAgoStr }
+      summaryDate: { $gte: sevenDaysAgoStr },
+      paymentNo: { $ne: '' }  // 有支付单号表示已成交
     };
     if (companyIdQuery) query7days.companyId = companyIdQuery;
 
@@ -642,10 +675,11 @@ router.get('/order-stats/:productId', authenticate, authorize('products:read'), 
     .sort({ summaryDate: -1 })
     .limit(100);
 
-    // 查询过去3个月的订单
+    // 查询过去3个月的订单（只统计已成交的订单）
     const query3months = {
       productId: tiktokProductId,
-      summaryDate: { $gte: threeMonthsAgoStr }
+      summaryDate: { $gte: threeMonthsAgoStr },
+      paymentNo: { $ne: '' }  // 有支付单号表示已成交
     };
     if (companyIdQuery) query3months.companyId = companyIdQuery;
 
@@ -675,8 +709,8 @@ router.get('/order-stats/:productId', authenticate, authorize('products:read'), 
     // 转换数据格式以适配前端
     const transformOrders = (orders) => {
       return orders.map(order => {
-        // 计算交易金额：优先使用 gmv，如果没有则用 productPrice * orderQuantity
-        const totalAmount = order.gmv || (order.productPrice || 0) * (order.orderQuantity || 0);
+        // 成交额 = 商品价格 × 下单件数
+        const totalAmount = (order.productPrice || 0) * (order.orderQuantity || 0);
         
         // 获取 BD 名称：优先使用 bdName，否则从 creatorId 查表
         let creatorName = order.bdName;
