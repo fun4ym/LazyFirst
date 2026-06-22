@@ -39,3 +39,20 @@ backups/
 tmp/
 temp/
 *.tmp
+
+# SSL证书（通过volume挂载，不提交到git）
+ssl/*
+
+# 本地数据库备份
+local-backups/
+tapdb_backup/
+
+# 测试和调试脚本
+server/test_*.js
+server/check_*.js
+
+# CodeBuddy计划文件
+.codebuddy/plans/
+
+# pending-sync 循环引用文件（已处理的备份副本）
+pending-sync/待回-*

@@ -202,6 +202,22 @@ Content-Type: application/json
 
 ## 常见问题
 
+### ⚠️ 重要：生产环境Docker配置禁忌（2026-06-22故障教训）
+
+**绝对禁止在生产环境使用以下volume挂载：**
+```yaml
+# ❌ 致命错误！会导致node_modules被覆盖 → 502 Bad Gateway
+volumes:
+  - ./server:/app/server
+  - ./frontend:/app/frontend
+```
+
+**正确做法：代码通过Dockerfile打包进镜像，不挂载代码目录**
+
+详见故障记录: `pending-sync/20260622-1903-线上502故障修复-DockerVolume挂载问题.md`
+
+---
+
 ### 1. MongoDB连接失败
 
 检查MongoDB是否启动：

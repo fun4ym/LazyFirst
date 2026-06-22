@@ -1,6 +1,6 @@
 FROM nginx:alpine
 COPY dist /usr/share/nginx/html
 COPY ssl-nginx.conf /etc/nginx/conf.d/default.conf
-COPY ssl /etc/nginx/ssl
+# SSL证书通过volume挂载，不打包进镜像
 EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]

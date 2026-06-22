@@ -117,16 +117,142 @@ sudo docker exec tap-mongodb rm -f /tmp/tapdb_backup_*.archive
 
 ---
 
-## 六、SSL证书位置
+## 六、SSL证书管理（重要！！！）
 
+### 证书位置
 | 位置 | 路径 |
 |------|------|
-| 服务器 | `/etc/nginx/ssl/tap.lazyfirst.com/` |
-| 容器内 | `/etc/nginx/ssl/` |
+| Let's Encrypt证书 | `/etc/letsencrypt/live/tap.lazyfirst.com/` |
+| Nginx使用的证书 | `/etc/nginx/ssl/tap.lazyfirst.com/` |
+| 容器内挂载路径 | `/etc/nginx/ssl/` |
+
+### 铁律（绝对遵守）
+1. **🚫 禁止把SSL证书打包进镜像**：`Dockerfile.frontend`不能COPY ssl目录
+2. **🚫 禁止git提交SSL证书**：`ssl/*`必须加入`.gitignore`
+3. **🚫 禁止rsync同步ssl目录**：rsync必须--exclude='ssl'
+4. **✅ SSL证书必须通过volume挂载**：`docker-compose.yml`里frontend服务必须挂载`/etc/nginx/ssl/tap.lazyfirst.com/:/etc/nginx/ssl/`
+
+### 证书续期
+- **有效期**: 90天（Let's Encrypt）
+- **自动续期**: Certbot已设置自动续期任务
+- **手动续期命令**:
+  ```bash
+  sudo certbot renew
+  sudo cp /etc/letsencrypt/live/tap.lazyfirst.com/fullchain.pem /etc/nginx/ssl/tap.lazyfirst.com/fullchain1.pem
+  sudo cp /etc/letsencrypt/live/tap.lazyfirst.com/privkey.pem /etc/nginx/ssl/tap.lazyfirst.com/privkey1.pem
+  sudo docker restart tap-frontend
+  ```
+- **检查证书有效期**:
+  ```bash
+  sudo openssl x509 -in /etc/nginx/ssl/tap.lazyfirst.com/fullchain1.pem -noout -dates
+  ```
+
+### 故障排查
+1. **HTTPS报错**: 先检查证书是否过期
+2. **证书文件名**: 服务器上是`fullchain1.pem`，软链接为`fullchain.pem`
+3. **volume挂载**: 检查`docker inspect tap-frontend`的Mounts部分
 
 ---
 
-## 七、故障排查
+## 七、故障排查（重要！！！必读）
+
+### ⚠️ 2026-06-22 线上502故障（Docker volume挂载覆盖node_modules）
+
+**故障日期**: 2026-06-22  
+**故障现象**: https://tap.lazyfirst.com/product-stats 所有API返回 **502 Bad Gateway**  
+**影响范围**: 所有 `/api/*` 端点
+
+#### 根因分析
+```
+docker-compose.yml 配置缺陷
+         ↓
+volumes: - ./server:/app/server   ← 致命错误配置
+         ↓
+宿主机 ./server 目录（无 node_modules）
+         ↓
+覆盖容器内 /app/server 目录（含 node_modules）
+         ↓
+容器启动时找不到 express 模块
+         ↓
+Error: Cannot find module 'express'
+         ↓
+backend 容器崩溃循环 (Restarting)
+         ↓
+Nginx 反向代理无法连接后端 → 502 Bad Gateway
+```
+
+#### 问题配置（已修复前）
+```yaml
+# docker-compose.yml - backend服务（错误配置❌）
+backend:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  volumes:
+    - ./server:/app/server   # ← 这行导致node_modules被覆盖！
+  ports:
+    - "3000:3000"
+```
+
+#### 修复方案
+```bash
+# 1. 备份原配置
+cp docker-compose.yml docker-compose.yml.bak
+
+# 2. 移除 backend 的 volumes 挂载配置
+# 删除这两行:
+#   volumes:
+#     - ./server:/app/server
+
+# 3. 强制删除旧容器，用新配置重启
+sudo docker rm -f tap-backend
+sudo docker compose up -d backend
+```
+
+#### 正确的docker-compose.yml配置（生产环境✅）
+```yaml
+backend:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  ports:
+    - "3000:3000"
+  environment:
+    - NODE_ENV=production
+    - MONGODB_URI=mongodb://mongodb:27017/tap_system
+    # ... 其他环境变量
+  depends_on:
+    - mongodb
+  # ❌ 绝对不能加 volumes: - ./server:/app/server
+```
+
+#### 经验教训（铁律）
+| 规则 | 原因 |
+|------|------|
+| 🚫 **生产环境禁止挂载代码目录** | `./server:/app/server` 会覆盖容器内node_modules |
+| ✅ **开发环境可以挂载** | 用于热重载，但必须确保宿主机有node_modules |
+| ✅ **正确做法**: Dockerfile COPY + npm install | 代码和依赖都打包进镜像 |
+| ✅ **只挂载必需的静态资源** | 如SSL证书、上传文件目录等 |
+
+#### 排查命令速查
+```bash
+# 1. 检查容器状态
+docker ps -a | grep tap-backend
+
+# 2. 查看容器日志（关键！）
+docker logs tap-backend --tail 50
+
+# 3. 检查是否有Restarting循环
+docker ps -a --filter "status=restarting"
+
+# 4. 进入容器检查文件
+docker exec -it tap-backend ls -la /app/server/node_modules
+
+# 5. 检查volume挂载情况
+docker inspect tap-backend | grep -A 10 Mounts
+```
+
+---
 
 ### 空白页
 - **原因**: _id类型变成字符串，populate失败
