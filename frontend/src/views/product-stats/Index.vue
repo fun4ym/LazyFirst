@@ -21,6 +21,7 @@
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 280px"
+              @change="handleDateRangeChange"
             />
           </div>
           <div class="filter-item">
@@ -30,6 +31,7 @@
               <el-radio-button value="thisMonth">本月</el-radio-button>
               <el-radio-button value="thisQuarter">本季度</el-radio-button>
               <el-radio-button value="lastMonth">上月</el-radio-button>
+              <el-radio-button value="lastYear">过去365天</el-radio-button>
             </el-radio-group>
           </div>
           <div class="filter-actions">
@@ -75,8 +77,8 @@
                   <el-icon><Money /></el-icon>
                 </div>
                 <div class="overview-content">
-                  <div class="overview-value">${{ formatMoney(orderOverview.totalGMV) }}</div>
-                  <div class="overview-label">总GMV</div>
+                  <div class="overview-value">${{ formatMoney(orderOverview.totalAmount) }}</div>
+                  <div class="overview-label">总成交额</div>
                 </div>
               </div>
             </el-col>
@@ -153,9 +155,9 @@
                     </template>
                   </el-table-column>
                   <el-table-column prop="orderCount" label="订单数" width="120" align="center" sortable />
-                  <el-table-column prop="gmv" label="GMV" width="140" align="right" sortable>
+                  <el-table-column prop="amount" label="成交额" width="140" align="right" sortable>
                     <template #default="{ row }">
-                      ${{ formatMoney(row.gmv) }}
+                      ${{ formatMoney(row.amount) }}
                     </template>
                   </el-table-column>
                   <el-table-column prop="bdCount" label="参与BD数" width="120" align="center">
@@ -189,7 +191,7 @@
             <div v-if="selectedProduct" class="product-detail-content">
               <div class="detail-summary">
                 <el-tag size="large" type="primary">总订单数：{{ selectedProduct.orderCount }}</el-tag>
-                <el-tag size="large" type="success" style="margin-left: 12px">总GMV：${{ formatMoney(selectedProduct.gmv) }}</el-tag>
+                <el-tag size="large" type="success" style="margin-left: 12px">总成交额：${{ formatMoney(selectedProduct.amount) }}</el-tag>
                 <el-tag size="large" type="warning" style="margin-left: 12px">参与BD：{{ selectedProduct.bdCount }} 人</el-tag>
                 <el-tag size="large" type="info" style="margin-left: 12px">带货达人：{{ selectedProduct.influencerCount }} 人</el-tag>
               </div>
@@ -199,14 +201,14 @@
                 <el-table-column prop="influencerUsername" label="用户名" width="130" />
                 <el-table-column prop="bdName" label="归属BD" width="100" />
                 <el-table-column prop="orderCount" label="订单数" width="100" align="center" sortable />
-                <el-table-column prop="gmv" label="GMV" width="120" align="right" sortable>
+                <el-table-column prop="amount" label="成交额" width="120" align="right" sortable>
                   <template #default="{ row }">
-                    ${{ formatMoney(row.gmv) }}
+                    ${{ formatMoney(row.amount) }}
                   </template>
                 </el-table-column>
-                <el-table-column prop="gmvPercent" label="GMV占比" width="100" align="center">
+                <el-table-column prop="amountPercent" label="成交额占比" width="100" align="center">
                   <template #default="{ row }">
-                    <el-progress :percentage="row.gmvPercent" :stroke-width="8" :color="'#7b1fa2'" />
+                    <el-progress :percentage="row.amountPercent" :stroke-width="8" :color="'#7b1fa2'" />
                   </template>
                 </el-table-column>
               </el-table>
@@ -229,16 +231,16 @@
                   <el-table-column type="index" label="排名" width="60" align="center" />
                   <el-table-column prop="bdName" label="BD姓名" width="120" />
                   <el-table-column prop="orderCount" label="订单数" width="120" align="center" sortable />
-                  <el-table-column prop="gmv" label="GMV" width="140" align="right" sortable>
+                  <el-table-column prop="amount" label="成交额" width="140" align="right" sortable>
                     <template #default="{ row }">
-                      ${{ formatMoney(row.gmv) }}
+                      ${{ formatMoney(row.amount) }}
                     </template>
                   </el-table-column>
                   <el-table-column prop="productCount" label="成交商品数" width="120" align="center" />
                   <el-table-column prop="influencerCount" label="管理达人数" width="120" align="center" />
-                  <el-table-column prop="gmvPercent" label="GMV占比" min-width="200">
+                  <el-table-column prop="amountPercent" label="成交额占比" min-width="200">
                     <template #default="{ row }">
-                      <el-progress :percentage="row.gmvPercent" :stroke-width="10" :color="'#7b1fa2'" />
+                      <el-progress :percentage="row.amountPercent" :stroke-width="10" :color="'#7b1fa2'" />
                     </template>
                   </el-table-column>
                 </el-table>
@@ -260,9 +262,9 @@
                   <el-table-column prop="influencerName" label="达人名称" min-width="120" />
                   <el-table-column prop="username" label="用户名" width="130" />
                   <el-table-column prop="orderCount" label="订单数" width="100" align="center" sortable />
-                  <el-table-column prop="gmv" label="GMV" width="140" align="right" sortable>
+                  <el-table-column prop="amount" label="成交额" width="140" align="right" sortable>
                     <template #default="{ row }">
-                      ${{ formatMoney(row.gmv) }}
+                      ${{ formatMoney(row.amount) }}
                     </template>
                   </el-table-column>
                   <el-table-column prop="productCount" label="带货商品数" width="110" align="center" />
@@ -442,7 +444,7 @@ import {
 
 // 时间筛选
 const dateRange = ref([])
-const quickDate = ref('thisMonth')
+const quickDate = ref('lastYear') // 默认值与onMounted一致
 const activeTab = ref('orders')
 
 // 商品详情弹窗
@@ -457,7 +459,7 @@ const detailLoading = ref(false)
 // 数据 - 订单概览
 const orderOverview = ref({
   totalOrders: 0,
-  totalGMV: 0,
+  totalAmount: 0,
   totalProducts: 0,
   avgOrderValue: 0
 })
@@ -488,16 +490,12 @@ const bdSampleStats = ref([])
 // 获取companyId
 const getCompanyId = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  // 兼容不同格式：companyId 可能是字符串或对象
   if (user.companyId) {
-    // 如果是对象（populate），取 _id
     if (typeof user.companyId === 'object' && user.companyId._id) {
       return user.companyId._id
     }
-    // 如果是字符串或ObjectId
     return user.companyId.toString()
   }
-  // 兼容 company 字段
   if (user.company) {
     if (typeof user.company === 'object' && user.company._id) {
       return user.company._id
@@ -507,36 +505,69 @@ const getCompanyId = () => {
   return ''
 }
 
-// 快捷日期选择
-const handleQuickDate = (value) => {
+// 根据快捷选择计算日期范围（纯函数，不触发查询）
+const getDateRangeByQuick = (value) => {
   const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   let start, end
-  
+
   switch (value) {
     case 'thisWeek':
-      const day = now.getDay() || 7
-      start = new Date(now.setDate(now.getDate() - day + 1))
-      end = new Date()
+      {
+        const day = now.getDay() || 7
+        start = new Date(now)
+        start.setDate(now.getDate() - day + 1)
+        start.setHours(0, 0, 0, 0)
+        // 结束日期是本周日
+        end = new Date(now)
+        end.setDate(now.getDate() - day + 7)
+        end.setHours(23, 59, 59, 999)
+      }
       break
     case 'thisMonth':
       start = new Date(now.getFullYear(), now.getMonth(), 1)
-      end = new Date()
+      end = new Date(today)
       break
     case 'thisQuarter':
-      const quarter = Math.floor(now.getMonth() / 3)
-      start = new Date(now.getFullYear(), quarter * 3, 1)
-      end = new Date()
+      {
+        const quarter = Math.floor(now.getMonth() / 3)
+        start = new Date(now.getFullYear(), quarter * 3, 1)
+        end = new Date(today)
+      }
       break
     case 'lastMonth':
       start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
       end = new Date(now.getFullYear(), now.getMonth(), 0)
       break
+    case 'lastYear':
+    default:
+      start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+      start.setHours(0, 0, 0, 0)
+      end = new Date(today)
+      break
   }
-  
-  dateRange.value = [
-    start.toISOString().split('T')[0],
-    end.toISOString().split('T')[0]
+
+  // 使用本地时间格式化，避免时区问题
+  const formatLocalDate = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  return [
+    formatLocalDate(start),
+    formatLocalDate(end)
   ]
+}
+
+// 快捷日期选择（由 el-radio-group @change 触发）
+const handleQuickDate = (value) => {
+  // value 是字符串（thisWeek/thisMonth/...），直接更新 quickDate
+  quickDate.value = value
+  dateRange.value = getDateRangeByQuick(value)
+  // 自动触发查询
+  handleSearch()
 }
 
 // 获取日期参数
@@ -558,25 +589,41 @@ const fetchOverview = async () => {
       ElMessage.error('未获取到公司信息')
       return
     }
-    
+
     const params = { companyId, ...getDateParams() }
     const res = await request.get('/product-stats/overview', { params })
-    
+
+    // 兼容两种格式：
+    // 格式1（拦截器直接返回 res.data）：{ orders: {...}, samples: {...} }
+    // 格式2（拦截器返回完整响应）：{ success: true, data: { orders: {...}, samples: {...} } }
+    let ordersData = null
+    let samplesData = null
+
     if (res && res.orders) {
+      // 格式1
+      ordersData = res.orders
+      samplesData = res.samples || null
+    } else if (res && res.data && res.data.orders) {
+      // 格式2
+      ordersData = res.data.orders
+      samplesData = res.data.samples || null
+    }
+
+    if (ordersData) {
       orderOverview.value = {
-        totalOrders: res.orders.totalOrders || 0,
-        totalGMV: res.orders.totalGMV || 0,
-        totalProducts: res.orders.totalProducts || 0,
-        avgOrderValue: res.orders.avgOrderValue || 0
+        totalOrders: ordersData.totalOrders || 0,
+        totalAmount: ordersData.totalAmount || 0,
+        totalProducts: ordersData.totalProducts || 0,
+        avgOrderValue: ordersData.avgOrderValue || 0
       }
     }
-    
-    if (res && res.samples) {
+
+    if (samplesData) {
       sampleOverview.value = {
-        totalApplications: res.samples.totalApplications || 0,
-        totalShipped: res.samples.totalShipped || 0,
-        avgSampleRate: res.samples.avgSampleRate || 0,
-        totalProducts: res.samples.totalProducts || 0
+        totalApplications: samplesData.totalApplications || 0,
+        totalShipped: samplesData.totalShipped || 0,
+        avgSampleRate: samplesData.avgSampleRate || 0,
+        totalProducts: samplesData.totalProducts || 0
       }
     }
   } catch (error) {
@@ -590,16 +637,20 @@ const fetchProductRanking = async () => {
   try {
     const companyId = getCompanyId()
     if (!companyId) return
-    
+
     const params = { companyId, ...getDateParams(), sortBy: 'orderCount' }
+    console.log('[DEBUG] fetchProductRanking params:', params)
     const res = await request.get('/product-stats/product-ranking', { params })
-    
+    console.log('[DEBUG] fetchProductRanking res:', JSON.stringify(res)?.substring(0, 500))
+
     if (Array.isArray(res)) {
       productOrderRanking.value = res.map(item => ({
         ...item,
-        gmv: item.gmv || 0,
+        amount: item.amount || 0,
         orderCount: item.orderCount || 0
       }))
+    } else {
+      console.warn('[DEBUG] fetchProductRanking: res 不是数组', res)
     }
   } catch (error) {
     console.error('获取商品成交排行失败:', error)
@@ -612,16 +663,16 @@ const fetchBdRanking = async () => {
   try {
     const companyId = getCompanyId()
     if (!companyId) return
-    
+
     const params = { companyId, ...getDateParams() }
     const res = await request.get('/product-stats/bd-ranking', { params })
-    
+
     if (Array.isArray(res)) {
       bdContribution.value = res.map(item => ({
         ...item,
-        gmv: item.gmv || 0,
+        amount: item.amount || 0,
         orderCount: item.orderCount || 0,
-        gmvPercent: item.gmvPercent || 0
+        amountPercent: item.amountPercent || 0
       }))
     }
   } catch (error) {
@@ -635,14 +686,14 @@ const fetchInfluencerRanking = async () => {
   try {
     const companyId = getCompanyId()
     if (!companyId) return
-    
+
     const params = { companyId, ...getDateParams() }
     const res = await request.get('/product-stats/influencer-ranking', { params })
-    
+
     if (Array.isArray(res)) {
       influencerRanking.value = res.map(item => ({
         ...item,
-        gmv: item.gmv || 0,
+        amount: item.amount || 0,
         orderCount: item.orderCount || 0
       }))
     }
@@ -657,14 +708,14 @@ const fetchSampleStats = async () => {
   try {
     const companyId = getCompanyId()
     if (!companyId) return
-    
+
     const params = { companyId, ...getDateParams() }
     const res = await request.get('/product-stats/sample-stats', { params })
-    
+
     if (res && res.productStats) {
       productSampleStats.value = res.productStats
     }
-    
+
     if (res && res.bdStats) {
       bdSampleStats.value = res.bdStats
     }
@@ -674,7 +725,7 @@ const fetchSampleStats = async () => {
   }
 }
 
-// 查询
+// 查询（手动点击"查询"按钮，或由 handleQuickDate 自动触发）
 const handleSearch = async () => {
   loading.value = true
   try {
@@ -685,7 +736,6 @@ const handleSearch = async () => {
       fetchInfluencerRanking(),
       fetchSampleStats()
     ])
-    ElMessage.success('查询成功')
   } catch (error) {
     ElMessage.error('查询失败')
   } finally {
@@ -695,9 +745,14 @@ const handleSearch = async () => {
 
 // 重置
 const handleReset = () => {
-  dateRange.value = []
-  quickDate.value = 'thisMonth'
-  handleQuickDate('thisMonth')
+  quickDate.value = 'lastYear'
+  dateRange.value = getDateRangeByQuick('lastYear')
+  handleSearch()
+}
+
+// 日期选择器变化（手动选日期时，清空快捷选择状态）
+const handleDateRangeChange = () => {
+  quickDate.value = ''
   handleSearch()
 }
 
@@ -706,20 +761,19 @@ const handleProductClick = async (row) => {
   selectedProduct.value = row
   productDetailVisible.value = true
   detailLoading.value = true
-  
+
   try {
     const companyId = getCompanyId()
     if (!companyId) return
-    
-    // 使用productId（TikTok商品ID）查询
-    const params = { 
-      companyId, 
+
+    const params = {
+      companyId,
       ...getDateParams(),
       productId: row.productId || row._id
     }
-    
+
     const res = await request.get(`/product-stats/product-detail/${row.productId}`, { params })
-    
+
     if (Array.isArray(res)) {
       productOrderDetail.value = res
     } else {
@@ -752,9 +806,9 @@ const getSampleRateType = (rate) => {
 }
 
 onMounted(async () => {
-  // 初始化为本月
-  handleQuickDate('thisMonth')
-  // 自动查询数据
+  // 初始化日期范围为"过去365天"，并查询
+  dateRange.value = getDateRangeByQuick('lastYear')
+  quickDate.value = 'lastYear'
   await handleSearch()
 })
 </script>
