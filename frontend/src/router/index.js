@@ -168,6 +168,12 @@ const routes = [
         meta: { title: '招募配置', permission: 'recruitments:read' }
       },
       {
+        path: 'influencer/aiMaker',
+        name: 'AiMaker',
+        component: () => import('@/views/influencer/AiMaker.vue'),
+        meta: { title: 'AI视频生成' }
+      },
+      {
         path: 'settings',
         name: 'Settings',
         redirect: '/settings/users'
@@ -209,6 +215,12 @@ const routes = [
         meta: { title: '系统模型' }
       },
       {
+        path: 'settings/ai-models',
+        name: 'AiModels',
+        component: () => import('@/views/settings/AiModels.vue'),
+        meta: { title: 'AI大模型配置' }
+      },
+      {
         path: 'settings/initialization',
         name: 'Initialization',
         component: () => import('@/views/settings/Initialization.vue'),
@@ -219,6 +231,13 @@ const routes = [
         name: 'InitImport',
         component: () => import('@/views/settings/InitImport.vue'),
         meta: { title: '初始化导入', requiresAuth: true }
+      },
+      // 商品统计页面
+      {
+        path: 'product-stats',
+        name: 'ProductStats',
+        component: () => import('@/views/product-stats/Index.vue'),
+        meta: { title: '商品统计', permission: 'productStats:read' }
       }
     ]
   }

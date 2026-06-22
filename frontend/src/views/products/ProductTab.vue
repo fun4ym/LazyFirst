@@ -258,6 +258,7 @@
       <el-table-column :label="$t('product.operation')" width="280" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="viewProduct(row)" v-if="hasPermission('products:read')">{{ $t('product.detail') }}</el-button>
+          <el-button link type="primary" @click="showMediaUpload(row)" v-if="hasPermission('products:update')">{{ $t('product.materials') }}</el-button>
           <el-button link type="primary" @click="showReport(row)" v-if="hasPermission('products:read')">{{ $t('product.report') }}</el-button>
           <el-button link type="primary" @click="editProduct(row)" v-if="hasPermission('products:update')">{{ $t('product.edit') }}</el-button>
           <el-button link type="danger" @click="deleteProduct(row)" v-if="hasPermission('products:delete')">{{ $t('product.delete') }}</el-button>
@@ -623,9 +624,81 @@
         <div v-else class="empty-section">
           <el-empty :description="$t('product.noActivities')" :image-size="60" />
         </div>
+
+        <!-- 媒体文件 -->
+        <div class="detail-section">
+          <div class="section-title">{{ $t('product.mediaFiles') }}</div>
+          <div v-if="currentProduct.mediaFiles && currentProduct.mediaFiles.length" class="media-files-grid">
+            <div v-for="media in currentProduct.mediaFiles" :key="media._id" class="media-file-item">
+              <div class="media-thumbnail">
+                <img v-if="media.type === 'image'" :src="media.url" :alt="media.title" />
+                <video v-else :src="media.url" preload="metadata"></video>
+              </div>
+              <div class="media-info">
+                <div class="media-title">{{ media.title || '未命名' }}</div>
+                <div class="media-meta">
+                  <span>{{ media.type === 'image' ? '图片' : '视频' }}</span>
+                  <span v-if="media.fileSize"> • {{ formatFileSize(media.fileSize) }}</span>
+                  <span v-if="media.duration"> • {{ media.duration }}秒</span>
+                </div>
+                <div class="media-uploader">上传者: {{ media.uploadedBy?.realName || media.uploadedBy?.username || '未知' }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-section">
+            <el-empty :description="$t('product.noMediaFiles')" :image-size="60" />
+          </div>
+        </div>
       </div>
       <template #footer>
         <el-button @click="showDetailDialog = false">{{ $t('product.close') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 媒体上传对话框 -->
+    <el-dialog v-model="showMediaUploadDialog" :title="$t('product.mediaUpload')" width="800px" :close-on-click-modal="false">
+      <div v-if="mediaUploadProduct">
+        <el-upload
+          class="upload-demo"
+          drag
+          multiple
+          :action="`/api/product-media/${mediaUploadProduct._id}/media`"
+          :headers="uploadHeaders"
+          :on-success="handleUploadSuccess"
+          :on-error="handleUploadError"
+          :before-upload="beforeUpload"
+        >
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text">拖拽文件到此处或 <em>点击上传</em></div>
+          <template #tip>
+            <div class="el-upload__tip">
+              支持上传图片 (jpg, png, gif) 和视频 (mp4, mov)，单文件不超过 50MB
+            </div>
+          </template>
+        </el-upload>
+        <div class="uploaded-list" v-if="uploadedFiles.length">
+          <h4>已上传文件</h4>
+          <el-table :data="uploadedFiles" size="small">
+            <el-table-column prop="name" label="文件名" />
+            <el-table-column prop="size" label="大小" />
+            <el-table-column prop="status" label="状态">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 'success' ? 'success' : 'danger'">
+                  {{ row.status === 'success' ? '成功' : '失败' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作">
+              <template #default="{ row }">
+                <el-button link type="danger" @click="removeUploadedFile(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showMediaUploadDialog = false">关闭</el-button>
+        <el-button type="primary" @click="saveMediaUpload">保存</el-button>
       </template>
     </el-dialog>
 
@@ -704,7 +777,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Box, CopyDocument, Close } from '@element-plus/icons-vue'
+import { Search, Plus, Box, CopyDocument, Close, UploadFilled } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
@@ -751,6 +824,14 @@ const loadingReport = ref(false)
 const editingProduct = ref(null)
 const currentProduct = ref(null)
 const reportProduct = ref(null)
+// 媒体上传相关
+const showMediaUploadDialog = ref(false)
+const mediaUploadProduct = ref(null)
+const uploadedFiles = ref([])
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${AuthManager.getToken()}`
+}))
+
 const products = ref([])
 const activities = ref([])
 const shops = ref([])
@@ -1314,6 +1395,15 @@ const getGradeType = (grade) => {
   return map[grade] || ''
 }
 
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
 // 加载订单统计
 const loadOrderStats = async (row, type) => {
   const cacheKey = `${row._id}_${type}`
@@ -1402,6 +1492,73 @@ const showReport = async (row) => {
   showReportDialog.value = true
   // 等待数据加载完成后再渲染
   await loadReportData()
+}
+
+// 显示媒体上传对话框
+const showMediaUpload = (row) => {
+  mediaUploadProduct.value = row
+  uploadedFiles.value = []
+  showMediaUploadDialog.value = true
+}
+
+const handleUploadSuccess = (response, file, fileList) => {
+  if (response.success) {
+    ElMessage.success(`${file.name} 上传成功`)
+    uploadedFiles.value.push({
+      id: response.data._id,
+      name: file.name,
+      size: file.size,
+      status: 'success'
+    })
+  } else {
+    ElMessage.error(`${file.name} 上传失败: ${response.message}`)
+    uploadedFiles.value.push({
+      name: file.name,
+      size: file.size,
+      status: 'error'
+    })
+  }
+}
+
+const handleUploadError = (error, file, fileList) => {
+  ElMessage.error(`${file.name} 上传失败: ${error.message}`)
+  uploadedFiles.value.push({
+    name: file.name,
+    size: file.size,
+    status: 'error'
+  })
+}
+
+const beforeUpload = (file) => {
+  const isImage = /\.(jpg|jpeg|png|gif)$/i.test(file.name)
+  const isVideo = /\.(mp4|mov|avi|wmv)$/i.test(file.name)
+  if (!isImage && !isVideo) {
+    ElMessage.error('只能上传图片或视频文件')
+    return false
+  }
+  const maxSize = 50 * 1024 * 1024 // 50MB
+  if (file.size > maxSize) {
+    ElMessage.error('文件大小不能超过 50MB')
+    return false
+  }
+  return true
+}
+
+const removeUploadedFile = (file) => {
+  if (file.id) {
+    // TODO: 调用API删除已上传文件
+    request.delete(`/product-media/${mediaUploadProduct.value._id}/media/${file.id}`).then(() => {
+      ElMessage.success('文件删除成功')
+    }).catch(() => {
+      ElMessage.error('文件删除失败')
+    })
+  }
+  uploadedFiles.value = uploadedFiles.value.filter(f => f !== file)
+}
+
+const saveMediaUpload = () => {
+  showMediaUploadDialog.value = false
+  ElMessage.success('媒体文件已保存')
 }
 
 // 加载报表数据

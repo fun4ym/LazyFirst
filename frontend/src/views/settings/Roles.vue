@@ -225,6 +225,7 @@ const menuNameMap = computed(() => ({
   bdDashboard: t('menu.bdDashboard'),
   bdDaily: t('menu.bdDaily'),
   performance: t('menu.performance'),
+  productStats: '商品统计',
   settings: t('menu.settings'),
   users: t('menu.users'),
   roles: t('menu.roles'),
@@ -466,6 +467,12 @@ const menuTree = ref([
       {
         name: '业绩报表',
         code: 'performance',
+        operations: ['read'],
+        controls: []
+      },
+      {
+        name: '商品统计',
+        code: 'productStats',
         operations: ['read'],
         controls: []
       }

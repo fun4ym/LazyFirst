@@ -282,7 +282,7 @@ const currencyList = ref([])
 // 加载货币列表
 const loadCurrencies = async () => {
   try {
-    const res = await request.get('/base-data/list', {
+    const res = await request.get('/public/base-data/list', {
       params: { type: 'priceUnit', limit: 100 }
     })
     currencyList.value = res.data || []
@@ -294,7 +294,7 @@ const loadCurrencies = async () => {
 // 加载公开招募列表
 const loadPublicRecruitments = async () => {
   try {
-    const res = await request.get('/recruitments', {
+    const res = await request.get('/public/recruitment', {
       params: { enabled: true }
     });
     // 过滤callableUsers为null的招募

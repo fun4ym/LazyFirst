@@ -12,6 +12,7 @@ export default defineConfig({
   server: {
     port: 5174,
     host: '0.0.0.0',
+    strictPort: true,  // 如果端口被占用，则直接报错，而不是尝试其他端口
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

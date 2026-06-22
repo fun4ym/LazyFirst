@@ -155,6 +155,14 @@
             <span>สูงกว่าหน้าร้าน +{{ formatRate(getCommissionDiff(prod)) }}</span>
           </div>
 
+          <!-- Take VIDEO away Button -->
+          <button class="take-video-btn" @click="handleTakeVideo(prod)">
+            <span class="take-video-text">Take VIDEO away</span>
+            <svg class="take-video-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <div class="take-video-sparkle"></div>
+            <div class="take-video-pulse"></div>
+          </button>
+
           <!-- CTA Button -->
           <a
             v-if="getActivityLink(prod)"
@@ -442,6 +450,17 @@ async function trackClick(productId) {
   } catch (e) {
     // 追踪失败不影响体验
   }
+}
+
+function handleTakeVideo(product) {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    // 未登录，跳转到登录页
+    window.location.href = '/login'
+    return
+  }
+  // 已登录，跳到达人工作台页面
+  window.location.href = `/influencer/aiMaker?productId=${product._id}`
 }
 </script>
 
@@ -1139,6 +1158,85 @@ async function trackClick(productId) {
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Take VIDEO away Button Styles */
+.take-video-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--eva-purple), var(--eva-purple-dark));
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  animation: pulse 2s infinite, electricBorder 1.5s infinite linear;
+}
+.take-video-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 32px rgba(119,89,153,0.6);
+}
+.take-video-btn:active {
+  transform: scale(0.98);
+}
+.take-video-text {
+  position: relative;
+  z-index: 1;
+}
+.take-video-icon {
+  position: relative;
+  z-index: 1;
+}
+.take-video-sparkle {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 20px;
+  height: 20px;
+  background: rgba(255,255,255,0.8);
+  border-radius: 50%;
+  filter: blur(2px);
+  animation: sparkle 1.5s infinite;
+}
+.take-video-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, var(--eva-green-light), var(--eva-purple-light)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: pulseBorder 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes electricBorder {
+  0% { box-shadow: 0 0 5px var(--eva-purple-light), 0 0 10px var(--eva-purple-light), 0 0 15px var(--eva-purple-light); }
+  50% { box-shadow: 0 0 10px var(--eva-green-light), 0 0 20px var(--eva-green-light), 0 0 30px var(--eva-green-light); }
+  100% { box-shadow: 0 0 5px var(--eva-purple-light), 0 0 10px var(--eva-purple-light), 0 0 15px var(--eva-purple-light); }
+}
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: translate(0,0); }
+  50% { opacity: 1; transform: translate(10px,10px); }
+}
+@keyframes pulseBorder {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 /* Loading spinner color fix */
