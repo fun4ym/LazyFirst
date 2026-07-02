@@ -27,19 +27,20 @@ request.interceptors.request.use(
       console.log('[Request] Token长度:', token?.length || 0, token ? '有值' : '无')
       console.log('[Request] Params:', config.params)
       
-      // Token为空：立即拒绝请求并触发登出，防止裸奔
+      // Token为空：直接触发登出并跳转，不抛错误（用户无感知）
       if (!token) {
-        console.warn('[Request] Token为空，拒绝请求并触发登出:', config.url)
+        console.warn('[Request] Token为空，触发登出:', config.url)
         // 延迟触发登出，避免在拦截器里直接跳转导致递归
-        setTimeout(() => {
-          if (!window.__isLoggingOut) {
-            window.__isLoggingOut = true
-            ElMessage.error('登录状态已失效，请重新登录')
+        if (!window.__isLoggingOut) {
+          window.__isLoggingOut = true
+          // 不显示错误消息，直接静默跳转
+          setTimeout(() => {
             AuthManager.logout()
             setTimeout(() => { window.__isLoggingOut = false }, 2000)
-          }
-        }, 0)
-        return Promise.reject(new Error('未提供认证令牌'))
+          }, 0)
+        }
+        // 返回一个永不 resolve 的 Promise，阻止请求发出
+        return new Promise(() => {})
       }
       
       config.headers.Authorization = `Bearer ${token}`
