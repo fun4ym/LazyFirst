@@ -11,7 +11,7 @@ const generateToken = (userId) => {
   return jwt.sign(
     { userId },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }  // 延长token有效期从7天到30天
   );
 };
 

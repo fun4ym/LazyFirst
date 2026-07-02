@@ -32,6 +32,13 @@ request.interceptors.request.use(
     } else {
       console.log('[Request] 公开页面请求，不添加token:', config.method?.toUpperCase(), config.url)
     }
+    
+    // 防止GET请求被浏览器缓存
+    if (config.method?.toLowerCase() === 'get') {
+      config.params = config.params || {}
+      config.params._t = Date.now()
+    }
+    
     return config
   },
   error => {
@@ -40,10 +47,24 @@ request.interceptors.request.use(
 )
 
 // 响应拦截器
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
+
 request.interceptors.response.use(
   response => {
     const res = response.data
-
+    
     // 成功响应
     if (res.success) {
       // 如果 res.data 是数组（列表接口），直接返回 data
@@ -88,8 +109,25 @@ request.interceptors.response.use(
 
       // 401 未授权（仅非公开页面）
       if (status === 401) {
-        ElMessage.error(data?.message || '登录已过期，请重新登录')
-        AuthManager.logout()
+        const originalRequest = error.config
+        
+        // 如果是刷新token的请求本身返回401，直接登出
+        if (originalRequest.url.includes('/auth/refresh')) {
+          AuthManager.logout()
+          return Promise.reject(error)
+        }
+        
+        // 避免重复弹窗和重复登出：检查是否已经在登出流程中
+        if (!window.__isLoggingOut) {
+          window.__isLoggingOut = true
+          ElMessage.error(data?.message || '登录已过期，请重新登录')
+          // 立即登出，不再延迟
+          AuthManager.logout()
+          // 延迟重置标志，避免短时间内重复触发
+          setTimeout(() => {
+            window.__isLoggingOut = false
+          }, 2000)
+        }
       }
       // 403 禁止访问
       else if (status === 403) {

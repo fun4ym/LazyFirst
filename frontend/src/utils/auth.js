@@ -108,6 +108,49 @@ const AuthManager = {
     console.log('[AuthManager] setUser 验证:', saved ? '成功' : '失败')
   },
 
+  // 解析JWT token的过期时间
+  getTokenExpiry() {
+    const token = this.getToken()
+    if (!token) return null
+    
+    try {
+      const base64Url = token.split('.')[1]
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      )
+      const { exp } = JSON.parse(jsonPayload)
+      return exp * 1000 // 转换为毫秒
+    } catch (e) {
+      console.error('[AuthManager] 解析token过期时间失败:', e)
+      return null
+    }
+  },
+
+  // 检查token是否即将过期（剩余时间小于指定天数）
+  isTokenExpiringSoon(days = 1) {
+    const expiry = this.getTokenExpiry()
+    if (!expiry) return false
+    
+    const now = Date.now()
+    const timeLeft = expiry - now
+    const oneDay = days * 24 * 60 * 60 * 1000
+    
+    return timeLeft < oneDay
+  },
+
+  // 获取token剩余有效时间（毫秒）
+  getTokenTimeLeft() {
+    const expiry = this.getTokenExpiry()
+    if (!expiry) return 0
+    
+    const now = Date.now()
+    return Math.max(0, expiry - now)
+  },
+
   // 登录
   async login(username, password) {
     console.log('[AuthManager] ========== 开始登录 ==========')

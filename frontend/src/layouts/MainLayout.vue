@@ -7,7 +7,7 @@
 
       <el-menu
         :default-active="activeMenu"
-        :default-openeds="['bd-workspace', 'supply-chain', 'data-collection', 'reports', 'market-workspace', 'settings']"
+        :default-openeds="['bd-workspace', 'supply-chain', 'data-collection', 'reports', 'market-workspace', 'influencer-workspace', 'settings']"
         router
         class="sidebar-menu"
       >
@@ -31,6 +31,12 @@
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.samplesBd()" index="/samples-bd">
             <span>{{ $t('menu.samples') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.digitalHumanManagement()" index="/bd/digital-human-management">
+            <span>{{ $t('menu.digitalHumanManagement') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.promptTemplateManagement()" index="/bd/prompt-template-management">
+            <span>{{ $t('menu.promptTemplateManagement') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -78,6 +84,9 @@
           <el-menu-item v-if="menuPermissions.performance()" index="/performance">
             <span>{{ $t('menu.performance') }}</span>
           </el-menu-item>
+          <el-menu-item v-if="menuPermissions.productStats()" index="/product-stats">
+            <span>{{ $t('menu.productStats') }}</span>
+          </el-menu-item>
         </el-sub-menu>
 
         <!-- 市场工作台 -->
@@ -88,6 +97,20 @@
           </template>
           <el-menu-item v-if="menuPermissions.recruitmentConfig()" index="/recruitments">
             <span>{{ $t('menu.recruitmentConfig') }}</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 达人工作台 -->
+        <el-sub-menu v-if="menuPermissions.influencerWorkspace()" index="influencer-workspace">
+          <template #title>
+            <el-icon><VideoCamera /></el-icon>
+            <span>{{ $t('menu.influencerWorkspace') }}</span>
+          </template>
+          <el-menu-item v-if="menuPermissions.aiMaker()" index="/influencer/aiMaker">
+            <span>{{ $t('menu.aiMaker') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.pointsBalance()" index="/influencer/points-balance">
+            <span>{{ $t('menu.pointsBalance') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -115,6 +138,9 @@
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.systemModels()" index="/settings/system-models">
             <span>{{ $t('menu.systemModels') }}</span>
+          </el-menu-item>
+          <el-menu-item v-if="menuPermissions.aiModels()" index="/settings/ai-models">
+            <span>{{ $t('menu.aiModels') }}</span>
           </el-menu-item>
           <el-menu-item v-if="menuPermissions.initImport()" index="/settings/init-import">
             <span>{{ $t('menu.initImport') }}</span>
@@ -245,10 +271,20 @@ const menuPermissions = {
   bdDashboard: () => hasAnyPermission(['bdDashboard:read', 'performance:read']),
   bdDaily: () => hasPermission('bdDaily:read'),
   performance: () => hasPermission('performance:read'),
+  productStats: () => hasPermission('productStats:read'),
 
   // 市场工作台 - 需要招募配置权限
   marketWorkspace: () => hasAnyPermission(['recruitments:read', 'recruitments:create', 'recruitments:update', 'recruitments:delete']),
   recruitmentConfig: () => hasAnyPermission(['recruitments:read', 'recruitments:create', 'recruitments:update', 'recruitments:delete']),
+
+  // 达人工作台 - 需要AI视频生成相关权限
+  influencerWorkspace: () => hasAnyPermission(['aiModels:read', 'digitalHumans:read', 'videos:create', 'ai_maker:read']),
+  aiMaker: () => hasAnyPermission(['aiModels:read', 'digitalHumans:read', 'videos:create', 'ai_maker:read']),
+  pointsBalance: () => hasPermission('ai_maker:read'),
+
+  // BD工作台 - 需要数字人管理或提示词模板管理权限
+  digitalHumanManagement: () => hasPermission('ai_maker:manage'),
+  promptTemplateManagement: () => hasPermission('ai_maker:manage'),
 
   // 系统设置 - 需要对应模块的读取权限
   settings: () => hasAnyPermission(['users:read', 'roles:read', 'departments:read', 'commissions:read', 'baseData:read', 'systemModels:read', 'initImport:read']) || isSuperAdmin(),
@@ -258,6 +294,7 @@ const menuPermissions = {
   commissionRules: () => hasPermission('commissions:read'),
   baseData: () => hasPermission('baseData:read'),
   systemModels: () => hasPermission('systemModels:read'),
+  aiModels: () => hasPermission('aiModels:read'),
   initImport: () => {
     // 初始化导入仅超级管理员可见
     const user = AuthManager.getUser()
@@ -311,6 +348,32 @@ const handlePasswordChange = async () => {
     ElMessage.error('密码修改失败')
   }
 }
+
+// Token过期预检查
+let tokenCheckInterval = null
+
+onMounted(() => {
+  // 每5分钟检查一次token是否即将过期
+  tokenCheckInterval = setInterval(() => {
+    if (AuthManager.isLoggedIn() && AuthManager.isTokenExpiringSoon(1)) {
+      const hoursLeft = Math.floor(AuthManager.getTokenTimeLeft() / (60 * 60 * 1000))
+      if (hoursLeft > 0) {
+        ElMessage.warning(`登录状态将在${hoursLeft}小时后过期，请保存工作并重新登录`)
+      } else {
+        const minutesLeft = Math.floor(AuthManager.getTokenTimeLeft() / (60 * 1000))
+        ElMessage.warning(`登录状态将在${minutesLeft}分钟后过期，请保存工作并重新登录`)
+      }
+    }
+  }, 5 * 60 * 1000) // 5分钟
+})
+
+// 组件卸载时清除定时器
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  if (tokenCheckInterval) {
+    clearInterval(tokenCheckInterval)
+  }
+})
 </script>
 
 <style scoped>
