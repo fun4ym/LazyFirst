@@ -26,9 +26,23 @@ request.interceptors.request.use(
       console.log('[Request] 发送请求:', config.method?.toUpperCase(), config.url + queryString)
       console.log('[Request] Token长度:', token?.length || 0, token ? '有值' : '无')
       console.log('[Request] Params:', config.params)
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
+      
+      // Token为空：立即拒绝请求并触发登出，防止裸奔
+      if (!token) {
+        console.warn('[Request] Token为空，拒绝请求并触发登出:', config.url)
+        // 延迟触发登出，避免在拦截器里直接跳转导致递归
+        setTimeout(() => {
+          if (!window.__isLoggingOut) {
+            window.__isLoggingOut = true
+            ElMessage.error('登录状态已失效，请重新登录')
+            AuthManager.logout()
+            setTimeout(() => { window.__isLoggingOut = false }, 2000)
+          }
+        }, 0)
+        return Promise.reject(new Error('未提供认证令牌'))
       }
+      
+      config.headers.Authorization = `Bearer ${token}`
     } else {
       console.log('[Request] 公开页面请求，不添加token:', config.method?.toUpperCase(), config.url)
     }
