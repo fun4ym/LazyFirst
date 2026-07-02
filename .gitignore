@@ -56,3 +56,6 @@ server/check_*.js
 
 # pending-sync 循环引用文件（已处理的备份副本）
 pending-sync/待回-*
+
+# 线上数据库同步文件
+tapdb_sync/

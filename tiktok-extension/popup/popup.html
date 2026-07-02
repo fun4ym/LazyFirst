@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LazyFirst TikTok 数据采集器</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- 未登录状态 -->
+    <div id="login-view" class="view">
+      <div class="logo">
+        <h2>LazyFirst</h2>
+        <p>TikTok 数据采集器</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="api-url">API地址</label>
+        <input type="text" id="api-url" placeholder="https://lazyfirst.com/api" value="http://localhost:3001/api">
+      </div>
+      
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" placeholder="请输入用户名">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="请输入密码">
+      </div>
+      
+      <button id="login-btn" class="btn-primary">登录</button>
+      
+      <div id="login-error" class="error-message"></div>
+    </div>
+    
+    <!-- 已登录状态 -->
+    <div id="main-view" class="view" style="display: none;">
+      <div class="header">
+        <div class="user-info">
+          <h3 id="user-name">用户名</h3>
+          <p id="user-role">角色</p>
+        </div>
+        <button id="logout-btn" class="btn-secondary">退出</button>
+      </div>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">今日同步</span>
+          <span id="today-sync-count" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">最后同步</span>
+          <span id="last-sync-time" class="stat-value">--</span>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button id="sync-now-btn" class="btn-primary">立即同步</button>
+        <button id="view-history-btn" class="btn-secondary">查看历史</button>
+        <button id="settings-btn" class="btn-secondary">设置</button>
+      </div>
+      
+      <div id="sync-status" class="status-message"></div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

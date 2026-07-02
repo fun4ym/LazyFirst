@@ -73,6 +73,10 @@ const userSchema = new mongoose.Schema({
   settlementDay: {
     type: Number,
     default: 15
+  },
+  // 最后登录时间
+  lastLoginAt: {
+    type: Date
   }
 }, {
   timestamps: true

@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "LazyFirst TikTok 数据采集器",
+  "version": "1.0.0",
+  "description": "在浏览TikTok时自动采集达人数据并同步到LazyFirst系统",
+  
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "https://www.tiktok.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://www.tiktok.com/*"],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "options_page": "options/options.html",
+  
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  }
+}

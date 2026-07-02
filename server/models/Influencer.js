@@ -140,6 +140,18 @@ const influencerSchema = new mongoose.Schema({
   blacklistReason: {
     type: String,
     default: ''
+  },
+  // 点数余额
+  pointsBalance: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // 数字人ID
+  digitalHumanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DigitalHuman',
+    default: null
   }
 }, {
   timestamps: true

@@ -5,9 +5,10 @@ const { JWT_SECRET } = require('../utils/jwt');
 // 验证JWT token
 const authenticate = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.header('Authorization');
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.warn('[Auth] 未收到Authorization头, IP:', req.ip, 'URL:', req.originalUrl);
       return res.status(401).json({
         success: false,
         message: '未提供认证令牌'
@@ -15,12 +16,11 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
-    console.log('[Auth] 收到token, 长度:', token.length);
-    console.log('[Auth] JWT_SECRET:', JWT_SECRET);
+    console.log('[Auth] 收到token, 长度:', token.length, 'URL:', req.originalUrl);
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
-      console.log('[Auth] Token验证成功, userId:', decoded.userId);
+      console.log('[Auth] Token验证成功, userId:', decoded.userId, 'URL:', req.originalUrl);
 
       // 查询用户信息
       const user = await User.findById(decoded.userId)
@@ -233,8 +233,8 @@ const optionalAuth = async (req, res, next) => {
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        try {
+        const decoded = jwt.verify(token, JWT_SECRET);
         const user = await User.findById(decoded.userId).select('-password');
         if (user) {
           req.user = user;

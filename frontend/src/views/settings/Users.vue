@@ -83,6 +83,11 @@
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
+        <el-table-column prop="lastLoginAt" :label="$t('user.lastLoginAt')" width="160">
+          <template #default="{ row }">
+            {{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('user.operation')" width="240" fixed="right">
           <template #default="{ row }">
             <!-- 超级管理员用户：只有超级管理员可编辑/删除 -->

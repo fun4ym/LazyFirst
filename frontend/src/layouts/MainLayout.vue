@@ -365,22 +365,6 @@ onMounted(() => {
       }
     }
   }, 5 * 60 * 1000) // 5分钟
-
-  // 监听 localStorage 变化（多标签页登出同步）
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'token' && !e.newValue) {
-      // 另一个标签页登出了，当前页同步跳转
-      console.warn('[MainLayout] 检测到token被清除（多标签页登出），当前页同步跳转登录页')
-      if (!window.__isLoggingOut) {
-        window.__isLoggingOut = true
-        ElMessage.warning('您已在其他标签页登出，即将返回登录页')
-        setTimeout(() => {
-          AuthManager.logout()
-          window.__isLoggingOut = false
-        }, 1500)
-      }
-    }
-  })
 })
 
 // 组件卸载时清除定时器

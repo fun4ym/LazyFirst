@@ -127,6 +127,12 @@ router.post('/login', [
       });
     }
 
+    // 更新最后登录时间（用 updateOne 避免触发 save 中间件）
+    await User.updateOne(
+      { _id: user._id },
+      { lastLoginAt: new Date() }
+    );
+
     // 生成token
     const token = generateToken(user._id);
 
@@ -141,7 +147,8 @@ router.post('/login', [
           phone: user.phone,
           email: user.email,
           company: user.companyId,
-          role: user.roleId
+          role: user.roleId,
+          lastLoginAt: user.lastLoginAt
         },
         token
       }

@@ -1,0 +1,130 @@
+/* TikTok Extension Content Styles */
+
+/* 覆盖层样式 */
+.lazyfirst-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #775999;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  max-width: 280px;
+  backdrop-filter: blur(10px);
+}
+
+.lazyfirst-overlay h4 {
+  margin: 0 0 8px 0;
+  color: #775999;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lazyfirst-overlay .metric {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.lazyfirst-overlay .metric:last-child {
+  border-bottom: none;
+}
+
+.lazyfirst-overlay .metric-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.lazyfirst-overlay .metric-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.lazyfirst-overlay .import-btn {
+  background: #775999;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 8px;
+  width: 100%;
+  transition: background 0.3s ease;
+}
+
+.lazyfirst-overlay .import-btn:hover {
+  background: #5c3d7a;
+}
+
+.lazyfirst-overlay .import-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* 导入按钮样式 */
+.lazyfirst-import-btn {
+  background: #775999;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+
+.lazyfirst-import-btn:hover {
+  background: #5c3d7a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(119, 89, 153, 0.3);
+}
+
+/* 加载动画 */
+.lazyfirst-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #775999;
+  border-radius: 50%;
+  animation: lazyfirst-spin 1s linear infinite;
+}
+
+@keyframes lazyfirst-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 成功提示 */
+.lazyfirst-success {
+  background: #4caf50;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* 错误提示 */
+.lazyfirst-error {
+  background: #f44336;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+}

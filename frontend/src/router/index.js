@@ -238,6 +238,27 @@ const routes = [
         name: 'ProductStats',
         component: () => import('@/views/product-stats/Index.vue'),
         meta: { title: '商品统计', permission: 'productStats:read' }
+      },
+      // 点数余额页面
+      {
+        path: 'influencer/points-balance',
+        name: 'PointsBalance',
+        component: () => import('@/views/influencer/PointsBalance.vue'),
+        meta: { title: '点数余额', permission: 'ai_maker:read' }
+      },
+      // 数字人管理页面（BD后台）
+      {
+        path: 'bd/digital-human-management',
+        name: 'DigitalHumanManagement',
+        component: () => import('@/views/bd/DigitalHumanManagement.vue'),
+        meta: { title: '数字人管理', permission: 'ai_maker:manage' }
+      },
+      // 提示词模板管理页面（BD后台）
+      {
+        path: 'bd/prompt-template-management',
+        name: 'PromptTemplateManagement',
+        component: () => import('@/views/bd/PromptTemplateManagement.vue'),
+        meta: { title: '提示词模板管理', permission: 'ai_maker:manage' }
       }
     ]
   }

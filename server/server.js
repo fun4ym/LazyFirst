@@ -37,6 +37,7 @@ const supplierRoutes = require('./routes/suppliers');
 const aiModelsRoutes = require('./routes/ai-models');
 const digitalHumansRoutes = require('./routes/digital-humans');
 const productMediaRoutes = require('./routes/product-media');
+const aiMakerRoutes = require('./routes/ai-maker');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -120,6 +121,7 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/ai-models', aiModelsRoutes);
 app.use('/api/digital-humans', digitalHumansRoutes);
 app.use('/api/product-media', productMediaRoutes);
+app.use('/api/ai-maker', aiMakerRoutes);
 
 // 错误处理
 app.use(notFound);
