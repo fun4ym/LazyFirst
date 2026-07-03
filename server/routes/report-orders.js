@@ -83,34 +83,23 @@ router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ modu
       query.createTime.$lte = new Date(endDate + ' 23:59:59');
     }
 
-    // 只显示已打款
+    // 只显示已打款（有打款单号）
     if (onlyPaid === 'true') {
-      query.commissionSettlementTime = { $exists: true, $ne: null };
-      console.log('[只显示已打款] 添加条件: commissionSettlementTime exists and != null');
+      query.paymentNo = { $exists: true, $ne: null, $regex: /.+/ };
+      console.log('[只显示已打款] 添加条件: paymentNo exists and not empty');
     }
 
-    // 打款时间范围
+    // 打款时间范围（基于打款日期字段）
     if (paymentStartDate || paymentEndDate) {
-      console.log('[打款时间范围] paymentStartDate:', paymentStartDate, 'paymentEndDate:', paymentEndDate, 'onlyPaid:', onlyPaid);
-      // 如果已经有只显示已打款条件，在此基础上添加时间范围
-      if (onlyPaid === 'true') {
-        if (paymentStartDate) {
-          query.commissionSettlementTime.$gte = new Date(paymentStartDate);
-          console.log('添加 $gte:', paymentStartDate);
-        }
-        if (paymentEndDate) {
-          query.commissionSettlementTime.$lte = new Date(paymentEndDate + ' 23:59:59');
-          console.log('添加 $lte:', paymentEndDate);
-        }
-      } else {
-        // 没有只显示已打款条件，独立处理时间范围
-        query.commissionSettlementTime = {};
-        if (paymentStartDate) {
-          query.commissionSettlementTime.$gte = new Date(paymentStartDate);
-        }
-        if (paymentEndDate) {
-          query.commissionSettlementTime.$lte = new Date(paymentEndDate + ' 23:59:59');
-        }
+      console.log('[打款时间范围] paymentStartDate:', paymentStartDate, 'paymentEndDate:', paymentEndDate);
+      query.commissionSettlementTime = query.commissionSettlementTime || {};
+      if (paymentStartDate) {
+        query.commissionSettlementTime.$gte = new Date(paymentStartDate);
+        console.log('添加 $gte:', paymentStartDate);
+      }
+      if (paymentEndDate) {
+        query.commissionSettlementTime.$lte = new Date(paymentEndDate + ' 23:59:59');
+        console.log('添加 $lte:', paymentEndDate);
       }
     }
 
@@ -706,9 +695,9 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
       if (!order.paymentNo || order.paymentNo.trim() === '') {
         validationErrors.push(`订单 ${order.orderNo} 打款单号为空，无法生成账单`);
       }
-      // 检查打款日期
-      if (!order.commissionSettlementTime || new Date(order.commissionSettlementTime) > today) {
-        validationErrors.push(`订单 ${order.orderNo} 打款日期不在今天或之前，无法生成账单`);
+      // 检查打款日期（放松校验：允许打款日期为空，后续会用当前日期替代）
+      if (order.commissionSettlementTime && new Date(order.commissionSettlementTime) > today) {
+        validationErrors.push(`订单 ${order.orderNo} 打款日期在未来，无法生成账单`);
       }
     }
 
@@ -720,9 +709,16 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
     }
 
     // 计算有效日期区间（订单的打款日期范围）
-    const settlementDates = orders
-      .filter(o => o.commissionSettlementTime)
-      .map(o => new Date(o.commissionSettlementTime));
+    // 如果有打款日期就用打款日期，否则用当前日期
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const settlementDates = orders.map(o => {
+      if (o.commissionSettlementTime) {
+        return new Date(o.commissionSettlementTime);
+      }
+      return today; // 打款日期为空时，用当前日期
+    });
 
     const validStartDate = new Date(Math.min(...settlementDates));
     const validEndDate = new Date(Math.max(...settlementDates));
