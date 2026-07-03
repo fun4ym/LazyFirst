@@ -681,30 +681,34 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
       });
     }
 
-    // 验证逻辑
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    const validationErrors = [];
+    // 过滤出有打款单号的订单（可以生成账单）
+    // 和没有打款单号的订单（无法生成账单）
+    const validOrders = [];
+    const invalidOrders = [];
 
     for (const order of orders) {
       // 检查结算标记
       if (order.settlementStatus === '已结清') {
-        validationErrors.push(`订单 ${order.orderNo} 已结清，无法生成账单`);
+        invalidOrders.push({ order, reason: '已结清' });
+        continue;
       }
       // 检查打款单号
       if (!order.paymentNo || order.paymentNo.trim() === '') {
-        validationErrors.push(`订单 ${order.orderNo} 打款单号为空，无法生成账单`);
+        invalidOrders.push({ order, reason: '打款单号为空' });
+        continue;
       }
       // 检查打款日期（放松校验：允许打款日期为空，后续会用当前日期替代）
-      if (order.commissionSettlementTime && new Date(order.commissionSettlementTime) > today) {
-        validationErrors.push(`订单 ${order.orderNo} 打款日期在未来，无法生成账单`);
+      if (order.commissionSettlementTime && new Date(order.commissionSettlementTime) > new Date()) {
+        invalidOrders.push({ order, reason: '打款日期在未来' });
+        continue;
       }
+      validOrders.push(order);
     }
 
-    if (validationErrors.length > 0) {
+    if (validOrders.length === 0) {
       return res.status(400).json({
         success: false,
-        message: validationErrors.join('；')
+        message: `选中的 ${orders.length} 条订单都无法生成账单（已结清、打款单号为空或打款日期在未来）`
       });
     }
 
@@ -713,7 +717,7 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
     const fallbackDate = new Date();
     fallbackDate.setHours(0, 0, 0, 0);
 
-    const settlementDates = orders.map(o => {
+    const settlementDates = validOrders.map(o => {
       if (o.commissionSettlementTime) {
         return new Date(o.commissionSettlementTime);
       }
@@ -727,7 +731,7 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
     const bdStats = {};
     let totalCommission = 0;
 
-    for (const order of orders) {
+    for (const order of validOrders) {
       const bdName = order.bdName || '未分配';
       const commission = (order.actualAffiliatePartnerCommission || 0) +
         (order.actualAffiliateServiceProviderShopAdPayment || 0);
@@ -751,7 +755,7 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
       validStartDate,
       validEndDate,
       totalCommission,
-      orderCount: orders.length,
+      orderCount: validOrders.length,
       bdList: Object.values(bdStats).map(bd => ({
         bdName: bd.bdName,
         commission: bd.commission,
@@ -762,16 +766,31 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
 
     await bill.save();
 
-    // 更新订单的settlementBillNo
+    // 只更新有打款单号的订单的settlementBillNo
+    const validOrderIds = validOrders.map(o => o._id);
     await ReportOrder.updateMany(
-      { _id: { $in: orderIds } },
+      { _id: { $in: validOrderIds } },
       { $set: { settlementBillNo: billNo } }
     );
 
+    // 构建返回消息
+    let message = `账单生成成功！共 ${validOrders.length} 条订单`;
+    if (invalidOrders.length > 0) {
+      const invalidReasons = invalidOrders.map(o => `订单 ${o.order.orderNo}（${o.reason}）`);
+      message += `。以下 ${invalidOrders.length} 条订单未包含：${invalidReasons.join('、')}`;
+    }
+
     res.json({
       success: true,
-      message: '账单生成成功',
-      data: bill
+      message: message,
+      data: {
+        bill,
+        invalidCount: invalidOrders.length,
+        invalidOrders: invalidOrders.map(o => ({
+          orderNo: o.order.orderNo,
+          reason: o.reason
+        }))
+      }
     });
 
   } catch (error) {
