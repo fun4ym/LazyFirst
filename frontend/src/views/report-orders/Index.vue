@@ -117,6 +117,12 @@
 
       <!-- 账单搜索筛选 -->
       <div v-show="activeTab === 'bills'" class="search-section">
+        <div class="header-actions" style="margin-bottom: 15px;">
+          <el-button type="primary" @click="showGenerateByMonthDialog">
+            <el-icon><Plus /></el-icon>
+            新增
+          </el-button>
+        </div>
         <el-form :model="billSearchForm" inline class="search-form">
           <el-form-item :label="$t('reportOrders.billNo')">
             <el-input
@@ -819,6 +825,28 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 按月生成账单对话框 -->
+    <el-dialog v-model="generateByMonthDialogVisible" title="按月生成账单" width="400px">
+      <el-form :model="generateByMonthForm" label-width="100px">
+        <el-form-item label="选择年份" required>
+          <el-select v-model="generateByMonthForm.year" placeholder="请选择年份" style="width: 100%;">
+            <el-option v-for="y in availableYears" :key="y" :label="y + '年'" :value="y" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="选择月份" required>
+          <el-select v-model="generateByMonthForm.month" placeholder="请选择月份" style="width: 100%;">
+            <el-option v-for="m in 12" :key="m" :label="m + '月'" :value="m" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="generateByMonthDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleGenerateByMonth" :loading="generatingByMonth">
+          确定生成
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -850,6 +878,14 @@ const importDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const orders = ref([])
 const fileList = ref([])
+
+// 按月生成账单
+const generateByMonthDialogVisible = ref(false)
+const generatingByMonth = ref(false)
+const generateByMonthForm = reactive({
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1
+})
 const uploadFile = ref(null)
 const createTimeRange = ref([])
 const paymentTimeRange = ref([])
@@ -1136,10 +1172,10 @@ const handleGenerateBill = async () => {
     return
   }
 
-  const orderIds = [...selectedOrderIds.value]
+  const totalCount = selectedOrderIds.value.size
 
   await ElMessageBox.confirm(
-    `已选择 ${selectedOrderIds.value.size} 条订单，确定要生成账单吗？`,
+    `已选择 ${totalCount} 条订单，没有打款单号的订单将被忽略。确定要生成账单吗？`,
     '生成账单',
     {
       type: 'warning',
@@ -1148,10 +1184,22 @@ const handleGenerateBill = async () => {
     }
   )
 
+  const orderIds = [...selectedOrderIds.value]
+
   generatingBill.value = true
   try {
     const res = await request.post('/report-orders/bills/generate', { orderIds })
-    ElMessage.success('账单生成成功！')
+    
+    // 处理部分成功的情况
+    const invalidCount = res.data?.invalidCount || 0
+    const validCount = res.data?.bill?.orderCount || (totalCount - invalidCount)
+    
+    if (invalidCount > 0) {
+      ElMessage.success(`账单生成成功！共 ${validCount} 条订单，${invalidCount} 条订单因没有打款单号或已结清未被包含。`)
+    } else {
+      ElMessage.success('账单生成成功！')
+    }
+    
     selectedOrders.value = []
     selectedOrderIds.value = new Set()
     // 刷新订单列表
@@ -1671,6 +1719,55 @@ const onProductClick = (productId) => {
   if (!productId) return
   // 可以跳转到商品详情页
   // router.push({ path: '/products', query: { id: productId } })
+}
+
+// 按月生成账单
+const availableYears = computed(() => {
+  const currentYear = new Date().getFullYear()
+  return [currentYear - 1, currentYear, currentYear + 1]
+})
+
+const showGenerateByMonthDialog = () => {
+  generateByMonthForm.year = new Date().getFullYear()
+  generateByMonthForm.month = new Date().getMonth() + 1
+  generateByMonthDialogVisible.value = true
+}
+
+const handleGenerateByMonth = async () => {
+  if (!generateByMonthForm.year || !generateByMonthForm.month) {
+    ElMessage.warning('请选择年份和月份')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要生成 ${generateByMonthForm.year}年${generateByMonthForm.month}月 的所有待结清账单吗？`,
+      '按月生成账单',
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }
+    )
+  } catch {
+    return // 用户取消
+  }
+
+  generatingByMonth.value = true
+  try {
+    const res = await request.post('/report-orders/bills/generate-by-month', {
+      year: generateByMonthForm.year,
+      month: generateByMonthForm.month
+    })
+    ElMessage.success(res.message || '生成成功！')
+    generateByMonthDialogVisible.value = false
+    loadBills()
+  } catch (error) {
+    console.error('Generate bills by month error:', error)
+    ElMessage.error(error.response?.data?.message || '生成失败')
+  } finally {
+    generatingByMonth.value = false
+  }
 }
 </script>
 

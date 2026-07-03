@@ -697,11 +697,7 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
         invalidOrders.push({ order, reason: '打款单号为空' });
         continue;
       }
-      // 检查打款日期（放松校验：允许打款日期为空，后续会用当前日期替代）
-      if (order.commissionSettlementTime && new Date(order.commissionSettlementTime) > new Date()) {
-        invalidOrders.push({ order, reason: '打款日期在未来' });
-        continue;
-      }
+      // 注意：不再校验打款日期，统一按创建时间处理
       validOrders.push(order);
     }
 
@@ -712,14 +708,8 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
       });
     }
 
-    // 计算有效日期区间（订单的打款日期范围）
-    // 如果有打款日期就用打款日期，否则用订单创建时间
-    const settlementDates = validOrders.map(o => {
-      if (o.commissionSettlementTime) {
-        return new Date(o.commissionSettlementTime);
-      }
-      return new Date(o.createTime); // 打款日期为空时，用订单创建时间
-    });
+    // 计算有效日期区间（按订单创建时间）
+    const settlementDates = validOrders.map(o => new Date(o.createTime));
 
     const validStartDate = new Date(Math.min(...settlementDates));
     const validEndDate = new Date(Math.max(...settlementDates));
@@ -1540,6 +1530,134 @@ router.delete('/bd-payment-records/:billId/:noteIndex', authenticate, authorize(
     res.status(500).json({
       success: false,
       message: '删除打款记录失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/report-orders/bills/generate-by-month
+ * @desc    按月生成账单（按创建时间筛选）
+ * @access  Private
+ */
+router.post('/bills/generate-by-month', authenticate, authorize('orders:update'), async (req, res) => {
+  try {
+    const { year, month } = req.body;
+
+    // 验证参数
+    if (!year || !month || month < 1 || month > 12) {
+      return res.status(400).json({
+        success: false,
+        message: '年份或月份无效'
+      });
+    }
+
+    const ReportOrder = require('../models/ReportOrder');
+    const Bill = require('../models/Bill');
+
+    // 计算月份起始和结束日期（按createTime）
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    console.log(`[按月生成账单] 年份:${year}, 月份:${month}, 起始:${startDate}, 结束:${endDate}`);
+
+    // 查询符合条件的订单（按创建时间筛选）
+    const orders = await ReportOrder.find({
+      companyId: req.companyId,
+      paymentNo: { $exists: true, $ne: null, $ne: '' },
+      $or: [
+        { settlementStatus: { $ne: '已结清' } },
+        { settlementStatus: { $exists: false } }
+      ],
+      createTime: { $gte: startDate, $lte: endDate }
+    });
+
+    console.log(`[按月生成账单] 找到 ${orders.length} 条符合条件的订单`);
+
+    if (orders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `所选月份没有已打款但未结清的订单`
+      });
+    }
+
+    // 按BD分组
+    const bdGroups = {};
+    for (const order of orders) {
+      const bdName = order.bdName || '未分配';
+      if (!bdGroups[bdName]) {
+        bdGroups[bdName] = [];
+      }
+      bdGroups[bdName].push(order);
+    }
+
+    console.log(`[按月生成账单] 按BD分组: ${Object.keys(bdGroups).join(', ')}`);
+
+    // 为每个BD生成账单
+    const generatedBills = [];
+    for (const bdName of Object.keys(bdGroups)) {
+      const bdOrders = bdGroups[bdName];
+      
+      // 计算佣金
+      let totalCommission = 0;
+      for (const order of bdOrders) {
+        const commission = (order.actualAffiliatePartnerCommission || 0) +
+          (order.actualAffiliateServiceProviderShopAdPayment || 0);
+        totalCommission += commission;
+      }
+
+      // 计算有效日期区间（按订单创建时间）
+      const settlementDates = bdOrders.map(o => new Date(o.createTime));
+      const validStartDate = new Date(Math.min(...settlementDates));
+      const validEndDate = new Date(Math.max(...settlementDates));
+
+      // 生成账单号
+      const billNo = await Bill.generateBillNo(req.companyId);
+
+      // 创建账单
+      const bill = new Bill({
+        companyId: req.companyId,
+        billNo: `${billNo}-${bdName}`,
+        validStartDate,
+        validEndDate,
+        totalCommission,
+        orderCount: bdOrders.length,
+        bdList: [{
+          bdName,
+          commission: totalCommission,
+          orderCount: bdOrders.length
+        }],
+        creatorId: req.user._id
+      });
+
+      await bill.save();
+
+      // 更新订单的settlementBillNo
+      const bdOrderIds = bdOrders.map(o => o._id);
+      await ReportOrder.updateMany(
+        { _id: { $in: bdOrderIds } },
+        { $set: { settlementBillNo: bill.billNo } }
+      );
+
+      console.log(`[按月生成账单] BD ${bdName}: 生成账单 ${bill.billNo}, 佣金:${totalCommission}, 订单数:${bdOrders.length}`);
+
+      generatedBills.push(bill);
+    }
+
+    res.json({
+      success: true,
+      message: `成功生成 ${generatedBills.length} 个账单`,
+      data: {
+        bills: generatedBills,
+        totalOrders: orders.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Generate bills by month error:', error);
+    res.status(500).json({
+      success: false,
+      message: '按月生成账单失败',
       error: error.message
     });
   }
