@@ -710,14 +710,14 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
 
     // 计算有效日期区间（订单的打款日期范围）
     // 如果有打款日期就用打款日期，否则用当前日期
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const fallbackDate = new Date();
+    fallbackDate.setHours(0, 0, 0, 0);
 
     const settlementDates = orders.map(o => {
       if (o.commissionSettlementTime) {
         return new Date(o.commissionSettlementTime);
       }
-      return today; // 打款日期为空时，用当前日期
+      return fallbackDate; // 打款日期为空时，用当前日期
     });
 
     const validStartDate = new Date(Math.min(...settlementDates));
