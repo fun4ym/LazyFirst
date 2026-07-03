@@ -401,10 +401,11 @@
               {{ formatDate(row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" fixed="right" width="180">
+          <el-table-column label="操作" fixed="right" width="240">
             <template #default="{ row }">
               <el-button link type="primary" @click="viewBillDetail(row)">详情</el-button>
               <el-button link type="success" @click="showSettleDialog(row)" :disabled="row.isSettled">结算</el-button>
+              <el-button link type="danger" @click="handleDeleteBill(row)" :disabled="row.isSettled">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -1769,6 +1770,39 @@ const handleGenerateByMonth = async () => {
     generatingByMonth.value = false
   }
 }
+}
+
+// 删除账单（仅限未结清状态）
+const handleDeleteBill = async (row) => {
+  if (row.isSettled) {
+    ElMessage.warning('已结清的账单不能删除')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除账单 ${row.billNo} 吗？\n删除后，关联订单的账单号将被清空。`,
+      '删除账单',
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }
+    )
+  } catch {
+    return
+  }
+
+  try {
+    await request.delete(`/report-orders/bills/${row._id}`)
+    ElMessage.success('删除成功！')
+    loadBills()
+  } catch (error) {
+    console.error('Delete bill error:', error)
+    ElMessage.error(error.response?.data?.message || '删除失败')
+  }
+}
+
 </script>
 
 <style scoped>

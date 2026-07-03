@@ -1581,74 +1581,64 @@ router.post('/bills/generate-by-month', authenticate, authorize('orders:update')
       });
     }
 
-    // 按BD分组
-    const bdGroups = {};
+    // 按BD统计佣金（不拆分账单，一个账单包含多个BD）
+    const bdStats = {};
+    let totalCommission = 0;
+
     for (const order of orders) {
       const bdName = order.bdName || '未分配';
-      if (!bdGroups[bdName]) {
-        bdGroups[bdName] = [];
+      const commission = (order.actualAffiliatePartnerCommission || 0) +
+        (order.actualAffiliateServiceProviderShopAdPayment || 0);
+
+      if (!bdStats[bdName]) {
+        bdStats[bdName] = { bdName, commission: 0, orderCount: 0, orderIds: [] };
       }
-      bdGroups[bdName].push(order);
+      bdStats[bdName].commission += commission;
+      bdStats[bdName].orderCount += 1;
+      bdStats[bdName].orderIds.push(order._id);
+      totalCommission += commission;
     }
 
-    console.log(`[按月生成账单] 按BD分组: ${Object.keys(bdGroups).join(', ')}`);
+    // 计算有效日期区间（按订单创建时间）
+    const settlementDates = orders.map(o => new Date(o.createTime));
+    const validStartDate = new Date(Math.min(...settlementDates));
+    const validEndDate = new Date(Math.max(...settlementDates));
 
-    // 为每个BD生成账单
-    const generatedBills = [];
-    for (const bdName of Object.keys(bdGroups)) {
-      const bdOrders = bdGroups[bdName];
-      
-      // 计算佣金
-      let totalCommission = 0;
-      for (const order of bdOrders) {
-        const commission = (order.actualAffiliatePartnerCommission || 0) +
-          (order.actualAffiliateServiceProviderShopAdPayment || 0);
-        totalCommission += commission;
-      }
+    // 生成账单号
+    const billNo = await Bill.generateBillNo(req.companyId);
 
-      // 计算有效日期区间（按订单创建时间）
-      const settlementDates = bdOrders.map(o => new Date(o.createTime));
-      const validStartDate = new Date(Math.min(...settlementDates));
-      const validEndDate = new Date(Math.max(...settlementDates));
+    // 创建账单（一个账单包含多个BD的订单）
+    const bill = new Bill({
+      companyId: req.companyId,
+      billNo,
+      validStartDate,
+      validEndDate,
+      totalCommission,
+      orderCount: orders.length,
+      bdList: Object.values(bdStats).map(bd => ({
+        bdName: bd.bdName,
+        commission: bd.commission,
+        orderCount: bd.orderCount
+      })),
+      creatorId: req.user._id
+    });
 
-      // 生成账单号
-      const billNo = await Bill.generateBillNo(req.companyId);
+    await bill.save();
 
-      // 创建账单
-      const bill = new Bill({
-        companyId: req.companyId,
-        billNo: `${billNo}-${bdName}`,
-        validStartDate,
-        validEndDate,
-        totalCommission,
-        orderCount: bdOrders.length,
-        bdList: [{
-          bdName,
-          commission: totalCommission,
-          orderCount: bdOrders.length
-        }],
-        creatorId: req.user._id
-      });
+    // 更新所有订单的settlementBillNo
+    const allOrderIds = orders.map(o => o._id);
+    await ReportOrder.updateMany(
+      { _id: { $in: allOrderIds } },
+      { $set: { settlementBillNo: bill.billNo } }
+    );
 
-      await bill.save();
-
-      // 更新订单的settlementBillNo
-      const bdOrderIds = bdOrders.map(o => o._id);
-      await ReportOrder.updateMany(
-        { _id: { $in: bdOrderIds } },
-        { $set: { settlementBillNo: bill.billNo } }
-      );
-
-      console.log(`[按月生成账单] BD ${bdName}: 生成账单 ${bill.billNo}, 佣金:${totalCommission}, 订单数:${bdOrders.length}`);
-
-      generatedBills.push(bill);
-    }
+    console.log(`[按月生成账单] 生成账单 ${bill.billNo}, 佣金:${totalCommission}, 订单数:${orders.length}, BD数:${Object.keys(bdStats).length}`);
 
     res.json({
       success: true,
-      message: `成功生成 ${generatedBills.length} 个账单`,
+      message: `成功生成1个账单，包含${orders.length}条订单`,
       data: {
-        bills: generatedBills,
+        bill,
         totalOrders: orders.length
       }
     });
@@ -1658,6 +1648,62 @@ router.post('/bills/generate-by-month', authenticate, authorize('orders:update')
     res.status(500).json({
       success: false,
       message: '按月生成账单失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/report-orders/bills/:id
+ * @desc    删除账单（仅限未结清状态）
+ * @access  Private
+ */
+router.delete('/bills/:id', authenticate, authorize('orders:delete'), async (req, res) => {
+  try {
+    const Bill = require('../models/Bill');
+    const ReportOrder = require('../models/ReportOrder');
+
+    const bill = await Bill.findOne({
+      _id: req.params.id,
+      companyId: req.companyId
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: '账单不存在'
+      });
+    }
+
+    // 只能删除未结清的账单
+    if (bill.isSettled) {
+      return res.status(400).json({
+        success: false,
+        message: '已结清的账单不能删除'
+      });
+    }
+
+    // 清空关联订单的settlementBillNo
+    await ReportOrder.updateMany(
+      { settlementBillNo: bill.billNo, companyId: req.companyId },
+      { $set: { settlementBillNo: null } }
+    );
+
+    // 删除账单
+    await Bill.deleteOne({ _id: bill._id });
+
+    console.log(`[删除账单] 账单号:${bill.billNo}, 操作员:${req.user?.realName || req.user?.username}`);
+
+    res.json({
+      success: true,
+      message: `账单 ${bill.billNo} 已删除`
+    });
+
+  } catch (error) {
+    console.error('Delete bill error:', error);
+    res.status(500).json({
+      success: false,
+      message: '删除账单失败',
       error: error.message
     });
   }
