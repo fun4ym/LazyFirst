@@ -130,7 +130,8 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getToken } from '@/utils/auth'
+import AuthManager from '@/utils/auth'
+const getToken = () => AuthManager.getToken()
 
 // 搜索表单
 const searchForm = reactive({
