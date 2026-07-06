@@ -164,10 +164,9 @@ const formatDateTime = (dateString) => {
   })
 }
 
-// 获取API地址
+// 获取API地址（使用相对路径 /api，本地经vite代理、生产经nginx代理到后端）
 const getApiUrl = () => {
-  // 根据实际情况修改
-  return process.env.VUE_APP_API_URL || '<ADDRESS_REMOVED>
+  return '/api'
 }
 
 // 获取数据列表

@@ -6,7 +6,10 @@
 console.log('LazyFirst Extension: Popup 加载');
 
 // 锁死的API地址（本地开发环境地址，测试时使用）
-const API_BASE_URL = 'http://localhost:3000'; // 本地开发环境
+const API_BASE_URL = 'http://localhost:3000'; // 本地开发环境（后端API）
+
+// 前端页面地址（本地开发环境前端运行在5174端口；生产环境前端与API同域，改为系统域名即可）
+const FRONTEND_BASE_URL = 'http://localhost:5174';
 
 // 登录错误限制配置
 const LOGIN_CONFIG = {
@@ -338,9 +341,10 @@ async function handleLogout() {
 async function handleViewData() {
   console.log('处理查看数据...');
   
-  // 打开LazyFirst系统的插件数据管理页面
-  const { apiBaseUrl } = await chrome.storage.local.get(['apiBaseUrl']);
-  chrome.tabs.create({ url: `${apiBaseUrl || API_BASE_URL}/settings/tiktok-extension-data` });
+  // 打开前端管理页面（注意：前端页面运行在前端端口，不是后端API端口）
+  const { frontendUrl } = await chrome.storage.local.get(['frontendUrl']);
+  const base = frontendUrl || FRONTEND_BASE_URL;
+  chrome.tabs.create({ url: `${base}/settings/tiktok-extension-data` });
 }
 
 /**
@@ -350,10 +354,10 @@ async function loadStats() {
   console.log('加载统计数据...');
   
   try {
-    // 从Background获取统计数据
+    // 从Background获取真实数据总数（来自数据库）
     const stats = await sendMessageToBackground({ type: 'GET_STATS' });
     
-    document.getElementById('today-count').textContent = stats.todayCount || 0;
+    document.getElementById('today-count').textContent = stats.totalCount || 0;
   } catch (error) {
     console.error('加载统计数据失败:', error);
   }

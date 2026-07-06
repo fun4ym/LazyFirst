@@ -200,19 +200,36 @@ async function updateStats() {
 }
 
 /**
- * 获取统计信息
+ * 获取统计信息（真实从数据库拉取采集数据总数）
  */
 async function getStats() {
-  const { todayCount = 0, lastCollectTime, totalCount = 0 } = await chrome.storage.local.get([
-    'todayCount',
-    'lastCollectTime',
-    'totalCount'
-  ]);
+  try {
+    const { accessToken } = await chrome.storage.local.get(['accessToken']);
+    
+    if (accessToken) {
+      const apiBaseUrl = await getApiBaseUrl();
+      
+      // 调用后端列表接口，取总数（limit=1只拿分页信息）
+      const response = await apiRequest(`${apiBaseUrl}/api/tiktok-extension-data?page=1&limit=1`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.pagination) {
+        return {
+          totalCount: result.data.pagination.total || 0
+        };
+      }
+    }
+  } catch (error) {
+    console.error('获取统计信息失败:', error);
+  }
   
   return {
-    todayCount,
-    lastCollectTime,
-    totalCount
+    totalCount: 0
   };
 }
 
