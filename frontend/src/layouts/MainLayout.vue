@@ -304,8 +304,8 @@ const menuPermissions = {
     return user?.role?.name === '超级管理员'
   },
 
-  // TikTok扩展数据 - 需要系统读取权限
-  tiktokExtensionData: () => hasPermission('system:read')
+  // TikTok扩展数据 - 所有已登录用户可见
+  tiktokExtensionData: () => true
 }
 
 const showPasswordDialog = ref(false)

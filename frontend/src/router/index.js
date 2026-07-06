@@ -265,7 +265,7 @@ const routes = [
         path: 'settings/tiktok-extension-data',
         name: 'TiktokExtensionData',
         component: () => import('@/views/settings/TiktokExtensionData.vue'),
-        meta: { title: 'TikTok扩展数据', permission: 'system:read' }
+        meta: { title: 'TikTok扩展数据', requiresAuth: true }
       }
     ]
   }

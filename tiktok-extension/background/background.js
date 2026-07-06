@@ -230,15 +230,26 @@ async function checkAuthStatus() {
     return { isLoggedIn: false };
   }
   
-  // 检查Token是否过期（7天有效期，提前1天提示刷新）
-  const tokenExpireTime = loginTime + (7 * 24 * 60 * 60 * 1000) - (1 * 24 * 60 * 60 * 1000);
+  // 检查Token是否过期（7天有效期）
+  const tokenExpireTime = loginTime + (7 * 24 * 60 * 60 * 1000);
   
   if (Date.now() >= tokenExpireTime) {
+    // Token已过期，清除登录状态
+    await chrome.storage.local.remove(['accessToken', 'user', 'loginTime']);
+    return { 
+      isLoggedIn: false,
+      message: 'Token已过期，请重新登录' 
+    };
+  }
+  
+  // Token即将过期（24小时内），提示用户但继续使用
+  const refreshThreshold = tokenExpireTime - (24 * 60 * 60 * 1000);
+  if (Date.now() >= refreshThreshold) {
     return { 
       isLoggedIn: true, 
       user, 
       needRefresh: true,
-      message: 'Token即将过期，请重新登录' 
+      message: 'Token即将过期，建议重新登录' 
     };
   }
   

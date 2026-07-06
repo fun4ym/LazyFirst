@@ -158,6 +158,35 @@ body {
   font-size: 12px;
 }
 
+/* TikTok Link */
+.tiktok-link {
+  background: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.tiktok-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #775999;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.tiktok-url:hover {
+  color: #5c3d7a;
+}
+
+.tiktok-url svg {
+  flex-shrink: 0;
+}
+
 /* Settings */
 .settings {
   background: white;

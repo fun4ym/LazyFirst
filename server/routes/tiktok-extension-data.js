@@ -81,7 +81,7 @@ router.post('/', authenticate, async (req, res) => {
     console.error('保存TikTok扩展数据失败:', error);
     res.status(500).json({
       success: false,
-      message: '保存数据失败'
+      message: '保存数据失败: ' + error.message
     });
   }
 });
@@ -235,7 +235,8 @@ router.put('/:id/sync', authenticate, async (req, res) => {
       avgVideoViews: data.avgVideoViews,
       poolType: 'private',
       remark: 'Chrome插件采集数据同步',
-      maintainerId: req.userId
+      maintainerId: req.userId,
+      maintainerName: req.user ? req.user.realName || req.user.username : '未知'
     });
     
     await maintenance.save();
@@ -259,7 +260,7 @@ router.put('/:id/sync', authenticate, async (req, res) => {
     console.error('同步数据失败:', error);
     res.status(500).json({
       success: false,
-      message: '同步数据失败'
+      message: '同步数据失败: ' + error.message
     });
   }
 });
@@ -354,7 +355,8 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           avgVideoViews: data.avgVideoViews,
           poolType: 'private',
           remark: 'Chrome插件采集数据同步',
-          maintainerId: req.userId
+          maintainerId: req.userId,
+          maintainerName: req.user ? req.user.realName || req.user.username : '未知'
         });
         
         await maintenance.save();

@@ -70,9 +70,12 @@ function showMainView(user) {
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('main-view').style.display = 'block';
   
-  // 显示用户信息
-  document.getElementById('user-name').textContent = user.realName || user.username;
-  document.getElementById('user-role').textContent = getRoleText(user.role);
+  // 显示用户信息 - 兼容后端返回的数据结构
+  const userName = user.realName || user.username || '用户';
+  const roleName = getRoleText(user.role);
+  
+  document.getElementById('user-name').textContent = userName;
+  document.getElementById('user-role').textContent = roleName;
   
   // 加载统计数据
   loadStats();
@@ -82,6 +85,17 @@ function showMainView(user) {
  * 获取角色文本
  */
 function getRoleText(role) {
+  if (!role) return '普通用户';
+  
+  // 如果role是对象，取name字段
+  if (typeof role === 'object') {
+    if (role.name) return role.name;
+    if (role === 'admin' || role === 'bd' || role === 'supplier' || role === 'shopfinder') {
+      return role;
+    }
+    return '普通用户';
+  }
+  
   const roleMap = {
     'admin': '管理员',
     'bd': 'BD',
@@ -234,11 +248,15 @@ async function handleLogin() {
     if (data.success) {
       console.log('登录成功:', data);
       
+      // 注意：后端返回的是 { success: true, data: { user, token } }
+      const userData = data.data.user;
+      const token = data.data.token;
+      
       // 存储Token和用户信息
       await chrome.storage.local.set({
-        accessToken: data.token,
+        accessToken: token,
         apiBaseUrl: API_BASE_URL, // 存储API地址
-        user: data.user,
+        user: userData,
         loginTime: Date.now()
       });
       
