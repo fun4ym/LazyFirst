@@ -342,9 +342,16 @@ async function handleViewData() {
   console.log('处理查看数据...');
   
   // 打开前端管理页面（注意：前端页面运行在前端端口，不是后端API端口）
-  const { frontendUrl } = await chrome.storage.local.get(['frontendUrl']);
+  const { frontendUrl, accessToken } = await chrome.storage.local.get(['frontendUrl', 'accessToken']);
   const base = frontendUrl || FRONTEND_BASE_URL;
-  chrome.tabs.create({ url: `${base}/settings/tiktok-extension-data` });
+  
+  // 带上扩展的登录Token，前端AuthManager会自动从URL恢复登录态（避免空白/跳登录页）
+  let url = `${base}/settings/tiktok-extension-data`;
+  if (accessToken) {
+    url += `?token=${encodeURIComponent(accessToken)}`;
+  }
+  
+  chrome.tabs.create({ url });
 }
 
 /**

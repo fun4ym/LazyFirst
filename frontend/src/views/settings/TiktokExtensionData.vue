@@ -190,13 +190,15 @@ const fetchDataList = async () => {
 
     const result = await response.json()
 
-    if (result.success) {
-      dataList.value = result.data.dataList
-      pagination.total = result.data.pagination.total
-      pagination.page = result.data.pagination.page
-      pagination.limit = result.data.pagination.limit
+    if (result.success && result.data) {
+      dataList.value = result.data.dataList || []
+      if (result.data.pagination) {
+        pagination.total = result.data.pagination.total || 0
+        pagination.page = result.data.pagination.page || 1
+        pagination.limit = result.data.pagination.limit || 20
+      }
     } else {
-      ElMessage.error(result.message || '获取数据失败')
+      ElMessage.error(result?.message || '获取数据失败')
     }
   } catch (error) {
     console.error('获取数据失败:', error)
