@@ -583,7 +583,6 @@ const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Plus, MagicStick, Download } from '@element-plus/icons-vue'
-import * as XLSX from 'xlsx'
 import AuthManager from '@/utils/auth'
 
 // 权限检查
@@ -1039,6 +1038,9 @@ const handleExport = async () => {
       '成单数': item.orderGeneratedCount || 0,
       '备注': item.remark || ''
     }))
+
+    // 动态加载 xlsx（避免 vite 预构建该大库导致 dev server 超时 500）
+    const XLSX = await import('xlsx')
 
     // 创建工作簿
     const ws = XLSX.utils.json_to_sheet(data)
