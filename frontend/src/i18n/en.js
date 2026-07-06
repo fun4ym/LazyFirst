@@ -131,6 +131,7 @@ export default {
     pointsBalance: 'Points Balance',
     digitalHumanManagement: 'Digital Human Management',
     promptTemplateManagement: 'Prompt Template Management',
+    tiktokExtensionData: 'TikTok Extension Data',
     // Three Card Layout
     productZone: 'Product Zone',
     configZone: 'Config Zone',

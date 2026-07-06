@@ -132,6 +132,7 @@ export default {
     pointsBalance: '点数余额',
     digitalHumanManagement: '数字人管理',
     promptTemplateManagement: '提示词模板',
+    tiktokExtensionData: 'TikTok扩展数据',
     // 三卡片布局
     productZone: '商品区',
     configZone: '配置区',

@@ -259,6 +259,13 @@ const routes = [
         name: 'PromptTemplateManagement',
         component: () => import('@/views/bd/PromptTemplateManagement.vue'),
         meta: { title: '提示词模板管理', permission: 'ai_maker:manage' }
+      },
+      // TikTok扩展数据采集页面
+      {
+        path: 'settings/tiktok-extension-data',
+        name: 'TiktokExtensionData',
+        component: () => import('@/views/settings/TiktokExtensionData.vue'),
+        meta: { title: 'TikTok扩展数据', permission: 'system:read' }
       }
     ]
   }

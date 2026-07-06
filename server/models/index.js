@@ -14,6 +14,7 @@ const ShopContact = require('./ShopContact');
 const ShopRating = require('./ShopRating');
 const ShopTracking = require('./ShopTracking');
 const Supplier = require('./Supplier');
+const TiktokExtensionData = require('./TiktokExtensionData');
 
 module.exports = {
   User,
@@ -31,5 +32,6 @@ module.exports = {
   ShopContact,
   ShopRating,
   ShopTracking,
-  Supplier
+  Supplier,
+  TiktokExtensionData
 };

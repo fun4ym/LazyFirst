@@ -1,39 +1,28 @@
 /**
  * LazyFirst TikTok 数据采集器 - Background Service Worker
- * 处理API调用、Token管理、数据同步
+ * 处理API调用、Token管理、数据存储
  */
 
 console.log('LazyFirst Extension: Background Service Worker 启动');
+
+// 配置
+const CONFIG = {
+  API_TIMEOUT: 30000, // API请求超时时间（30秒）
+  MAX_RETRIES: 3, // 最大重试次数
+  CACHE_TTL: 60 * 60 * 1000 // 缓存有效期（1小时）
+};
 
 // 监听来自Content Script的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background收到消息:', request.type, request);
   
-  if (request.type === 'IMPORT_INFLUENCER') {
-    // 导入达人
-    importInfluencer(request.data)
+  if (request.type === 'SAVE_COLLECTED_DATA') {
+    // 保存采集的数据
+    saveCollectedData(request.data)
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, message: error.message }));
     
     return true; // 异步响应
-  }
-  
-  if (request.type === 'BATCH_IMPORT_INFLUENCERS') {
-    // 批量导入达人
-    batchImportInfluencers(request.data)
-      .then(result => sendResponse(result))
-      .catch(error => sendResponse({ success: false, message: error.message }));
-    
-    return true; // 异步响应
-  }
-  
-  if (request.type === 'FETCH_INFLUENCER') {
-    // 查询达人
-    checkInfluencerExists(request.tiktokId)
-      .then(influencer => sendResponse({ success: true, influencer }))
-      .catch(error => sendResponse({ success: false, message: error.message }));
-    
-    return true;
   }
   
   if (request.type === 'CHECK_AUTH') {
@@ -44,127 +33,140 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     return true;
   }
+  
+  if (request.type === 'GET_STATS') {
+    // 获取统计信息
+    getStats()
+      .then(stats => sendResponse(stats))
+      .catch(error => sendResponse({ error: error.message }));
+    
+    return true;
+  }
 });
 
 /**
- * 检查达人是否存在（带缓存）
+ * 获取API地址（从存储中读取，默认使用生产环境地址）
  */
-async function checkInfluencerExists(tiktokId) {
-  const { apiUrl, accessToken } = await chrome.storage.local.get(['apiUrl', 'accessToken']);
-  
-  if (!apiUrl || !accessToken) {
-    throw new Error('未登录或API地址未配置');
-  }
-  
-  // 先检查缓存
-  const cacheKey = `influencer_${tiktokId}`;
-  const cachedData = await getCache(cacheKey);
-  
-  if (cachedData) {
-    console.log('从缓存中读取达人数据:', tiktokId);
-    return cachedData;
-  }
-  
-  // 缓存未命中，调用API
-  console.log('调用API查询达人:', tiktokId);
-  
-  const response = await fetch(`${apiUrl}/influencers?tiktokId=${tiktokId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  
-  if (!response.ok) {
-    throw new Error(`查询失败: ${response.status}`);
-  }
-  
-  const data = await response.json();
-  
-  let influencer = null;
-  if (data.data && data.data.length > 0) {
-    influencer = data.data[0]; // 返回第一个匹配的达人
-    
-    // 存入缓存（1小时有效期）
-    await setCache(cacheKey, influencer, 60 * 60 * 1000);
-  }
-  
-  return influencer; // 达人不存在返回null
-}
-
-// 导入cache工具函数
-// 注意：Chrome Extension中无法直接import，需要复制函数或使用chrome.storage直接操作
-async function setCache(key, data, ttl = 60 * 60 * 1000) {
-  const cacheKey = 'cache_' + key;
-  const cacheData = {
-    data: data,
-    timestamp: Date.now(),
-    ttl: ttl
-  };
-  
-  await chrome.storage.local.set({ [cacheKey]: cacheData });
-}
-
-async function getCache(key) {
-  const cacheKey = 'cache_' + key;
-  const result = await chrome.storage.local.get(cacheKey);
-  const cacheData = result[cacheKey];
-  
-  if (!cacheData) {
-    return null; // 缓存不存在
-  }
-  
-  // 检查是否过期
-  if (Date.now() - cacheData.timestamp > cacheData.ttl) {
-    // 缓存过期，删除
-    await chrome.storage.local.remove(cacheKey);
-    return null;
-  }
-  
-  return cacheData.data;
+async function getApiBaseUrl() {
+  const { apiBaseUrl } = await chrome.storage.local.get(['apiBaseUrl']);
+  return apiBaseUrl || 'https://lazyfirst.com'; // 默认生产环境地址
 }
 
 /**
- * 导入达人（核心逻辑）
+ * 带超时的fetch请求
  */
-async function importInfluencer(authorData) {
+async function fetchWithTimeout(url, options, timeout = CONFIG.API_TIMEOUT) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
   try {
-    const { apiUrl, accessToken, user } = await chrome.storage.local.get(['apiUrl', 'accessToken', 'user']);
-    
-    if (!apiUrl || !accessToken) {
-      throw new Error('未登录或API地址未配置');
-    }
-    
-    // 1. 检查达人是否存在
-    const existingInfluencer = await checkInfluencerExists(authorData.tiktokId);
-    
-    if (existingInfluencer) {
-      // 2a. 达人已存在 → 添加维护记录
-      await addMaintenanceRecord(existingInfluencer._id, authorData, apiUrl, accessToken);
-      
-      return {
-        success: true,
-        message: '已更新维护记录',
-        influencerId: existingInfluencer._id,
-        isNew: false
-      };
-    } else {
-      // 2b. 达人不存在 → 创建新达人
-      const newInfluencer = await createInfluencer(authorData, apiUrl, accessToken, user);
-      
-      // 添加维护记录
-      await addMaintenanceRecord(newInfluencer._id, authorData, apiUrl, accessToken);
-      
-      return {
-        success: true,
-        message: '已创建达人并添加维护记录',
-        influencerId: newInfluencer._id,
-        isNew: true
-      };
-    }
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
   } catch (error) {
-    console.error('导入达人失败:', error);
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('请求超时，请检查网络连接');
+    }
+    throw error;
+  }
+}
+
+/**
+ * 带重试的API请求
+ */
+async function apiRequest(url, options, retries = CONFIG.MAX_RETRIES) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetchWithTimeout(url, options);
+      
+      if (response.ok) {
+        return response;
+      }
+      
+      // 如果是401错误，可能是Token过期
+      if (response.status === 401 && i === retries - 1) {
+        // 最后一次重试失败，清除Token
+        await chrome.storage.local.remove(['accessToken', 'user', 'loginTime']);
+        throw new Error('认证失败，请重新登录');
+      }
+      
+      // 其他错误，继续重试
+      if (i < retries - 1) {
+        await sleep(1000 * (i + 1)); // 指数退避
+        continue;
+      }
+      
+      throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+    } catch (error) {
+      if (i === retries - 1) {
+        throw error;
+      }
+      
+      // 网络错误，继续重试
+      await sleep(1000 * (i + 1));
+    }
+  }
+}
+
+/**
+ * 睡眠函数
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 保存采集的数据（核心逻辑）
+ * 将数据存储到tiktok_extension_data表，不直接同步到influencer表
+ */
+async function saveCollectedData(authorData) {
+  try {
+    const { accessToken, user } = await chrome.storage.local.get(['accessToken', 'user']);
+    
+    if (!accessToken) {
+      throw new Error('未登录');
+    }
+    
+    // 获取API地址
+    const apiBaseUrl = await getApiBaseUrl();
+    
+    // 调用API保存数据到tiktok_extension_data表
+    console.log('保存采集的数据:', authorData.tiktokId);
+    
+    const response = await apiRequest(`${apiBaseUrl}/api/tiktok-extension-data`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tiktokId: authorData.tiktokId,
+        tiktokName: authorData.nickname || authorData.username,
+        followerCount: authorData.followerCount || 0,
+        estimatedGmv: authorData.estimatedGmv || 0,
+        monthlySalesCount: authorData.monthlySalesCount || 0,
+        avgVideoViews: authorData.avgVideoViews || 0,
+        collectedAt: authorData.collectedAt || new Date().toISOString(),
+        collectedBy: user ? user._id : null
+      })
+    });
+    
+    const result = await response.json();
+    
+    // 更新本地统计
+    await updateStats();
+    
+    return {
+      success: true,
+      message: '数据已保存，等待系统同步',
+      dataId: result.data._id
+    };
+  } catch (error) {
+    console.error('保存数据失败:', error);
     return {
       success: false,
       message: error.message
@@ -173,112 +175,44 @@ async function importInfluencer(authorData) {
 }
 
 /**
- * 创建新达人
+ * 更新本地统计
  */
-async function createInfluencer(authorData, apiUrl, accessToken, user) {
-  const influencerData = {
-    tiktokName: authorData.nickname || authorData.username,
-    tiktokId: authorData.tiktokId,
-    latestFollowers: authorData.followerCount || 0,
-    latestGmv: authorData.estimatedGmv || 0,
-    monthlySalesCount: authorData.monthlySalesCount || 0,
-    avgVideoViews: authorData.avgVideoViews || 0,
-    poolType: 'private',
-    assignedTo: user ? user._id : null
-  };
+async function updateStats() {
+  const { todayCount = 0, lastCollectTime } = await chrome.storage.local.get(['todayCount', 'lastCollectTime']);
   
-  const response = await fetch(`${apiUrl}/influencers`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(influencerData)
-  });
+  // 检查是否是同一天
+  const today = new Date().toDateString();
+  const lastCollectDay = lastCollectTime ? new Date(lastCollectTime).toDateString() : null;
   
-  if (!response.ok) {
-    throw new Error(`创建达人失败: ${response.status}`);
+  if (today !== lastCollectDay) {
+    // 新的一天，重置计数
+    await chrome.storage.local.set({
+      todayCount: 1,
+      lastCollectTime: Date.now()
+    });
+  } else {
+    // 同一天，增加计数
+    await chrome.storage.local.set({
+      todayCount: todayCount + 1,
+      lastCollectTime: Date.now()
+    });
   }
-  
-  return response.json();
 }
 
 /**
- * 添加维护记录
+ * 获取统计信息
  */
-async function addMaintenanceRecord(influencerId, authorData, apiUrl, accessToken) {
-  const maintenanceData = {
-    influencerId: influencerId,
-    followers: authorData.followerCount || 0,
-    gmv: authorData.estimatedGmv || 0,
-    monthlySalesCount: authorData.monthlySalesCount || 0,
-    avgVideoViews: authorData.avgVideoViews || 0,
-    poolType: 'private',
-    remark: 'Chrome插件自动更新',
-    maintainerId: (await chrome.storage.local.get('user')).user?._id,
-    maintainerName: (await chrome.storage.local.get('user')).user?.realName || 'Chrome插件'
-  };
-  
-  const response = await fetch(`${apiUrl}/influencer-maintenances`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(maintenanceData)
-  });
-  
-  if (!response.ok) {
-    throw new Error(`添加维护记录失败: ${response.status}`);
-  }
-  
-  return response.json();
-}
-
-/**
- * 批量导入达人
- */
-async function batchImportInfluencers(influencersData) {
-  const results = {
-    success: 0,
-    failed: 0,
-    skipped: 0,
-    details: []
-  };
-  
-  for (const authorData of influencersData) {
-    try {
-      const result = await importInfluencer(authorData);
-      
-      if (result.success) {
-        results.success++;
-        results.details.push({
-          tiktokId: authorData.tiktokId,
-          status: 'success',
-          message: result.message,
-          isNew: result.isNew
-        });
-      } else {
-        results.failed++;
-        results.details.push({
-          tiktokId: authorData.tiktokId,
-          status: 'failed',
-          message: result.message
-        });
-      }
-    } catch (error) {
-      results.failed++;
-      results.details.push({
-        tiktokId: authorData.tiktokId,
-        status: 'failed',
-        message: error.message
-      });
-    }
-  }
+async function getStats() {
+  const { todayCount = 0, lastCollectTime, totalCount = 0 } = await chrome.storage.local.get([
+    'todayCount',
+    'lastCollectTime',
+    'totalCount'
+  ]);
   
   return {
-    success: true,
-    results: results
+    todayCount,
+    lastCollectTime,
+    totalCount
   };
 }
 
@@ -286,14 +220,13 @@ async function batchImportInfluencers(influencersData) {
  * 检查认证状态
  */
 async function checkAuthStatus() {
-  const { accessToken, apiUrl, user, loginTime } = await chrome.storage.local.get([
+  const { accessToken, user, loginTime } = await chrome.storage.local.get([
     'accessToken',
-    'apiUrl',
     'user',
     'loginTime'
   ]);
   
-  if (!accessToken || !apiUrl) {
+  if (!accessToken) {
     return { isLoggedIn: false };
   }
   

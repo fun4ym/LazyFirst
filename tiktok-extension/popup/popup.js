@@ -1,7 +1,18 @@
 /**
  * LazyFirst TikTok 数据采集器 - Popup Script
- * 处理登录、显示状态、同步数据
+ * 处理登录、显示状态
  */
+
+console.log('LazyFirst Extension: Popup 加载');
+
+// 锁死的API地址（本地开发环境地址，测试时使用）
+const API_BASE_URL = 'http://localhost:3000'; // 本地开发环境
+
+// 登录错误限制配置
+const LOGIN_CONFIG = {
+  MAX_ATTEMPTS: 3, // 最大尝试次数
+  LOCKOUT_DURATION: 5 * 60 * 1000 // 锁定时间（5分钟）
+};
 
 console.log('LazyFirst Extension: Popup 加载');
 
@@ -10,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Popup DOM加载完成');
   checkLoginStatus();
   bindEvents();
+  loadSettings();
 });
 
 /**
@@ -45,6 +57,9 @@ function showLoginView() {
   console.log('显示登录视图');
   document.getElementById('login-view').style.display = 'block';
   document.getElementById('main-view').style.display = 'none';
+  
+  // 检查是否被锁定
+  checkLockoutStatus();
 }
 
 /**
@@ -89,14 +104,87 @@ function bindEvents() {
   // 退出按钮
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
   
-  // 立即同步按钮
-  document.getElementById('sync-now-btn').addEventListener('click', handleSyncNow);
+  // 查看数据按钮
+  document.getElementById('view-data-btn').addEventListener('click', handleViewData);
   
-  // 查看历史按钮
-  document.getElementById('view-history-btn').addEventListener('click', handleViewHistory);
+  // DEBUG模式开关
+  document.getElementById('debug-mode').addEventListener('change', handleDebugModeChange);
+}
+
+/**
+ * 加载设置
+ */
+async function loadSettings() {
+  const { debugMode } = await chrome.storage.local.get(['debugMode']);
+  document.getElementById('debug-mode').checked = debugMode || false;
+}
+
+/**
+ * 处理DEBUG模式开关变化
+ */
+async function handleDebugModeChange() {
+  const debugMode = document.getElementById('debug-mode').checked;
+  await chrome.storage.local.set({ debugMode });
+  console.log('DEBUG模式:', debugMode);
+}
+
+/**
+ * 检查锁定状态
+ */
+async function checkLockoutStatus() {
+  const lockoutData = await chrome.storage.local.get(['loginAttempts', 'lockoutUntil']);
   
-  // 设置按钮
-  document.getElementById('settings-btn').addEventListener('click', handleSettings);
+  if (lockoutData.lockoutUntil && Date.now() < lockoutData.lockoutUntil) {
+    // 还在锁定期间
+    showLockoutMessage(lockoutData.lockoutUntil);
+    return true;
+  } else if (lockoutData.lockoutUntil && Date.now() >= lockoutData.lockoutUntil) {
+    // 锁定已过期，清除锁定状态
+    await chrome.storage.local.remove(['loginAttempts', 'lockoutUntil']);
+  }
+  
+  return false;
+}
+
+/**
+ * 显示锁定消息
+ */
+function showLockoutMessage(lockoutUntil) {
+  const lockoutDiv = document.getElementById('lockout-message');
+  const loginBtn = document.getElementById('login-btn');
+  
+  lockoutDiv.style.display = 'block';
+  loginBtn.disabled = true;
+  
+  // 更新倒计时
+  updateLockoutTimer(lockoutUntil);
+}
+
+/**
+ * 更新锁定倒计时
+ */
+function updateLockoutTimer(lockoutUntil) {
+  const timerSpan = document.getElementById('lockout-timer');
+  
+  function update() {
+    const remaining = lockoutUntil - Date.now();
+    
+    if (remaining <= 0) {
+      // 锁定已过期
+      document.getElementById('lockout-message').style.display = 'none';
+      document.getElementById('login-btn').disabled = false;
+      chrome.storage.local.remove(['loginAttempts', 'lockoutUntil']);
+      return;
+    }
+    
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    timerSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    setTimeout(update, 1000);
+  }
+  
+  update();
 }
 
 /**
@@ -105,16 +193,16 @@ function bindEvents() {
 async function handleLogin() {
   console.log('处理登录...');
   
-  const apiUrl = document.getElementById('api-url').value.trim();
+  // 检查是否被锁定
+  const isLocked = await checkLockoutStatus();
+  if (isLocked) {
+    return;
+  }
+  
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
   
   // 验证输入
-  if (!apiUrl) {
-    showLoginError('请输入API地址');
-    return;
-  }
-  
   if (!username) {
     showLoginError('请输入用户名');
     return;
@@ -125,14 +213,15 @@ async function handleLogin() {
     return;
   }
   
-  // 禁用登录按钮
+  // 禁用登录按钮，显示加载状态
   const loginBtn = document.getElementById('login-btn');
+  const originalText = loginBtn.textContent;
   loginBtn.disabled = true;
-  loginBtn.textContent = '登录中...';
+  loginBtn.innerHTML = '<span class="loading-spinner"></span> 登录中...';
   
   try {
-    // 调用LazyFirst API登录
-    const response = await fetch(`${apiUrl}/auth/login`, {
+    // 调用LazyFirst API登录（使用锁死的API地址）
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -148,27 +237,67 @@ async function handleLogin() {
       // 存储Token和用户信息
       await chrome.storage.local.set({
         accessToken: data.token,
-        apiUrl: apiUrl,
+        apiBaseUrl: API_BASE_URL, // 存储API地址
         user: data.user,
         loginTime: Date.now()
       });
+      
+      // 清除登录错误计数
+      await chrome.storage.local.remove(['loginAttempts', 'lockoutUntil']);
       
       // 显示主视图
       showMainView(data.user);
       
       // 清除错误信息
       hideLoginError();
+      
+      // 清除密码字段（安全考虑）
+      document.getElementById('password').value = '';
     } else {
       console.error('登录失败:', data.message);
-      showLoginError(data.message || '登录失败');
+      
+      // 增加登录错误计数
+      await incrementLoginAttempts();
+      
+      showLoginError(data.message || '登录失败，请检查用户名和密码');
     }
   } catch (error) {
     console.error('登录请求失败:', error);
-    showLoginError('登录请求失败，请检查API地址和网络连接');
+    
+    // 增加登录错误计数
+    await incrementLoginAttempts();
+    
+    if (error.message.includes('Failed to fetch')) {
+      showLoginError('无法连接到服务器，请检查网络连接');
+    } else {
+      showLoginError('登录请求失败：' + error.message);
+    }
   } finally {
     // 恢复登录按钮
     loginBtn.disabled = false;
-    loginBtn.textContent = '登录';
+    loginBtn.textContent = originalText;
+  }
+}
+
+/**
+ * 增加登录错误计数
+ */
+async function incrementLoginAttempts() {
+  const { loginAttempts = 0 } = await chrome.storage.local.get(['loginAttempts']);
+  const newAttempts = loginAttempts + 1;
+  
+  if (newAttempts >= LOGIN_CONFIG.MAX_ATTEMPTS) {
+    // 达到最大尝试次数，锁定
+    const lockoutUntil = Date.now() + LOGIN_CONFIG.LOCKOUT_DURATION;
+    await chrome.storage.local.set({
+      loginAttempts: newAttempts,
+      lockoutUntil: lockoutUntil
+    });
+    
+    showLockoutMessage(lockoutUntil);
+  } else {
+    await chrome.storage.local.set({ loginAttempts: newAttempts });
+    showLoginError(`登录失败，还有 ${LOGIN_CONFIG.MAX_ATTEMPTS - newAttempts} 次机会`);
   }
 }
 
@@ -179,44 +308,21 @@ async function handleLogout() {
   console.log('处理退出登录...');
   
   // 清除存储
-  await chrome.storage.local.remove(['accessToken', 'apiUrl', 'user', 'loginTime']);
+  await chrome.storage.local.remove(['accessToken', 'apiBaseUrl', 'user', 'loginTime']);
   
   // 显示登录视图
   showLoginView();
 }
 
 /**
- * 处理立即同步
+ * 处理查看数据
  */
-async function handleSyncNow() {
-  console.log('处理立即同步...');
+async function handleViewData() {
+  console.log('处理查看数据...');
   
-  showStatus('同步功能开发中...', 'success');
-}
-
-/**
- * 处理查看历史
- */
-async function handleViewHistory() {
-  console.log('处理查看历史...');
-  
-  // 打开LazyFirst系统的达人管理页面
-  const { apiUrl } = await chrome.storage.local.get('apiUrl');
-  
-  if (apiUrl) {
-    const baseUrl = apiUrl.replace('/api', '');
-    chrome.tabs.create({ url: `${baseUrl}/influencer-managements` });
-  }
-}
-
-/**
- * 处理设置
- */
-async function handleSettings() {
-  console.log('处理设置...');
-  
-  // 打开选项页面
-  chrome.runtime.openOptionsPage();
+  // 打开LazyFirst系统的插件数据管理页面
+  const { apiBaseUrl } = await chrome.storage.local.get(['apiBaseUrl']);
+  chrome.tabs.create({ url: `${apiBaseUrl || API_BASE_URL}/settings/tiktok-extension-data` });
 }
 
 /**
@@ -225,11 +331,14 @@ async function handleSettings() {
 async function loadStats() {
   console.log('加载统计数据...');
   
-  // TODO: 从存储中读取今⽇同步数量、最后同步时间
-  const { todaySyncCount, lastSyncTime } = await chrome.storage.local.get(['todaySyncCount', 'lastSyncTime']);
-  
-  document.getElementById('today-sync-count').textContent = todaySyncCount || 0;
-  document.getElementById('last-sync-time').textContent = lastSyncTime || '--';
+  try {
+    // 从Background获取统计数据
+    const stats = await sendMessageToBackground({ type: 'GET_STATS' });
+    
+    document.getElementById('today-count').textContent = stats.todayCount || 0;
+  } catch (error) {
+    console.error('加载统计数据失败:', error);
+  }
 }
 
 /**
@@ -253,14 +362,8 @@ function hideLoginError() {
  * 显示状态消息
  */
 function showStatus(message, type) {
-  const statusDiv = document.getElementById('sync-status');
-  statusDiv.textContent = message;
-  statusDiv.className = `status-message ${type}`;
-  
-  // 3秒后自动隐藏
-  setTimeout(() => {
-    statusDiv.className = 'status-message';
-  }, 3000);
+  // 不再使用status消息，改为直接在页面上显示
+  console.log('状态消息:', message);
 }
 
 /**

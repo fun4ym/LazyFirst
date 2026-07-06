@@ -16,11 +16,6 @@
       </div>
       
       <div class="form-group">
-        <label for="api-url">API地址</label>
-        <input type="text" id="api-url" placeholder="https://lazyfirst.com/api" value="http://localhost:3001/api">
-      </div>
-      
-      <div class="form-group">
         <label for="username">用户名</label>
         <input type="text" id="username" placeholder="请输入用户名">
       </div>
@@ -33,6 +28,10 @@
       <button id="login-btn" class="btn-primary">登录</button>
       
       <div id="login-error" class="error-message"></div>
+      
+      <div id="lockout-message" class="lockout-message" style="display: none;">
+        登录失败次数过多，请等待 <span id="lockout-timer">5:00</span> 后重试
+      </div>
     </div>
     
     <!-- 已登录状态 -->
@@ -45,24 +44,27 @@
         <button id="logout-btn" class="btn-secondary">退出</button>
       </div>
       
-      <div class="stats">
-        <div class="stat-item">
-          <span class="stat-label">今日同步</span>
-          <span id="today-sync-count" class="stat-value">0</span>
+      <div class="status">
+        <div class="status-item">
+          <span class="status-label">采集状态</span>
+          <span id="collect-status" class="status-value">正在运行</span>
         </div>
-        <div class="stat-item">
-          <span class="stat-label">最后同步</span>
-          <span id="last-sync-time" class="stat-value">--</span>
+        <div class="status-item">
+          <span class="status-label">今日采集</span>
+          <span id="today-count" class="status-value">0</span>
+        </div>
+      </div>
+      
+      <div class="settings">
+        <div class="setting-item">
+          <label for="debug-mode">DEBUG模式（显示通知）</label>
+          <input type="checkbox" id="debug-mode">
         </div>
       </div>
       
       <div class="actions">
-        <button id="sync-now-btn" class="btn-primary">立即同步</button>
-        <button id="view-history-btn" class="btn-secondary">查看历史</button>
-        <button id="settings-btn" class="btn-secondary">设置</button>
+        <button id="view-data-btn" class="btn-secondary">查看数据</button>
       </div>
-      
-      <div id="sync-status" class="status-message"></div>
     </div>
   </div>
   

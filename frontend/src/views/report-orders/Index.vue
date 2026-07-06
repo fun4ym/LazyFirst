@@ -1770,7 +1770,6 @@ const handleGenerateByMonth = async () => {
     generatingByMonth.value = false
   }
 }
-}
 
 // 删除账单（仅限未结清状态）
 const handleDeleteBill = async (row) => {

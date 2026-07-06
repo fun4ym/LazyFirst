@@ -145,6 +145,9 @@
           <el-menu-item v-if="menuPermissions.initImport()" index="/settings/init-import">
             <span>{{ $t('menu.initImport') }}</span>
           </el-menu-item>
+          <el-menu-item v-if="menuPermissions.tiktokExtensionData()" index="/settings/tiktok-extension-data">
+            <span>{{ $t('menu.tiktokExtensionData') }}</span>
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -299,7 +302,10 @@ const menuPermissions = {
     // 初始化导入仅超级管理员可见
     const user = AuthManager.getUser()
     return user?.role?.name === '超级管理员'
-  }
+  },
+
+  // TikTok扩展数据 - 需要系统读取权限
+  tiktokExtensionData: () => hasPermission('system:read')
 }
 
 const showPasswordDialog = ref(false)
