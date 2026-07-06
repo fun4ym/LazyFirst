@@ -208,13 +208,13 @@ router.put('/:id/sync', authenticate, async (req, res) => {
       // 达人已存在，更新数据
       influencer.latestFollowers = data.followerCount;
       influencer.latestGmv = data.estimatedGmv;
-      influencer.tiktokName = data.tiktokName;
+      influencer.tiktokName = data.tiktokName || influencer.tiktokName;
       await influencer.save();
     } else {
       // 达人不存在，创建新达人
       influencer = new Influencer({
         companyId: req.companyId,
-        tiktokName: data.tiktokName,
+        tiktokName: data.tiktokName || data.tiktokId || '未知达人',
         tiktokId: data.tiktokId,
         latestFollowers: data.followerCount,
         latestGmv: data.estimatedGmv,
@@ -241,11 +241,11 @@ router.put('/:id/sync', authenticate, async (req, res) => {
     
     await maintenance.save();
     
-    // 更新数据同步状态
-    data.synced = true;
-    data.syncedAt = new Date();
-    data.influencerId = influencer._id;
-    await data.save();
+    // 更新数据同步状态（用 updateOne 避免整文档重新校验 required 字段导致 500）
+    await TiktokExtensionData.updateOne(
+      { _id: data._id },
+      { $set: { synced: true, syncedAt: new Date(), influencerId: influencer._id } }
+    );
     
     res.json({
       success: true,
@@ -328,14 +328,14 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           // 更新现有达人
           influencer.latestFollowers = data.followerCount;
           influencer.latestGmv = data.estimatedGmv;
-          influencer.tiktokName = data.tiktokName;
+          influencer.tiktokName = data.tiktokName || influencer.tiktokName;
           await influencer.save();
         } else {
-          // 创建新达人
-          influencer = new Influencer({
-            companyId: req.companyId,
-            tiktokName: data.tiktokName,
-            tiktokId: data.tiktokId,
+        // 创建新达人
+        influencer = new Influencer({
+          companyId: req.companyId,
+          tiktokName: data.tiktokName || data.tiktokId || '未知达人',
+          tiktokId: data.tiktokId,
             latestFollowers: data.followerCount,
             latestGmv: data.estimatedGmv,
             poolType: 'private',
@@ -361,11 +361,11 @@ router.post('/batch-sync', authenticate, async (req, res) => {
         
         await maintenance.save();
         
-        // 更新数据同步状态
-        data.synced = true;
-        data.syncedAt = new Date();
-        data.influencerId = influencer._id;
-        await data.save();
+        // 更新数据同步状态（用 updateOne 避免整文档重新校验 required 字段导致 500）
+        await TiktokExtensionData.updateOne(
+          { _id: data._id },
+          { $set: { synced: true, syncedAt: new Date(), influencerId: influencer._id } }
+        );
         
         results.success++;
         results.details.push({
