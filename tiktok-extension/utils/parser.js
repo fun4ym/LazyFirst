@@ -147,6 +147,65 @@ function extractContacts(bio) {
 }
 
 /**
+ * 格式化大数字为紧凑模式（1200 → "1.2K", 3500000 → "3.5M"）
+ */
+function formatCompactNumber(num) {
+  if (!num || isNaN(num)) return '-';
+  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(num);
+}
+
+/**
+ * 计算互动率百分比（点赞/播放量）
+ */
+function calculateEngagementRate(plays, likes) {
+  if (!plays || plays === 0) return '-';
+  const rate = (likes / plays) * 100;
+  return rate.toFixed(1) + '%';
+}
+
+/**
+ * 格式化时长（秒 → MM:SS 或 HH:MM:SS）
+ */
+function formatDuration(seconds) {
+  if (!seconds || isNaN(seconds)) return '-';
+  const s = Math.floor(seconds);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
+ * 格式化相对日期（如 "3天前" 返回 ISO 日期字符串）
+ */
+function formatRelativeDate(text) {
+  if (!text) return '-';
+  text = text.trim().toLowerCase();
+  const now = Date.now();
+  const dayMs = 86400000;
+
+  if (text.includes('s') || text === 'just now') return '今天';
+  if (text.includes('m')) {
+    const m = parseInt(text);
+    if (m < 60) return '今天';
+  }
+  if (text.includes('h')) {
+    return parseInt(text) + '小时前';
+  }
+  if (text.includes('d')) {
+    const days = parseInt(text);
+    if (days < 8) return days + '天前';
+    return Math.floor(days / 7) + '周前';
+  }
+  if (text.includes('w')) return parseInt(text) + '周前';
+  if (text.includes('月') || text.includes('month')) return text;
+
+  return text;
+}
+
+/**
  * 估算GMV（根据粉丝数和互动数据）
  */
 function estimateGMV(followerCount, avgVideoViews, engagementRate = 0.05) {
@@ -178,6 +237,10 @@ if (typeof module !== 'undefined' && module.exports) {
     parseRelativeDate,
     extractContacts,
     estimateGMV,
-    estimateFV
+    estimateFV,
+    formatCompactNumber,
+    calculateEngagementRate,
+    formatDuration,
+    formatRelativeDate
   };
 }

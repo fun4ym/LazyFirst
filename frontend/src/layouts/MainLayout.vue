@@ -38,6 +38,9 @@
           <el-menu-item v-if="menuPermissions.promptTemplateManagement()" index="/bd/prompt-template-management">
             <span>{{ $t('menu.promptTemplateManagement') }}</span>
           </el-menu-item>
+          <el-menu-item v-if="menuPermissions.chromeExtension()" index="/bd/chrome-extension">
+            <span>{{ $t('menu.chromeExtension') }}</span>
+          </el-menu-item>
         </el-sub-menu>
 
         <!-- 供应链 -->
@@ -145,9 +148,7 @@
           <el-menu-item v-if="menuPermissions.initImport()" index="/settings/init-import">
             <span>{{ $t('menu.initImport') }}</span>
           </el-menu-item>
-          <el-menu-item v-if="menuPermissions.tiktokExtensionData()" index="/settings/tiktok-extension-data">
-            <span>{{ $t('menu.tiktokExtensionData') }}</span>
-          </el-menu-item>
+
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -251,7 +252,7 @@ const menuPermissions = {
   dashboard: () => true,
 
   // BD工作台 - 需要达人或样品申请(BD)权限
-  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samplesBd:read', 'samplesBd:create', 'videos:read']),
+  bdWorkspace: () => hasAnyPermission(['influencers:read', 'influencers:create', 'samplesBd:read', 'samplesBd:create', 'videos:read', 'chromeExtension:read']),
   influencerList: () => hasPermission('influencers:read'),
   videoRegister: () => hasAnyPermission(['videos:read', 'videos:create', 'videos:update', 'videos:delete']),
   samplesBd: () => hasAnyPermission(['samplesBd:read', 'samplesBd:create']),
@@ -288,6 +289,7 @@ const menuPermissions = {
   // BD工作台 - 需要数字人管理或提示词模板管理权限
   digitalHumanManagement: () => hasPermission('ai_maker:manage'),
   promptTemplateManagement: () => hasPermission('ai_maker:manage'),
+  chromeExtension: () => true, // Chrome插件页面：有BD工作台权限即可见
 
   // 系统设置 - 需要对应模块的读取权限
   settings: () => hasAnyPermission(['users:read', 'roles:read', 'departments:read', 'commissions:read', 'baseData:read', 'systemModels:read', 'initImport:read']) || isSuperAdmin(),
@@ -302,10 +304,7 @@ const menuPermissions = {
     // 初始化导入仅超级管理员可见
     const user = AuthManager.getUser()
     return user?.role?.name === '超级管理员'
-  },
-
-  // TikTok扩展数据 - 所有已登录用户可见
-  tiktokExtensionData: () => true
+  }
 }
 
 const showPasswordDialog = ref(false)

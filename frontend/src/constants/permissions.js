@@ -43,6 +43,7 @@ export const MODULES = {
   COMMISSION_RULES: { code: 'commissions', name: '分润规则', parent: 'settings' },
   BASE_DATA: { code: 'baseData', name: '基础数据', parent: 'settings' },
   SYSTEM_MODELS: { code: 'systemModels', name: '系统模型', parent: 'settings' },
+  CHROME_EXTENSION: { code: 'chromeExtension', name: 'Chrome插件', parent: 'bdWorkspace' },
 }
 
 // 操作权限 - 对应按钮/控件
@@ -114,6 +115,7 @@ export const PERMISSION_MAP = {
   '/influencer-managements': [makePermission('influencers', 'read')],
   '/videos': [makePermission('videos', 'read'), makePermission('videos', 'create'), makePermission('videos', 'update'), makePermission('videos', 'delete')],
   '/samples-bd': [makePermission('samplesBd', 'read'), makePermission('samplesBd', 'create'), makePermission('samplesBd', 'update'), makePermission('samplesBd', 'delete')],
+  '/bd/chrome-extension': [], // Chrome插件：BD工作台权限即可，无额外要求
 
   // 供应链
   '/products': [makePermission('products', 'read')],

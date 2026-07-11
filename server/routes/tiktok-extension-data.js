@@ -15,15 +15,21 @@ const router = express.Router();
 router.post('/', authenticate, async (req, res) => {
   try {
     const {
-      tiktokId,
+      tiktokId: rawTiktokId,
       tiktokName,
+      nickname,
+      username,
       followerCount,
       estimatedGmv,
       monthlySalesCount,
       avgVideoViews,
+      collectedAt,
       rawData
     } = req.body;
-    
+
+    // 归一化 tiktokId：Chrome 插件采集到的可能是 "/@xxx" 形式，统一去掉前导斜杠
+    const tiktokId = (rawTiktokId || '').replace(/^\/+/, '').trim();
+
     // 验证必填字段
     if (!tiktokId) {
       return res.status(400).json({
@@ -31,6 +37,10 @@ router.post('/', authenticate, async (req, res) => {
         message: 'tiktokId为必填项'
       });
     }
+
+    // 昵称兜底：插件上报字段为 nickname/username，可能为空串；
+    // 后端模型 tiktokName 为必填，为空时回退到 tiktokId，避免 Mongoose 必填校验抛 500
+    const resolvedName = (tiktokName || nickname || username || '').trim() || tiktokId;
     
     // 检查是否已存在相同tiktokId的数据（同一公司）
     const existingData = await TiktokExtensionData.findOne({
@@ -40,7 +50,7 @@ router.post('/', authenticate, async (req, res) => {
     
     if (existingData) {
       // 更新现有数据
-      existingData.tiktokName = tiktokName || existingData.tiktokName;
+      existingData.tiktokName = resolvedName || existingData.tiktokName;
       existingData.followerCount = followerCount !== undefined ? followerCount : existingData.followerCount;
       existingData.estimatedGmv = estimatedGmv !== undefined ? estimatedGmv : existingData.estimatedGmv;
       existingData.monthlySalesCount = monthlySalesCount !== undefined ? monthlySalesCount : existingData.monthlySalesCount;
@@ -58,15 +68,17 @@ router.post('/', authenticate, async (req, res) => {
     }
     
     // 创建新数据
+    const parsedCollectedAt = collectedAt ? new Date(collectedAt) : null;
     const newData = new TiktokExtensionData({
       companyId: req.companyId,
       tiktokId,
-      tiktokName,
+      tiktokName: resolvedName,
       followerCount: followerCount || 0,
       estimatedGmv: estimatedGmv || 0,
       monthlySalesCount: monthlySalesCount || 0,
       avgVideoViews: avgVideoViews || 0,
       collectedBy: req.userId,
+      ...(parsedCollectedAt && !isNaN(parsedCollectedAt.getTime()) ? { collectedAt: parsedCollectedAt } : {}),
       rawData: rawData || {}
     });
     
@@ -121,12 +133,18 @@ router.get('/', authenticate, async (req, res) => {
     
     // 日期范围过滤
     if (startDate || endDate) {
-      query.collectedAt = {};
+      const dateRange = {};
       if (startDate) {
-        query.collectedAt.$gte = new Date(startDate);
+        const sd = new Date(startDate);
+        if (!isNaN(sd.getTime())) dateRange.$gte = sd;
       }
       if (endDate) {
-        query.collectedAt.$lte = new Date(endDate);
+        const ed = new Date(endDate);
+        if (!isNaN(ed.getTime())) dateRange.$lte = ed;
+      }
+      // 仅当存在有效日期时才加入查询，避免空对象 {} 触发 Mongoose 日期 cast 错误
+      if (Object.keys(dateRange).length > 0) {
+        query.collectedAt = dateRange;
       }
     }
     
@@ -158,6 +176,132 @@ router.get('/', authenticate, async (req, res) => {
       success: false,
       message: '获取数据列表失败'
     });
+  }
+});
+
+/**
+ * GET /api/tiktok-extension-data/influencer/:tiktokId
+ * 插件用：根据 tiktokId 返回达人的最新四指标（FV/GMV/MSS/APV）
+ */
+router.get('/influencer/:tiktokId', authenticate, async (req, res) => {
+  try {
+    const tiktokId = (req.params.tiktokId || '').replace(/^\/+/, '').trim();
+
+    if (!tiktokId) {
+      return res.status(400).json({
+        success: false,
+        message: 'tiktokId为必填项'
+      });
+    }
+
+    // 兼容两种存储格式：@username 和 username（CSV导入等常不带 @）
+    const searchIds = tiktokId.startsWith('@')
+      ? [tiktokId, tiktokId.replace(/^@/, '')]
+      : [tiktokId, '@' + tiktokId];
+
+    let influencer = await Influencer.findOne({
+      companyId: req.companyId,
+      tiktokId: { $in: searchIds }
+    }).select('tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews');
+
+    // 若 Influencer 表没有，尝试回退到最新一条采集数据（已同步未同步均可）
+    if (!influencer) {
+      const extData = await TiktokExtensionData.findOne({
+        companyId: req.companyId,
+        tiktokId: { $in: searchIds }
+      }).sort({ collectedAt: -1 });
+
+      if (extData) {
+        return res.json({
+          success: true,
+          data: {
+            tiktokId: extData.tiktokId,
+            tiktokName: extData.tiktokName || extData.tiktokId,
+            followers: extData.followerCount || 0,
+            totalLikes: extData.totalLikes || 0
+          }
+        });
+      }
+    }
+
+    if (!influencer) {
+      return res.status(404).json({
+        success: false,
+        message: '达人不存在'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        tiktokId: influencer.tiktokId,
+        tiktokName: influencer.tiktokName,
+        followers: influencer.latestFollowers || 0,
+        totalLikes: influencer.totalLikes || 0
+      }
+    });
+  } catch (error) {
+    console.error('获取达人指标失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取达人指标失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * GET /api/tiktok-extension-data/message-template
+ * 返回当前登录 BD 的私信模板（按 BD 账号各自配置）
+ */
+router.get('/message-template', authenticate, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const userId = req.userId || (req.user && req.user._id);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: '未获取到当前用户' });
+    }
+    const user = await User.findById(userId).select('messageTemplate realName username');
+    if (!user) {
+      return res.status(404).json({ success: false, message: '用户不存在' });
+    }
+    res.json({
+      success: true,
+      template: user.messageTemplate || '',
+      user: { realName: user.realName, username: user.username }
+    });
+  } catch (error) {
+    console.error('获取私信模板失败:', error);
+    res.status(500).json({ success: false, message: '获取私信模板失败: ' + error.message });
+  }
+});
+
+/**
+ * PUT /api/tiktok-extension-data/message-template
+ * 更新当前登录 BD 的私信模板
+ */
+router.put('/message-template', authenticate, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const userId = req.userId || (req.user && req.user._id);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: '未获取到当前用户' });
+    }
+    const { template } = req.body;
+    if (typeof template !== 'string') {
+      return res.status(400).json({ success: false, message: 'template 必须为字符串' });
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { messageTemplate: template },
+      { new: true }
+    ).select('messageTemplate');
+    if (!user) {
+      return res.status(404).json({ success: false, message: '用户不存在' });
+    }
+    res.json({ success: true, template: user.messageTemplate, message: '私信模板已保存' });
+  } catch (error) {
+    console.error('保存私信模板失败:', error);
+    res.status(500).json({ success: false, message: '保存私信模板失败: ' + error.message });
   }
 });
 
@@ -208,6 +352,13 @@ router.put('/:id/sync', authenticate, async (req, res) => {
       // 达人已存在，更新数据
       influencer.latestFollowers = data.followerCount;
       influencer.latestGmv = data.estimatedGmv;
+      // ★ 同步月销和平均播放：有有效值才覆盖，避免把旧维护数据刷成0
+      if (data.monthlySalesCount > 0) {
+        influencer.monthlySalesCount = data.monthlySalesCount;
+      }
+      if (data.avgVideoViews > 0) {
+        influencer.avgVideoViews = data.avgVideoViews;
+      }
       influencer.tiktokName = data.tiktokName || influencer.tiktokName;
       await influencer.save();
     } else {
@@ -218,6 +369,8 @@ router.put('/:id/sync', authenticate, async (req, res) => {
         tiktokId: data.tiktokId,
         latestFollowers: data.followerCount,
         latestGmv: data.estimatedGmv,
+        monthlySalesCount: data.monthlySalesCount || 0,
+        avgVideoViews: data.avgVideoViews || 0,
         poolType: 'private',
         assignedTo: req.userId
       });
@@ -328,6 +481,13 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           // 更新现有达人
           influencer.latestFollowers = data.followerCount;
           influencer.latestGmv = data.estimatedGmv;
+          // ★ 同步月销和平均播放：有有效值才覆盖，避免把旧维护数据刷成0
+          if (data.monthlySalesCount > 0) {
+            influencer.monthlySalesCount = data.monthlySalesCount;
+          }
+          if (data.avgVideoViews > 0) {
+            influencer.avgVideoViews = data.avgVideoViews;
+          }
           influencer.tiktokName = data.tiktokName || influencer.tiktokName;
           await influencer.save();
         } else {
@@ -338,6 +498,8 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           tiktokId: data.tiktokId,
             latestFollowers: data.followerCount,
             latestGmv: data.estimatedGmv,
+            monthlySalesCount: data.monthlySalesCount || 0,
+            avgVideoViews: data.avgVideoViews || 0,
             poolType: 'private',
             assignedTo: req.userId
           });

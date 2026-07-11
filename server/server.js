@@ -39,6 +39,7 @@ const digitalHumansRoutes = require('./routes/digital-humans');
 const productMediaRoutes = require('./routes/product-media');
 const aiMakerRoutes = require('./routes/ai-maker');
 const tiktokExtensionDataRoutes = require('./routes/tiktok-extension-data');
+const systemModelsRoutes = require('./routes/system-models');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -124,6 +125,7 @@ app.use('/api/digital-humans', digitalHumansRoutes);
 app.use('/api/product-media', productMediaRoutes);
 app.use('/api/ai-maker', aiMakerRoutes);
 app.use('/api/tiktok-extension-data', tiktokExtensionDataRoutes);
+app.use('/api/system-models', systemModelsRoutes);
 
 // 错误处理
 app.use(notFound);

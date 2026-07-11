@@ -7,11 +7,12 @@ console.log('LazyFirst Extension: Options 加载');
 
 // 默认设置
 const DEFAULT_SETTINGS = {
-  apiUrl: 'http://localhost:3001/api',
+  apiUrl: 'http://localhost:3000',
   autoSync: false,
   syncInterval: 60,
   showNotifications: true,
   showOverlay: true,
+  showVideoTags: true,
   showGmv: true,
   showFv: true,
   showBatchImport: true
@@ -49,6 +50,7 @@ async function loadSettings() {
     document.getElementById('sync-interval').value = settings.syncInterval || DEFAULT_SETTINGS.syncInterval;
     document.getElementById('show-notifications').checked = settings.showNotifications !== false;
     document.getElementById('show-overlay').checked = settings.showOverlay !== false;
+    document.getElementById('show-video-tags').checked = settings.showVideoTags !== false;
     document.getElementById('show-gmv').checked = settings.showGmv !== false;
     document.getElementById('show-fv').checked = settings.showFv !== false;
     document.getElementById('show-batch-import').checked = settings.showBatchImport !== false;
@@ -74,6 +76,7 @@ async function saveSettings() {
     syncInterval: parseInt(document.getElementById('sync-interval').value) || DEFAULT_SETTINGS.syncInterval,
     showNotifications: document.getElementById('show-notifications').checked,
     showOverlay: document.getElementById('show-overlay').checked,
+    showVideoTags: document.getElementById('show-video-tags').checked,
     showGmv: document.getElementById('show-gmv').checked,
     showFv: document.getElementById('show-fv').checked,
     showBatchImport: document.getElementById('show-batch-import').checked

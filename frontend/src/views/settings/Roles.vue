@@ -358,6 +358,14 @@ const menuTree = ref([
           { code: 'btn-edit', name: '编辑视频' },
           { code: 'btn-delete', name: '删除视频' }
         ]
+      },
+      {
+        name: 'Chrome插件',
+        code: 'chromeExtension',
+        operations: ['read'],
+        controls: [
+          { code: 'btn-download', name: '下载插件' }
+        ]
       }
     ]
   },

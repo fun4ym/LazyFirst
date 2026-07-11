@@ -1,11 +1,515 @@
 /**
  * LazyFirst TikTok 数据采集器 - Content Styles
- * 统一管理注入到TikTok页面的样式
+ * 配色：商务紫色系（主色 #7b1fa2 / 深紫 #4a148c / 浅紫 #9c4dcc）
  */
 
-/* 导入按钮基础样式 */
+/* ════════════════════════════════════════════
+   CSS 变量
+   ════════════════════════════════════════════ */
+:root {
+  --lf-primary: #7b1fa2;
+  --lf-primary-dark: #4a148c;
+  --lf-primary-light: #9c4dcc;
+  --lf-accent: #f3e5f5;
+  --lf-bg: #faf5ff;
+  --lf-border: #e8e4ef;
+  --lf-white: #ffffff;
+  --lf-text: #2d1b4e;
+  --lf-text-secondary: #7c6d8f;
+  --lf-success: #66bb6a;
+  --lf-success-bg: #e8f5e9;
+}
+
+/* ════════════════════════════════════════════
+   右下角紧凑覆盖层（搜索页视频卡片）
+   不挡住视频预览，只占右下角
+   ════════════════════════════════════════════ */
+.lf-compact-overlay {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 9998;
+  background: linear-gradient(135deg, rgba(123, 31, 162, 0.92) 0%, rgba(74, 20, 140, 0.95) 100%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 8px;
+  padding: 5px 7px;
+  min-width: auto;
+  max-width: 150px;
+  box-shadow: 0 2px 10px rgba(123, 31, 162, 0.4);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  cursor: default;
+  box-sizing: border-box;
+}
+
+.lf-compact-overlay:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(123, 31, 162, 0.4);
+}
+
+/* ── 数据统计行 ── */
+.lf-compact-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.lf-compact-stats.lf-search-stats {
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.lf-compact-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  padding: 3px 4px;
+}
+
+.lf-compact-stat .lf-compact-value {
+  font-size: 12px;
+}
+
+/* 只有点赞数据时的大字高亮样式 */
+.lf-compact-stat.lf-stat-highlight {
+  background: rgba(255, 255, 255, 0.22);
+  padding: 4px 8px;
+}
+
+.lf-compact-stat.lf-stat-highlight .lf-compact-value.lf-value-large {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.lf-compact-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.lf-compact-label {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 400;
+  margin-top: 1px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── loading 态（视频卡 / 达人卡读取中）── */
+.lf-compact-overlay.lf-loading,
+.lf-influencer-metrics-overlay.lf-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  min-width: 90px;
+}
+
+.lf-loading-text {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: lf-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes lf-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.lf-loading-skeleton {
+  display: flex;
+  gap: 4px;
+}
+
+.lf-loading-skeleton span {
+  width: 22px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.25) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.25) 75%);
+  background-size: 200% 100%;
+  animation: lf-shimmer 1.4s infinite;
+}
+
+@keyframes lf-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ════════════════════════════════════════════
+   右下角达人信息覆盖层（粉丝数 / 被赞总数 + 按钮）
+   ════════════════════════════════════════════ */
+.lf-influencer-metrics-overlay {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  z-index: 9997;
+  background: linear-gradient(135deg, rgba(123, 31, 162, 0.92) 0%, rgba(74, 20, 140, 0.95) 100%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 8px;
+  padding: 5px 7px;
+  min-width: auto;
+  max-width: 160px;
+  box-shadow: 0 2px 10px rgba(123, 31, 162, 0.4);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  cursor: default;
+  box-sizing: border-box;
+}
+
+.lf-influencer-metrics-overlay:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(123, 31, 162, 0.5);
+}
+
+.lf-influencer-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.lf-influencer-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  padding: 3px 4px;
+}
+
+.lf-influencer-metric-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.lf-influencer-metric-label {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+  margin-top: 1px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── 达人卡操作按钮区 ── */
+.lf-influencer-actions {
+  display: flex;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.lf-scrape-btn,
+.lf-msg-btn {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 3px 6px;
+  line-height: 1.3;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+/* scrape 主按钮：紫色渐变 */
+.lf-scrape-btn {
+  background: linear-gradient(135deg, #ffffff 0%, #f3e5f5 100%);
+  color: var(--lf-primary-dark);
+}
+
+.lf-scrape-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.lf-scrape-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* send message 次按钮：描边白 */
+.lf-msg-btn {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.lf-msg-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.65);
+  transform: translateY(-1px);
+}
+
+.lf-msg-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* 采集中 / 打开中 */
+.lf-scrape-btn.lf-collecting,
+.lf-msg-btn.lf-collecting {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* 已 scrape */
+.lf-scrape-btn.lf-collected {
+  background: linear-gradient(135deg, var(--lf-success) 0%, #81c784 100%);
+  color: #ffffff;
+  cursor: default;
+}
+
+/* ════════════════════════════════════════════
+   达人主页采集按钮组
+   ════════════════════════════════════════════ */
+.lf-profile-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.lf-profile-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lf-btn-collect-author {
+  background: linear-gradient(135deg, var(--lf-primary) 0%, var(--lf-primary-light) 100%);
+  color: white;
+}
+
+.lf-btn-collect-author:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(123, 31, 162, 0.4);
+}
+
+.lf-btn-collect-videos {
+  background: linear-gradient(135deg, var(--lf-primary-light) 0%, #ba68c8 100%);
+  color: white;
+}
+
+.lf-btn-collect-videos:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(156, 77, 204, 0.4);
+}
+
+.lf-profile-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.lf-profile-btn.lf-collecting {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.lf-profile-btn.lf-collected {
+  background: linear-gradient(135deg, var(--lf-success) 0%, #81c784 100%);
+}
+
+/* ════════════════════════════════════════════
+   视频详情页面板（右上角浮动）
+   ════════════════════════════════════════════ */
+.lazyfirst-overlay {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: var(--lf-white);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  min-width: 280px;
+  max-width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border: 1px solid var(--lf-border);
+}
+
+.lazyfirst-overlay h4 {
+  margin: 0 0 16px 0;
+  color: var(--lf-primary);
+  font-size: 18px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--lf-accent);
+  padding-bottom: 8px;
+}
+
+/* ── 视频面板标题头 ── */
+.lf-video-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.lf-video-panel-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lf-video-panel-author {
+  font-size: 12px;
+  color: var(--lf-primary);
+  font-weight: 600;
+  background: var(--lf-accent);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* ── 视频面板统计 ── */
+.lf-video-panel-stats {
+  background: var(--lf-accent);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.lf-video-panel-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.lf-video-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--lf-white);
+  border-radius: 8px;
+  padding: 8px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.lf-video-stat-icon {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.lf-video-stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lf-text);
+}
+
+.lf-video-stat-label {
+  font-size: 10px;
+  color: var(--lf-text-secondary);
+  font-weight: 400;
+}
+
+.lf-video-panel-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.lf-video-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--lf-white);
+  border-radius: 6px;
+  padding: 6px 4px;
+}
+
+.lf-video-metric-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lf-primary);
+}
+
+.lf-video-metric-label {
+  font-size: 10px;
+  color: var(--lf-text-secondary);
+}
+
+/* ════════════════════════════════════════════
+   通知提示栏
+   ════════════════════════════════════════════ */
+.lazyfirst-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--lf-white);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  max-width: 400px;
+  animation: lf-slide-in 0.3s ease;
+  border: 1px solid var(--lf-border);
+}
+
+.lazyfirst-notification.success {
+  border-left: 4px solid var(--lf-success);
+}
+
+.lazyfirst-notification.error {
+  border-left: 4px solid #e53935;
+}
+
+.lazyfirst-notification.info {
+  border-left: 4px solid var(--lf-primary-light);
+}
+
+@keyframes lf-slide-in {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes lf-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(400px); opacity: 0; }
+}
+
+/* ════════════════════════════════════════════
+   加载动画
+   ════════════════════════════════════════════ */
+.lazyfirst-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--lf-accent);
+  border-top: 3px solid var(--lf-primary);
+  border-radius: 50%;
+  animation: lf-spin 1s linear infinite;
+}
+
+@keyframes lf-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ════════════════════════════════════════════
+   旧样式兼容（逐步废弃）
+   ════════════════════════════════════════════ */
 .lazyfirst-import-btn {
-  background: linear-gradient(135deg, #fe2c55 0%, #25f4ee 100%);
+  background: linear-gradient(135deg, var(--lf-primary) 0%, var(--lf-primary-light) 100%);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -13,14 +517,14 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(254, 44, 85, 0.3);
+  box-shadow: 0 2px 8px rgba(123, 31, 162, 0.3);
   transition: all 0.3s ease;
   z-index: 9999;
 }
 
 .lazyfirst-import-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(254, 44, 85, 0.4);
+  box-shadow: 0 4px 12px rgba(123, 31, 162, 0.4);
 }
 
 .lazyfirst-import-btn:active {
@@ -33,161 +537,9 @@
   transform: none;
 }
 
-/* 批量导入按钮 */
-#lazyfirst-batch-import-btn {
-  position: fixed;
-  top: 60px;
-  right: 20px;
-  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
-  padding: 12px 24px;
-  font-size: 16px;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-}
-
-/* 复选框样式 */
-.lazyfirst-checkbox {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  z-index: 9999;
-  accent-color: #fe2c55;
-}
-
-/* 覆盖层样式 */
-.lazyfirst-overlay {
-  position: fixed;
-  top: 60px;
-  right: 20px;
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-  min-width: 280px;
-  max-width: 320px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.lazyfirst-overlay h4 {
-  margin: 0 0 16px 0;
-  color: #fe2c55;
-  font-size: 18px;
-  font-weight: 700;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 8px;
-}
-
-.lazyfirst-overlay .metric {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.lazyfirst-overlay .metric-label {
-  color: #666;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.lazyfirst-overlay .metric-value {
-  color: #333;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.lazyfirst-overlay .import-btn {
-  width: 100%;
-  margin-top: 12px;
-  background: linear-gradient(135deg, #fe2c55 0%, #25f4ee 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.lazyfirst-overlay .import-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(254, 44, 85, 0.4);
-}
-
-/* 加载动画 */
-.lazyfirst-loading {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #fe2c55;
-  border-radius: 50%;
-  animation: lazyfirst-spin 1s linear infinite;
-}
-
-@keyframes lazyfirst-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 通知提示 */
-.lazyfirst-notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: white;
-  border-radius: 8px;
-  padding: 16px 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10000;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  max-width: 400px;
-  animation: lazyfirst-slide-in 0.3s ease;
-}
-
-.lazyfirst-notification.success {
-  border-left: 4px solid #4caf50;
-}
-
-.lazyfirst-notification.error {
-  border-left: 4px solid #fe2c55;
-}
-
-.lazyfirst-notification.info {
-  border-left: 4px solid #2196f3;
-}
-
-@keyframes lazyfirst-slide-in {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes lazyfirst-slide-out {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-}
-
-/* 响应式适配 */
+/* ════════════════════════════════════════════
+   响应式适配
+   ════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .lazyfirst-overlay {
     top: auto;
@@ -197,12 +549,50 @@
     min-width: auto;
     max-width: none;
   }
-  
-  #lazyfirst-batch-import-btn {
-    top: auto;
-    bottom: 80px;
-    right: 10px;
-    left: 10px;
-    text-align: center;
+
+  .lf-compact-overlay {
+    min-width: auto;
+    max-width: 120px;
+    padding: 4px 5px;
+    top: 4px;
+    right: 4px;
+  }
+
+  .lf-compact-stats.lf-search-stats {
+    gap: 2px;
+  }
+
+  .lf-compact-value {
+    font-size: 10px;
+  }
+
+  .lf-compact-label {
+    font-size: 7px;
+  }
+
+  .lf-influencer-metrics-overlay {
+    min-width: auto;
+    max-width: 120px;
+    padding: 4px 5px;
+    bottom: 4px;
+    right: 4px;
+  }
+
+  .lf-scrape-btn,
+  .lf-msg-btn {
+    font-size: 8px;
+    padding: 2px 4px;
+  }
+
+  .lf-influencer-metrics-grid {
+    gap: 2px;
+  }
+
+  .lf-influencer-metric-value {
+    font-size: 10px;
+  }
+
+  .lf-influencer-metric-label {
+    font-size: 7px;
   }
 }

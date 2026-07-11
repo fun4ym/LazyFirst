@@ -22,7 +22,7 @@ body {
 
 /* Header */
 header {
-  background: linear-gradient(135deg, #775999 0%, #8a6bb0 100%);
+  background: linear-gradient(135deg, #7b1fa2 0%, #9c4dcc 100%);
   color: white;
   padding: 24px;
   border-radius: 8px;
@@ -88,7 +88,7 @@ header p {
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus {
   outline: none;
-  border-color: #775999;
+  border-color: #7b1fa2;
 }
 
 /* Checkbox */
@@ -124,7 +124,7 @@ header p {
 .btn-primary {
   flex: 1;
   padding: 12px;
-  background: #775999;
+  background: #7b1fa2;
   color: white;
   border: none;
   border-radius: 6px;
@@ -135,15 +135,15 @@ header p {
 }
 
 .btn-primary:hover {
-  background: #5c3d7a;
+  background: #4a148c;
 }
 
 .btn-secondary {
   flex: 1;
   padding: 12px;
   background: white;
-  color: #775999;
-  border: 1px solid #775999;
+  color: #7b1fa2;
+  border: 1px solid #7b1fa2;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
@@ -194,7 +194,7 @@ header p {
 .stat-card .stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: #775999;
+  color: #7b1fa2;
   margin-bottom: 4px;
 }
 

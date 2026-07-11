@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LazyFirst TikTok 数据采集器",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "在浏览TikTok时自动采集达人数据并同步到LazyFirst系统",
   
   "permissions": [
@@ -30,14 +30,26 @@
   "content_scripts": [
     {
       "matches": ["https://www.tiktok.com/*"],
-      "js": ["content/content.js"],
+      "js": [
+        "utils/parser.js",
+        "content/components/VideoStatsOverlay.js",
+        "content/components/InfluencerMetricsOverlay.js",
+        "content/content.js"
+      ],
       "css": ["content/content.css"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   
   "options_page": "options/options.html",
-  
+
+  "web_accessible_resources": [
+    {
+      "resources": ["content/injected.js"],
+      "matches": ["https://www.tiktok.com/*"]
+    }
+  ],
+
   "icons": {
     "16": "assets/icons/icon16.png",
     "48": "assets/icons/icon48.png",

@@ -260,12 +260,19 @@ const routes = [
         component: () => import('@/views/bd/PromptTemplateManagement.vue'),
         meta: { title: '提示词模板管理', permission: 'ai_maker:manage' }
       },
-      // TikTok扩展数据采集页面
+      // BD Chrome插件介绍页面（含采集数据管理）
       {
-        path: 'settings/tiktok-extension-data',
-        name: 'TiktokExtensionData',
-        component: () => import('@/views/settings/TiktokExtensionData.vue'),
-        meta: { title: 'TikTok扩展数据', requiresAuth: true }
+        path: 'bd/chrome-extension',
+        name: 'ChromeExtension',
+        component: () => import('@/views/bd/ChromeExtension.vue'),
+        meta: { title: 'Chrome插件' }
+      },
+      // BD 私信模板配置页面
+      {
+        path: 'settings/message-template',
+        name: 'MessageTemplate',
+        component: () => import('@/views/settings/MessageTemplate.vue'),
+        meta: { title: '私信模板', requiresAuth: true }
       }
     ]
   }

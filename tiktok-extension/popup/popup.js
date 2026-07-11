@@ -346,7 +346,7 @@ async function handleViewData() {
   const base = frontendUrl || FRONTEND_BASE_URL;
   
   // 带上扩展的登录Token，前端AuthManager会自动从URL恢复登录态（避免空白/跳登录页）
-  let url = `${base}/settings/tiktok-extension-data`;
+  let url = `${base}/bd/chrome-extension`;
   if (accessToken) {
     url += `?token=${encodeURIComponent(accessToken)}`;
   }
