@@ -373,5 +373,34 @@ docker network connect tap-system_default <container-name>
 3. 考虑自动化部署流水线，减少人工操作风险
 
 ---
-*文档更新日期: 2026-04-22*
+### 2026-07-14 阶段三数据库字段收敛 + 优化修复
+**更新日期**: 2026年7月14日
+**执行人**: 小垃圾
+**授权人**: 主人
+
+#### 数据库字段收敛（phase3）
+1. **Order→ReportOrder 单表合并**: 扩展 ReportOrder 字段，orders/commissions/performance 路由改为 ReportOrder，删除 Order 模型
+2. **枚举统一**: Activity/Product.sampleMethod 中文→online/offline（activities 11+products 351 条已迁移）
+3. **兼容字段回填**: SampleManagement.influencerId 回填 301 条（354条保留兼容字段）
+4. **冗余清理**: 删除 SampleManagement.isSampleSent、Shop.products 等无消费方字段
+
+#### 优化修复
+1. **Dockerfile**: 修复 npm ci 因 lock 陈旧失败，最终方案=重新生成干净 lock + 恢复 npm ci
+2. **Bill.js**: 移除 billNo 字段 redundant unique:true，消除 Mongoose 重复索引警告
+
+#### 迁移脚本（4个，均支持 --mode/--uri/--apply）
+- `server/migrate_activity_samplemethod.js`：中文枚举→online/offline
+- `server/migrate_sample_compat.js`：兼容字段回填
+- `server/migrate_order_to_reportorder.js`：Order→ReportOrder 合并
+- `server/migrate_clean_fields.js`：清理冗余字段
+
+#### 关键经验
+1. **npm ci 失败排查**: lock 文件陈旧缺传递依赖 → `npm install --package-lock-only` 无效 → 需删除 lock 重装生成干净文件
+2. **迁移脚本在容器内执行**: 服务器宿主机无 node_modules，须 `docker exec tap-backend node /app/server/migrate_xxx.js` 在容器内跑
+3. **容器内连 MongoDB**: 用 `--uri=mongodb://...@mongodb:27017/...`（docker 内网服务名），公网 IP 在容器内不通
+4. **E11000 冲突容错**: 迁移脚本每条记录包 try/catch，唯一索引冲突 skip 不中断
+5. **冒烟测试**: server/smoke-test.cjs 可验证后端各接口完整性
+
+---
+*文档更新日期: 2026-07-14*
 *更新人: 小垃圾*
