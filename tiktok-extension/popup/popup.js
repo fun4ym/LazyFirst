@@ -6,7 +6,10 @@
 console.log('LazyFirst Extension: Popup 加载');
 
 // 前端页面地址（本地开发环境前端运行在5174端口；生产环境前端与API同域，改为系统域名即可）
-const FRONTEND_BASE_URL = 'http://localhost:5174';
+// 优先引用 utils/constants.js 的统一常量（由 popup.html 注入），未注入时回退本地值
+const FRONTEND_BASE_URL = (typeof FRONTEND_BASE_URL_DEV !== 'undefined' && FRONTEND_BASE_URL_DEV)
+  ? FRONTEND_BASE_URL_DEV
+  : 'http://localhost:5174';
 
 // 历史遗留：不再硬编码API地址，改为从storage动态读取
 // 默认线上地址：https://tap.lazyfirst.com

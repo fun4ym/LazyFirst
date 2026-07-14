@@ -549,6 +549,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { getSampleStatusType } from '@/utils/sampleStatus'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
@@ -694,15 +695,7 @@ const getSampleRowClassName = ({ row }) => {
 }
 
 // 获取寄样状态类型
-const getSampleStatusType = (status) => {
-  const typeMap = {
-    pending: 'warning',    // 待审核 - 黄色
-    shipping: 'primary',   // 寄样中 - 蓝色
-    sent: 'success',       // 已寄样 - 绿色
-    refused: 'danger'      // 不合作 - 红色
-  }
-  return typeMap[status] || 'info'
-}
+
 
 // 获取寄样状态文本
 const getSampleStatusText = (status) => {

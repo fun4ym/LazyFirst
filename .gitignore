@@ -51,6 +51,10 @@ tapdb_backup/
 server/test_*.js
 server/check_*.js
 
+# 历史遗留产物归档（保留备查，不提交到 git）
+_legacy/
+dist/
+
 # CodeBuddy计划文件
 .codebuddy/plans/
 

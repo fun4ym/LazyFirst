@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
-const { Commission, Order, Influencer } = require('../models');
+const { Commission, ReportOrder, Influencer } = require('../models');
 
 const router = express.Router();
 
@@ -84,8 +84,8 @@ router.post('/calculate', authenticate, authorize('commissions:calculate'), asyn
       });
     }
 
-    // 查找订单
-    const order = await Order.findOne({
+    // 查找订单（阶段三：Order 已合并到 ReportOrder）
+    const order = await ReportOrder.findOne({
       _id: orderId,
       companyId: req.companyId
     });

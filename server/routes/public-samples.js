@@ -179,7 +179,7 @@ router.get('/', async (req, res) => {
         gmv: sample.influencerId?.latestGmv || 0,
         salesman: sample.salesmanId?.realName || sample.salesmanId?.username || sample.salesman || '',
         shippingInfo: sample.shippingInfo,
-        isSampleSent: sample.isSampleSent,
+        isSampleSent: sample.sampleStatus === 'sent',
         sampleStatus: sample.sampleStatus,
         trackingNumber: sample.trackingNumber,
         shippingDate: sample.shippingDate,
@@ -261,7 +261,6 @@ router.put('/batch', async (req, res) => {
 
     if (sampleStatus !== undefined) {
       updateData.sampleStatus = sampleStatus;
-      updateData.isSampleSent = sampleStatus === 'sent';
       updateData.sampleStatusUpdatedAt = new Date();
       if (sampleStatus === 'sent') {
         if (logisticsCompany !== undefined) updateData.logisticsCompany = logisticsCompany;

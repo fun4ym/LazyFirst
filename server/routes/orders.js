@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
-const { Order } = require('../models');
+const { ReportOrder } = require('../models');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -50,12 +50,12 @@ router.get('/', authenticate, authorize('orders:read'), async (req, res) => {
       query.shopName = { $regex: shopName, $options: 'i' };
     }
 
-    const orders = await Order.find(query)
+    const orders = await ReportOrder.find(query)
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
       .sort({ createTime: -1 });
 
-    const total = await Order.countDocuments(query);
+    const total = await ReportOrder.countDocuments(query);
 
     res.json({
       success: true,
@@ -88,10 +88,12 @@ router.post('/', authenticate, authorize('orders:create'), async (req, res) => {
   try {
     const orderData = {
       ...req.body,
-      companyId: req.companyId
+      companyId: req.companyId,
+      // ReportOrder.summaryDate 必填，创建时兜底为今日
+      summaryDate: req.body.summaryDate || new Date().toISOString().slice(0, 10)
     };
 
-    const order = await Order.create(orderData);
+    const order = await ReportOrder.create(orderData);
 
     res.status(201).json({
       success: true,
@@ -187,7 +189,13 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
           creatorId: req.user._id
         };
 
-        await Order.findOneAndUpdate(
+        // summaryDate 兜底：优先用订单创建日，否则今日（ReportOrder 必填）
+        if (!orderData.summaryDate) {
+          orderData.summaryDate = orderData.createTime
+            ? new Date(orderData.createTime).toISOString().slice(0, 10)
+            : new Date().toISOString().slice(0, 10);
+        }
+        await ReportOrder.findOneAndUpdate(
           { orderNo: orderData.orderNo, companyId: req.companyId },
           orderData,
           { upsert: true, new: true }

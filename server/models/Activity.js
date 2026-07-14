@@ -26,7 +26,7 @@ const activitySchema = new mongoose.Schema({
   },
   sampleMethod: {
     type: String,
-    enum: ['线上', '线下', ''],
+    enum: ['online', 'offline', ''],
     default: ''
   },
   cooperationCountry: {

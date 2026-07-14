@@ -1,63 +1,49 @@
-# TAP系统 - TikTok达人管理与分润平台
+# LazyFirst - TikTok 达人管理与分润平台
 
-一个多租户SaaS系统，用于管理TikTok达人、样品申请、订单和分润计算。
+一个多租户 SaaS 系统，用于管理 TikTok 达人（CRM）、样品申请、订单报表、分润计算、BD 日报、AI 工具箱（数字人/提示词/视频生成）以及 Chrome 插件数据采集。
+
+> 项目原名 `tap-system`（package.json 中 `name` 仍为 `tap-system`），对外品牌名为 **LazyFirst**。
 
 ## 技术栈
 
-- **后端**: Node.js + Express
-- **数据库**: MongoDB (Mongoose)
-- **认证**: JWT (jsonwebtoken)
-- **验证**: express-validator
-- **前端**: Vue 3 + Element Plus
+| 层 | 技术 |
+|---|---|
+| 后端 | Node.js + Express 4 + Mongoose 8 + JWT（`jsonwebtoken`） |
+| 安全/校验 | `helmet`、`express-rate-limit`、`express-validator` |
+| 数据库 | MongoDB（多租户按 `companyId` 隔离），生产用真实 MongoDB |
+| 前端 | Vue 3 + Element Plus + Vue Router 4 + Pinia + vue-i18n |
+| 插件 | Chrome 扩展（Manifest V3），见 `tiktok-extension/` |
+| 部署 | Docker（`docker-compose.yml` / `Dockerfile` / `Dockerfile.frontend`）+ Nginx（`nginx.conf`） |
+
+> ⚠️ 注意：早期文档曾描述使用 `mongodb-memory-server`（内存库），该包仅作为 `devDependencies` 遗留，**生产/常规开发均使用真实 MongoDB**，不存在"重启丢数据"问题。
 
 ## 项目结构
 
 ```
 .
-├── server/                          # 后端服务
-│   ├── config/
-│   │   └── database.js              # 数据库配置
-│   ├── middleware/
-│   │   ├── auth.js                  # 认证中间件
-│   │   ├── errorHandler.js          # 错误处理
-│   │   └── notFound.js              # 404处理
-│   ├── models/                      # 数据模型
-│   │   ├── User.js                  # 用户
-│   │   ├── Company.js               # 公司
-│   │   ├── Influencer.js            # 达人
-│   │   ├── Product.js               # 商品
-│   │   ├── Order.js                 # 订单
-│   │   ├── SampleRequest.js         # 样品申请
-│   │   ├── SampleManagement.js      # 寄样管理
-│   │   └── ReportOrder.js           # 报告订单
-│   ├── routes/                      # 路由
-│   ├── scripts/                     # 工具脚本
-│   │   ├── export-data.js           # 数据导出
-│   │   ├── import-data.js           # 数据导入
-│   │   ├── backup.sh                # 数据库备份
-│   │   └── restore.sh               # 数据库恢复
-│   └── server.js                    # 服务器入口
-├── frontend/                        # 前端应用
+├── server/                     # 后端服务（Express + Mongoose）
+│   ├── config/database.js      # 数据库连接
+│   ├── middleware/             # auth / errorHandler / notFound / filterByDataScope
+│   ├── models/                 # 34 个 Mongoose 模型（见 database-schema.md）
+│   ├── routes/                 # 34 个路由文件
+│   ├── services/               # 业务服务层（当前仅 volcano-api.js，待扩充）
+│   ├── utils/                  # 工具函数
+│   └── server.js               # 服务入口
+├── frontend/                   # 前端应用（Vue 3 + Vite）
 │   └── src/
-│       ├── views/                   # 页面
-│       ├── components/              # 组件
-│       └── utils/                   # 工具函数
-├── DATABASE_MIGRATION_PLAN.md       # 数据库迁移规划
-├── MONGODB_ATLAS_SETUP.md           # Atlas配置指南
-├── SETUP_MONGODB.md                 # MongoDB安装指南
-└── README.md                        # 本文件
+│       ├── views/              # 页面（约 46 个 .vue）
+│       ├── components/         # 公共组件
+│       ├── stores/             # Pinia stores
+│       ├── i18n/               # zh.js / en.js 国际化
+│       └── router/             # 路由
+├── tiktok-extension/           # Chrome 插件子项目（Manifest V3）
+├── _legacy/                    # 历史遗留产物归档（不提交 git，仅供追溯）
+├── m-memory/                   # 操作记忆（本地规则/服务器/暗号等）
+├── database-schema.md          # 数据库模型文档（34 个模型）
+├── ARCHITECTURE.md             # 系统架构说明
+├── RULES.md                    # 第一顺位操作规则（开工前必读）
+└── README.md
 ```
-
-## 数据库配置
-
-### 当前状态
-项目默认使用 `mongodb-memory-server`（内存数据库），每次重启数据会丢失。
-
-### 推荐方案
-- **开发环境**: 本地 MongoDB
-- **生产环境**: MongoDB Atlas（免费版 512MB）
-
-详见 [DATABASE_MIGRATION_PLAN.md](DATABASE_MIGRATION_PLAN.md)
 
 ## 快速开始
 
@@ -65,296 +51,91 @@
 
 ```bash
 # 后端
-cd server
-npm install
+cd server && npm install
 
 # 前端
-cd frontend
-npm install
+cd frontend && npm install
 ```
 
 ### 2. 配置环境变量
 
-在项目根目录创建 `.env` 文件：
+在 `server/` 下创建 `.env`（参考 `m-memory/m-intimacy.md` 与 `m-local.md`）：
 
 ```env
 NODE_ENV=development
-PORT=3000
-
-# MongoDB连接字符串
-# 本地开发
-MONGODB_URI=mongodb://localhost:27017/tap_system
-
-# 生产环境 (Atlas)
-# MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/tap-system?retryWrites=true&w=majority
-
-# JWT配置
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+PORT=3000                      # 后端端口（实际以 .env 为准）
+MONGODB_URI=mongodb://localhost:27017/lazyfirst
+JWT_SECRET=your-secret
 JWT_EXPIRE=7d
+CORS_ORIGIN=http://localhost:5173
 ```
 
-### 3. 安装并启动 MongoDB（本地开发）
+> 前端开发服务器默认端口为 Vite 的 `5173`（可用 `frontend/vite.config.js` 的 `server.port` 覆盖）。前后端端口以本地 `.env` / 配置文件为准，避免文档与运行环境不符。
+
+### 3. 本地启动
 
 ```bash
-# macOS (使用Homebrew)
-brew install mongodb-community
-brew services start mongodb-community
+# 后端（nodemon 热重载）
+cd server && npm run dev
 
-# 验证安装
-mongosh
+# 前端（另开终端）
+cd frontend && npm run dev
 ```
 
-### 4. 启动服务
+健康检查：`GET /health` → `{ status: 'ok' }`；API 基址：`/api`。
+
+### 4. 生产构建与部署
 
 ```bash
-# 后端
-cd server
-npm run dev
+# 前端构建
+cd frontend && npm run build     # 产物 frontend/dist/
 
-# 前端（新终端）
-cd frontend
-npm run dev
+# Docker 部署（见 docker-compose.yml）
+docker compose up -d --build
 ```
 
-访问 http://localhost:5173
+> ⚠️ 生产 `docker-compose.yml` **禁止**以 `volumes: - ./server:/app/server` 方式挂载代码目录（会覆盖容器内 node_modules 导致 502）。代码应通过 Dockerfile `COPY` + `npm install` 打包进镜像。
 
-## 数据备份与恢复
+## 主要 API 模块（`/api` 前缀）
 
-### 备份数据库
-```bash
-cd server/scripts
-./backup.sh
-```
+| 模块 | 路由前缀 | 说明 |
+|---|---|---|
+| 认证 | `/api/auth` | 登录/注册/当前用户 |
+| 用户/角色/部门 | `/api/users` `/api/roles` `/api/departments` | RBAC |
+| 达人管理 | `/api/influencer-managements` | 达人 CRM 主模块 |
+| 商品/店铺/活动 | `/api/products` `/api/shops` `/api/activities` | 商品与活动配置 |
+| 订单/报表订单 | `/api/orders` `/api/report-orders` | 订单原始表 + 报表去重表 |
+| 样品 | `/api/samples` `/api/public/samples` | 寄样管理（含公开页） |
+| 分润/分润规则 | `/api/commissions` `/api/commission-rules` | 分润计算 |
+| BD 日报 | `/api/bd-daily` | BD 日报统计 |
+| 统计看板 | `/api/dashboard` `/api/product-stats` | 概览聚合 |
+| 招募 | `/api/recruitments` `/api/public/recruitment` | 达人招募 |
+| 视频/插件数据 | `/api/videos` `/api/tiktok-extension-data` | 视频登记 + 插件采集 |
+| AI 工具箱 | `/api/ai-models` `/api/digital-humans` `/api/ai-maker` `/api/system-models` | 数字人/提示词/视频生成 |
+| 供应商 | `/api/suppliers` | 供应商管理 |
+| 初始化/导入 | `/api/initialization` `/api/init-import` | 样品导入与系统初始化 |
 
-### 恢复数据库
-```bash
-cd server/scripts
-./restore.sh backups/backup_20240104_120000.tar.gz
-```
-
-### 导出数据（JSON格式）
-```bash
-cd server/scripts
-node export-data.js
-```
-
-### 导入数据
-```bash
-cd server/scripts
-node import-data.js ../backups/data-export-xxx.json
-```
-
-## 默认账号
-
-| 用户名 | 密码 | 角色 |
-|--------|------|------|
-| admin | admin123 | 超级管理员 |
-
-## 生产部署
-
-1. 配置 MongoDB Atlas（详见 [MONGODB_ATLAS_SETUP.md](MONGODB_ATLAS_SETUP.md)）
-2. 更新 `.env` 文件中的 `MONGODB_URI`
-3. 设置强密码的 `JWT_SECRET`
-4. 执行数据迁移（如果需要）
-5. 设置定时备份
-6. 配置监控告警
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "username": "testuser",
-  "password": "password123",
-  "realName": "张三",
-  "phone": "13800138000",
-  "companyId": "company_id",
-  "roleId": "role_id"
-}
-```
-
-#### 登录
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "username": "testuser",
-  "password": "password123"
-}
-```
-
-#### 获取当前用户
-```http
-GET /api/auth/me
-Authorization: Bearer <token>
-```
-
-### 达人管理接口
-
-#### 获取达人列表
-```http
-GET /api/influencers?page=1&limit=10&poolType=private
-Authorization: Bearer <token>
-```
-
-#### 创建达人
-```http
-POST /api/influencers
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "tiktokInfo": {
-    "displayName": "达人名称",
-    "tiktokId": "tiktok_id"
-  },
-  "basicInfo": {
-    "phone": "13800138000"
-  }
-}
-```
-
-#### 分配达人给BD
-```http
-POST /api/influencers/:id/assign
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "assignedTo": "bd_user_id"
-}
-```
-
-#### 回收达人到公海
-```http
-POST /api/influencers/:id/reclaim
-Authorization: Bearer <token>
-```
-
-### 订单管理接口
-
-#### 获取订单列表
-```http
-GET /api/orders?page=1&limit=10&status=completed
-Authorization: Bearer <token>
-```
-
-#### 创建订单
-```http
-POST /api/orders
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "influencerId": "influencer_id",
-  "productId": "product_id",
-  "orderNo": "ORDER001",
-  "totalAmount": 1990.00,
-  "commissionRate": 0.15
-}
-```
-
-### 分润管理接口
-
-#### 获取分润记录
-```http
-GET /api/commissions?page=1&limit=10&status=pending
-Authorization: Bearer <token>
-```
-
-#### 计算分润
-```http
-POST /api/commissions/calculate
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "orderId": "order_id"
-}
-```
+完整模型与字段见 [database-schema.md](database-schema.md)；系统架构见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## 核心功能
 
-### 1. 多租户隔离
-- 所有数据按 `companyId` 隔离
-- 用户只能访问自己公司的数据
-- API自动添加租户过滤
-
-### 2. 达人CRM管理
-- **公海/私海池**: 自动管理达人归属
-- **流动规则**: 支持自动回收和手动分配
-- **维护记录**: 跟踪数据变动、配合度、询价
-- **视频打分**: 综合TikTok数据和销售数据
-- **达人画像**: 基于历史和近期数据计算评分
-
-### 3. 分润计算
-- 订单完成后自动查找关联样品申请
-- 根据达人和订单信息计算分润
-- 支持自定义分润比例
-- 记录详细的分润历史
-
-### 4. 权限控制
-- 基于角色的权限管理
-- 支持细粒度权限控制
-- JWT认证保证安全
+- **多租户隔离**：所有数据按 `companyId` 隔离，API 自动注入租户过滤。
+- **达人 CRM**：公海/私海池、流动规则、维护记录、视频打分、达人画像。
+- **样品与订单**：样品申请→寄样→订单关联→报表去重→分润计算闭环。
+- **BD 工具箱**：BD 日报、数字人、提示词模板、AI 生成。
+- **Chrome 插件**：TikTok 页面采集达人/视频指标，写入 `tiktok_extension_data`。
 
 ## 开发规范
 
-### 代码风格
-- 使用ES6+语法
-- async/await处理异步
-- 统一的错误处理
-- RESTful API设计
+- 风格：ES6+ / async-await / 统一错误处理 / RESTful。
+- 模型统一从 `server/models/index.js` 导出，路由集中引入。
+- 提交规范：`feat:` / `fix:` / `docs:` / `refactor:` / `test:` / `chore:`。
+- 开工前必读 `RULES.md`；连线上操作需主人授权。
 
-### Git提交规范
-```
-feat: 新功能
-fix: 修复bug
-docs: 文档更新
-style: 代码格式调整
-refactor: 重构
-test: 测试
-chore: 构建/工具
-```
+## 文档索引
 
-## 部署
-
-### CloudBase部署
-
-1. 登录CloudBase控制台
-2. 创建云开发环境
-3. 配置环境变量
-4. 部署云函数
-
-### Docker部署
-
-```bash
-docker build -t tap-system .
-docker run -p 3000:3000 tap-system
-```
-
-## 测试
-
-```bash
-npm test
-```
-
-## 常见问题
-
-### MongoDB连接失败
-- 检查MongoDB是否启动
-- 检查连接字符串是否正确
-- 检查防火墙设置
-
-### JWT验证失败
-- 检查JWT_SECRET是否配置
-- 检查token是否过期
-- 检查token格式是否正确
-
-### 跨域问题
-- 在.env中配置CORS_ORIGIN
-- 确保前端URL正确配置
-
-## 联系方式
-
-如有问题，请联系开发团队。
+- `RULES.md`：第一顺位操作规则
+- `database-schema.md`：数据库全部 34 个模型
+- `ARCHITECTURE.md`：系统架构与数据流
+- `DEPLOYMENT.md` / `QUICK_START.md` / `TROUBLESHOOTING.md`：部署与排障
+- `_legacy/`：历史遗留产物（已归档，不参与构建）

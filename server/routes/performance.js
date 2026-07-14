@@ -91,8 +91,8 @@ router.post('/generate', authenticate, authorize('performance:create'), async (r
       });
     }
 
-    const Order = require('../models/Order');
-    const orders = await Order.find({
+    const ReportOrder = require('../models/ReportOrder');
+    const orders = await ReportOrder.find({
       companyId: req.companyId,
       status: 'completed',
       createdAt: {

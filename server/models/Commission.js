@@ -18,12 +18,13 @@ const commissionSchema = new mongoose.Schema({
   },
   orderId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order',
+    ref: 'ReportOrder',
     required: true
   },
   sampleRequestId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'SampleRequest'
+    // 修正悬空引用：项目无 SampleRequest 模型，样品相关统一为 SampleManagement
+    ref: 'SampleManagement'
   },
   orderAmount: {
     type: Number,

@@ -2,8 +2,16 @@
  * LazyFirst TikTok 数据采集器 - 常量定义
  */
 
-// API地址（默认）
-const DEFAULT_API_URL = 'http://localhost:3001/api';
+// API地址（默认开发环境：后端运行在 3000 端口，见 frontend/.env.development / vite.config.js proxy）
+// 注意：popup/background 实际优先读取用户在 options 页配置的 apiUrl（chrome.storage），
+// 以下常量仅作为最终回退与集中声明，避免端口硬编码散落多处导致联调失败。
+const DEFAULT_API_URL = 'http://localhost:3000/api';
+
+// 前端管理页面地址（开发环境 vite 端口，见 frontend/vite.config.js port:5174）
+const FRONTEND_BASE_URL_DEV = 'http://localhost:5174';
+
+// 生产环境回退域名（background.js 内另有一份，二者需保持一致；如有变更请主人确认后统一修改）
+const PROD_API_FALLBACK = 'https://tap.lazyfirst.com';
 
 // TikTok页面URL模式
 const TIKTOK_URL_PATTERNS = {

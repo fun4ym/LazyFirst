@@ -48,11 +48,6 @@ const shopSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
-  // 店铺关联的商品ID列表（用于公开样品申请查询）
-  products: {
-    type: [String],
-    default: []
-  }
 }, {
   timestamps: true
 });

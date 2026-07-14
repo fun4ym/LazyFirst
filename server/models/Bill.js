@@ -9,8 +9,7 @@ const billSchema = new mongoose.Schema({
   // 账单号
   billNo: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   // 有效日期区间
   validStartDate: {

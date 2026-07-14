@@ -250,8 +250,8 @@
           <el-col :span="12">
             <el-form-item :label="$t('activities.sampleMethod')">
               <el-select v-model="form.sampleMethod" :placeholder="$t('activities.selectSampleMethod')" style="width: 100%">
-                <el-option :label="$t('activities.online')" value="线上" />
-                <el-option :label="$t('activities.offline')" value="线下" />
+                <el-option :label="$t('activities.online')" value="online" />
+                <el-option :label="$t('activities.offline')" value="offline" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -702,7 +702,7 @@ const form = reactive({
   name: '',
   type: 'self_initiated',
   tapLink: '',
-  sampleMethod: '线上',
+  sampleMethod: 'online',
   cooperationCountry: '',
   startDate: '',
   endDate: '',
@@ -1041,7 +1041,7 @@ const resetForm = () => {
     name: '',
     type: 'self_initiated',
     tapLink: '',
-    sampleMethod: '线上',
+    sampleMethod: 'online',
     cooperationCountry: defaultCountry?.name || '',
     startDate: '',
     endDate: '',

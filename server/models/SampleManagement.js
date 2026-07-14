@@ -54,11 +54,6 @@ const sampleManagementSchema = new mongoose.Schema({
     type: String,
     comment: '收货信息'
   },
-  isSampleSent: {
-    type: Boolean,
-    default: false,
-    comment: '是否寄样（兼容旧数据）'
-  },
   // 寄样状态：pending-待审核, shipping-寄样中, sent-已寄样, refused-不合作
   sampleStatus: {
     type: String,
@@ -188,7 +183,6 @@ sampleManagementSchema.index({ companyId: 1, date: 1, influencerId: 1, productId
 // 辅助索引
 sampleManagementSchema.index({ companyId: 1, influencerId: 1 });
 sampleManagementSchema.index({ companyId: 1, productId: 1 });
-sampleManagementSchema.index({ companyId: 1, isSampleSent: 1 });
 sampleManagementSchema.index({ companyId: 1, isOrderGenerated: 1 });
 sampleManagementSchema.index({ companyId: 1, salesmanId: 1 });
 sampleManagementSchema.index({ companyId: 1, shopId: 1 });

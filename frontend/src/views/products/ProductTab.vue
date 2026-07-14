@@ -465,8 +465,8 @@
                 <el-col :span="12">
                   <el-form-item :label="$t('product.sampleMethod')">
                     <el-select v-model="config.sampleMethod" :placeholder="$t('common.select')" style="width: 100%">
-                      <el-option :label="$t('product.onlineMethod')" value="线上" />
-                      <el-option :label="$t('product.offlineMethod')" value="线下" />
+                      <el-option :label="$t('product.onlineMethod')" value="online" />
+                      <el-option :label="$t('product.offlineMethod')" value="offline" />
                     </el-select>
                   </el-form-item>
                 </el-col>

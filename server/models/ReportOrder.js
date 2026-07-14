@@ -236,6 +236,23 @@ const reportOrderSchema = new mongoose.Schema({
     type: String,
     default: '',
     comment: '结清账单号'
+  },
+  // —— 阶段三：从 Order 合并而来的字段（Order 收敛为单表 ReportOrder）——
+  totalAmount: {
+    type: Number,
+    default: 0,
+    comment: '订单总金额（合并自 Order，供 commissions/performance 使用）'
+  },
+  commissionRate: {
+    type: Number,
+    default: 0.15,
+    comment: '佣金率（合并自 Order，供 commissions 使用）'
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'cancelled'],
+    default: 'pending',
+    comment: '订单状态（合并自 Order，供 performance 报表过滤）'
   }
 }, {
   timestamps: true

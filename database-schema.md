@@ -1,11 +1,16 @@
 # BD达人管理系统 - 数据库设计
 
+> **⚠️ 文档更新说明（2026-07-14）**
+> 本文档原始版本仅记录 **24 个模型**，经《项目优化方案-20260714.md》勘察，实际 `server/models/` 共有 **34 个模型文件**。
+> 下方"## 数据库集合列表"仅保留原始 24 个模型的逐字段详述；**新增模型与字段偏离**统一在文末「附录：模型清单校正（34 个）」中说明，避免与逐字段详述冲突。
+> 已知冗余/悬空引用点见《项目优化方案-20260714.md》第 3 章，本文档仅做事实补充，不含改动。
+
 ## 技术栈
 - 数据库: MongoDB (Mongoose ODM)
 - 后端: Node.js + Express
 - 前端: Vue.js 3 + Element Plus
 
-## 数据库集合列表（24个模型）
+## 数据库集合列表（原始 24 个模型，字段详述见下；完整 34 个见文末附录）
 
 ### 1. users（用户表）
 ```javascript
@@ -740,3 +745,48 @@ Company ─┬── User ──── Role
 - 生成规则：`活动名称 + 系统时间 + 1126` 取16位MD5哈希
 - 存储在 `recruitments.identificationCode` 字段
 - 通过 `POST /api/recruitments/:id/refresh-code` 手动刷新
+
+---
+
+## 附录：模型清单校正（共 34 个，2026-07-14 勘察）
+
+> 实际 `server/models/` 共 34 个文件（含 `index.js`）。原始文档列出 24 个，**缺失 10 个**，另有部分已记录模型字段已实质偏离。
+
+### A. 原始文档已记录（24 个，字段详述见上文）
+users, companies, roles, departments, influencer_managements(Influencer), products(Product), orders(Order), sample_managements(SampleManagement), report_orders(ReportOrder), commissions(Commission), commission_rules(CommissionRule), activities(Activity), activity_histories(ActivityHistory), influencer_maintenances(InfluencerMaintenance), base_data(BaseData), bd_daily(BdDaily), performances(Performance), bills(Bill), shops(Shop), shop_contacts(ShopContact), shop_ratings(ShopRating), shop_trackings(ShopTracking), recruitments(Recruitment), temp_id_mappings(TempIdMapping)
+
+### B. 文档缺失的 10 个模型（新增）
+
+| 模型文件 | 集合/中文名 | 用途 | 主要字段（节选） |
+|---|---|---|---|
+| `Video.js` | videos / 视频 | 达人视频登记，关联样品与商品 | `companyId`, `sampleId`(→SampleManagement), `productId`(→Product), `tiktokProductId`, 播放/点赞/评论/分享指标 |
+| `TiktokExtensionData.js` | tiktok_extension_data / 插件采集 | Chrome 插件采集的达人原始数据，待同步到 Influencer | `companyId`, `tiktokId`, `tiktokName`, `followerCount` 等 |
+| `DigitalHuman.js` | digital_humans / 数字人 | BD 工具箱：数字人配置 | `companyId`, 名称/形象/配置 |
+| `AiModel.js` | ai_models / AI 模型 | BD 工具箱：AI 模型配置 | `companyId`, 模型名/类型/参数 |
+| `PointsTransaction.js` | points_transactions / 点数交易 | 达人点数赚取/消耗历史 | `influencerId`(→Influencer), `type`(earn/consume/gift), `amount` |
+| `PromptTemplate.js` | prompt_templates / 提示词模板 | BD 工具箱：提示词模板 | `companyId`, 标题/内容/分类 |
+| `PageVisit.js` | page_visits / 页面访问 | 页面访问埋点 | `companyId`, 路径/访客/时长 |
+| `VideoGenerationTask.js` | video_generation_tasks / 视频生成任务 | AI 视频生成任务状态 | `influencerId`, `productId`, `prompt`, `status` |
+| `Supplier.js` | suppliers / 供应商 | 供应链：供应商管理 | `companyId`, 名称/联系方式 |
+| `ActivityHistory.js` | activity_histories / 活动历史 | 活动变更历史（已在 A 中，字段需补全） | 活动快照/操作人/时间 |
+
+> 注：`ActivityHistory` 已在原始文档 A 中列出但字段节略，其余 9 个为完全缺失；完整字段以 `server/models/*.js` 源码为准。
+
+### C. 已记录模型中已知的字段偏离 / 冗余点（详见《项目优化方案-20260714.md》第 3 章）
+
+| 模型 | 问题 |
+|---|---|
+| `Order` | `storeId` ref `Store`（**模型不存在，悬空**）；`activityId`/`orderDate`/`products`/`totalAmount`/`commissionRate` 等"兼容字段"导入流程不写入 |
+| `ReportOrder` | 与 `Order` 字段大面积重复（Excel 导入字段/6 佣金率/7 预计佣金/7 实际佣金/退货退款/打款字段），需明确职责边界 |
+| `SampleManagement` | 三组兼容旧字段并存：`isSampleSent`(Boolean) vs `sampleStatus`；`influencerAccount`(String) vs `influencerId`；`salesman`(String) vs `salesmanId` |
+| `Influencer` | `latestFollowers`/`latestGmv`/`latestMaintainerName` 等为反范式快照，与 `InfluencerMaintenance` 冗余（有意缓存） |
+| `Commission` | `sampleRequestId` ref `SampleRequest`（**模型不存在**，应为 `SampleManagement`） |
+| `Shop` | 新增 `products:[String]` 与 `Product.shopId` 构成双向冗余 |
+| `Activity` | `sampleMethod` 枚举 `['线上','线下','']` 与 `Product.activityConfigs[].sampleMethod` 的 `online/offline` 不一致 |
+| `TempIdMapping` | 仅 Excel 导入临时用，导入后应清理 / 加 TTL |
+
+### D. 索引一致性
+- 所有表均按 `companyId` 建索引（一致，保留）。
+- `ReportOrder` 唯一索引 `{orderNo, subOrderNo, companyId}`；`Order` 无唯一约束（合并前需先解决去重语义）。
+- `SampleManagement` 唯一索引 `{companyId, date, influencerId, productId}`；`isSampleSent` 索引应随字段废弃移除。
+

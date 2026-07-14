@@ -500,7 +500,7 @@ async function importSamples(data, companyId, creatorId) {
         salesman: salesmanName, // 保留兼容字段
         shippingInfo: row['收货信息'] || '',
         sampleImage: row['样品图片'] || '',
-        isSampleSent: row['是否寄样'] === '是' || row['是否寄样'] === true,
+        sampleStatus: (row['是否寄样'] === '是' || row['是否寄样'] === true) ? 'sent' : 'pending',
         trackingNumber: row['发货单号'] || '',
         shippingDate: shippingDate,
         logisticsCompany: row['物流公司'] || '',
@@ -513,7 +513,7 @@ async function importSamples(data, companyId, creatorId) {
 
       // 更新时不覆盖的字段
       const protectedFields = [
-        'isSampleSent', 'sampleStatus', 'refusalReason',
+        'sampleStatus', 'refusalReason',
         'sampleStatusUpdatedBy', 'sampleStatusUpdatedAt',
         'trackingNumber', 'shippingDate', 'logisticsCompany', 'receivedDate',
         'fulfillmentTime', 'isAdPromotion', 'adPromotionTime', 'isOrderGenerated',

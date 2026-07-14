@@ -119,14 +119,11 @@ router.get('/', authenticate, authorize('samples:read', 'samplesBd:read'), filte
       }
     }
 
-    // 寄样状态筛选
+    // 寄样状态筛选（isSampleSent 兼容映射为 sampleStatus）
     if (sampleStatus) {
       query.sampleStatus = sampleStatus;
     } else if (isSampleSent !== undefined) {
-      query.isSampleSent = isSampleSent === 'true';
-      if (isSampleSent === 'true') {
-        query.sampleStatus = 'sent';
-      }
+      query.sampleStatus = isSampleSent === 'true' ? 'sent' : { $ne: 'sent' };
     }
 
     // 是否出单筛选
@@ -490,7 +487,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       influencerId: influencerId,
       salesmanId: salesmanId || req.user._id,
       shippingInfo: shippingInfo || '',
-      isSampleSent: isSampleSent || false,
+      sampleStatus: isSampleSent ? 'sent' : 'pending',
       trackingNumber: trackingNumber || '',
       shippingDate: shippingDate ? new Date(shippingDate) : undefined,
       logisticsCompany: logisticsCompany || '',
@@ -586,7 +583,6 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
       updateData.sampleStatus = sampleStatus;
       updateData.sampleStatusUpdatedBy = req.user._id;
       updateData.sampleStatusUpdatedAt = new Date();
-      updateData.isSampleSent = sampleStatus === 'sent';
 
       if (sampleStatus === 'sent') {
         if (req.body.logisticsCompany !== undefined) {
@@ -1110,7 +1106,7 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           influencerId: influencerObj._id,     // ★ ObjectId
           salesmanId: matchedSalesmanId,       // ★ ObjectId
           shippingInfo: row['收货信息'] || '',
-          isSampleSent: row['是否寄样'] === '是' || row['是否寄样'] === true,
+          sampleStatus: (row['是否寄样'] === '是' || row['是否寄样'] === true) ? 'sent' : 'pending',
           trackingNumber: row['发货单号'] || '',
           shippingDate: shippingDate,
           logisticsCompany: row['物流公司'] || '',

@@ -729,6 +729,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch, computed } from 'vue'
+import { getSampleStatusType } from '@/utils/sampleStatus'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -884,14 +885,7 @@ const truncateText = (text, maxLength) => {
   return text.substring(0, maxLength) + '...'
 }
 
-const getSampleStatusType = (status) => {
-  const typeMap = {
-    pending: 'warning',
-    sent: 'success',
-    refused: 'danger'
-  }
-  return typeMap[status] || 'info'
-}
+
 
 const getSampleStatusText = (status) => {
   const textMap = {

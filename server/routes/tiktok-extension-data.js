@@ -99,6 +99,62 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 /**
+ * POST /api/tiktok-extension-data/batch-videos
+ * 批量保存插件采集的达人视频数据
+ * 供Chrome插件「采集视频数据」按钮调用（content.js -> SAVE_COLLECTED_VIDEOS）
+ *
+ * 说明：TiktokExtensionData 模型聚焦达人维度指标，未单独建模视频列表。
+ * 视频作为采集补充数据，定位/创建对应达人的采集记录后暂存进 rawData.videos，
+ * 复用已有 Object 字段，无需新增集合或迁移。后续如需正式建模可专项处理。
+ */
+router.post('/batch-videos', authenticate, async (req, res) => {
+  try {
+    const { tiktokId: rawTiktokId, videos, collectedAt } = req.body;
+
+    // 归一化 tiktokId（与 POST / 保持一致，去掉前导斜杠）
+    const tiktokId = (rawTiktokId || '').replace(/^\/+/, '').trim();
+
+    if (!tiktokId) {
+      return res.status(400).json({ success: false, message: 'tiktokId为必填项' });
+    }
+
+    if (!Array.isArray(videos) || videos.length === 0) {
+      return res.status(400).json({ success: false, message: 'videos不能为空数组' });
+    }
+
+    // 定位该达人的采集记录；不存在则创建（视频作为采集补充数据暂存 rawData.videos）
+    let data = await TiktokExtensionData.findOne({ companyId: req.companyId, tiktokId });
+    if (!data) {
+      data = new TiktokExtensionData({
+        companyId: req.companyId,
+        tiktokId,
+        tiktokName: tiktokId,
+        collectedBy: req.userId
+      });
+    }
+
+    const rawData = data.rawData && typeof data.rawData === 'object' ? data.rawData : {};
+    rawData.videos = videos;
+    data.rawData = rawData;
+    data.collectedAt = collectedAt ? new Date(collectedAt) : new Date();
+    await data.save();
+
+    res.status(201).json({
+      success: true,
+      message: `已保存 ${videos.length} 个视频数据`,
+      count: videos.length,
+      data: { _id: data._id, tiktokId, videoCount: videos.length }
+    });
+  } catch (error) {
+    console.error('批量保存视频数据失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '保存视频数据失败: ' + error.message
+    });
+  }
+});
+
+/**
  * GET /api/tiktok-extension-data
  * 获取采集的数据列表
  * 供系统管理页面调用

@@ -4,6 +4,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
+const { ReportOrder, Bill, SampleManagement, Video, User } = require('../models');
 
 const router = express.Router();
 
@@ -105,7 +106,6 @@ router.get('/', authenticate, authorize('orders:read'), filterByDataScope({ modu
 
     console.log('[查询条件] query.commissionSettlementTime:', JSON.stringify(query.commissionSettlementTime));
 
-    const ReportOrder = require('../models/ReportOrder');
 
     // 处理排序
     let sortOptions = { summaryDate: -1 };
@@ -176,7 +176,6 @@ router.post('/import', authenticate, authorize('orders:create'), upload.single('
 
     console.log('File received:', req.file.path, req.file.originalname);
 
-    const ReportOrder = require('../models/ReportOrder');
     console.log('Reading Excel file...');
 
     const workbook = XLSX.readFile(req.file.path);
@@ -424,7 +423,6 @@ function parseExcelDate(value) {
 // 测试端点：查询数据库中的订单
 router.get('/debug/orders', authenticate, authorize('orders:read'), async (req, res) => {
   try {
-    const ReportOrder = require('../models/ReportOrder');
     const orders = await ReportOrder.find({ companyId: req.companyId })
       .select('orderNo subOrderNo productName productPrice orderQuantity shopName orderStatus')
       .limit(10);
@@ -451,10 +449,6 @@ router.get('/debug/orders', authenticate, authorize('orders:read'), async (req, 
  */
 router.post('/match-bd', authenticate, authorize('orders:update'), async (req, res) => {
   try {
-    const ReportOrder = require('../models/ReportOrder');
-    const SampleManagement = require('../models/SampleManagement');
-    const Video = require('../models/Video');
-    const User = require('../models/User');
 
     // 获取所有订单记录
     const orders = await ReportOrder.find({ companyId: req.companyId });
@@ -658,8 +652,6 @@ router.post('/match-bd', authenticate, authorize('orders:update'), async (req, r
 router.post('/bills/generate', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const { orderIds } = req.body;
-    const ReportOrder = require('../models/ReportOrder');
-    const Bill = require('../models/Bill');
 
     if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
       return res.status(400).json({
@@ -799,7 +791,6 @@ router.post('/bills/generate', authenticate, authorize('orders:update'), async (
 router.get('/bills', authenticate, authorize('orders:read'), async (req, res) => {
   try {
     const { page = 1, limit = 10, billNo, isSettled, startDate, endDate, validDate } = req.query;
-    const Bill = require('../models/Bill');
 
     // 构建查询条件
     const query = { companyId: req.companyId };
@@ -872,9 +863,6 @@ router.get('/bills', authenticate, authorize('orders:read'), async (req, res) =>
  */
 router.get('/bills/:id', authenticate, authorize('orders:read'), async (req, res) => {
   try {
-    const Bill = require('../models/Bill');
-    const ReportOrder = require('../models/ReportOrder');
-    const User = require('../models/User');
 
     const bill = await Bill.findOne({
       _id: req.params.id,
@@ -989,8 +977,6 @@ router.get('/bills/:id', authenticate, authorize('orders:read'), async (req, res
 router.post('/bills/:id/settle', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const { settlementNotes } = req.body;
-    const Bill = require('../models/Bill');
-    const ReportOrder = require('../models/ReportOrder');
 
     const bill = await Bill.findOne({
       _id: req.params.id,
@@ -1080,7 +1066,6 @@ router.post('/bills/:id/settle', authenticate, authorize('orders:update'), async
 router.put('/bills/:id/settlement-note', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const { noteIndex, bankAccount, bankFlowNo, note } = req.body;
-    const Bill = require('../models/Bill');
 
     const bill = await Bill.findOne({
       _id: req.params.id,
@@ -1159,7 +1144,6 @@ router.put('/bills/:id/settlement-note', authenticate, authorize('orders:update'
 router.post('/bills/:id/settlement-note', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const { bdName, bankAccount, bankFlowNo, note } = req.body;
-    const Bill = require('../models/Bill');
 
     const bill = await Bill.findOne({
       _id: req.params.id,
@@ -1233,7 +1217,6 @@ router.post('/bills/:id/settlement-note', authenticate, authorize('orders:update
 router.get('/bills/:id/settlement-history', authenticate, authorize('orders:view'), async (req, res) => {
   try {
     const { noteIndex } = req.query;
-    const Bill = require('../models/Bill');
 
     const bill = await Bill.findOne({
       _id: req.params.id,
@@ -1302,7 +1285,6 @@ router.get('/bd-payment-records/:bdName', authenticate, authorize('orders:view')
   try {
     const { bdName } = req.params;
     const { type } = req.query; // 不传type则查所有类型
-    const Bill = require('../models/Bill');
 
     // 获取该BD的所有账单的settlementNotes
     // 先尝试精确匹配，再尝试模糊匹配（兼容realName和username不一致的情况）
@@ -1321,8 +1303,7 @@ router.get('/bd-payment-records/:bdName', authenticate, authorize('orders:view')
 
     // 如果模糊匹配也没找到，尝试用用户名查询用户，再匹配
     if (bills.length === 0) {
-      const User = require('../models/User');
-      const user = await User.findOne({
+        const user = await User.findOne({
         companyId: req.companyId,
         $or: [
           { realName: { $regex: bdName, $options: 'i' } },
@@ -1407,7 +1388,6 @@ router.post('/bd-payment-records', authenticate, authorize('orders:update'), [
     }
 
     const { billId, bdName, type, bankAccount, bankFlowNo, amount, paymentTime, note } = req.body;
-    const Bill = require('../models/Bill');
 
     let bill = null;
     
@@ -1494,7 +1474,6 @@ router.post('/bd-payment-records', authenticate, authorize('orders:update'), [
 router.delete('/bd-payment-records/:billId/:noteIndex', authenticate, authorize('orders:update'), async (req, res) => {
   try {
     const { billId, noteIndex } = req.params;
-    const Bill = require('../models/Bill');
 
     const bill = await Bill.findOne({
       _id: billId,
@@ -1552,8 +1531,6 @@ router.post('/bills/generate-by-month', authenticate, authorize('orders:update')
       });
     }
 
-    const ReportOrder = require('../models/ReportOrder');
-    const Bill = require('../models/Bill');
 
     // 计算月份起始和结束日期（按createTime）
     const startDate = new Date(year, month - 1, 1);
@@ -1660,8 +1637,6 @@ router.post('/bills/generate-by-month', authenticate, authorize('orders:update')
  */
 router.delete('/bills/:id', authenticate, authorize('orders:delete'), async (req, res) => {
   try {
-    const Bill = require('../models/Bill');
-    const ReportOrder = require('../models/ReportOrder');
 
     const bill = await Bill.findOne({
       _id: req.params.id,

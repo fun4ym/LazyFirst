@@ -78,6 +78,8 @@
     </div>
   </div>
   
+  <!-- 先注入统一常量（开发/生产 URL），供 popup.js 引用，避免硬编码散落 -->
+  <script src="../utils/constants.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
