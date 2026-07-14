@@ -7,7 +7,7 @@ console.log('LazyFirst Extension: Options 加载');
 
 // 默认设置
 const DEFAULT_SETTINGS = {
-  apiUrl: 'http://localhost:3000',
+  apiUrl: 'https://tap.lazyfirst.com',
   autoSync: false,
   syncInterval: 60,
   showNotifications: true,

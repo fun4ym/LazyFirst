@@ -5,11 +5,24 @@
 
 console.log('LazyFirst Extension: Popup 加载');
 
-// 锁死的API地址（本地开发环境地址，测试时使用）
-const API_BASE_URL = 'http://localhost:3000'; // 本地开发环境（后端API）
-
 // 前端页面地址（本地开发环境前端运行在5174端口；生产环境前端与API同域，改为系统域名即可）
 const FRONTEND_BASE_URL = 'http://localhost:5174';
+
+// 历史遗留：不再硬编码API地址，改为从storage动态读取
+// 默认线上地址：https://tap.lazyfirst.com
+const FALLBACK_API_URL = 'https://tap.lazyfirst.com';
+
+/**
+ * 获取API基础地址
+ * 优先读取用户在options页配置的apiUrl，否则用线上默认地址
+ */
+async function getApiBaseUrl() {
+  const { apiUrl, apiBaseUrl } = await chrome.storage.local.get(['apiUrl', 'apiBaseUrl']);
+  let base = apiUrl || apiBaseUrl || FALLBACK_API_URL;
+  // 去末尾的 /api 后缀
+  base = base.replace(/\/api\/?$/, '');
+  return base;
+}
 
 // 登录错误限制配置
 const LOGIN_CONFIG = {
@@ -237,8 +250,9 @@ async function handleLogin() {
   loginBtn.innerHTML = '<span class="loading-spinner"></span> 登录中...';
   
   try {
-    // 调用LazyFirst API登录（使用锁死的API地址）
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    // 调用LazyFirst API登录（优先使用用户配置的API地址，否则用线上默认地址）
+    const apiBase = await getApiBaseUrl();
+    const response = await fetch(`${apiBase}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -258,7 +272,7 @@ async function handleLogin() {
       // 存储Token和用户信息
       await chrome.storage.local.set({
         accessToken: token,
-        apiBaseUrl: API_BASE_URL, // 存储API地址
+        apiBaseUrl: apiBase, // 存储正确的API地址
         user: userData,
         loginTime: Date.now()
       });

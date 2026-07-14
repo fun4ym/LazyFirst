@@ -78,11 +78,11 @@ const userSchema = new mongoose.Schema({
   lastLoginAt: {
     type: Date
   },
-  // BD 私信模板：支持 {昵称} {粉丝数} 占位符
-  messageTemplate: {
-    type: String,
-    default: '',
-    comment: 'BD私信模板，支持 {昵称} {粉丝数} 占位符'
+  // BD 私信模板（三语：泰文/英文/中文），支持 {昵称} {粉丝数} 占位符
+  messageTemplates: {
+    th: { type: String, default: '' },
+    en: { type: String, default: '' },
+    zh: { type: String, default: '' }
   }
 }, {
   timestamps: true

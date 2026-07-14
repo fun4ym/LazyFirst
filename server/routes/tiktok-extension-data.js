@@ -251,7 +251,8 @@ router.get('/influencer/:tiktokId', authenticate, async (req, res) => {
 
 /**
  * GET /api/tiktok-extension-data/message-template
- * 返回当前登录 BD 的私信模板（按 BD 账号各自配置）
+ * 返回当前登录 BD 的三语私信模板（泰文/英文/中文）
+ * 兼容旧单语模板：若旧字段 messageTemplate 有值，迁移到 messageTemplates.th
  */
 router.get('/message-template', authenticate, async (req, res) => {
   try {
@@ -260,13 +261,22 @@ router.get('/message-template', authenticate, async (req, res) => {
     if (!userId) {
       return res.status(401).json({ success: false, message: '未获取到当前用户' });
     }
-    const user = await User.findById(userId).select('messageTemplate realName username');
+    const user = await User.findById(userId).select('messageTemplates messageTemplate realName username');
     if (!user) {
       return res.status(404).json({ success: false, message: '用户不存在' });
     }
+
+    // 兼容旧数据：如果旧字段有值且新字段全空，把旧值迁移到 th
+    let templates = user.messageTemplates || { th: '', en: '', zh: '' };
+    if (user.messageTemplate && !templates.th && !templates.en && !templates.zh) {
+      templates.th = user.messageTemplate;
+      // 自动迁移保存
+      await User.findByIdAndUpdate(userId, { messageTemplates: templates, messageTemplate: '' });
+    }
+
     res.json({
       success: true,
-      template: user.messageTemplate || '',
+      templates,
       user: { realName: user.realName, username: user.username }
     });
   } catch (error) {
@@ -277,7 +287,7 @@ router.get('/message-template', authenticate, async (req, res) => {
 
 /**
  * PUT /api/tiktok-extension-data/message-template
- * 更新当前登录 BD 的私信模板
+ * 更新当前登录 BD 的三语私信模板
  */
 router.put('/message-template', authenticate, async (req, res) => {
   try {
@@ -286,19 +296,24 @@ router.put('/message-template', authenticate, async (req, res) => {
     if (!userId) {
       return res.status(401).json({ success: false, message: '未获取到当前用户' });
     }
-    const { template } = req.body;
-    if (typeof template !== 'string') {
-      return res.status(400).json({ success: false, message: 'template 必须为字符串' });
+    const { templates } = req.body;
+    if (!templates || typeof templates !== 'object') {
+      return res.status(400).json({ success: false, message: 'templates 必须为对象 {th, en, zh}' });
     }
+    const sanitized = {
+      th: typeof templates.th === 'string' ? templates.th : '',
+      en: typeof templates.en === 'string' ? templates.en : '',
+      zh: typeof templates.zh === 'string' ? templates.zh : ''
+    };
     const user = await User.findByIdAndUpdate(
       userId,
-      { messageTemplate: template },
+      { messageTemplates: sanitized, messageTemplate: '' },
       { new: true }
-    ).select('messageTemplate');
+    ).select('messageTemplates');
     if (!user) {
       return res.status(404).json({ success: false, message: '用户不存在' });
     }
-    res.json({ success: true, template: user.messageTemplate, message: '私信模板已保存' });
+    res.json({ success: true, templates: user.messageTemplates, message: '私信模板已保存' });
   } catch (error) {
     console.error('保存私信模板失败:', error);
     res.status(500).json({ success: false, message: '保存私信模板失败: ' + error.message });

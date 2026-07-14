@@ -2179,6 +2179,28 @@ export default {
     syncFailed: 'Sync failed',
     batchSyncFailed: 'Batch sync failed',
     deleteFailed: 'Delete failed',
-    batchDeleteFailed: 'Batch delete failed'
+    batchDeleteFailed: 'Batch delete failed',
+    // Message Template
+    templateBtn: 'Message Template',
+    templateDialogTitle: 'Message Template',
+    templateTips: 'The extension "send message" button will auto-fill this template. Supported placeholders:',
+    templatePlaceholderNick: '{昵称} → Influencer nickname',
+    templatePlaceholderFollowers: '{粉丝数} → Follower count (auto-abbreviated, e.g. 1.2M)',
+    templateTabTh: 'ไทย',
+    templateTabEn: 'English',
+    templateTabZh: '中文',
+    templateContentLabel: 'Template Content',
+    templatePreviewTitle: 'Preview',
+    templatePreviewDesc: 'Will show when sending to @example_user (1.2M followers):',
+    templatePreviewTitleEn: 'Preview',
+    templatePreviewDescEn: 'Will show when sending to @example_user (1.2M followers):',
+    templateCancel: 'Cancel',
+    templateReset: 'Reset',
+    templateSave: 'Save Template',
+    templateSaveSuccess: 'Template saved',
+    templateSaveFailed: 'Save failed',
+    templatePlaceholderTh: 'e.g. สวัสดี {昵称}, พวกเราคือ LazyFirst, เห็นว่าคุณมีผู้ติดตาม {粉丝数}, หวังว่าจะได้ร่วมงานกัน!',
+    templatePlaceholderEn: 'e.g. Hi {昵称}, we are LazyFirst, noticed you have {粉丝数} followers, looking forward to working together!',
+    templatePlaceholderZh: 'e.g. Hi {昵称}, we are LazyFirst, focused on TikTok e-commerce. Noticed you have {粉丝数} followers. Looking forward to working together!'
   }
 }

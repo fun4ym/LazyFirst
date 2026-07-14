@@ -165,7 +165,9 @@ function handleSendMessageClick(btn, authorData) {
     btn.classList.remove('lf-collecting');
     btn.textContent = 'send message';
 
-    let template = (response && response.success && response.template) || 'Hi {昵称}, nice to connect!';
+    // 三语模板，默认使用泰文
+    const templates = (response && response.success && response.templates) || {};
+    const template = templates.th || templates.en || templates.zh || 'Hi {昵称}, nice to connect!';
     const rendered = renderMessageTemplate(template, authorData);
 
     // 打开 TikTok 私信页（由 BD 手动发送）

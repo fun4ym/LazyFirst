@@ -10,10 +10,16 @@
           </div>
           <p class="intro-subtitle">{{ $t('chromeExtension.subtitle') }}</p>
         </div>
-        <el-button type="primary" @click="downloadExtension">
-          <el-icon><Download /></el-icon>
-          {{ $t('chromeExtension.download') }}
-        </el-button>
+        <div class="intro-actions">
+          <el-button @click="openTemplateDialog">
+            <el-icon><EditPen /></el-icon>
+            {{ $t('chromeExtension.templateBtn') }}
+          </el-button>
+          <el-button type="primary" @click="downloadExtension">
+            <el-icon><Download /></el-icon>
+            {{ $t('chromeExtension.download') }}
+          </el-button>
+        </div>
       </div>
 
       <div class="intro-body">
@@ -175,6 +181,91 @@
         />
       </div>
     </el-card>
+
+    <!-- 信息模版弹层 -->
+    <el-dialog
+      v-model="showTemplateDialog"
+      :title="$t('chromeExtension.templateDialogTitle')"
+      width="620px"
+      :close-on-click-modal="false"
+      destroy-on-close
+    >
+      <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
+        <template #default>
+          {{ $t('chromeExtension.templateTips') }}
+          <ul class="placeholder-tips">
+            <li><code>{昵称}</code> → {{ $t('chromeExtension.templatePlaceholderNick') }}</li>
+            <li><code>{粉丝数}</code> → {{ $t('chromeExtension.templatePlaceholderFollowers') }}</li>
+          </ul>
+        </template>
+      </el-alert>
+
+      <el-tabs v-model="activeLang" type="card">
+        <el-tab-pane :label="$t('chromeExtension.templateTabTh')" name="th">
+          <el-form :label-width="locale === 'en' ? '140px' : '80px'">
+            <el-form-item :label="$t('chromeExtension.templateContentLabel')">
+              <el-input
+                v-model="templates.th"
+                type="textarea"
+                :rows="6"
+                maxlength="500"
+                show-word-limit
+                :placeholder="$t('chromeExtension.templatePlaceholderTh')"
+              />
+            </el-form-item>
+          </el-form>
+          <div class="template-preview-box">
+            <div class="template-preview-title">{{ $t('chromeExtension.templatePreviewTitle') }}</div>
+            <div class="template-preview-desc">{{ $t('chromeExtension.templatePreviewDesc') }}</div>
+            <div class="template-preview-content">{{ preview('th') }}</div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane :label="$t('chromeExtension.templateTabEn')" name="en">
+          <el-form :label-width="locale === 'en' ? '140px' : '80px'">
+            <el-form-item :label="$t('chromeExtension.templateContentLabel')">
+              <el-input
+                v-model="templates.en"
+                type="textarea"
+                :rows="6"
+                maxlength="500"
+                show-word-limit
+                :placeholder="$t('chromeExtension.templatePlaceholderEn')"
+              />
+            </el-form-item>
+          </el-form>
+          <div class="template-preview-box">
+            <div class="template-preview-title">{{ $t('chromeExtension.templatePreviewTitleEn') }}</div>
+            <div class="template-preview-desc">{{ $t('chromeExtension.templatePreviewDescEn') }}</div>
+            <div class="template-preview-content">{{ preview('en') }}</div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane :label="$t('chromeExtension.templateTabZh')" name="zh">
+          <el-form :label-width="locale === 'en' ? '140px' : '80px'">
+            <el-form-item :label="$t('chromeExtension.templateContentLabel')">
+              <el-input
+                v-model="templates.zh"
+                type="textarea"
+                :rows="6"
+                maxlength="500"
+                show-word-limit
+                :placeholder="$t('chromeExtension.templatePlaceholderZh')"
+              />
+            </el-form-item>
+          </el-form>
+          <div class="template-preview-box">
+            <div class="template-preview-title">{{ $t('chromeExtension.templatePreviewTitle') }}</div>
+            <div class="template-preview-desc">{{ $t('chromeExtension.templatePreviewDesc') }}</div>
+            <div class="template-preview-content">{{ preview('zh') }}</div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+
+      <template #footer>
+        <el-button @click="showTemplateDialog = false">{{ $t('chromeExtension.templateCancel') }}</el-button>
+        <el-button @click="resetTemplate">{{ $t('chromeExtension.templateReset') }}</el-button>
+        <el-button type="primary" :loading="templateSaving" @click="saveTemplate">{{ $t('chromeExtension.templateSave') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -182,7 +273,7 @@
 import { computed, ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, UserFilled, VideoPlay, Download } from '@element-plus/icons-vue'
+import { Search, UserFilled, VideoPlay, Download, EditPen } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
 const { t, locale } = useI18n()
@@ -400,6 +491,74 @@ const handleSizeChange = (val) => { pagination.limit = val; pagination.page = 1;
 const handlePageChange = (val) => { pagination.page = val; fetchDataList() }
 
 onMounted(() => { fetchDataList() })
+
+// ========== 信息模版弹层 ==========
+const DEFAULT_TEMPLATES = {
+  th: 'สวัสดี {昵称}, พวกเราคือ LazyFirst, เห็นว่าคุณมีผู้ติดตาม {粉丝数}, หวังว่าจะได้ร่วมงานกัน!',
+  en: 'Hi {昵称}, we are LazyFirst, noticed you have {粉丝数} followers, looking forward to working together!',
+  zh: 'Hi {昵称}, 我们是 LazyFirst，关注到你有 {粉丝数} 粉丝，期待合作！'
+}
+const showTemplateDialog = ref(false)
+const activeLang = ref('th')
+const templates = reactive({ th: '', en: '', zh: '' })
+const templateSaving = ref(false)
+
+const preview = (lang) => {
+  const txt = templates[lang] || DEFAULT_TEMPLATES[lang]
+  const nickname = lang === 'th' ? 'example_user' : 'example_user'
+  const followers = '1.2M'
+  return txt.replace(/\{昵称\}/g, nickname).replace(/\{粉丝数\}/g, followers)
+}
+
+const openTemplateDialog = async () => {
+  showTemplateDialog.value = true
+  activeLang.value = 'th'
+  try {
+    const response = await fetch(`${getApiUrl()}/tiktok-extension-data/message-template`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    })
+    const result = await response.json()
+    if (result.success && result.templates) {
+      templates.th = result.templates.th || ''
+      templates.en = result.templates.en || ''
+      templates.zh = result.templates.zh || ''
+    }
+  } catch (error) {
+    console.error('获取信息模版失败:', error)
+  }
+}
+
+const saveTemplate = async () => {
+  templateSaving.value = true
+  try {
+    const response = await fetch(`${getApiUrl()}/tiktok-extension-data/message-template`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ templates: { th: templates.th, en: templates.en, zh: templates.zh } })
+    })
+    const result = await response.json()
+    if (result.success) {
+      ElMessage.success(t('chromeExtension.templateSaveSuccess'))
+      showTemplateDialog.value = false
+    } else {
+      ElMessage.error(result.message || t('chromeExtension.templateSaveFailed'))
+    }
+  } catch (error) {
+    console.error('保存信息模版失败:', error)
+    ElMessage.error(t('chromeExtension.templateSaveFailed') + ': ' + error.message)
+  } finally {
+    templateSaving.value = false
+  }
+}
+
+const resetTemplate = () => {
+  templates.th = ''
+  templates.en = ''
+  templates.zh = ''
+}
 </script>
 
 <style scoped>
@@ -559,5 +718,56 @@ onMounted(() => { fetchDataList() })
   display: flex;
   justify-content: flex-end;
   margin-top: 12px;
+}
+
+/* 头部按钮组 */
+.intro-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 信息模版弹层 */
+.placeholder-tips {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.8;
+}
+
+.placeholder-tips code {
+  background: #f3e5f5;
+  color: #7b1fa2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: Monaco, Menlo, monospace;
+  font-size: 12px;
+}
+
+.template-preview-box {
+  margin-top: 4px;
+  background: #faf5ff;
+  border: 1px solid #e8e4ef;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.template-preview-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #7b1fa2;
+  margin-bottom: 4px;
+}
+
+.template-preview-desc {
+  font-size: 12px;
+  color: #7c6d8f;
+  margin-bottom: 8px;
+}
+
+.template-preview-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #2d1b4e;
+  white-space: pre-wrap;
 }
 </style>

@@ -2374,6 +2374,28 @@ export default {
     syncFailed: '同步失败',
     batchSyncFailed: '批量同步失败',
     deleteFailed: '删除失败',
-    batchDeleteFailed: '批量删除失败'
+    batchDeleteFailed: '批量删除失败',
+    // 信息模版
+    templateBtn: '信息模版',
+    templateDialogTitle: '私信信息模版',
+    templateTips: '插件「send message」将自动套用此模版。支持以下占位符：',
+    templatePlaceholderNick: '{昵称} → 达人昵称',
+    templatePlaceholderFollowers: '{粉丝数} → 达人粉丝数（自动缩写，如 1.2M）',
+    templateTabTh: 'ไทย',
+    templateTabEn: 'English',
+    templateTabZh: '中文',
+    templateContentLabel: '模版内容',
+    templatePreviewTitle: '实时预览',
+    templatePreviewDesc: '向达人 @example_user（粉丝 1.2M）发送时将显示：',
+    templatePreviewTitleEn: 'Preview',
+    templatePreviewDescEn: 'Will show when sending to @example_user (1.2M followers):',
+    templateCancel: '取消',
+    templateReset: '重置默认',
+    templateSave: '保存模版',
+    templateSaveSuccess: '信息模版已保存',
+    templateSaveFailed: '保存失败',
+    templatePlaceholderTh: '例如: สวัสดี {昵称}, พวกเราคือ LazyFirst, เห็นว่าคุณมีผู้ติดตาม {粉丝数}, หวังว่าจะได้ร่วมงานกัน!',
+    templatePlaceholderEn: 'e.g. Hi {昵称}, we are LazyFirst, noticed you have {粉丝数} followers, looking forward to working together!',
+    templatePlaceholderZh: '例如：Hi {昵称}, 我们是 LazyFirst，专注 TikTok 带货，看到你有 {粉丝数} 粉丝，期待合作！'
   }
 }

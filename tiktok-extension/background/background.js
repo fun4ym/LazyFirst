@@ -71,9 +71,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.type === 'GET_MESSAGE_TEMPLATE') {
-    // 插件内查询：返回当前 BD 的私信模板
+    // 插件内查询：返回当前 BD 的三语私信模板
     getMessageTemplate()
-      .then(template => sendResponse({ success: true, template }))
+      .then(templates => sendResponse({ success: true, templates }))
       .catch(error => sendResponse({ success: false, message: error.message }));
 
     return true; // 异步响应
@@ -567,7 +567,7 @@ async function fetchInfluencerProfileData(tiktokId) {
 }
 
 /**
- * 获取当前登录 BD 的私信模板
+ * 获取当前登录 BD 的三语私信模板
  */
 async function getMessageTemplate() {
   try {
@@ -592,7 +592,8 @@ async function getMessageTemplate() {
       throw new Error(result.message || '获取私信模板失败');
     }
 
-    return result.template || '';
+    // 返回三语模板对象 { th, en, zh }
+    return result.templates || { th: '', en: '', zh: '' };
   } catch (error) {
     console.error('获取私信模板失败:', error.message);
     throw error;

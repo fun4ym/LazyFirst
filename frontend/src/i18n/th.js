@@ -1998,7 +1998,29 @@ export default {
     syncFailed: 'ซิงค์ล้มเหลว',
     batchSyncFailed: 'ซิงค์เป็นชุดล้มเหลว',
     deleteFailed: 'ลบล้มเหลว',
-    batchDeleteFailed: 'ลบเป็นชุดล้มเหลว'
+    batchDeleteFailed: 'ลบเป็นชุดล้มเหลว',
+    // เทมเพลตข้อความ
+    templateBtn: 'เทมเพลตข้อความ',
+    templateDialogTitle: 'เทมเพลตข้อความ',
+    templateTips: 'ปุ่ม "send message" ของส่วนขยายจะกรอกข้อความตามเทมเพลตนี้โดยอัตโนมัติ รองรับตัวแปร:',
+    templatePlaceholderNick: '{昵称} → ชื่อครีเอเตอร์',
+    templatePlaceholderFollowers: '{粉丝数} → จำนวนผู้ติดตาม (ย่ออัตโนมัติ เช่น 1.2M)',
+    templateTabTh: 'ไทย',
+    templateTabEn: 'English',
+    templateTabZh: '中文',
+    templateContentLabel: 'เนื้อหาเทมเพลต',
+    templatePreviewTitle: 'ตัวอย่าง',
+    templatePreviewDesc: 'จะแสดงเมื่อส่งถึง @example_user (ผู้ติดตาม 1.2M):',
+    templatePreviewTitleEn: 'Preview',
+    templatePreviewDescEn: 'Will show when sending to @example_user (1.2M followers):',
+    templateCancel: 'ยกเลิก',
+    templateReset: 'รีเซ็ต',
+    templateSave: 'บันทึกเทมเพลต',
+    templateSaveSuccess: 'บันทึกเทมเพลตสำเร็จ',
+    templateSaveFailed: 'บันทึกล้มเหลว',
+    templatePlaceholderTh: 'เช่น: สวัสดี {昵称}, พวกเราคือ LazyFirst, เห็นว่าคุณมีผู้ติดตาม {粉丝数}, หวังว่าจะได้ร่วมงานกัน!',
+    templatePlaceholderEn: 'เช่น: Hi {昵称}, we are LazyFirst, noticed you have {粉丝数} followers, looking forward to working together!',
+    templatePlaceholderZh: 'เช่น: Hi {昵称}, เราคือ LazyFirst มุ่งเน้น TikTok e-commerce เห็นว่าคุณมีผู้ติดตาม {粉丝数} หวังว่าจะได้ร่วมงานกัน!'
   },
   // มือถือ
   mobile: {
