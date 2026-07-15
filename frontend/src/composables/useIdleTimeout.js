@@ -5,12 +5,13 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import AuthManager from '@/utils/auth'
 
-const IDLE_TIMEOUT = 30 * 60 * 1000 // 30分钟（毫秒）
-const CHECK_INTERVAL = 10000 // 每10秒检查一次
+const IDLE_TIMEOUT = 120 * 60 * 1000 // 2小时（毫秒）
+const CHECK_INTERVAL = 30000 // 每30秒检查一次
 
 export function useIdleTimeout(timeout = IDLE_TIMEOUT) {
   const lastActivity = ref(Date.now())
   let checkTimer = null
+  let _started = false
 
   // 更新活动时间
   const updateActivity = () => {
@@ -38,13 +39,16 @@ export function useIdleTimeout(timeout = IDLE_TIMEOUT) {
     document.removeEventListener('keypress', updateActivity)
     document.removeEventListener('scroll', updateActivity)
     document.removeEventListener('touchstart', updateActivity)
+    _started = false
   }
 
-  // 启动检测
+  // 启动检测（幂等：重复调用不会重复注册）
   const start = () => {
+    if (_started) return
     // 只有已登录才启动检测
     if (!AuthManager.isLoggedIn()) return
 
+    _started = true
     updateActivity()
 
     // 添加事件监听
