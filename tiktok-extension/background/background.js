@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function getApiBaseUrl() {
   // 注意：options 页面保存的存储 key 是 apiUrl（并非 apiBaseUrl），这里以 apiUrl 为准，兼容旧的 apiBaseUrl
   const { apiUrl, apiBaseUrl } = await chrome.storage.local.get(['apiUrl', 'apiBaseUrl']);
-  let base = apiUrl || apiBaseUrl || 'https://lazyfirst.com'; // 默认生产环境地址
+  let base = apiUrl || apiBaseUrl || 'https://tap.lazyfirst.com'; // 默认生产环境地址（与 popup/options 保持一致）
   // 规范化：去掉结尾的 /api，调用处统一拼接 /api/...，避免 "http://x/api/api/..." 双路径导致 404
   base = base.replace(/\/api\/?$/, '');
   return base;

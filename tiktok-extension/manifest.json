@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LazyFirst TikTok 数据采集器",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "在浏览TikTok时自动采集达人数据并同步到LazyFirst系统",
   
   "permissions": [
@@ -11,7 +11,8 @@
   ],
   
   "host_permissions": [
-    "https://www.tiktok.com/*"
+    "https://www.tiktok.com/*",
+    "https://tap.lazyfirst.com/*"
   ],
   
   "background": {

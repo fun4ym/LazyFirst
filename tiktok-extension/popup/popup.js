@@ -11,8 +11,7 @@ const FRONTEND_BASE_URL = (typeof FRONTEND_BASE_URL_DEV !== 'undefined' && FRONT
   ? FRONTEND_BASE_URL_DEV
   : 'http://localhost:5174';
 
-// 历史遗留：不再硬编码API地址，改为从storage动态读取
-// 默认线上地址：https://tap.lazyfirst.com
+// 默认线上地址（必须与 background.js / options.js / constants.js 保持一致）
 const FALLBACK_API_URL = 'https://tap.lazyfirst.com';
 
 /**
@@ -22,8 +21,9 @@ const FALLBACK_API_URL = 'https://tap.lazyfirst.com';
 async function getApiBaseUrl() {
   const { apiUrl, apiBaseUrl } = await chrome.storage.local.get(['apiUrl', 'apiBaseUrl']);
   let base = apiUrl || apiBaseUrl || FALLBACK_API_URL;
-  // 去末尾的 /api 后缀
-  base = base.replace(/\/api\/?$/, '');
+  // 去末尾的 /api 后缀以及 trailing slash
+  base = base.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  console.log('[Popup] 当前API地址:', base, '| 来源:', apiUrl ? 'apiUrl' : (apiBaseUrl ? 'apiBaseUrl' : 'fallback'));
   return base;
 }
 
@@ -233,7 +233,8 @@ async function handleLogin() {
   }
   
   const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
+  // 密码不做 trim，保持与前端网页登录行为一致（网页端未 trim）
+  const password = document.getElementById('password').value;
   
   // 验证输入
   if (!username) {
@@ -255,6 +256,7 @@ async function handleLogin() {
   try {
     // 调用LazyFirst API登录（优先使用用户配置的API地址，否则用线上默认地址）
     const apiBase = await getApiBaseUrl();
+    console.log('[Popup] 登录请求地址:', `${apiBase}/api/auth/login`);
     const response = await fetch(`${apiBase}/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -263,7 +265,9 @@ async function handleLogin() {
       body: JSON.stringify({ username, password })
     });
     
+    console.log('[Popup] 登录响应状态:', response.status);
     const data = await response.json();
+    console.log('[Popup] 登录响应内容:', data);
     
     if (data.success) {
       console.log('登录成功:', data);
@@ -283,8 +287,8 @@ async function handleLogin() {
       // 清除登录错误计数
       await chrome.storage.local.remove(['loginAttempts', 'lockoutUntil']);
       
-      // 显示主视图
-      showMainView(data.user);
+      // 显示主视图（注意后端返回结构是 data.data.user，不是 data.user）
+      showMainView(userData);
       
       // 清除错误信息
       hideLoginError();
