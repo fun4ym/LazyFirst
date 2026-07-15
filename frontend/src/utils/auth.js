@@ -44,8 +44,8 @@ const AuthManager = {
     // 用户权限可能在 role.permissions 中
     const role = user.role
     if (!role) return []
-    // 如果是超级管理员（role.name === '超级管理员' 或 'admin' 或权限包含 *）
-    if (role.name === '超级管理员' || role.name === 'admin' || role.permissions?.includes('*')) {
+    // 如果是超级管理员（role.name === '超级管理员'/'admin'/'管理员' 或权限包含 *）
+    if (role.name === '超级管理员' || role.name === 'admin' || role.name === '管理员' || role.permissions?.includes('*')) {
       return ['*']
     }
     return role.permissions || []
@@ -74,7 +74,7 @@ const AuthManager = {
     // 超级管理员拥有全部权限
     const role = user.role
     if (!role) return 'all'
-    if (role.name === '超级管理员' || role.name === 'admin' || role.permissions?.includes('*')) {
+    if (role.name === '超级管理员' || role.name === 'admin' || role.name === '管理员' || role.permissions?.includes('*')) {
       return 'all'
     }
     // 从 moduleDataScopes 获取指定模块的数据权限

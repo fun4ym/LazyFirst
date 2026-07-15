@@ -242,6 +242,9 @@ const hasAnyPermission = (permissions) => AuthManager.hasAnyPermission(permissio
 
 // 判断是否是超级管理员
 const isSuperAdmin = () => {
+  const user = AuthManager.getUser()
+  const role = user?.role
+  if (role?.name === '超级管理员' || role?.name === 'admin' || role?.name === '管理员') return true
   const permissions = AuthManager.getPermissions()
   return permissions.includes('*')
 }

@@ -147,7 +147,7 @@ router.post('/login', [
           phone: user.phone,
           email: user.email,
           company: user.companyId,
-          role: user.roleId,
+          role: user.roleId || (user.role === 'admin' ? { name: 'admin', permissions: ['*'] } : (user.role ? { name: user.role, permissions: [] } : null)),
           lastLoginAt: user.lastLoginAt
         },
         token
