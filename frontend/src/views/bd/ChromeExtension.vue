@@ -280,7 +280,7 @@ const { t, locale } = useI18n()
 const getToken = () => AuthManager.getToken()
 
 // ========== 上部：插件介绍 ==========
-const extensionVersion = ref('1.1.0')
+const extensionVersion = ref('1.2.1')
 
 const steps = computed(() => [
   { title: t('chromeExtension.step1Title'), desc: t('chromeExtension.step1Desc') },
