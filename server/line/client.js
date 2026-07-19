@@ -113,7 +113,23 @@ async function createRichMenu(richMenuObject) {
 }
 
 async function setRichMenuImage(richMenuId, buffer, contentType) {
-  return getBlobClient().setRichMenuImage(richMenuId, buffer, contentType);
+  // SDK v11 的 setRichMenuImage 有时 content-type 不对导致 415，
+  // 直接用 fetch 调用 LINE Data API 更可靠
+  const token = config.channelAccessToken;
+  const url = `https://api-data.line.me/v2/bot/richmenu/${richMenuId}/content`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': contentType || 'image/jpeg',
+    },
+    body: buffer,
+  });
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`${resp.status} - ${resp.statusText}${body ? ': ' + body : ''}`);
+  }
+  return resp.json();
 }
 
 async function setDefaultRichMenu(richMenuId) {
