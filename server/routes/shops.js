@@ -213,7 +213,7 @@ router.post('/:id/contacts', authenticate, async (req, res) => {
       name,
       phone,
       email,
-      trackerId
+      trackerId: trackerId || null
     });
 
     await contact.save();
@@ -238,7 +238,7 @@ router.put('/:id/contacts/:contactId', authenticate, async (req, res) => {
     contact.name = name || contact.name;
     contact.phone = phone !== undefined ? phone : contact.phone;
     contact.email = email !== undefined ? email : contact.email;
-    contact.trackerId = trackerId !== undefined ? trackerId : contact.trackerId;
+    contact.trackerId = trackerId !== undefined ? (trackerId || null) : contact.trackerId;
 
     await contact.save();
 
