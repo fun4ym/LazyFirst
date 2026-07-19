@@ -30,7 +30,7 @@ async function drawSection(image, x, w, h, color, label, subLabel) {
       image.setPixelColor(color.bg, dx, dy);
     }
   }
-  // 主标签（泰文）
+  // 主标签
   const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
   const tw = Jimp.measureText(font, label);
   image.print(font, x + Math.floor((w - tw) / 2), Math.floor(h * 0.35), label);
@@ -46,9 +46,9 @@ async function drawSection(image, x, w, h, color, label, subLabel) {
 // 生成卖家版 Rich Menu 图片
 async function generateSupplyImage() {
   const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.supply[0], 'นโยบาย', 'Policy');
-  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.supply[1], 'สมัครร่วม', 'Register');
-  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.supply[2], 'ติดต่อ', 'Contact');
+  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.supply[0], 'Policy', '');
+  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.supply[1], 'Register', '');
+  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.supply[2], 'Contact', '');
   // 分区竖线
   for (let y = 0; y < MENU_HEIGHT; y++) { image.setPixelColor(0xFFFFFFFF, 833, y); image.setPixelColor(0xFFFFFFFF, 1666, y); }
   return image.getBufferAsync(Jimp.MIME_JPEG);
@@ -57,9 +57,9 @@ async function generateSupplyImage() {
 // 生成达人版 Rich Menu 图片
 async function generateInfluencerImage() {
   const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.influencer[0], 'กิจกรรม', 'Events');
-  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.influencer[1], 'สินค้า', 'Products');
-  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.influencer[2], 'ติดต่อ', 'Contact');
+  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.influencer[0], 'Events', '');
+  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.influencer[1], 'Products', '');
+  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.influencer[2], 'Contact', '');
   for (let y = 0; y < MENU_HEIGHT; y++) { image.setPixelColor(0xFFFFFFFF, 833, y); image.setPixelColor(0xFFFFFFFF, 1666, y); }
   return image.getBufferAsync(Jimp.MIME_JPEG);
 }
