@@ -1,89 +1,92 @@
 // Rich Menu 生成&部署服务
-// - 用 jimp 生成两套菜单图片（2500×843）
+// - 用 jimp v1 生成两套菜单图片（2500×843）
 // - 部署到 LINE 并支持按角色绑定
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 const lineClient = require('./client');
 const flex = require('./flex');
 
 const MENU_WIDTH = 2500;
 const MENU_HEIGHT = 843;
-const SECTION_COUNT = 3;
-const SECTION_WIDTH = Math.floor(MENU_WIDTH / SECTION_COUNT); // 833, 833, 834
+const SECTION_WIDTHS = [833, 834, 833]; // 左中右
 
 // 颜色方案
 const COLORS = {
-  supply: {
-    left:   { bg: 0x6C5CE7FF, text: '#FFFFFF' }, // 政策
-    middle: { bg: 0xA855F7FF, text: '#FFFFFF' }, // 报名
-    right:  { bg: 0xD946EFFF, text: '#FFFFFF' }, // 客服
-  },
-  influencer: {
-    left:   { bg: 0xEC4899FF, text: '#FFFFFF' }, // 活动
-    middle: { bg: 0xF97316FF, text: '#FFFFFF' }, // 产品
-    right:  { bg: 0x06B6D4FF, text: '#FFFFFF' }, // 客服
-  },
+  supply: [
+    { bg: '#6C5CE7', text: '#FFFFFF' }, // 政策
+    { bg: '#A855F7', text: '#FFFFFF' }, // 报名
+    { bg: '#D946EF', text: '#FFFFFF' }, // 客服
+  ],
+  influencer: [
+    { bg: '#EC4899', text: '#FFFFFF' }, // 活动
+    { bg: '#F97316', text: '#FFFFFF' }, // 产品
+    { bg: '#06B6D4', text: '#FFFFFF' }, // 客服
+  ],
 };
 
-// 为每个分区绘制：背景色 + 文字标签
-async function drawSection(image, x, w, h, color, label, subLabel) {
-  // 背景色
-  for (let dx = x; dx < x + w && dx < image.bitmap.width; dx++) {
-    for (let dy = 0; dy < h; dy++) {
-      image.setPixelColor(color.bg, dx, dy);
+// 生成菜单图片
+async function generateImage(sections, menuType) {
+  const image = new Jimp({ width: MENU_WIDTH, height: MENU_HEIGHT, color: '#00000000' });
+
+  let x = 0;
+  for (let i = 0; i < 3; i++) {
+    const w = SECTION_WIDTHS[i];
+    const c = COLORS[menuType][i];
+    const section = sections[i];
+
+    // 背景色
+    for (let dx = x; dx < x + w; dx++) {
+      for (let dy = 0; dy < MENU_HEIGHT; dy++) {
+        image.setPixelColor(Jimp.cssColorToHex(c.bg), dx, dy);
+      }
     }
-  }
-  // 主标签（泰文）
-  const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
-  const tw = Jimp.measureText(font, label);
-  image.print(font, x + Math.floor((w - tw) / 2), Math.floor(h * 0.35), label);
 
-  // 副标签（英文）
-  if (subLabel) {
+    // 主标签（泰文）
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
+    image.print({ font, x: x + Math.floor((w - Jimp.measureText(font, section.label)) / 2), y: Math.floor(MENU_HEIGHT * 0.33), text: section.label });
+
+    // 副标签（英文）
     const fontSub = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-    const sw = Jimp.measureText(fontSub, subLabel);
-    image.print(fontSub, x + Math.floor((w - sw) / 2), Math.floor(h * 0.55), subLabel);
-  }
-}
+    image.print({ font: fontSub, x: x + Math.floor((w - Jimp.measureText(fontSub, section.sub)) / 2), y: Math.floor(MENU_HEIGHT * 0.55), text: section.sub });
 
-// 生成卖家版 Rich Menu 图片
-async function generateSupplyImage() {
-  const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,        SECTION_WIDTH, MENU_HEIGHT, COLORS.supply.left,   'นโยบาย', 'Policy');
-  await drawSection(image, 833,      SECTION_WIDTH, MENU_HEIGHT, COLORS.supply.middle, 'สมัครร่วม', 'Register');
-  await drawSection(image, 1667,     SECTION_WIDTH, MENU_HEIGHT, COLORS.supply.right,  'ติดต่อ', 'Contact');
+    x += w;
+  }
 
   // 分区竖线
-  for (let y = 0; y < MENU_HEIGHT; y++) {
-    image.setPixelColor(0xFFFFFFFF, 833, y);
-    image.setPixelColor(0xFFFFFFFF, 1666, y);
+  let splitX = 0;
+  for (let i = 0; i < 2; i++) {
+    splitX += SECTION_WIDTHS[i];
+    for (let dy = 0; dy < MENU_HEIGHT; dy++) {
+      image.setPixelColor(0xFFFFFFFF, splitX, dy);
+    }
   }
 
-  return image.getBufferAsync(Jimp.MIME_JPEG);
+  return image.getBuffer('image/jpeg');
 }
 
-// 生成达人版 Rich Menu 图片
-async function generateInfluencerImage() {
-  const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,        SECTION_WIDTH, MENU_HEIGHT, COLORS.influencer.left,   'กิจกรรม', 'Events');
-  await drawSection(image, 833,      SECTION_WIDTH, MENU_HEIGHT, COLORS.influencer.middle, 'สินค้า', 'Products');
-  await drawSection(image, 1667,     SECTION_WIDTH, MENU_HEIGHT, COLORS.influencer.right,  'ติดต่อ', 'Contact');
-
-  for (let y = 0; y < MENU_HEIGHT; y++) {
-    image.setPixelColor(0xFFFFFFFF, 833, y);
-    image.setPixelColor(0xFFFFFFFF, 1666, y);
-  }
-
-  return image.getBufferAsync(Jimp.MIME_JPEG);
+// 卖家版图片
+function generateSupplyImage() {
+  return generateImage([
+    { label: 'นโยบาย', sub: 'Policy' },
+    { label: 'สมัครร่วม', sub: 'Register' },
+    { label: 'ติดต่อ', sub: 'Contact' },
+  ], 'supply');
 }
 
-// 创建并上传一套 Rich Menu
+// 达人版图片
+function generateInfluencerImage() {
+  return generateImage([
+    { label: 'กิจกรรม', sub: 'Events' },
+    { label: 'สินค้า', sub: 'Products' },
+    { label: 'ติดต่อ', sub: 'Contact' },
+  ], 'influencer');
+}
+
+// 创建菜单对象 + 上传图片
 async function deployRichMenu(builder, imageFn) {
-  // ① 创建菜单对象
   const menuDef = builder();
   const { richMenuId } = await lineClient.createRichMenu(menuDef);
   console.log(`[RichMenu] 创建菜单: ${richMenuId} (${menuDef.name})`);
 
-  // ② 上传图片
   const imgBuffer = await imageFn();
   await lineClient.setRichMenuImage(richMenuId, imgBuffer, 'image/jpeg');
   console.log(`[RichMenu] 上传图片: ${richMenuId}`);
