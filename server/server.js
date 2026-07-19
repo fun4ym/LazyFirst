@@ -103,6 +103,9 @@ app.get('/health', (req, res) => {
 app.post('/health', (req, res) => {
   res.status(200).send('OK');
 });
+app.post('/api/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // API路由
 app.use('/api/auth', authRoutes);
