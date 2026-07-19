@@ -99,6 +99,10 @@ app.use('/api/auth', authLimiter);
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+// LINE Webhook 验证中转（POST 200 即可触发激活）
+app.post('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // API路由
 app.use('/api/auth', authRoutes);
