@@ -51,6 +51,7 @@ function parseCode(text) {
 // 方案A：确认绑定，将 lineUserId 写入匹配到 bindingToken 的记录
 // 返回 { ok, role, name } 或 { ok:false, reason }
 async function confirm({ token, lineUserId }) {
+  console.log('[LINE Binding] confirm called:', { token, lineUserId: lineUserId || 'EMPTY!' });
   if (!token || !lineUserId) return { ok: false, reason: 'invalid_params' };
   const parsed = parseCode(token);
   if (!parsed) return { ok: false, reason: 'invalid_token' };
@@ -65,10 +66,12 @@ async function confirm({ token, lineUserId }) {
   const doc = await Model.findOne({ lineBindingToken: parsed.token });
   if (!doc) return { ok: false, reason: 'token_not_found' };
 
+  console.log('[LINE Binding] before save:', { docId: doc._id, lineUserId, currentLineUserId: doc.lineUserId });
   doc.lineUserId = lineUserId;
   doc.lineBoundAt = new Date();
   doc.lineBindingToken = ''; // 一次性绑定码，用后失效
   await doc.save();
+  console.log('[LINE Binding] after save:', { docId: doc._id, savedLineUserId: doc.lineUserId, lineBoundAt: doc.lineBoundAt });
 
   return {
     ok: true,
