@@ -1,5 +1,5 @@
 # 多阶段构建 - 后端
-FROM node:18-alpine AS backend
+FROM node:22-alpine AS backend
 
 WORKDIR /app
 
