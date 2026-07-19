@@ -31,12 +31,30 @@ const shopContactSchema = new mongoose.Schema({
   trackerName: {
     type: String,
     default: ''
+  },
+  // LINE 绑定（供应端卖家；方案A：lineBindingToken 绑定码；linkToken 预留方案B）
+  lineUserId: {
+    type: String,
+    default: ''
+  },
+  lineBindingToken: {
+    type: String,
+    default: ''
+  },
+  linkToken: {
+    type: String,
+    default: ''
+  },
+  lineBoundAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
 });
 
 shopContactSchema.index({ companyId: 1, shopId: 1 });
+shopContactSchema.index({ companyId: 1, lineUserId: 1 });
 
 const ShopContact = mongoose.model('ShopContact', shopContactSchema);
 

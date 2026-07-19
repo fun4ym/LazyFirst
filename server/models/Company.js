@@ -42,6 +42,22 @@ const companySchema = new mongoose.Schema({
         type: Number,
         default: 90
       }
+    },
+    // LINE 官方账号 OA 级模板（欢迎语 / 政策 / 客服自动回复），支持 {昵称} 占位符，双语
+    lineTemplates: {
+      autoReplyEnabled: { type: Boolean, default: true },
+      welcome: {
+        th: { type: String, default: '' },
+        en: { type: String, default: '' }
+      },
+      policy: {
+        th: { type: String, default: '' },
+        en: { type: String, default: '' }
+      },
+      contactReply: {
+        th: { type: String, default: '' },
+        en: { type: String, default: '' }
+      }
     }
   }
 }, {

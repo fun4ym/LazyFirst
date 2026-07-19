@@ -138,7 +138,13 @@
             <span v-else class="text-gray">-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" width="180" fixed="right">
+        <el-table-column label="LINE" width="90">
+          <template #default="{ row }">
+            <el-tag v-if="row.lineUserId" type="success" size="small">{{ $t('line.bound') }}</el-tag>
+            <el-tag v-else type="info" size="small">{{ $t('line.unbound') }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.operation')" width="240" fixed="right">
           <template #default="{ row }">
             <el-button link type="info" @click="viewDetail(row)">{{ $t('influencer.detail') }}</el-button>
             <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="primary" @click="editInfluencer(row)">{{ $t('influencer.edit') }}</el-button>
@@ -147,6 +153,7 @@
             <el-button v-if="row.poolType === 'public' && !row.isBlacklisted && hasPermission('influencers:update')" link type="warning" @click="claimInfluencer(row)">{{ $t('influencer.claim') }}</el-button>
             <el-button v-if="row.poolType === 'private' && !row.isBlacklisted && hasPermission('influencers:update')" link type="danger" @click="releaseInfluencer(row)">{{ $t('influencer.release') }}</el-button>
             <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="danger" @click="addToBlacklist(row)">{{ $t('influencer.blacklist') }}</el-button>
+            <el-button v-if="hasPermission('influencers:update')" link type="primary" @click="openLineBinding(row)">{{ $t('line.bindingCode') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -790,6 +797,15 @@
 
       </div>
     </el-dialog>
+
+    <!-- LINE 绑定码对话框 -->
+    <LineBindingDialog
+      v-model="showLineBinding"
+      role="influencer"
+      :target-id="lineBindingTarget.id"
+      :target-name="lineBindingTarget.name"
+      @bound-changed="onLineBoundChanged"
+    />
   </div>
 </template>
 
@@ -803,8 +819,21 @@ import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 import InfluencerCell from '@/components/InfluencerCell.vue'
+import LineBindingDialog from '@/components/LineBindingDialog.vue'
 
 const { t } = useI18n()
+
+// LINE 绑定对话框
+const showLineBinding = ref(false)
+const lineBindingTarget = reactive({ id: '', name: '' })
+const openLineBinding = (row) => {
+  lineBindingTarget.id = row._id
+  lineBindingTarget.name = row.tiktokName || row.tiktokId || row.nickname || ''
+  showLineBinding.value = true
+}
+const onLineBoundChanged = () => {
+  loadData()
+}
 
 const router = useRouter()
 

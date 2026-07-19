@@ -62,6 +62,60 @@
       </div>
     </el-card>
 
+    <!-- LINE 运营概览 -->
+    <el-card v-if="lineOverview" shadow="hover" class="line-overview-card" style="margin-bottom: 20px;">
+      <template #header>
+        <div class="card-header-title">
+          <span>{{ $t('lineOverview.title') }}</span>
+        </div>
+      </template>
+      <el-row :gutter="20" class="line-overview-row">
+        <el-col :xs="24" :sm="8">
+          <div class="line-metric">
+            <div class="line-metric-icon" style="background: linear-gradient(135deg, #06C755 0%, #04a344 100%);">
+              <el-icon><User /></el-icon>
+            </div>
+            <div class="line-metric-content">
+              <div class="line-metric-value">{{ lineOverview.binding.totalBound }}</div>
+              <div class="line-metric-label">{{ $t('lineOverview.boundTotal') }}</div>
+              <div class="line-metric-sub">
+                {{ $t('lineOverview.boundInfluencer') }} {{ lineOverview.binding.influencerBound }} ·
+                {{ $t('lineOverview.boundSeller') }} {{ lineOverview.binding.shopContactBound }}
+              </div>
+            </div>
+          </div>
+        </el-col>
+        <el-col :xs="24" :sm="8">
+          <div class="line-metric">
+            <div class="line-metric-icon" style="background: linear-gradient(135deg, #775999 0%, #5E417E 100%);">
+              <el-icon><Promotion /></el-icon>
+            </div>
+            <div class="line-metric-content">
+              <div class="line-metric-value">{{ lineOverview.usage.pushCount }} <small>{{ $t('lineOverview.pushTimes') }}</small></div>
+              <div class="line-metric-label">{{ $t('lineOverview.monthPush') }}</div>
+              <div class="line-metric-sub">{{ $t('lineOverview.messageCount') }} {{ lineOverview.usage.messageCount }}</div>
+            </div>
+          </div>
+        </el-col>
+        <el-col :xs="24" :sm="8">
+          <div class="line-metric line-metric-quota">
+            <div class="line-quota-head">
+              <span class="line-metric-label">{{ $t('lineOverview.quota') }}</span>
+              <span class="line-quota-num">{{ lineOverview.usage.messageCount }} / {{ lineOverview.usage.quota }}</span>
+            </div>
+            <el-progress
+              :percentage="Math.min(100, Math.round(lineOverview.usage.usedRatio * 100))"
+              :status="lineQuotaStatus"
+              :stroke-width="12"
+            />
+            <div class="line-metric-sub" :class="{ 'quota-warn': lineOverview.usage.warn, 'quota-danger': lineOverview.usage.exceeded }">
+              {{ lineQuotaText }} · {{ $t('lineOverview.remaining') }} {{ lineOverview.usage.remaining }}
+            </div>
+          </div>
+        </el-col>
+      </el-row>
+    </el-card>
+
     <!-- BD数据概览 -->
     <template v-if="isBD && bdStats">
       <!-- 统计日期提示 -->
@@ -268,7 +322,7 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 import request from '@/utils/request'
-import { Box, ShoppingCart, Money, Calendar, User, VideoPlay } from '@element-plus/icons-vue'
+import { Box, ShoppingCart, Money, Calendar, User, VideoPlay, Promotion } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import AuthManager from '@/utils/auth'
 
@@ -278,6 +332,37 @@ const sampleTrendRange = ref('7days')
 const orderTrendRange = ref('7days')
 const publicRecruitments = ref([])
 const currencyList = ref([])
+const lineOverview = ref(null)
+
+// LINE 额度进度条状态
+const lineQuotaStatus = computed(() => {
+  if (!lineOverview.value) return ''
+  const u = lineOverview.value.usage
+  if (u.exceeded) return 'exception'
+  if (u.warn) return 'warning'
+  return 'success'
+})
+
+const lineQuotaText = computed(() => {
+  if (!lineOverview.value) return ''
+  const u = lineOverview.value.usage
+  if (u.exceeded) return t('lineOverview.quotaExceeded')
+  if (u.warn) return t('lineOverview.quotaWarn')
+  return t('lineOverview.quotaNormal')
+})
+
+// 加载 LINE 运营概览
+const loadLineOverview = async () => {
+  try {
+    const res = await request.get('/line/overview')
+    if (res && res.usage && res.binding) {
+      lineOverview.value = { usage: res.usage, binding: res.binding }
+    }
+  } catch (error) {
+    // LINE 未配置或无权限时静默忽略，不影响仪表盘
+    console.warn('加载 LINE 概览失败:', error?.message || error)
+  }
+}
 
 // 加载货币列表
 const loadCurrencies = async () => {
@@ -646,6 +731,8 @@ onMounted(() => {
   if (user) {
     // 加载公开招募列表（对所有登录用户）
     loadPublicRecruitments()
+    // 加载 LINE 运营概览（对所有登录用户）
+    loadLineOverview()
     
     const role = user.role
     console.log('[Dashboard] Role:', role, 'Type:', typeof role, 'IsArray:', Array.isArray(role))
@@ -680,6 +767,94 @@ onMounted(() => {
 .public-recruitment-card {
   border-radius: 12px;
   border: 1px solid #e8ecef;
+}
+
+.line-overview-card {
+  border-radius: 12px;
+  border: 1px solid #e8ecef;
+}
+
+.line-overview-row {
+  padding: 8px 4px;
+}
+
+.line-metric {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+.line-metric-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.line-metric-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.line-metric-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1.2;
+}
+
+.line-metric-value small {
+  font-size: 14px;
+  font-weight: 500;
+  color: #909399;
+}
+
+.line-metric-label {
+  font-size: 13px;
+  color: #606266;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.line-metric-sub {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.line-metric-sub.quota-warn {
+  color: #E6A23C;
+  font-weight: 600;
+}
+
+.line-metric-sub.quota-danger {
+  color: #F56C6C;
+  font-weight: 600;
+}
+
+.line-metric-quota {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.line-quota-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.line-quota-num {
+  font-size: 15px;
+  font-weight: 700;
+  color: #775999;
 }
 
 .public-recruitment-list {

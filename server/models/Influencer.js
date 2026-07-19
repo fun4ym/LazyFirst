@@ -152,6 +152,23 @@ const influencerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DigitalHuman',
     default: null
+  },
+  // LINE 绑定（方案A：lineBindingToken 绑定码；linkToken 预留方案B 官方 Account Link）
+  lineUserId: {
+    type: String,
+    default: ''
+  },
+  lineBindingToken: {
+    type: String,
+    default: ''
+  },
+  linkToken: {
+    type: String,
+    default: ''
+  },
+  lineBoundAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
@@ -190,6 +207,7 @@ influencerSchema.index({ companyId: 1, assignedTo: 1 });
 influencerSchema.index({ companyId: 1, tiktokId: 1 });
 influencerSchema.index({ companyId: 1, tiktokName: 1 });
 influencerSchema.index({ companyId: 1, status: 1 });
+influencerSchema.index({ companyId: 1, lineUserId: 1 });
 
 // 设置虚拟字段
 influencerSchema.set('toJSON', { virtuals: true });

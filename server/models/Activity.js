@@ -126,6 +126,21 @@ const activitySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
     required: true
+  },
+  // LINE 推送配置（复用 Activity 作为 Campaign 载体）
+  linePush: {
+    enabled: { type: Boolean, default: false },
+    audienceCriteria: {
+      categoryTags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'BaseData' }],
+      suitableCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'BaseData' }],
+      followerMin: { type: Number, default: 0 },
+      followerMax: { type: Number, default: 0 }
+    },
+    lastPushAt: { type: Date, default: null },
+    lastPushStatus: { type: String, default: '' },
+    lastRecipientCount: { type: Number, default: 0 },
+    lastMode: { type: String, default: '' },
+    audienceGroupId: { type: String, default: '' }
   }
 }, {
   timestamps: true

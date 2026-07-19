@@ -1,0 +1,89 @@
+/* LazyFirst - partner.tiktokshop.com 注入样式 */
+
+.lf-partner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 0 12px;
+  margin-left: 6px;
+  border: 1px solid #FE2C55;
+  border-radius: 6px;
+  background: #FE2C55;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s ease, opacity .15s ease, transform .05s ease;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.lf-partner-btn:hover { background: #e0204b; }
+.lf-partner-btn:active { transform: translateY(1px); }
+.lf-partner-btn:disabled { cursor: default; opacity: .9; }
+
+.lf-partner-btn.lf-collecting {
+  background: #ff90a9;
+  border-color: #ff90a9;
+  color: #fff;
+}
+.lf-partner-btn.lf-collected {
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #4CAF50;
+}
+
+/* 列表页第一列前置按钮：更紧凑，与达人头像并排 */
+.lf-partner-btn.lf-list-front {
+  height: 24px;
+  padding: 0 8px;
+  margin: 0;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* 达人单元格改为 flex，让按钮与达人信息左右并排 */
+.lf-has-collect-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.lf-creator-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 详情页头部按钮：稍大一点 */
+.lf-partner-btn.lf-detail {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+
+/* 轻量 toast */
+#lf-partner-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  max-width: 80vw;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .82);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, top .2s ease;
+}
+#lf-partner-toast.lf-show { opacity: 1; top: 22px; }
+#lf-partner-toast.lf-ok { background: rgba(76, 175, 80, .94); }
+#lf-partner-toast.lf-err { background: rgba(244, 67, 54, .94); }

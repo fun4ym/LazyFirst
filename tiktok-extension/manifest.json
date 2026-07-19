@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "LazyFirst TikTok 数据采集器",
-  "version": "1.2.1",
-  "description": "在浏览TikTok时自动采集达人数据并同步到LazyFirst系统",
+  "version": "1.3.0",
+  "description": "在浏览TikTok与TikTok Shop联盟达人后台时自动采集达人数据并同步到LazyFirst系统",
   
   "permissions": [
     "storage",
@@ -12,6 +12,7 @@
   
   "host_permissions": [
     "https://www.tiktok.com/*",
+    "https://partner.tiktokshop.com/*",
     "https://tap.lazyfirst.com/*"
   ],
   
@@ -39,6 +40,15 @@
       ],
       "css": ["content/content.css"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["https://partner.tiktokshop.com/*"],
+      "js": [
+        "utils/parser.js",
+        "content/partner.js"
+      ],
+      "css": ["content/partner.css"],
+      "run_at": "document_idle"
     }
   ],
   

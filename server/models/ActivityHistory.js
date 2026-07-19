@@ -9,7 +9,7 @@ const activityHistorySchema = new mongoose.Schema({
   action: {
     type: String,
     required: true,
-    enum: ['create', 'update', 'delete', 'status_change']
+    enum: ['create', 'update', 'delete', 'status_change', 'line_push']
   },
   changes: {
     type: mongoose.Schema.Types.Mixed,

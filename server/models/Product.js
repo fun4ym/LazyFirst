@@ -170,6 +170,11 @@ const productSchema = new mongoose.Schema({
   tiktokSku: String,
   // TikTok shop信息（从合作产品迁移）
   tiktokProductId: String,
+  // LINE/Flex「去带货」直跳真实 TikTok 商品链接（缺省跳 /products/public?productId=XXX）
+  tiktokProductUrl: {
+    type: String,
+    default: ''
+  },
   productCategory: {
     type: String,
     required: [true, '请选择商品类目'],

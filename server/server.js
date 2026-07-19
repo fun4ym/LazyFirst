@@ -40,6 +40,7 @@ const productMediaRoutes = require('./routes/product-media');
 const aiMakerRoutes = require('./routes/ai-maker');
 const tiktokExtensionDataRoutes = require('./routes/tiktok-extension-data');
 const systemModelsRoutes = require('./routes/system-models');
+const lineRoutes = require('./routes/line');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -65,7 +66,15 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // 请求解析
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  // 捕获原始 body，供 LINE Webhook 做 X-Line-Signature 校验（不破坏其他路由）
+  verify: (req, res, buf) => {
+    if (buf && buf.length) {
+      req.rawBody = buf;
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 限流（临时禁用以排查问题）
@@ -126,6 +135,8 @@ app.use('/api/product-media', productMediaRoutes);
 app.use('/api/ai-maker', aiMakerRoutes);
 app.use('/api/tiktok-extension-data', tiktokExtensionDataRoutes);
 app.use('/api/system-models', systemModelsRoutes);
+// LINE 集成路由：/api/line/webhook 免 JWT 鉴权（仅签名校验），业务路由内部复用 authenticate
+app.use('/api/line', lineRoutes);
 
 // 错误处理
 app.use(notFound);

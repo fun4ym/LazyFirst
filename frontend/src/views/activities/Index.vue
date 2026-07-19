@@ -174,6 +174,7 @@
             <el-button link type="primary" @click="viewDetail(row)" v-if="hasPermission('activities:read')">{{ $t('activities.viewDetail') }}</el-button>
             <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('activities:update')">{{ $t('activities.editBtn') }}</el-button>
             <el-button link type="success" @click="showImportDialog(row)" v-if="hasPermission('activities:btn-import-products')">{{ $t('activities.importProducts') }}</el-button>
+            <el-button link type="warning" @click="openLinePush(row)" v-if="hasPermission('activities:update')">{{ $t('linePush.btn') }}</el-button>
             <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('activities:delete')">{{ $t('activities.delete') }}</el-button>
           </template>
         </el-table-column>
@@ -643,6 +644,9 @@
         <el-button type="primary" @click="handleImport" :loading="importLoading">{{ $t('activities.importConfirm') }}</el-button>
       </template>
     </el-dialog>
+
+    <!-- LINE 推送对话框 -->
+    <LinePushDialog v-model="showLinePush" :activity="linePushActivity" @pushed="loadData" />
   </div>
 </template>
 
@@ -656,6 +660,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Plus, Refresh, Upload, Loading, Goods, ArrowRight, DocumentCopy } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
+import LinePushDialog from '@/components/LinePushDialog.vue'
+
+// LINE 推送对话框
+const showLinePush = ref(false)
+const linePushActivity = ref({})
+const openLinePush = (row) => {
+  linePushActivity.value = row
+  showLinePush.value = true
+}
 
 // 权限检查
 const hasPermission = (perm) => AuthManager.hasPermission(perm)

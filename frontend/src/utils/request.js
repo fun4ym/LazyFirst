@@ -22,30 +22,11 @@ request.interceptors.request.use(
     // 公开页面不添加 Authorization 头
     if (!isPublicPage()) {
       const token = AuthManager.getToken()
-      const queryString = config.params ? '?' + new URLSearchParams(config.params).toString() : ''
-      console.log('[Request] 发送请求:', config.method?.toUpperCase(), config.url + queryString)
-      console.log('[Request] Token长度:', token?.length || 0, token ? '有值' : '无')
-      console.log('[Request] Params:', config.params)
       
-      // Token为空：直接触发登出并跳转，不抛错误（用户无感知）
-      if (!token) {
-        console.warn('[Request] Token为空，触发登出:', config.url)
-        // 延迟触发登出，避免在拦截器里直接跳转导致递归
-        if (!window.__isLoggingOut) {
-          window.__isLoggingOut = true
-          // 不显示错误消息，直接静默跳转
-          setTimeout(() => {
-            AuthManager.logout()
-            setTimeout(() => { window.__isLoggingOut = false }, 2000)
-          }, 0)
-        }
-        // 返回一个永不 resolve 的 Promise，阻止请求发出
-        return new Promise(() => {})
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
       }
-      
-      config.headers.Authorization = `Bearer ${token}`
-    } else {
-      console.log('[Request] 公开页面请求，不添加token:', config.method?.toUpperCase(), config.url)
+      // token 为空时不登出，让请求正常发出，后端返回 401 后由响应拦截器统一处理
     }
     
     // 防止GET请求被浏览器缓存

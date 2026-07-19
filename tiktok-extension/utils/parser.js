@@ -206,6 +206,45 @@ function formatRelativeDate(text) {
 }
 
 /**
+ * 解析 partner.tiktokshop.com 的指标数值（泰铢/美元，含 K/M 后缀及近似写法 "10K+"）
+ * 例：'฿433.8M' → { value: 433800000, isApproximate: false }
+ *     '936.0K'  → { value: 936000,   isApproximate: false }
+ *     '฿10K+'   → { value: 10000,    isApproximate: true }
+ *     '0'       → { value: 0,        isApproximate: false }
+ */
+function parsePartnerMetric(text) {
+  if (text === null || text === undefined) {
+    return { value: 0, isApproximate: false };
+  }
+
+  let s = String(text).trim().replace(/[฿$\s,]/g, '');
+  let isApproximate = false;
+
+  if (s.endsWith('+')) {
+    isApproximate = true;
+    s = s.slice(0, -1);
+  }
+
+  s = s.toUpperCase();
+  let multiplier = 1;
+
+  if (s.endsWith('M')) {
+    multiplier = 1000000;
+    s = s.slice(0, -1);
+  } else if (s.endsWith('K')) {
+    multiplier = 1000;
+    s = s.slice(0, -1);
+  }
+
+  const num = parseFloat(s);
+  if (isNaN(num)) {
+    return { value: 0, isApproximate: false };
+  }
+
+  return { value: num * multiplier, isApproximate };
+}
+
+/**
  * 估算GMV（根据粉丝数和互动数据）
  */
 function estimateGMV(followerCount, avgVideoViews, engagementRate = 0.05) {
@@ -238,6 +277,7 @@ if (typeof module !== 'undefined' && module.exports) {
     extractContacts,
     estimateGMV,
     estimateFV,
+    parsePartnerMetric,
     formatCompactNumber,
     calculateEngagementRate,
     formatDuration,

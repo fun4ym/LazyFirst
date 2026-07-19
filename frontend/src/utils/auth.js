@@ -2,25 +2,9 @@
 import router from '@/router'
 
 const AuthManager = {
-  // 获取 token
+  // 获取 token（纯读取，不做任何URL操作，避免触发Vue Router路由变化）
   getToken() {
-    // 先检查URL参数，如果有则保存到localStorage（恢复token）
-    const urlParams = new URLSearchParams(window.location.search)
-    const urlToken = urlParams.get('token')
-
-    if (urlToken) {
-      console.log('[AuthManager] URL中发现token，保存到localStorage')
-      localStorage.setItem('token', urlToken)
-      // 清除URL中的token参数（避免泄露）
-      const url = new URL(window.location.href)
-      url.searchParams.delete('token')
-      window.history.replaceState({}, '', url.toString())
-      return urlToken
-    }
-
-    // 从 localStorage 获取
     const token = localStorage.getItem('token') || ''
-    console.log('[AuthManager] getToken 从localStorage:', token ? '有值' : '空')
     return token
   },
 

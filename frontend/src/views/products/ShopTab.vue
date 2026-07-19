@@ -191,12 +191,19 @@
         <el-table :data="contacts" stripe style="margin-top: 10px">
           <el-table-column prop="name" label="联系人" width="120" />
           <el-table-column prop="phone" label="手机号" width="120" />
-          <el-table-column prop="email" label="邮箱" width="180" />
-          <el-table-column prop="trackerName" label="跟踪人" width="100" />
-          <el-table-column label="操作" width="120">
+          <el-table-column prop="email" label="邮箱" width="160" />
+          <el-table-column prop="trackerName" label="跟踪人" width="90" />
+          <el-table-column label="LINE" width="80">
+            <template #default="{ row }">
+              <el-tag v-if="row.lineUserId" type="success" size="small">{{ $t('line.bound') }}</el-tag>
+              <el-tag v-else type="info" size="small">{{ $t('line.unbound') }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180">
             <template #default="{ row }">
               <el-button link type="primary" @click="editContact(row)">修改</el-button>
               <el-button link type="danger" @click="deleteContact(row)">删除</el-button>
+              <el-button link type="primary" @click="openLineBinding(row)">{{ $t('line.bindingCode') }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -239,6 +246,15 @@
       </template>
     </el-dialog>
 
+    <!-- LINE 绑定码对话框（卖家/联系人） -->
+    <LineBindingDialog
+      v-model="showLineBinding"
+      role="shopContact"
+      :target-id="lineBindingTarget.id"
+      :target-name="lineBindingTarget.name"
+      @bound-changed="onLineBoundChanged"
+    />
+
     <!-- 添加跟踪记录对话框 -->
     <el-dialog v-model="showTrackingDialog" title="添加跟踪记录" width="500px">
       <el-form :model="trackingForm" label-width="80px">
@@ -264,8 +280,21 @@ import { Search, Check } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
+import LineBindingDialog from '@/components/LineBindingDialog.vue'
 
 const userStore = useUserStore()
+
+// LINE 绑定对话框（联系人=卖家 ShopContact）
+const showLineBinding = ref(false)
+const lineBindingTarget = reactive({ id: '', name: '' })
+const openLineBinding = (row) => {
+  lineBindingTarget.id = row._id
+  lineBindingTarget.name = row.name || ''
+  showLineBinding.value = true
+}
+const onLineBoundChanged = () => {
+  if (currentShop.value) viewShop(currentShop.value)
+}
 
 // 权限检查 - 支持 products 和 shops 权限
 const hasPermission = (perm) => {
