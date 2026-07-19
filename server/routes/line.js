@@ -11,7 +11,6 @@ const bindingService = require('../line/bindingService');
 const audienceService = require('../line/audienceService');
 const pushService = require('../line/pushService');
 const quotaService = require('../line/quotaService');
-const flex = require('../line/flex');
 const { authenticate } = require('../middleware/auth');
 
 // 允许的绑定角色
@@ -80,36 +79,19 @@ router.put('/templates', authenticate, async (req, res) => {
   }
 });
 
-// 部署/更新卖家专属 Rich Menu（政策 / 报名活动 / 联系客服）并设为默认
+// 部署/更新双套 Rich Menu（卖家 + 达人）并上传图片，卖家菜单设为默认
 router.post('/rich-menu/setup', authenticate, async (req, res) => {
   try {
     if (!config.isConfigured) {
       return res.status(400).json({ success: false, message: 'LINE 未配置凭证，无法部署 Rich Menu' });
     }
-    // 清理旧的同名 Rich Menu，避免堆积（SDK v11：getRichMenuList 返回 { richmenus: [...] }）
-    try {
-      const listRes = await lineClient.getRichMenuList();
-      const list = listRes?.richmenus || listRes?.richMenuList || [];
-      console.log('[LINE] Rich Menu 列表:', list.length, '个');
-      await Promise.all(
-        list
-          .filter(m => m.name === 'supplyRichMenu')
-          .map(m => lineClient.deleteRichMenu(m.richMenuId).catch(() => {}))
-      );
-    } catch (e) {
-      console.warn('[LINE] 清理旧 Rich Menu 失败（忽略）:', e.message);
-    }
-    // SDK v11：createRichMenu 返回 { richMenuId: '...' }
-    console.log('[LINE] 创建 Rich Menu...');
-    const createRes = await lineClient.createRichMenu(flex.buildSupplyRichMenu());
-    const richMenuId = createRes.richMenuId;
-    console.log('[LINE] Rich Menu 创建成功:', richMenuId);
-    // 注意：Rich Menu 图片需另行上传（setRichMenuImage），此处仅创建结构并设默认
-    await lineClient.setDefaultRichMenu(richMenuId);
+    const richMenuService = require('../line/richMenuService');
+    const { supplyMenuId, influencerMenuId } = await richMenuService.setup();
     res.json({
       success: true,
-      richMenuId,
-      message: 'Rich Menu 已创建并设为默认，请上传菜单图片后生效'
+      supplyMenuId,
+      influencerMenuId,
+      message: '双套 Rich Menu 已部署：卖家菜单(默认) + 达人菜单。绑定角色的用户将自动看到对应菜单。'
     });
   } catch (error) {
     const detail = error.body || error.message;

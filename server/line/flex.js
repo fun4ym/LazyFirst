@@ -170,11 +170,11 @@ function buildSupplyRichMenu() {
     size: { width: 2500, height: 843 },
     selected: true,
     name: 'supplyRichMenu',
-    chatBarText: 'เมนู / Menu',
+    chatBarText: 'เมนูผู้ขาย / Seller Menu',
     areas: [
       {
         bounds: { x: 0, y: 0, width: 833, height: 843 },
-        action: { type: 'message', label: 'นโยบาย', text: 'นโยบาย' } // 触发政策卡片回复
+        action: { type: 'message', label: 'นโยบาย', text: 'นโยบาย' }
       },
       {
         bounds: { x: 833, y: 0, width: 834, height: 843 },
@@ -182,7 +182,32 @@ function buildSupplyRichMenu() {
       },
       {
         bounds: { x: 1667, y: 0, width: 833, height: 843 },
-        action: { type: 'message', label: 'ติดต่อ', text: 'ติดต่อ' } // 触发客服自动回复
+        action: { type: 'message', label: 'ติดต่อ', text: 'ติดต่อ' }
+      }
+    ]
+  };
+}
+
+// 达人专属 Rich Menu（F2）：热门产品 / 最新活动 / 联系客服
+function buildInfluencerRichMenu() {
+  const u = baseUrl();
+  return {
+    size: { width: 2500, height: 843 },
+    selected: true,
+    name: 'influencerRichMenu',
+    chatBarText: 'เมนูครีเอเตอร์ / Creator Menu',
+    areas: [
+      {
+        bounds: { x: 0, y: 0, width: 833, height: 843 },
+        action: { type: 'uri', label: 'กิจกรรมล่าสุด', uri: `${u}/recruitments/public` }
+      },
+      {
+        bounds: { x: 833, y: 0, width: 834, height: 843 },
+        action: { type: 'postback', label: 'สินค้าแนะนำ', data: 'action=hot_products' }
+      },
+      {
+        bounds: { x: 1667, y: 0, width: 833, height: 843 },
+        action: { type: 'message', label: 'ติดต่อ', text: 'ติดต่อ' }
       }
     ]
   };
@@ -193,5 +218,6 @@ module.exports = {
   genericHelpMessage,
   policyFlexCard,
   productFlexCard,
-  buildSupplyRichMenu
+  buildSupplyRichMenu,
+  buildInfluencerRichMenu
 };

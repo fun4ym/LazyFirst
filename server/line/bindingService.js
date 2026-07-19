@@ -102,6 +102,16 @@ async function unbind({ role, id, companyId }) {
   return { ok: true };
 }
 
+// 根据 lineUserId 反向查询绑定角色（供 Rich Menu 自动挂载）
+async function getRoleByLineUser(lineUserId) {
+  if (!lineUserId) return null;
+  const influencer = await Influencer.findOne({ lineUserId });
+  if (influencer) return 'influencer';
+  const shopContact = await ShopContact.findOne({ lineUserId });
+  if (shopContact) return 'shopContact';
+  return null;
+}
+
 // ===== 预留方案B：官方 Account Link（linkToken/nonce）=====
 // 上线 LIFF/Account Link 后实现：校验 nonce、用 linkToken 换取绑定关系。
 async function bindWithLinkToken({ lineUserId, linkToken, nonce }) {
@@ -117,5 +127,6 @@ module.exports = {
   confirm,
   getBindingStatus,
   unbind,
-  bindWithLinkToken
+  bindWithLinkToken,
+  getRoleByLineUser
 };

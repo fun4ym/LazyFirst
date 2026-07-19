@@ -6,6 +6,7 @@ const client = require('./client');
 const flex = require('./flex');
 const templateService = require('./templateService');
 const bindingService = require('./bindingService');
+const richMenuService = require('./richMenuService');
 
 // 关键词映射（泰文/英文/中文均可触发）
 const POLICY_KEYWORDS = ['นโยบาย', 'policy', '政策', '带货政策'];
@@ -41,10 +42,23 @@ async function handle(event) {
 
 async function handleFollow(event) {
   const replyToken = event.replyToken;
+  const lineUserId = event.source && event.source.userId;
   try {
     const companyId = await templateService.resolveCompanyId();
     const templates = await templateService.getTemplates(companyId);
     await client.replyMessage(replyToken, flex.welcomeMessage(templates.welcome));
+
+    // 检查是否已绑定角色，自动挂对应 Rich Menu
+    if (lineUserId) {
+      try {
+        const role = await bindingService.getRoleByLineUser(lineUserId);
+        if (role) {
+          await richMenuService.attachRoleMenu(lineUserId, role);
+        }
+      } catch (rmErr) {
+        console.warn('[LINE] follow 自动挂菜单失败（忽略）:', rmErr.message);
+      }
+    }
   } catch (e) {
     console.error('[LINE] follow 回复失败:', e.message);
   }
@@ -69,6 +83,12 @@ async function handleText(event) {
             type: 'text',
             text: `ผูกบัญชีสำเร็จ! ✅ / Bound successfully!${nameStr}`
           });
+          // 绑定成功后自动挂对应角色菜单
+          try {
+            await richMenuService.attachRoleMenu(lineUserId, result.role);
+          } catch (rmErr) {
+            console.warn('[LINE] 绑定后挂菜单失败（忽略）:', rmErr.message);
+          }
         } else {
           await client.replyMessage(replyToken, {
             type: 'text',
