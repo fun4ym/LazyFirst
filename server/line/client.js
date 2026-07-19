@@ -56,19 +56,23 @@ function validateSignature(rawBody, signature) {
   }
 }
 
-// 回复（follow/message 事件携带 replyToken，1 秒内有效）
+// 回复（follow/message 事件携带 replyToken）
+// 注意：LINE API 要求 messages 必须是数组格式
 async function replyMessage(replyToken, messages) {
-  return getClient().replyMessage({ replyToken, messages });
+  const msgs = Array.isArray(messages) ? messages : [messages];
+  return getClient().replyMessage({ replyToken, messages: msgs });
 }
 
 // 主动推送（指定 userId / 数组）
 async function pushMessage(to, messages) {
-  return getClient().pushMessage({ to, messages });
+  const msgs = Array.isArray(messages) ? messages : [messages];
+  return getClient().pushMessage({ to, messages: msgs });
 }
 
 // 多人推送（userId 数组，单次上限 500，调用方负责分批）
 async function multicast(to, messages) {
-  return getClient().multicast({ to, messages });
+  const msgs = Array.isArray(messages) ? messages : [messages];
+  return getClient().multicast({ to, messages: msgs });
 }
 
 // 精准推送（narrowcast）：先建受众组再发送，返回 requestId 供进度回查
