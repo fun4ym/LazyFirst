@@ -49,7 +49,7 @@ function getAudienceClient() {
 function validateSignature(rawBody, signature) {
   if (!config.channelSecret) return false;
   try {
-    return line.validateSignature(rawBody, signature, config.channelSecret);
+    return line.validateSignature(rawBody, config.channelSecret, signature);
   } catch (e) {
     console.error('[LINE] 签名校验异常:', e.message);
     return false;
