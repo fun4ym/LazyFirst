@@ -94,23 +94,32 @@ async function deployRichMenu(builder, imageFn) {
 // 清理已有菜单 & 部署两套
 async function setup() {
   // 先清理历史菜单
-  const existing = await lineClient.getRichMenuList();
-  const list = existing.richmenus || [];
-  for (const m of list) {
-    await lineClient.deleteRichMenu(m.richMenuId);
-    console.log(`[RichMenu] 已清理: ${m.richMenuId}`);
+  try {
+    const existing = await lineClient.getRichMenuList();
+    const list = existing.richmenus || [];
+    for (const m of list) {
+      await lineClient.deleteRichMenu(m.richMenuId);
+      console.log(`[RichMenu] 已清理: ${m.richMenuId}`);
+    }
+  } catch (e) {
+    console.warn('[RichMenu] 清理旧菜单失败（忽略）:', e.message);
   }
 
-  // 部署卖家菜单
+  // 部署卖家菜单（含图片）
   const supplyMenuId = await deployRichMenu(flex.buildSupplyRichMenu, generateSupplyImage);
 
-  // 部署达人菜单
+  // 部署达人菜单（含图片）
   const influencerMenuId = await deployRichMenu(flex.buildInfluencerRichMenu, generateInfluencerImage);
 
-  // 卖家菜单设为默认（兜底，未绑定的用户看这个）
-  await lineClient.setDefaultRichMenu(supplyMenuId);
-  console.log(`[RichMenu] 卖家菜单设为默认: ${supplyMenuId}`);
+  // 卖家菜单设为默认（兜底）。免费号可能不支持，失败就跳过
+  try {
+    await lineClient.setDefaultRichMenu(supplyMenuId);
+    console.log(`[RichMenu] 卖家菜单设为默认: ${supplyMenuId}`);
+  } catch (e) {
+    console.warn(`[RichMenu] 设默认菜单失败（免费号限制，跳过）: ${e.message}`);
+  }
 
+  console.log(`[RichMenu] 部署完成: 卖家=${supplyMenuId} 达人=${influencerMenuId}`);
   return { supplyMenuId, influencerMenuId };
 }
 
