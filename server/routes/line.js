@@ -18,12 +18,14 @@ const VALID_ROLES = ['influencer', 'shopContact'];
 
 // 拼接「带参加好友链接」：加好友后引导用户发送绑定码
 function buildAddFriendLink(token) {
-  const oaId = config.channelId ? `@${config.channelId}` : '';
-  // 官方加好友链接（basic id 需为 @xxx 形式，若未配置则返回空）
+  const rawOaId = config.oaId || process.env.LINE_OA_ID || '';
+  const oaId = rawOaId.startsWith('@') ? rawOaId : (rawOaId ? `@${rawOaId}` : '');
+  const addFriendUrl = oaId
+    ? `https://line.me/R/ti/p/${encodeURIComponent(oaId)}`
+    : '';
   return {
     token,
-    // 前端展示：让用户复制绑定码，加好友后在聊天内发送
-    addFriendUrl: process.env.LINE_ADD_FRIEND_URL || 'https://line.me/R/ti/p/%40380xfno',
+    addFriendUrl,
     oaId
   };
 }

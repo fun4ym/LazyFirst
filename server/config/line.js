@@ -7,11 +7,12 @@ const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
 const channelId = process.env.LINE_CHANNEL_ID || '';
 const liffId = process.env.LINE_LIFF_ID || '';
 const webhookBaseUrl = process.env.LINE_WEBHOOK_BASE_URL || '';
+const oaId = process.env.LINE_OA_ID || '';
 // 单一 LINE OA 归属公司：Webhook 无 JWT 上下文，用此定位公司（缺省时回退首个公司）
 const defaultCompanyId = process.env.LINE_DEFAULT_COMPANY_ID || '';
 
 // 是否已配置完整凭证（未配置时仅加载，不抛错，便于本地启动）
-const isConfigured = Boolean(channelAccessToken && channelSecret);
+const isConfigured = Boolean(channelAccessToken && channelSecret && channelId);
 
 module.exports = {
   channelAccessToken,
@@ -19,6 +20,7 @@ module.exports = {
   channelId,
   liffId,
   webhookBaseUrl,
+  oaId,
   defaultCompanyId,
   isConfigured
 };

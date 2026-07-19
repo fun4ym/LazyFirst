@@ -133,7 +133,7 @@ async function setRichMenuImage(richMenuId, buffer, contentType) {
 }
 
 async function setDefaultRichMenu(richMenuId) {
-  return getClient().setDefaultRichMenu({ richMenuId });
+  return getClient().setDefaultRichMenu(richMenuId);
 }
 
 async function getRichMenuList() {
@@ -141,23 +141,23 @@ async function getRichMenuList() {
 }
 
 async function deleteRichMenu(richMenuId) {
-  return getClient().deleteRichMenu({ richMenuId });
+  return getClient().deleteRichMenu(richMenuId);
 }
 
 // 将 Rich Menu 绑定到指定用户（按角色区分菜单）
 async function linkRichMenuToUser(userId, richMenuId) {
-  return getClient().linkRichMenuIdToUser({ userId, richMenuId });
+  return getClient().linkRichMenuIdToUser(userId, richMenuId);
 }
 
 // 解绑用户 Rich Menu（回到默认菜单或兜底）
 async function unlinkRichMenuFromUser(userId) {
-  return getClient().unlinkRichMenuIdFromUser({ userId });
+  return getClient().unlinkRichMenuIdFromUser(userId);
 }
 
 // 查询用户当前绑定的 Rich Menu
 async function getRichMenuIdOfUser(userId) {
   try {
-    const res = await getClient().getRichMenuIdOfUser({ userId });
+    const res = await getClient().getRichMenuIdOfUser(userId);
     return res.richMenuId || null;
   } catch (e) {
     if (e.statusCode === 404) return null; // 用户无默认菜单
