@@ -8,18 +8,18 @@ const flex = require('./flex');
 const MENU_WIDTH = 2500;
 const MENU_HEIGHT = 843;
 
-// 颜色方案（0xAARRGGBB）
-const hex = (s) => (parseInt(s.replace('#', ''), 16) << 8) | 0xFF;
+// 颜色方案（0xAARRGGBB，用 BigInt 避免 js 左移溢出）
+const toColor = (hexStr) => Number(BigInt('0x' + hexStr.replace('#', '') + 'FF'));
 const COLORS = {
   supply: [
-    { bg: hex('#6C5CE7'), text: '#FFFFFF' },
-    { bg: hex('#A855F7'), text: '#FFFFFF' },
-    { bg: hex('#D946EF'), text: '#FFFFFF' },
+    { bg: toColor('6C5CE7') },
+    { bg: toColor('A855F7') },
+    { bg: toColor('D946EF') },
   ],
   influencer: [
-    { bg: hex('#EC4899'), text: '#FFFFFF' },
-    { bg: hex('#F97316'), text: '#FFFFFF' },
-    { bg: hex('#06B6D4'), text: '#FFFFFF' },
+    { bg: toColor('EC4899') },
+    { bg: toColor('F97316') },
+    { bg: toColor('06B6D4') },
   ],
 };
 
