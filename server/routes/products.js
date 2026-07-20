@@ -133,7 +133,7 @@ router.post('/', authenticate, authorize('products:create'), async (req, res) =>
     const product = await Product.create(productData);
 
     // LINE通知：新品推荐推送（仅当关联活动时，异步、不阻塞响应）
-    if (lineConfig.isConfigured() && productData.activityConfigs?.length > 0) {
+    if (lineConfig.isConfigured && productData.activityConfigs?.length > 0) {
       setTimeout(async () => {
         try {
           const matched = await Influencer.find({
@@ -257,7 +257,7 @@ router.put('/:id', authenticate, authorize('products:update'), async (req, res) 
     }
 
     // LINE通知：新增活动关联时推送新品（异步）
-    if (lineConfig.isConfigured() && product.activityConfigs?.length > 0) {
+    if (lineConfig.isConfigured && product.activityConfigs?.length > 0) {
       setTimeout(async () => {
         try {
           const matched = await Influencer.find({

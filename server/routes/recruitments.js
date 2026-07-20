@@ -192,7 +192,7 @@ router.post('/', authenticate, authorize('recruitments:create'), [
     await recruitment.save();
 
     // LINE通知：新活动推送给已绑定达人（异步，不阻塞响应）
-    if (lineConfig.isConfigured() && enabled !== false) {
+    if (lineConfig.isConfigured && enabled !== false) {
       setTimeout(async () => {
         try {
           const matched = await Influencer.find({
