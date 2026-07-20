@@ -39,7 +39,9 @@ export default {
     confirmMsg: '将向 {count} 位已绑定 LINE 的达人推送产品卡，确认发起？',
     pushSuccess: '推送已发起，覆盖 {count} 人',
     noProduct: '暂无可预览产品',
-    productPushTitle: '新品推送到 LINE'
+    productPushTitle: '单品推 LINE',
+    recruitmentPushTitle: '招募推送到 LINE',
+    recruitmentPushConfirm: '将向 {count} 位已绑定 LINE 的达人推送招募卡，确认发起？'
   },
   lineRecords: {
     title: 'LINE 发送记录',

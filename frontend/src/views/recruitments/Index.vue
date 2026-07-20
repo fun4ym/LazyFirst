@@ -107,6 +107,7 @@
         <el-table-column :label="$t('common.operation')" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="showEditDialog(row)" v-if="hasPermission('recruitments:update')">{{ $t('recruitment.edit') }}</el-button>
+            <el-button link type="primary" @click="openRecruitmentPush(row)" v-if="hasPermission('recruitments:update')">推送 LINE</el-button>
             <el-button link type="danger" @click="handleDelete(row)" v-if="hasPermission('recruitments:delete')">{{ $t('recruitment.delete') }}</el-button>
           </template>
         </el-table-column>
@@ -330,6 +331,9 @@
         </div>
       </div>
     </el-drawer>
+
+    <!-- 招募推送 LINE 弹窗 -->
+    <LineRecruitmentPushDialog v-model="recruitmentPushVisible" :recruitment="currentRecruitment" />
   </div>
 </template>
 
@@ -341,6 +345,7 @@ import request from '@/utils/request'
 import AuthManager from '@/utils/auth'
 import { Plus, Link, CopyDocument } from '@element-plus/icons-vue'
 import { presetColors } from './components/recruitmentStyles'
+import LineRecruitmentPushDialog from '@/components/LineRecruitmentPushDialog.vue'
 
 const { t } = useI18n()
 const hasPermission = (perm) => AuthManager.hasPermission(perm)
@@ -360,6 +365,14 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 const currentId = ref(null)
+
+// 招募推送弹窗
+const recruitmentPushVisible = ref(false)
+const currentRecruitment = ref(null)
+const openRecruitmentPush = (row) => {
+  currentRecruitment.value = row
+  recruitmentPushVisible.value = true
+}
 
 // 表单
 const formRef = ref(null)

@@ -4,6 +4,7 @@
 const Activity = require('../models/Activity');
 const ActivityHistory = require('../models/ActivityHistory');
 const Product = require('../models/Product');
+const Recruitment = require('../models/Recruitment');
 const LinePushRecord = require('../models/LinePushRecord');
 const audienceService = require('./audienceService');
 const quotaService = require('./quotaService');
@@ -267,10 +268,101 @@ async function getPushStatus({ activityId, companyId, requestId }) {
   return { mode: (activity && activity.linePush && activity.linePush.lastMode) || '', linePush: activity ? activity.linePush : null };
 }
 
+// 发起「招募推送」给指定受众（按标签筛选）
+async function sendRecruitment({ recruitmentId, companyId, operatorId, operatorName, mode, criteriaOverride }) {
+  if (!config.isConfigured) throw new Error('LINE 未配置凭证，无法推送');
+
+  const recruitment = await Recruitment.findOne({ _id: recruitmentId, companyId }).lean();
+  if (!recruitment) throw new Error('招募不存在或无权限');
+
+  const criteria = criteriaOverride || {};
+  const { userIds, count } = await audienceService.getAudience(companyId, criteria);
+  if (count === 0) {
+    await writeRecord({
+      companyId, type: 'recruitment', refId: recruitment._id, refName: recruitment.name,
+      operatorId, operatorName, mode: mode || 'multicast', audienceCriteria: criteria,
+      recipientCount: 0, status: 'failed', error: 'no_audience'
+    });
+    throw new Error('没有匹配的已绑定 LINE 达人');
+  }
+
+  // 关联商品名
+  let productsText = '';
+  // 综合费率：取该招募下各商品的「推广佣金率」均值；高于广场 = 推广佣金率 - 广场佣金率（百分点）
+  let rateInfo = null;
+  if (recruitment.products && recruitment.products.length) {
+    const prods = await Product.find({ _id: { $in: recruitment.products }, companyId }).lean();
+    productsText = prods.map(p => p.name).join('、');
+    const rates = prods.map(p => {
+      const cfg = (p.activityConfigs && p.activityConfigs.length)
+        ? (p.activityConfigs.find(a => a.isDefault) || p.activityConfigs[0])
+        : null;
+      const promo = (cfg && cfg.promotionInfluencerRate != null) ? Number(cfg.promotionInfluencerRate) : (p.promotionInfluencerRate != null ? Number(p.promotionInfluencerRate) : 0);
+      const square = (cfg && cfg.squareCommissionRate != null) ? Number(cfg.squareCommissionRate) : (p.squareCommissionRate != null ? Number(p.squareCommissionRate) : 0);
+      return { promo, square };
+    }).filter(r => r.promo > 0 || r.square > 0);
+    if (rates.length) {
+      const avgPromo = rates.reduce((s, r) => s + r.promo, 0) / rates.length;
+      const avgSquare = rates.reduce((s, r) => s + r.square, 0) / rates.length;
+      const round1 = v => Math.round(v * 10) / 10;
+      rateInfo = { rate: round1(avgPromo * 100), diff: round1((avgPromo - avgSquare) * 100) };
+    }
+  }
+  // 要求文案
+  const reqs = [];
+  if (recruitment.requirementGmv) reqs.push(`GMV≥${recruitment.requirementGmv}`);
+  if (recruitment.requirementFollowers) reqs.push(`FV≥${recruitment.requirementFollowers}K`);
+  if (recruitment.requirementMonthlySales) reqs.push(`MSS≥${recruitment.requirementMonthlySales}`);
+  if (recruitment.requirementAvgViews) reqs.push(`APV≥${recruitment.requirementAvgViews}`);
+  const requirementText = reqs.join(' | ');
+
+  const message = flex.campaignCard({
+    name: recruitment.name,
+    description: recruitment.description,
+    requirementText,
+    productsText,
+    recruitmentId: recruitment.identificationCode || recruitment._id,
+    rateInfo
+  });
+
+  const useNarrowcast = mode === 'narrowcast' && count >= NARROWCAST_THRESHOLD;
+  const resultMode = useNarrowcast ? 'narrowcast' : 'multicast';
+
+  try {
+    if (useNarrowcast) {
+      const audienceGroupId = await audienceService.createAudienceGroupWithUsers(`recruitment_${recruitmentId}_${Date.now()}`, userIds);
+      const { requestId } = await lineClient.narrowcast({ messages: message, recipient: { audienceGroupId } });
+      console.log(`[LINE] 招募推送(narrowcast) requestId=${requestId}, 人数=${count}`);
+    } else {
+      let batches = 0;
+      for (let i = 0; i < userIds.length; i += MULTICAST_BATCH) {
+        const batch = userIds.slice(i, i + MULTICAST_BATCH);
+        await lineClient.multicast(batch, message);
+        batches += 1;
+      }
+      console.log(`[LINE] 招募推送(multicast) 批数=${batches}, 人数=${count}`);
+    }
+    await writeRecord({
+      companyId, type: 'recruitment', refId: recruitment._id, refName: recruitment.name,
+      operatorId, operatorName, mode: resultMode, audienceCriteria: criteria,
+      recipientCount: count, status: 'success'
+    });
+    return { recipientCount: count, mode: resultMode };
+  } catch (err) {
+    await writeRecord({
+      companyId, type: 'recruitment', refId: recruitment._id, refName: recruitment.name,
+      operatorId, operatorName, mode: resultMode, audienceCriteria: criteria,
+      recipientCount: 0, status: 'failed', error: err.message
+    });
+    throw err;
+  }
+}
+
 module.exports = {
   MULTICAST_BATCH,
   NARROWCAST_THRESHOLD,
   sendCampaign,
   sendProduct,
+  sendRecruitment,
   getPushStatus
 };

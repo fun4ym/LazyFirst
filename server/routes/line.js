@@ -155,15 +155,43 @@ router.post('/unbind', authenticate, async (req, res) => {
 
 // ===== M4 受众分群 & 推送 =====
 
-// 受众预估：body { criteria: { categoryTags, suitableCategories, followerMin, followerMax } }
+// query 参数可能是逗号分隔字符串或数组，统一转数组
+function splitCsv(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.map(String).filter(Boolean);
+  return String(v).split(',').map(s => s.trim()).filter(Boolean);
+}
+
+// 受众预估核心：兼容 POST(body.criteria 对象) 与 GET(query 参数)
+async function previewAudience(companyId, rawCriteria) {
+  const criteria = {
+    categoryTags: splitCsv(rawCriteria.categoryTags),
+    suitableCategories: splitCsv(rawCriteria.suitableCategories),
+    followerMin: rawCriteria.followerMin ? Number(rawCriteria.followerMin) : 0,
+    followerMax: rawCriteria.followerMax ? Number(rawCriteria.followerMax) : 0
+  };
+  const count = await audienceService.previewCount(companyId, criteria);
+  const suggestedMode = count >= pushService.NARROWCAST_THRESHOLD ? 'narrowcast_available' : 'multicast';
+  return { success: true, count, suggestedMode, narrowcastThreshold: pushService.NARROWCAST_THRESHOLD };
+}
+
+// 受众预估（POST）：body { criteria: { categoryTags[], suitableCategories[], followerMin, followerMax } }
 router.post('/audience/preview', authenticate, async (req, res) => {
   try {
     const criteria = (req.body && req.body.criteria) || {};
-    const count = await audienceService.previewCount(req.companyId, criteria);
-    const mode = count >= pushService.NARROWCAST_THRESHOLD ? 'narrowcast_available' : 'multicast';
-    res.json({ success: true, count, suggestedMode: mode, narrowcastThreshold: pushService.NARROWCAST_THRESHOLD });
+    res.json(await previewAudience(req.companyId, criteria));
   } catch (error) {
     console.error('[LINE] 受众预估失败:', error.message);
+    res.status(500).json({ success: false, message: '受众预估失败: ' + error.message });
+  }
+});
+
+// 受众预估（GET）：前端 LineProductPushDialog 用 query 参数（逗号串）预览人数
+router.get('/audience/preview', authenticate, async (req, res) => {
+  try {
+    res.json(await previewAudience(req.companyId, req.query || {}));
+  } catch (error) {
+    console.error('[LINE] 受众预估失败(GET):', error.message);
     res.status(500).json({ success: false, message: '受众预估失败: ' + error.message });
   }
 });
@@ -207,12 +235,31 @@ router.post('/product/:id/push', authenticate, async (req, res) => {
   }
 });
 
+// 发起招募推送（手动）：body { mode?, criteria? }
+router.post('/recruitment/:id/push', authenticate, async (req, res) => {
+  try {
+    const { mode, criteria } = req.body || {};
+    const result = await pushService.sendRecruitment({
+      recruitmentId: req.params.id,
+      companyId: req.companyId,
+      operatorId: req.userId,
+      operatorName: (req.user && (req.user.realName || req.user.username)) || '',
+      mode,
+      criteriaOverride: criteria
+    });
+    res.json({ success: true, ...result, message: '推送已发起' });
+  } catch (error) {
+    console.error('[LINE] 发起招募推送失败:', error.message);
+    res.status(400).json({ success: false, message: '发起招募推送失败: ' + error.message });
+  }
+});
+
 // 发送记录列表：query { type?, page?, pageSize? }
 router.get('/push-records', authenticate, async (req, res) => {
   try {
     const { type, page = 1, pageSize = 20 } = req.query;
     const query = { companyId: req.companyId };
-    if (type && ['campaign', 'product'].includes(type)) query.type = type;
+    if (type && ['campaign', 'product', 'recruitment'].includes(type)) query.type = type;
     const total = await LinePushRecord.countDocuments(query);
     const records = await LinePushRecord.find(query)
       .sort({ createdAt: -1 })

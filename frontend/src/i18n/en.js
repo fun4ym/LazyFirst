@@ -39,7 +39,9 @@ export default {
     confirmMsg: 'Send the product card to {count} LINE-bound influencers. Proceed?',
     pushSuccess: 'Push started, reaching {count} people',
     noProduct: 'No product to preview',
-    productPushTitle: 'Push New Product to LINE'
+    productPushTitle: 'Push Single Product to LINE',
+    recruitmentPushTitle: 'Push Recruitment to LINE',
+    recruitmentPushConfirm: 'Send the recruitment card to {count} LINE-bound influencers. Proceed?'
   },
   lineRecords: {
     title: 'LINE Push Records',

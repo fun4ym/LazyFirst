@@ -423,11 +423,52 @@ function sampleApprovalCard({ productName, influencerName, sampleId }) {
   };
 }
 
+// 综合费率展示块（招募推送用）
+// rateInfo: { rate: number(%), diff: number(百分点，正=高于广场) }
+function rateInfoBlock(rateInfo) {
+  if (!rateInfo || rateInfo.rate == null) return null;
+  const { rate, diff } = rateInfo;
+  let diffText, diffColor;
+  if (diff > 0) { diffText = `↑ 高于广场 ${diff}%`; diffColor = '#2E7D32'; }
+  else if (diff < 0) { diffText = `↓ 低于广场 ${Math.abs(diff)}%`; diffColor = '#C62828'; }
+  else { diffText = '与广场持平'; diffColor = '#757575'; }
+  return {
+    type: 'box',
+    layout: 'vertical',
+    margin: 'md',
+    paddingAll: '12px',
+    cornerRadius: '10px',
+    backgroundColor: '#F3EDFA',
+    borderColor: '#E1D4F2',
+    borderWidth: '1px',
+    contents: [
+      {
+        type: 'box',
+        layout: 'baseline',
+        spacing: 'sm',
+        contents: [
+          { type: 'text', text: '综合费率', size: 'sm', color: '#6A1B9A', weight: 'bold', flex: 1 },
+          { type: 'text', text: `${rate}%`, size: 'xl', weight: 'bold', color: '#6A1B9A', align: 'end', flex: 0 }
+        ]
+      },
+      {
+        type: 'text',
+        text: diffText,
+        size: 'xs',
+        color: diffColor,
+        margin: 'xs',
+        align: 'end',
+        weight: 'bold'
+      }
+    ]
+  };
+}
+
 // ========== 活动推送卡片 ==========
 
 // 活动/招募通知（push 给匹配达人）
-// { name, description, requirementText, productsText, recruitmentId }
-function campaignCard({ name, description, requirementText, productsText, recruitmentId }) {
+// { name, description, requirementText, productsText, recruitmentId, rateInfo }
+function campaignCard({ name, description, requirementText, productsText, recruitmentId, rateInfo }) {
   const body = [
     { type: 'text', text: name || 'New Campaign', weight: 'bold', size: 'xl', wrap: true, color: '#1F1F1F' }
   ];
@@ -436,6 +477,8 @@ function campaignCard({ name, description, requirementText, productsText, recrui
   }
   if (requirementText) body.push(infoRow('📊 要求', requirementText, '#1F1F1F'));
   if (productsText) body.push(infoRow('🛍 商品', productsText, '#1F1F1F'));
+  const rateBlock = rateInfoBlock(rateInfo);
+  if (rateBlock) body.push(rateBlock);
   return {
     type: 'flex',
     altText: `New Campaign: ${name || ''}`,
@@ -488,7 +531,7 @@ function newProductCard({ name, price, currency, commissionRate, imageUrl, produ
   if (commissionRate != null) body.push(infoRow('🤝 推广佣金', `${commissionRate}%`, '#2E7D32'));
   return {
     type: 'flex',
-    altText: `新品推荐：${name || ''}`,
+    altText: `单品推荐：${name || ''}`,
     contents: {
       type: 'bubble',
       size: 'kilo',
@@ -499,7 +542,7 @@ function newProductCard({ name, price, currency, commissionRate, imageUrl, produ
         backgroundColor: '#6A1B9A',
         paddingAll: 'md',
         contents: [
-          { type: 'text', text: '🆕 新品上架 · NEW ARRIVAL', color: '#FFFFFF', weight: 'bold', size: 'sm' }
+          { type: 'text', text: '📦 单品推荐 · FEATURED', color: '#FFFFFF', weight: 'bold', size: 'sm' }
         ]
       },
       body: {
