@@ -567,8 +567,11 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
         setTimeout(() => {
           lineClient.pushMessage(influencer.lineUserId, [
             lineFlex.sampleConfirmedCard({ productName, influencerName, productUrl })
-          ]).catch(e => console.warn('[LINE] 通知达人申样失败:', e.message));
+          ]).then(() => console.log(`[LINE] 申样确认推送成功 → 达人 ${influencerName} (${influencer.lineUserId})`))
+            .catch(e => console.warn('[LINE] 通知达人申样失败:', e.message));
         }, 100);
+      } else {
+        console.log(`[LINE] 达人 ${influencerName} 未绑定 LINE，跳过申样确认推送`);
       }
 
       // 通知卖家：有新申样待审批
@@ -580,6 +583,9 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
               await lineClient.pushMessage(seller.lineUserId, [
                 lineFlex.sampleApprovalCard({ productName, influencerName, sampleId })
               ]);
+              console.log(`[LINE] 申样审批通知推送成功 → 卖家 (${seller.lineUserId})`);
+            } else {
+              console.log(`[LINE] 商品 ${productName} 所属店铺无绑定 LINE 的卖家联系人，跳过审批通知`);
             }
           } catch (e) { console.warn('[LINE] 通知卖家申样失败:', e.message); }
         }, 200);
