@@ -419,6 +419,8 @@ router.put('/:id/sync', authenticate, async (req, res) => {
       tiktokId: data.tiktokId
     });
     
+    let isNewInfluencer = false;
+    
     if (influencer) {
       // 达人已存在，更新数据
       influencer.latestFollowers = data.followerCount;
@@ -447,23 +449,44 @@ router.put('/:id/sync', authenticate, async (req, res) => {
       });
       
       await influencer.save();
+      isNewInfluencer = true;
     }
     
-    // 添加维护记录
-    const maintenance = new InfluencerMaintenance({
-      companyId: req.companyId,
-      influencerId: influencer._id,
-      followers: data.followerCount,
-      gmv: data.estimatedGmv,
-      monthlySalesCount: data.monthlySalesCount,
-      avgVideoViews: data.avgVideoViews,
-      poolType: 'private',
-      remark: 'Chrome插件采集数据同步',
-      maintainerId: req.userId,
-      maintainerName: req.user ? req.user.realName || req.user.username : '未知'
-    });
-    
-    await maintenance.save();
+    // 添加维护记录（如果失败则回滚新创建的达人）
+    try {
+      const maintenance = new InfluencerMaintenance({
+        companyId: req.companyId,
+        influencerId: influencer._id,
+        followers: data.followerCount,
+        gmv: data.estimatedGmv,
+        monthlySalesCount: data.monthlySalesCount,
+        avgVideoViews: data.avgVideoViews,
+        poolType: 'private',
+        remark: 'Chrome插件采集数据同步',
+        maintainerId: req.userId,
+        maintainerName: req.user ? req.user.realName || req.user.username : '未知'
+      });
+      
+      await maintenance.save();
+
+      // ★ 同步更新达人的最新维护信息，否则列表页“最近维护”列为空
+      influencer.latestMaintenanceTime = maintenance.createdAt;
+      influencer.latestMaintainerId = req.userId;
+      influencer.latestMaintainerName = req.user ? req.user.realName || req.user.username : '未知';
+      influencer.latestRemark = 'Chrome插件采集数据同步';
+      await influencer.save();
+    } catch (maintError) {
+      console.error('同步-创建维护记录失败 tiktokId=' + data.tiktokId + ':', maintError.message);
+      // 如果是新创建的达人，回滚删除
+      if (isNewInfluencer) {
+        await Influencer.findByIdAndDelete(influencer._id);
+        console.log('同步-已回滚新达人:', data.tiktokId);
+      }
+      return res.status(500).json({
+        success: false,
+        message: '同步失败: 创建维护记录失败 - ' + maintError.message
+      });
+    }
     
     // 更新数据同步状态（用 updateOne 避免整文档重新校验 required 字段导致 500）
     await TiktokExtensionData.updateOne(
@@ -548,6 +571,8 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           tiktokId: data.tiktokId
         });
         
+        let isNewInfluencer = false;
+        
         if (influencer) {
           // 更新现有达人
           influencer.latestFollowers = data.followerCount;
@@ -562,11 +587,11 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           influencer.tiktokName = data.tiktokName || influencer.tiktokName;
           await influencer.save();
         } else {
-        // 创建新达人
-        influencer = new Influencer({
-          companyId: req.companyId,
-          tiktokName: data.tiktokName || data.tiktokId || '未知达人',
-          tiktokId: data.tiktokId,
+          // 创建新达人
+          influencer = new Influencer({
+            companyId: req.companyId,
+            tiktokName: data.tiktokName || data.tiktokId || '未知达人',
+            tiktokId: data.tiktokId,
             latestFollowers: data.followerCount,
             latestGmv: data.estimatedGmv,
             monthlySalesCount: data.monthlySalesCount || 0,
@@ -576,23 +601,47 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           });
           
           await influencer.save();
+          isNewInfluencer = true;
         }
         
-        // 添加维护记录
-        const maintenance = new InfluencerMaintenance({
-          companyId: req.companyId,
-          influencerId: influencer._id,
-          followers: data.followerCount,
-          gmv: data.estimatedGmv,
-          monthlySalesCount: data.monthlySalesCount,
-          avgVideoViews: data.avgVideoViews,
-          poolType: 'private',
-          remark: 'Chrome插件采集数据同步',
-          maintainerId: req.userId,
-          maintainerName: req.user ? req.user.realName || req.user.username : '未知'
-        });
-        
-        await maintenance.save();
+        // 添加维护记录（如果失败则回滚新创建的达人）
+        try {
+          const maintenance = new InfluencerMaintenance({
+            companyId: req.companyId,
+            influencerId: influencer._id,
+            followers: data.followerCount,
+            gmv: data.estimatedGmv,
+            monthlySalesCount: data.monthlySalesCount,
+            avgVideoViews: data.avgVideoViews,
+            poolType: 'private',
+            remark: 'Chrome插件采集数据同步',
+            maintainerId: req.userId,
+            maintainerName: req.user ? req.user.realName || req.user.username : '未知'
+          });
+          
+          await maintenance.save();
+
+          // ★ 同步更新达人的最新维护信息，否则列表页“最近维护”列为空
+          influencer.latestMaintenanceTime = maintenance.createdAt;
+          influencer.latestMaintainerId = req.userId;
+          influencer.latestMaintainerName = req.user ? req.user.realName || req.user.username : '未知';
+          influencer.latestRemark = 'Chrome插件采集数据同步';
+          await influencer.save();
+        } catch (maintError) {
+          console.error('批量同步-创建维护记录失败 tiktokId=' + data.tiktokId + ':', maintError.message);
+          // 如果是新创建的达人，回滚删除
+          if (isNewInfluencer) {
+            await Influencer.findByIdAndDelete(influencer._id);
+            console.log('批量同步-已回滚新达人:', data.tiktokId);
+          }
+          results.failed++;
+          results.details.push({
+            id,
+            status: 'failed',
+            message: '创建维护记录失败: ' + maintError.message
+          });
+          continue;
+        }
         
         // 更新数据同步状态（用 updateOne 避免整文档重新校验 required 字段导致 500）
         await TiktokExtensionData.updateOne(
@@ -609,6 +658,7 @@ router.post('/batch-sync', authenticate, async (req, res) => {
           influencerId: influencer._id
         });
       } catch (error) {
+        console.error('批量同步-处理失败 id=' + id + ':', error.message);
         results.failed++;
         results.details.push({
           id,

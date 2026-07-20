@@ -108,6 +108,43 @@
    → 账单(Bill) → 结算(settlementStatus)
 ```
 
+## 6.5 LINE 官方账号集成（供应端 + 达人端双边闭环）
+
+将 LINE OA（LazyFirst @380xfno，泰国未认证账号）与现有系统打通：加好友 → 身份绑定 → 按标签精准推送 → 转化（报名 / 带货）。**核心原则：复用现有库表，零新表；前端能力嵌入现有后台页面，不新建独立 LINE 模块页。**
+
+### 6.5.1 后端模块（`server/line/`）
+
+| 文件 | 职责 |
+|---|---|
+| `config/line.js` | 读取 LINE 环境变量（Channel Secret/Access Token/Channel ID/LIFF ID/Webhook Base URL/默认公司），导出 `@line/bot-sdk` 客户端单例 |
+| `line/client.js` | 封装签名校验、reply/push/multicast/narrowcast、audienceGroup 上传、progress 查询、Rich Menu 增删改查 |
+| `line/flex.js` | Flex 构造器：政策卡、产品卡（图+标题+价格+「去带货」URI 按钮）、供应端 Rich Menu（政策/报名/客服） |
+| `line/templateService.js` | OA 级模板读写（存 `Company.settings.lineTemplates`），双语默认（th 主 + en 兜底）、`{昵称}` 占位符渲染 |
+| `line/webhookHandler.js` | 事件分发：follow 发欢迎语；message/postback 识别绑定码→绑定，或关键词自动回复 |
+| `line/bindingService.js` | 方案A 绑定码生成/解析/确认（写 `Influencer/ShopContact.lineUserId`），预留方案B 官方 Account Link |
+| `line/audienceService.js` | 按 `companyId + categoryTags/suitableCategories + latestFollowers 区间 + lineUserId 存在 + status` 分群，返回 userId 列表；≥50 时按需建受众组 |
+| `line/pushService.js` | `sendCampaign`：取受众→multicast(≤500 分批) 主路径 / narrowcast 兜底；写 `ActivityHistory(line_push)`；回写 `Activity.linePush` |
+| `line/quotaService.js` | 基于 `ActivityHistory` 当月 `line_push` 计数估算额度（Free≈300/月），提供绑定数概览与额度告警 |
+| `routes/line.js` | `POST /webhook`（免 JWT，签名校验）；其余业务路由（模板/绑定码/受众预览/推送/回查/额度/概览）复用 `authenticate` |
+
+### 6.5.2 关键设计
+
+- **Webhook 免 JWT**：`app.use('/api/line', lineRoutes)` 置于 `authenticate` 中间件之外，路由内用 `validateSignature` 校验 `X-Line-Signature`，拒绝伪造请求。
+- **零新表落点**：绑定→`Influencer/ShopContact.lineUserId`；Campaign→`Activity.linePush` 子文档；推送日志→`ActivityHistory(action='line_push')`；模板→`Company.settings.lineTemplates`；报名→复用 `Recruitment` 公开页 `/recruitments/public`；带货→`Product.tiktokProductUrl` 或 `/products/public`。
+- **multicast 主 / narrowcast 兜底**：早期受众普遍 < 50 人，直接按标签查 userId 走 multicast（≤500/次分批），规避 narrowcast 50 人门槛与受众组复杂度。
+- **多租户贯穿**：所有 LINE 查询强制注入 `companyId`，新增 `{companyId:1, lineUserId:1}` 复合索引。
+- **异常不吞**：Webhook/推送/轮询全程 try/catch + 结构化日志，失败记 `ActivityHistory.newData.status='failed'` 并触发额度/失败告警。
+
+### 6.5.3 前端嵌入点（复用现有页面）
+
+| 页面 | 嵌入能力 |
+|---|---|
+| `influencer-managements/Index.vue` | LINE 状态列 + 「生成绑定码」（`LineBindingDialog`, role=influencer） |
+| `products/ShopTab.vue` | 联系人 LINE 状态列 + 绑定码（`LineBindingDialog`, role=shopContact） |
+| `activities/Index.vue` | 「LINE 推送」按钮 → `LinePushDialog`（受众条件 + Flex 卡预览 + 人数预估 + 发起） |
+| `settings/MessageTemplate.vue` | 新增「LINE 欢迎语/自动回复」tab（双语模板 + 自动回复开关） |
+| `Dashboard.vue` | LINE 运营概览卡片（绑定数 / 本月推送 / 额度进度条） |
+
 ## 7. 部署
 
 - Docker：`docker-compose.yml` 编排 backend + frontend + Nginx；`Dockerfile` / `Dockerfile.frontend` 构建。

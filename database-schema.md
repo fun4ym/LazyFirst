@@ -55,6 +55,13 @@
     flowRules: {
       publicPoolReturnDays: Number,   // 公池回收天数（30）
       privatePoolMaxDays: Number      // 私池最大天数（90）
+    },
+    // LINE 官方账号 OA 级模板（欢迎语 / 政策 / 客服自动回复），支持 {昵称} 占位符，双语（th 主 + en 兜底）
+    lineTemplates: {
+      autoReplyEnabled: Boolean,      // 是否启用关键词自动回复
+      welcome: { th: String, en: String },       // 加好友欢迎语
+      policy: { th: String, en: String },        // 带货政策文案
+      contactReply: { th: String, en: String }   // 联系客服自动回复
     }
   },
   createdAt: Date,
@@ -140,11 +147,16 @@
   blacklistedBy: ObjectId,
   blacklistedByName: String,
   blacklistReason: String,
+  // LINE 绑定（达人端；方案A：lineBindingToken 绑定码，linkToken 预留方案B 官方 Account Link）
+  lineUserId: String,            // LINE 匿名 userId（绑定后写入）
+  lineBindingToken: String,      // 方案A 一次性绑定码（如 LZI-XXXXXX）
+  linkToken: String,             // 预留方案B（官方 Account Link）
+  lineBoundAt: Date,             // 绑定完成时间
   createdAt: Date,
   updatedAt: Date
 }
 // 虚拟字段: maintenanceStatus (public/pending/normal/maintenance_needed/at_risk/about_to_release/released)
-// 索引: { companyId: 1, poolType: 1 }, { companyId: 1, assignedTo: 1 }, { companyId: 1, tiktokId: 1 }, { companyId: 1, tiktokName: 1 }, { companyId: 1, status: 1 }
+// 索引: { companyId: 1, poolType: 1 }, { companyId: 1, assignedTo: 1 }, { companyId: 1, tiktokId: 1 }, { companyId: 1, tiktokName: 1 }, { companyId: 1, status: 1 }, { companyId: 1, lineUserId: 1 }
 ```
 
 ### 6. influencerMaintenances（达人维护记录表）
@@ -229,6 +241,7 @@
   images: [String],
   description: String,
   status: String,                // active, inactive
+  tiktokProductUrl: String,      // LINE/Flex「去带货」直跳真实 TikTok 商品链接（缺省跳 /products/public?productId=XXX）
   createdAt: Date,
   updatedAt: Date
 }
@@ -267,10 +280,15 @@
   email: String,                 // 邮箱
   trackerId: ObjectId,           // 跟踪人ID（User）
   trackerName: String,           // 跟踪人姓名
+  // LINE 绑定（供应端卖家；方案A：lineBindingToken 绑定码，linkToken 预留方案B）
+  lineUserId: String,            // LINE 匿名 userId（绑定后写入）
+  lineBindingToken: String,      // 方案A 一次性绑定码（如 LZS-XXXXXX）
+  linkToken: String,             // 预留方案B（官方 Account Link）
+  lineBoundAt: Date,             // 绑定完成时间
   createdAt: Date,
   updatedAt: Date
 }
-// 索引: { companyId: 1, shopId: 1 }
+// 索引: { companyId: 1, shopId: 1 }, { companyId: 1, lineUserId: 1 }
 ```
 
 ### 10. shopRatings（店铺评分表）
@@ -476,6 +494,21 @@
   description: String,
   status: String,                // pending/upcoming/active/ended
   creatorId: ObjectId,
+  // LINE 推送配置（复用 Activity 作为 Campaign 载体，零新表）
+  linePush: {
+    enabled: Boolean,            // 是否启用 LINE 推送
+    audienceCriteria: {
+      categoryTags: [ObjectId],       // 归类标签（BaseData）
+      suitableCategories: [ObjectId], // 适用品类（BaseData）
+      followerMin: Number,            // 粉丝数下限
+      followerMax: Number             // 粉丝数上限（0 表示不限）
+    },
+    lastPushAt: Date,            // 最近推送时间
+    lastPushStatus: String,      // success/failed
+    lastRecipientCount: Number,  // 最近覆盖人数
+    lastMode: String,            // multicast/narrowcast
+    audienceGroupId: String      // narrowcast 受众组 ID（如有）
+  },
   createdAt: Date,
   updatedAt: Date
 }
@@ -487,7 +520,7 @@
 {
   _id: ObjectId,
   activityId: ObjectId,          // 活动ID（必填）
-  action: String,                // create/update/delete/status_change（必填）
+  action: String,                // create/update/delete/status_change/line_push（必填）
   changes: Mixed,                // 变更内容
   previousData: Mixed,           // 变更前数据
   newData: Mixed,                // 变更后数据

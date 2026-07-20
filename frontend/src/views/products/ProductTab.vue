@@ -261,6 +261,7 @@
           <el-button link type="primary" @click="showMediaUpload(row)" v-if="hasPermission('products:update')">{{ $t('product.materials') }}</el-button>
           <el-button link type="primary" @click="showReport(row)" v-if="hasPermission('products:read')">{{ $t('product.report') }}</el-button>
           <el-button link type="primary" @click="editProduct(row)" v-if="hasPermission('products:update')">{{ $t('product.edit') }}</el-button>
+          <el-button link type="primary" @click="openProductPush(row)">{{ $t('linePush.productPushTitle') }}</el-button>
           <el-button link type="danger" @click="deleteProduct(row)" v-if="hasPermission('products:delete')">{{ $t('product.delete') }}</el-button>
         </template>
       </el-table-column>
@@ -279,7 +280,10 @@
       />
     </div>
 
-      <!-- 新建/编辑对话框 -->
+      <!-- 新品推送对话框 -->
+    <LineProductPushDialog v-model="productPushVisible" :product="currentProduct" />
+
+    <!-- 新建/编辑对话框 -->
     <el-dialog
       v-model="showDialog"
       :title="editingProduct ? $t('product.editProduct') : $t('product.addProduct')"
@@ -783,6 +787,7 @@ import { useUserStore } from '@/stores/user'
 import AuthManager from '@/utils/auth'
 import * as echarts from 'echarts'
 import ProductCell from '@/components/ProductCell.vue'
+import LineProductPushDialog from '@/components/LineProductPushDialog.vue'
 
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -822,6 +827,7 @@ const showDetailDialog = ref(false)
 const showReportDialog = ref(false)
 const loadingReport = ref(false)
 const editingProduct = ref(null)
+const productPushVisible = ref(false)
 const currentProduct = ref(null)
 const reportProduct = ref(null)
 // 媒体上传相关
@@ -1227,6 +1233,11 @@ const viewProduct = async (row) => {
     console.error('获取产品详情失败:', error)
     ElMessage.error('获取产品详情失败')
   }
+}
+
+const openProductPush = (row) => {
+  currentProduct.value = row
+  productPushVisible.value = true
 }
 
 const editProduct = (row) => {

@@ -555,24 +555,11 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     influencer.latestRemark = `申请样品：${product.name}`;
     await influencer.save();
 
-    // LINE通知：达人确认 + 卖家审批通知（异步推送，不阻塞响应）
-    if (lineConfig.isConfigured) {
+    // LINE通知：仅通知卖家（达人主动发起申样，无需回执确认）
+    if (lineConfig.isConfigured && product?.shopId) {
       const productName = product?.name || '';
       const influencerName = influencer?.name || influencer?.nickname || influencer?.tiktokName || '';
-      const productUrl = product?.productUrl || '';
       const sampleId = sample._id?.toString() || '';
-
-      // 通知达人：申样已提交
-      if (influencer.lineUserId) {
-        setTimeout(() => {
-          lineClient.pushMessage(influencer.lineUserId, [
-            lineFlex.sampleConfirmedCard({ productName, influencerName, productUrl })
-          ]).then(() => console.log(`[LINE] 申样确认推送成功 → 达人 ${influencerName} (${influencer.lineUserId})`))
-            .catch(e => console.warn('[LINE] 通知达人申样失败:', e.message));
-        }, 100);
-      } else {
-        console.log(`[LINE] 达人 ${influencerName} 未绑定 LINE，跳过申样确认推送`);
-      }
 
       // 通知卖家：有新申样待审批
       if (product?.shopId) {

@@ -11,6 +11,7 @@ const bindingService = require('../line/bindingService');
 const audienceService = require('../line/audienceService');
 const pushService = require('../line/pushService');
 const quotaService = require('../line/quotaService');
+const LinePushRecord = require('../models/LinePushRecord');
 const { authenticate } = require('../middleware/auth');
 
 // 允许的绑定角色
@@ -184,6 +185,44 @@ router.post('/activity/:id/push', authenticate, async (req, res) => {
   } catch (error) {
     console.error('[LINE] 发起推送失败:', error.message);
     res.status(400).json({ success: false, message: '发起推送失败: ' + error.message });
+  }
+});
+
+// 发起新品推送（手动）：body { mode?, criteria? }
+router.post('/product/:id/push', authenticate, async (req, res) => {
+  try {
+    const { mode, criteria } = req.body || {};
+    const result = await pushService.sendProduct({
+      productId: req.params.id,
+      companyId: req.companyId,
+      operatorId: req.userId,
+      operatorName: (req.user && (req.user.realName || req.user.username)) || '',
+      mode,
+      criteriaOverride: criteria
+    });
+    res.json({ success: true, ...result, message: '推送已发起' });
+  } catch (error) {
+    console.error('[LINE] 发起新品推送失败:', error.message);
+    res.status(400).json({ success: false, message: '发起新品推送失败: ' + error.message });
+  }
+});
+
+// 发送记录列表：query { type?, page?, pageSize? }
+router.get('/push-records', authenticate, async (req, res) => {
+  try {
+    const { type, page = 1, pageSize = 20 } = req.query;
+    const query = { companyId: req.companyId };
+    if (type && ['campaign', 'product'].includes(type)) query.type = type;
+    const total = await LinePushRecord.countDocuments(query);
+    const records = await LinePushRecord.find(query)
+      .sort({ createdAt: -1 })
+      .skip((Number(page) - 1) * Number(pageSize))
+      .limit(Number(pageSize))
+      .lean();
+    res.json({ success: true, total, page: Number(page), pageSize: Number(pageSize), records });
+  } catch (error) {
+    console.error('[LINE] 查询发送记录失败:', error.message);
+    res.status(500).json({ success: false, message: '查询发送记录失败: ' + error.message });
   }
 });
 

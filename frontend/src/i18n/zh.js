@@ -38,7 +38,29 @@ export default {
     confirmPush: '确认推送',
     confirmMsg: '将向 {count} 位已绑定 LINE 的达人推送产品卡，确认发起？',
     pushSuccess: '推送已发起，覆盖 {count} 人',
-    noProduct: '暂无可预览产品'
+    noProduct: '暂无可预览产品',
+    productPushTitle: '新品推送到 LINE'
+  },
+  lineRecords: {
+    title: 'LINE 发送记录',
+    tabAll: '全部',
+    tabCampaign: '活动推送',
+    tabProduct: '新品推送',
+    colTime: '时间',
+    colType: '类型',
+    colTarget: '推送对象',
+    colOperator: '操作人',
+    colAudience: '受众条件',
+    colRecipient: '送达人数',
+    colStatus: '状态',
+    typeCampaign: '活动推送',
+    typeProduct: '新品推送',
+    statusSuccess: '成功',
+    statusFailed: '失败',
+    statusPartial: '部分失败',
+    audienceAll: '全部达人',
+    empty: '暂无发送记录',
+    open: '发送记录'
   },
   lineOverview: {
     title: 'LINE 运营概览',

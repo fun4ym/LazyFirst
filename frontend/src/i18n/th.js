@@ -1,4 +1,28 @@
 export default {
+  linePush: {
+    productPushTitle: 'ส่งสินค้าใหม่ไปยัง LINE'
+  },
+  lineRecords: {
+    title: 'ประวัติการส่ง LINE',
+    tabAll: 'ทั้งหมด',
+    tabCampaign: 'แคมเปญ',
+    tabProduct: 'สินค้าใหม่',
+    colTime: 'เวลา',
+    colType: 'ประเภท',
+    colTarget: 'เป้าหมาย',
+    colOperator: 'ผู้ดำเนินการ',
+    colAudience: 'เงื่อนไขผู้รับ',
+    colRecipient: 'จำนวนที่ส่ง',
+    colStatus: 'สถานะ',
+    typeCampaign: 'แคมเปญ',
+    typeProduct: 'สินค้าใหม่',
+    statusSuccess: 'สำเร็จ',
+    statusFailed: 'ล้มเหลว',
+    statusPartial: 'บางส่วนล้มเหลว',
+    audienceAll: 'ผู้มีอิทธิพลทั้งหมด',
+    empty: 'ยังไม่มีประวัติการส่ง',
+    open: 'ประวัติการส่ง'
+  },
   common: {
     search: 'ค้นหา',
     reset: 'รีเซ็ต',

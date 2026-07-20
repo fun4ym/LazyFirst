@@ -7,6 +7,7 @@
             <el-icon><Plus /></el-icon>
             {{ $t('activities.create') }}
           </el-button>
+          <el-button @click="recordsVisible = true">{{ $t('lineRecords.open') }}</el-button>
         </div>
       </template>
 
@@ -647,6 +648,7 @@
 
     <!-- LINE 推送对话框 -->
     <LinePushDialog v-model="showLinePush" :activity="linePushActivity" @pushed="loadData" />
+    <LinePushRecordsDialog v-model="recordsVisible" />
   </div>
 </template>
 
@@ -661,6 +663,7 @@ import request from '@/utils/request'
 import { Plus, Refresh, Upload, Loading, Goods, ArrowRight, DocumentCopy } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 import LinePushDialog from '@/components/LinePushDialog.vue'
+import LinePushRecordsDialog from '@/components/LinePushRecordsDialog.vue'
 
 // LINE 推送对话框
 const showLinePush = ref(false)
@@ -669,6 +672,9 @@ const openLinePush = (row) => {
   linePushActivity.value = row
   showLinePush.value = true
 }
+
+// LINE 发送记录对话框
+const recordsVisible = ref(false)
 
 // 权限检查
 const hasPermission = (perm) => AuthManager.hasPermission(perm)

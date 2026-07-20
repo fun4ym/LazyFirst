@@ -132,35 +132,6 @@ router.post('/', authenticate, authorize('products:create'), async (req, res) =>
 
     const product = await Product.create(productData);
 
-    // LINE通知：新品推荐推送（仅当关联活动时，异步、不阻塞响应）
-    if (lineConfig.isConfigured && productData.activityConfigs?.length > 0) {
-      setTimeout(async () => {
-        try {
-          const matched = await Influencer.find({
-            companyId: req.companyId,
-            lineUserId: { $exists: true, $ne: '' }
-          }).limit(500);
-          if (matched.length > 0) {
-            const lineIds = matched.map(m => m.lineUserId);
-            const img = product.images?.[0] || '';
-            const { sent, failed } = await lineFlex.multicastInBatches(
-              (uids, msgs) => lineClient.multicast(uids, msgs),
-              lineIds,
-              [lineFlex.newProductCard({
-                name: product.name || '',
-                price: product.price,
-                currency: product.currency || 'THB',
-                commissionRate: product.commissionRate,
-                imageUrl: img,
-                productUrl: `${process.env.FRONTEND_URL || 'https://tap.lazyfirst.com'}/products/public`
-              })]
-            );
-            console.log(`[LINE] 新品推送完成: ${product.name}, 发送${sent}, 失败${failed}`);
-          }
-        } catch (e) { console.warn('[LINE] 新品推送失败:', e.message); }
-      }, 500);
-    }
-
     res.status(201).json({
       success: true,
       message: '创建商品成功',
@@ -254,34 +225,6 @@ router.put('/:id', authenticate, authorize('products:update'), async (req, res) 
         success: false,
         message: '商品不存在'
       });
-    }
-
-    // LINE通知：新增活动关联时推送新品（异步）
-    if (lineConfig.isConfigured && product.activityConfigs?.length > 0) {
-      setTimeout(async () => {
-        try {
-          const matched = await Influencer.find({
-            companyId: req.companyId,
-            lineUserId: { $exists: true, $ne: '' }
-          }).limit(500);
-          if (matched.length > 0) {
-            const lineIds = matched.map(m => m.lineUserId);
-            const img = product.images?.[0] || '';
-            await lineFlex.multicastInBatches(
-              (uids, msgs) => lineClient.multicast(uids, msgs),
-              lineIds,
-              [lineFlex.newProductCard({
-                name: product.name || '',
-                price: product.price,
-                currency: product.currency || 'THB',
-                commissionRate: product.commissionRate,
-                imageUrl: img,
-                productUrl: `${process.env.FRONTEND_URL || 'https://tap.lazyfirst.com'}/products/public`
-              })]
-            );
-          }
-        } catch (e) { console.warn('[LINE] 更新产品推送失败:', e.message); }
-      }, 500);
     }
 
     res.json({

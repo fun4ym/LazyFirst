@@ -4,6 +4,7 @@
 const Activity = require('../models/Activity');
 const ActivityHistory = require('../models/ActivityHistory');
 const Product = require('../models/Product');
+const LinePushRecord = require('../models/LinePushRecord');
 const audienceService = require('./audienceService');
 const quotaService = require('./quotaService');
 const flex = require('./flex');
@@ -98,6 +99,11 @@ async function sendCampaign({ activityId, companyId, operatorId, operatorName, p
       activityId, companyId, operatorId, operatorName,
       newData: { ...result, productId: product._id }
     });
+    await writeRecord({
+      companyId, type: 'campaign', refId: activity._id, refName: activity.name,
+      operatorId, operatorName, mode: result.mode, audienceCriteria: criteria,
+      recipientCount: 0, status: 'failed', error: result.error
+    });
     // 回写活动
     activity.linePush = activity.linePush || {};
     activity.linePush.lastPushAt = new Date();
@@ -130,6 +136,13 @@ async function sendCampaign({ activityId, companyId, operatorId, operatorName, p
     }
   });
 
+  // 写入发送记录（用于「发送记录」弹层）
+  await writeRecord({
+    companyId, type: 'campaign', refId: activity._id, refName: activity.name,
+    operatorId, operatorName, mode: result.mode, audienceCriteria: criteria,
+    recipientCount: count, status: 'success'
+  });
+
   // 额度告警：本次推送后若接近/超出月度额度，记录告警日志
   try {
     const usage = await quotaService.getMonthlyUsage(companyId);
@@ -146,6 +159,98 @@ async function sendCampaign({ activityId, companyId, operatorId, operatorName, p
   }
 
   return result;
+}
+
+// 统一写入「发送记录」
+async function writeRecord({ companyId, type, refId, refName, operatorId, operatorName, mode, audienceCriteria, recipientCount, status, error }) {
+  try {
+    await LinePushRecord.create({
+      companyId,
+      type,
+      refId,
+      refName: refName || '',
+      operatorId,
+      operatorName: operatorName || '',
+      mode: mode || 'multicast',
+      audienceCriteria: audienceCriteria || {},
+      recipientCount: recipientCount || 0,
+      status: status || 'success',
+      error: error || ''
+    });
+  } catch (e) {
+    console.error('[LINE] 写入发送记录失败:', e.message);
+  }
+}
+
+// 构建新品卡片所需参数
+function buildProductCardArgs(product) {
+  const img = (product.images && product.images[0]) ||
+    (product.productImages && product.productImages[0]) || '';
+  const price = product.price || product.priceRangeMin || 0;
+  const commissionRate = product.commissionRate ||
+    (product.activityConfigs && product.activityConfigs[0] && product.activityConfigs[0].promotionInfluencerRate) || null;
+  const baseUrl = process.env.FRONTEND_URL || 'https://tap.lazyfirst.com';
+  const productUrl = product.tiktokProductUrl || `${baseUrl}/products/public?productId=${product._id}`;
+  return {
+    name: product.name,
+    price,
+    currency: product.currency || 'THB',
+    commissionRate,
+    imageUrl: img,
+    productUrl
+  };
+}
+
+// 主动发起「新品推送」给指定受众（按标签筛选）
+async function sendProduct({ productId, companyId, operatorId, operatorName, mode, criteriaOverride }) {
+  if (!config.isConfigured) throw new Error('LINE 未配置凭证，无法推送');
+
+  const product = await Product.findOne({ _id: productId, companyId }).lean();
+  if (!product) throw new Error('商品不存在或无权限');
+
+  const criteria = criteriaOverride || {};
+  const { userIds, count } = await audienceService.getAudience(companyId, criteria);
+  if (count === 0) {
+    await writeRecord({
+      companyId, type: 'product', refId: product._id, refName: product.name,
+      operatorId, operatorName, mode: mode || 'multicast', audienceCriteria: criteria,
+      recipientCount: 0, status: 'failed', error: 'no_audience'
+    });
+    throw new Error('没有匹配的已绑定 LINE 达人');
+  }
+
+  const message = flex.newProductCard(buildProductCardArgs(product));
+  const useNarrowcast = mode === 'narrowcast' && count >= NARROWCAST_THRESHOLD;
+  const resultMode = useNarrowcast ? 'narrowcast' : 'multicast';
+
+  try {
+    if (useNarrowcast) {
+      const audienceGroupId = await audienceService.createAudienceGroupWithUsers(`product_${productId}_${Date.now()}`, userIds);
+      const { requestId } = await lineClient.narrowcast({ messages: message, recipient: { audienceGroupId } });
+      console.log(`[LINE] 新品推送(narrowcast) requestId=${requestId}, 人数=${count}`);
+    } else {
+      let batches = 0;
+      for (let i = 0; i < userIds.length; i += MULTICAST_BATCH) {
+        const batch = userIds.slice(i, i + MULTICAST_BATCH);
+        await lineClient.multicast(batch, message);
+        batches += 1;
+      }
+      console.log(`[LINE] 新品推送(multicast) 批数=${batches}, 人数=${count}`);
+    }
+    await writeRecord({
+      companyId, type: 'product', refId: product._id, refName: product.name,
+      operatorId, operatorName, mode: resultMode, audienceCriteria: criteria,
+      recipientCount: count, status: 'success'
+    });
+    return { recipientCount: count, mode: resultMode };
+  } catch (err) {
+    await writeRecord({
+      companyId, type: 'product', refId: product._id, refName: product.name,
+      operatorId, operatorName, mode: resultMode, audienceCriteria: criteria,
+      recipientCount: 0, status: 'failed', error: err.message
+    });
+    throw err;
+  }
 }
 
 // 回查 narrowcast 进度（multicast 无 progress，返回 last 日志）
@@ -166,5 +271,6 @@ module.exports = {
   MULTICAST_BATCH,
   NARROWCAST_THRESHOLD,
   sendCampaign,
+  sendProduct,
   getPushStatus
 };

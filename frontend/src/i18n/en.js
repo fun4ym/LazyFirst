@@ -38,7 +38,29 @@ export default {
     confirmPush: 'Confirm Push',
     confirmMsg: 'Send the product card to {count} LINE-bound influencers. Proceed?',
     pushSuccess: 'Push started, reaching {count} people',
-    noProduct: 'No product to preview'
+    noProduct: 'No product to preview',
+    productPushTitle: 'Push New Product to LINE'
+  },
+  lineRecords: {
+    title: 'LINE Push Records',
+    tabAll: 'All',
+    tabCampaign: 'Campaign',
+    tabProduct: 'New Product',
+    colTime: 'Time',
+    colType: 'Type',
+    colTarget: 'Target',
+    colOperator: 'Operator',
+    colAudience: 'Audience',
+    colRecipient: 'Recipients',
+    colStatus: 'Status',
+    typeCampaign: 'Campaign',
+    typeProduct: 'New Product',
+    statusSuccess: 'Success',
+    statusFailed: 'Failed',
+    statusPartial: 'Partial',
+    audienceAll: 'All influencers',
+    empty: 'No push records yet',
+    open: 'Push Records'
   },
   lineOverview: {
     title: 'LINE Operations Overview',
