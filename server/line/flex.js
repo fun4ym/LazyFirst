@@ -213,11 +213,103 @@ function buildInfluencerRichMenu() {
   };
 }
 
+// 绑定成功卡片（F3-1：达人/卖家绑定后首次展示）
+// { name, role, bdName, bdContact }
+function boundSuccessCard({ name, role, bdName, bdContact }) {
+  const roleLabel = role === 'influencer'
+    ? { th: 'Creator', en: 'Creator' }
+    : { th: 'ผู้ขาย', en: 'Seller' };
+  const nameLabel = role === 'influencer' ? 'Creator' : 'Store';
+  const bdLine = bdName ? `BD: ${bdName}${bdContact ? ' | ' + bdContact : ''}` : null;
+  const bodyContents = [
+    { type: 'text', text: `${nameLabel}: ${name || '-'}`, size: 'sm', wrap: true },
+    { type: 'text', text: `Role: ${roleLabel.en}`, size: 'sm', color: '#666666' },
+  ];
+  if (bdLine) {
+    bodyContents.push({ type: 'separator', margin: 'md' });
+    bodyContents.push({ type: 'text', text: bdLine, size: 'sm', wrap: true, color: '#555555' });
+  }
+  const footerButtons = role === 'influencer'
+    ? [
+        { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📦 View Products', uri: `${baseUrl()}/products/public` } },
+        { type: 'button', style: 'secondary', action: { type: 'uri', label: '📋 View Events', uri: `${baseUrl()}/recruitments/public` } }
+      ]
+    : [
+        { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📦 View Products', uri: `${baseUrl()}/products/public` } },
+        { type: 'button', style: 'secondary', action: { type: 'uri', label: '📋 Samples', uri: `${baseUrl()}/samples-public` } }
+      ];
+  return {
+    type: 'flex',
+    altText: 'ผูกบัญชีสำเร็จ! / Bound successfully!',
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#775999',
+        contents: [
+          { type: 'text', text: 'ผูกบัญชีสำเร็จ! ✅', color: '#FFFFFF', weight: 'bold', size: 'lg' },
+          { type: 'text', text: 'Bound Successfully', color: '#E6DCF0', size: 'sm' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: bodyContents
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: footerButtons
+      }
+    }
+  };
+}
+
+// 新人引导消息（绑定后跟卡片一起下发）
+function onboardingGuide(role) {
+  if (role === 'influencer') {
+    return {
+      type: 'text',
+      text: '📌 Quick Guide:\n\n1. Browse "Products" for sample requests\n2. Check "Events" for campaigns\n3. Reply "Policy" for commission details\n4. Reply "Contact" to reach your BD\n\nGet started now! 🚀'
+    };
+  }
+  return {
+    type: 'text',
+    text: '📌 Quick Guide:\n\n1. Reply "Policy" for partnership terms\n2. Check Samples for influencer requests\n3. Reply "Contact" to reach your BD\n\nWelcome aboard! 🚀'
+  };
+}
+
+// 邀请卡片文本（给 BD 复制发送用）
+function inviteCardText({ code, role, name, bdName }) {
+  const roleLabel = role === 'influencer' ? 'Creator' : 'Seller';
+  const addFriendLink = `https://line.me/R/ti/p/${config.oaId || '@380xfxno'}`;
+  return [
+    `📲 Join LazyFirst on LINE!`,
+    ``,
+    `Hi ${name || roleLabel},`,
+    `Add our LINE OA and send your binding code to get started:`,
+    ``,
+    `👉 ${addFriendLink}`,
+    ``,
+    `Your binding code: ${code}`,
+    `Just copy and paste it in LINE chat!`,
+    ``,
+    bdName ? `- ${bdName}` : ''
+  ].filter(Boolean).join('\n');
+}
+
 module.exports = {
   welcomeMessage,
   genericHelpMessage,
   policyFlexCard,
   productFlexCard,
   buildSupplyRichMenu,
-  buildInfluencerRichMenu
+  buildInfluencerRichMenu,
+  boundSuccessCard,
+  onboardingGuide,
+  inviteCardText
 };

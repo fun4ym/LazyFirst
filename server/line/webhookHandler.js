@@ -78,14 +78,20 @@ async function handleText(event) {
       try {
         const result = await bindingService.confirm({ token: parsed.token, lineUserId });
         if (result.ok) {
-          const nameStr = result.name ? `（${result.name}）` : '';
-          await client.replyMessage(replyToken, {
-            type: 'text',
-            text: `ผูกบัญชีสำเร็จ! ✅ / Bound successfully!${nameStr}`
-          });
+          const nameStr = result.name || '-';
+          const roleStr = result.role || parsed.role;
+          const bdName = result.bdName || '';
+          const bdContact = result.bdContact || '';
+
+          // 发绑定成功 Flex 卡片
+          await client.replyMessage(replyToken, [
+            flex.boundSuccessCard({ name: nameStr, role: roleStr, bdName, bdContact }),
+            flex.onboardingGuide(roleStr)
+          ]);
+
           // 绑定成功后自动挂对应角色菜单
           try {
-            await richMenuService.attachRoleMenu(lineUserId, result.role);
+            await richMenuService.attachRoleMenu(lineUserId, roleStr);
           } catch (rmErr) {
             console.warn('[LINE] 绑定后挂菜单失败（忽略）:', rmErr.message);
           }

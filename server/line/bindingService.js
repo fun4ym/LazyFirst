@@ -63,7 +63,9 @@ async function confirm({ token, lineUserId }) {
     { $set: { lineUserId: '' } }
   );
 
-  const doc = await Model.findOne({ lineBindingToken: parsed.token });
+  const doc = await Model.findOne({ lineBindingToken: parsed.token })
+    .populate(parsed.role === 'influencer' ? 'assignedTo' : 'tracker', 'realName phone');
+
   if (!doc) return { ok: false, reason: 'token_not_found' };
 
   console.log('[LINE Binding] before save:', { docId: doc._id, lineUserId, currentLineUserId: doc.lineUserId });
@@ -73,10 +75,22 @@ async function confirm({ token, lineUserId }) {
   await doc.save();
   console.log('[LINE Binding] after save:', { docId: doc._id, savedLineUserId: doc.lineUserId, lineBoundAt: doc.lineBoundAt });
 
+  // 提取 BD 信息
+  let bdName = '';
+  let bdContact = '';
+  if (parsed.role === 'influencer' && doc.assignedTo) {
+    bdName = doc.assignedTo.realName || '';
+    bdContact = doc.assignedTo.phone || '';
+  } else if (parsed.role !== 'influencer') {
+    bdName = doc.trackerName || '';
+  }
+
   return {
     ok: true,
     role: parsed.role,
-    name: doc.nickname || doc.name || doc.contactName || ''
+    name: doc.nickname || doc.name || doc.contactName || '',
+    bdName,
+    bdContact
   };
 }
 
