@@ -558,7 +558,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     // LINE通知：达人确认 + 卖家审批通知（异步推送，不阻塞响应）
     if (lineConfig.isConfigured) {
       const productName = product?.name || '';
-      const influencerName = influencer?.name || influencer?.nickname || '';
+      const influencerName = influencer?.name || influencer?.nickname || influencer?.tiktokName || '';
       const productUrl = product?.productUrl || '';
       const sampleId = sample._id?.toString() || '';
 
