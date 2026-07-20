@@ -6,9 +6,13 @@ const SampleManagement = require('../models/SampleManagement');
 const Video = require('../models/Video');
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
+const ShopContact = require('../models/ShopContact');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const User = require('../models/User');
+const lineClient = require('../line/client');
+const lineFlex = require('../line/flex');
+const lineConfig = require('../config/line');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -550,6 +554,37 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     influencer.latestMaintainerName = req.user.realName || req.user.username;
     influencer.latestRemark = `申请样品：${product.name}`;
     await influencer.save();
+
+    // LINE通知：达人确认 + 卖家审批通知（异步推送，不阻塞响应）
+    if (lineConfig.isConfigured()) {
+      const productName = product?.name || '';
+      const influencerName = influencer?.name || influencer?.nickname || '';
+      const productUrl = product?.productUrl || '';
+      const sampleId = sample._id?.toString() || '';
+
+      // 通知达人：申样已提交
+      if (influencer.lineUserId) {
+        setTimeout(() => {
+          lineClient.pushMessage(influencer.lineUserId, [
+            lineFlex.sampleConfirmedCard({ productName, influencerName, productUrl })
+          ]).catch(e => console.warn('[LINE] 通知达人申样失败:', e.message));
+        }, 100);
+      }
+
+      // 通知卖家：有新申样待审批
+      if (product?.shopId) {
+        setTimeout(async () => {
+          try {
+            const seller = await ShopContact.findOne({ shopId: product.shopId, lineUserId: { $exists: true, $ne: '' } });
+            if (seller?.lineUserId) {
+              await lineClient.pushMessage(seller.lineUserId, [
+                lineFlex.sampleApprovalCard({ productName, influencerName, sampleId })
+              ]);
+            }
+          } catch (e) { console.warn('[LINE] 通知卖家申样失败:', e.message); }
+        }, 200);
+      }
+    }
 
     res.status(201).json({
       success: true,

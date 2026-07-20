@@ -302,6 +302,201 @@ function inviteCardText({ code, role, name, bdName }) {
   ].filter(Boolean).join('\n');
 }
 
+// ========== 申样通知卡片 ==========
+
+// 达人端：申样提交确认（push 通知）
+// { productName, influencerName, productUrl }
+function sampleConfirmedCard({ productName, influencerName, productUrl }) {
+  return {
+    type: 'flex',
+    altText: `Sample Request Confirmed: ${productName || 'Product'}`,
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#775999',
+        contents: [
+          { type: 'text', text: 'Sample Requested! 📦', color: '#FFFFFF', weight: 'bold', size: 'lg' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          { type: 'text', text: `Creator: ${influencerName || '-'}`, size: 'sm', wrap: true },
+          { type: 'text', text: `Product: ${productName || '-'}`, size: 'sm', wrap: true, weight: 'bold' },
+          { type: 'text', text: 'Status: Pending', size: 'sm', color: '#FF9800' },
+          { type: 'text', text: 'We will notify you once the sample is arranged.', size: 'xs', color: '#999999', wrap: true }
+        ]
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📦 View Product', uri: productUrl || `${baseUrl()}/products/public` } }
+        ]
+      }
+    }
+  };
+}
+
+// 卖家端：申样审批通知（push 通知）
+// { productName, influencerName, sampleId }
+function sampleApprovalCard({ productName, influencerName, sampleId }) {
+  return {
+    type: 'flex',
+    altText: `New Sample Request: ${influencerName || 'Creator'} → ${productName || 'Product'}`,
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#E65100',
+        contents: [
+          { type: 'text', text: '🔔 New Sample Request', color: '#FFFFFF', weight: 'bold', size: 'md' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          { type: 'text', text: `Creator: ${influencerName || '-'}`, size: 'sm', wrap: true, weight: 'bold' },
+          { type: 'text', text: `Product: ${productName || '-'}`, size: 'sm', wrap: true },
+          { type: 'separator', margin: 'md' },
+          { type: 'text', text: 'Please review and process this request.', size: 'xs', color: '#999999', wrap: true }
+        ]
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📋 Review Samples', uri: `${baseUrl()}/samples-public` } }
+        ]
+      }
+    }
+  };
+}
+
+// ========== 活动推送卡片 ==========
+
+// 活动/招募通知（push 给匹配达人）
+// { name, description, requirementText, productsText, recruitmentId }
+function campaignCard({ name, description, requirementText, productsText, recruitmentId }) {
+  const bodyContents = [
+    { type: 'text', text: name || 'New Campaign', weight: 'bold', size: 'lg', wrap: true }
+  ];
+  if (description) {
+    bodyContents.push({ type: 'text', text: description || '', size: 'sm', wrap: true, color: '#666666' });
+  }
+  if (requirementText) {
+    bodyContents.push({ type: 'separator', margin: 'md' });
+    bodyContents.push({ type: 'text', text: `📊 ${requirementText}`, size: 'xs', wrap: true, color: '#888888' });
+  }
+  if (productsText) {
+    bodyContents.push({ type: 'text', text: `🛍 ${productsText}`, size: 'xs', wrap: true, color: '#888888' });
+  }
+  return {
+    type: 'flex',
+    altText: `New Campaign: ${name || ''}`,
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#775999',
+        contents: [
+          { type: 'text', text: 'New Campaign! 🎉', color: '#FFFFFF', weight: 'bold', size: 'lg' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: bodyContents
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📋 View Campaign', uri: `${baseUrl()}/recruitments/public?recruitmentId=${recruitmentId || ''}` } }
+        ]
+      }
+    }
+  };
+}
+
+// 新品推荐卡片（push 给匹配达人）
+// { name, price, currency, commissionRate, imageUrl, productUrl }
+function newProductCard({ name, price, currency, commissionRate, imageUrl, productUrl }) {
+  const cur = currency || 'THB';
+  const priceText = price ? `${cur} ${Number(price).toLocaleString()}` : 'TBD';
+  const commissionText = commissionRate ? `Commission: ${commissionRate}%` : null;
+  const bodyContents = [
+    { type: 'text', text: name || 'New Product', weight: 'bold', size: 'md', wrap: true },
+    { type: 'text', text: priceText, size: 'sm', color: '#775999', weight: 'bold' }
+  ];
+  if (commissionText) {
+    bodyContents.push({ type: 'text', text: commissionText, size: 'xs', color: '#4CAF50' });
+  }
+  return {
+    type: 'flex',
+    altText: `New Product: ${name || ''}`,
+    contents: {
+      type: 'bubble',
+      size: 'kilo',
+      hero: imageUrl ? { type: 'image', url: imageUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' } : undefined,
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#775999',
+        contents: [
+          { type: 'text', text: '🆕 New Product', color: '#FFFFFF', weight: 'bold', size: 'sm' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: bodyContents
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📦 View Product', uri: productUrl || `${baseUrl()}/products/public` } }
+        ]
+      }
+    }
+  };
+}
+
+// ========== 批量推送辅助：分批 multicast（单次上限 500） ==========
+async function multicastInBatches(pushMessageFn, userIds, messages, batchSize = 400) {
+  const batches = [];
+  for (let i = 0; i < userIds.length; i += batchSize) {
+    batches.push(userIds.slice(i, i + batchSize));
+  }
+  let sent = 0;
+  let failed = 0;
+  for (const batch of batches) {
+    try {
+      await pushMessageFn(batch, messages);
+      sent += batch.length;
+    } catch (e) {
+      console.error('[LINE multicast] batch failed:', e.message);
+      failed += batch.length;
+    }
+  }
+  return { sent, failed };
+}
+
 module.exports = {
   welcomeMessage,
   genericHelpMessage,
@@ -311,5 +506,10 @@ module.exports = {
   buildInfluencerRichMenu,
   boundSuccessCard,
   onboardingGuide,
-  inviteCardText
+  inviteCardText,
+  sampleConfirmedCard,
+  sampleApprovalCard,
+  campaignCard,
+  newProductCard,
+  multicastInBatches
 };

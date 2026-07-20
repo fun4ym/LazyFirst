@@ -3,7 +3,11 @@ const { body, validationResult } = require('express-validator');
 const { authenticate, authorize } = require('../middleware/auth');
 const Recruitment = require('../models/Recruitment');
 const Product = require('../models/Product');
+const Influencer = require('../models/Influencer');
 const User = require('../models/User');
+const lineClient = require('../line/client');
+const lineFlex = require('../line/flex');
+const lineConfig = require('../config/line');
 
 const router = express.Router();
 
@@ -186,6 +190,34 @@ router.post('/', authenticate, authorize('recruitments:create'), [
     });
 
     await recruitment.save();
+
+    // LINE通知：新活动推送给已绑定达人（异步，不阻塞响应）
+    if (lineConfig.isConfigured() && enabled !== false) {
+      setTimeout(async () => {
+        try {
+          const matched = await Influencer.find({
+            companyId: req.companyId,
+            lineUserId: { $exists: true, $ne: '' }
+          }).limit(500);
+          if (matched.length > 0) {
+            const lineIds = matched.map(m => m.lineUserId);
+            const productsText = products?.length ? `${products.length} 个产品` : '';
+            const { sent, failed } = await lineFlex.multicastInBatches(
+              (uids, msgs) => lineClient.multicast(uids, msgs),
+              lineIds,
+              [lineFlex.campaignCard({
+                name: recruitment.name,
+                description: recruitment.description || '',
+                requirementText: '',
+                productsText,
+                recruitmentId: recruitment._id?.toString() || ''
+              })]
+            );
+            console.log(`[LINE] 活动推送完成: ${name}, 发送${sent}, 失败${failed}`);
+          }
+        } catch (e) { console.warn('[LINE] 活动推送失败:', e.message); }
+      }, 500);
+    }
 
     const populated = await Recruitment.findById(recruitment._id)
       .populate('products', 'name sku tiktokProductId images commissionRate squareCommissionRate promotionInfluencerRate activityConfigs')
