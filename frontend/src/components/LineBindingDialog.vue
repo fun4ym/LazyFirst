@@ -25,6 +25,19 @@
         <el-button size="small" type="primary" plain @click="copyCode">{{ $t('line.copyCode') }}</el-button>
       </div>
 
+      <!-- 邀请文案卡片：一键复制给达人/卖家 -->
+      <div v-if="token" class="invite-card">
+        <div class="invite-header">
+          <el-icon><Promotion /></el-icon>
+          <span>Invite via Chat</span>
+        </div>
+        <div class="invite-preview">{{ inviteText }}</div>
+        <el-button size="small" type="success" @click="copyInviteText">
+          <el-icon><CopyDocument /></el-icon>
+          Copy Invite Text
+        </el-button>
+      </div>
+
       <el-alert type="info" :closable="false" show-icon class="tips">
         <template #default>
           <div>{{ $t('line.bindingStep1') }}</div>
@@ -52,6 +65,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { CopyDocument, Promotion } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 const props = defineProps({
@@ -71,6 +85,26 @@ const addFriendUrl = ref('')
 const status = reactive({ bound: false, lineBindingToken: '' })
 
 const roleLabel = computed(() => props.role === 'influencer' ? t('line.roleInfluencer') : t('line.roleSeller'))
+
+const inviteText = computed(() => {
+  const friendLink = addFriendUrl.value || 'https://line.me/R/ti/p/@380xfxno'
+  const namePart = props.targetName ? `Hi ${props.targetName},\n` : ''
+  const roleHint = props.role === 'influencer'
+    ? 'As a creator, you can browse products and request samples.'
+    : 'As a seller, you can review sample requests and manage products.'
+  return [
+    '📲 Join LazyFirst on LINE!',
+    '',
+    namePart + 'Add our LINE OA and send your binding code to get started:',
+    '',
+    '👉 ' + friendLink,
+    '',
+    'Your binding code: ' + token.value,
+    '(Copy and paste it in LINE chat after adding)',
+    '',
+    roleHint
+  ].filter(Boolean).join('\n')
+})
 
 const handleOpen = async () => {
   token.value = ''
@@ -145,6 +179,15 @@ const copyFriendLink = async () => {
     ElMessage.warning(addFriendUrl.value)
   }
 }
+
+const copyInviteText = async () => {
+  try {
+    await navigator.clipboard.writeText(inviteText.value)
+    ElMessage.success('Invite text copied! You can now paste it in WhatsApp / Messenger / TikTok DM.')
+  } catch (e) {
+    ElMessage.warning('Copy failed, please select and copy manually')
+  }
+}
 </script>
 
 <style scoped>
@@ -196,5 +239,35 @@ const copyFriendLink = async () => {
   font-size: 12px;
   color: #775999;
   word-break: break-all;
+}
+.invite-card {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.invite-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 10px;
+}
+.invite-preview {
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #333;
+  white-space: pre-wrap;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px dashed #c8e6c9;
 }
 </style>
