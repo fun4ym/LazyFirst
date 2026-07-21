@@ -1,67 +1,80 @@
 // Rich Menu 生成&部署服务
-// - 用 jimp 生成两套菜单图片（2500×843）
+// - 用 @napi-rs/canvas 生成两套菜单图片（2500×843），支持泰文渲染
 // - 部署到 LINE 并支持按角色绑定
-const Jimp = require('jimp');
+const { createCanvas, GlobalFonts } = require('@napi-rs/canvas');
+const path = require('path');
 const lineClient = require('./client');
 const flex = require('./flex');
 
 const MENU_WIDTH = 2500;
 const MENU_HEIGHT = 843;
 
-// 颜色方案（0xAARRGGBB，用 BigInt 避免 js 左移溢出）
-const toColor = (hexStr) => Number(BigInt('0x' + hexStr.replace('#', '') + 'FF'));
+// 注册泰文字体
+const thaiFontPath = path.join(__dirname, '..', 'fonts', 'NotoSansThai-Regular.ttf');
+GlobalFonts.registerFromPath(thaiFontPath, 'NotoSansThai');
+
+// 颜色方案
 const COLORS = {
-  supply: [
-    { bg: toColor('6C5CE7') },
-    { bg: toColor('A855F7') },
-    { bg: toColor('D946EF') },
-  ],
-  influencer: [
-    { bg: toColor('EC4899') },
-    { bg: toColor('F97316') },
-    { bg: toColor('06B6D4') },
-  ],
+  supply: ['#6C5CE7', '#A855F7', '#D946EF'],
+  influencer: ['#EC4899', '#F97316', '#06B6D4'],
 };
 
 // 为每个分区绘制背景色 + 文字
-async function drawSection(image, x, w, h, color, label, subLabel) {
-  for (let dx = x; dx < x + w && dx < image.bitmap.width; dx++) {
-    for (let dy = 0; dy < h; dy++) {
-      image.setPixelColor(color.bg, dx, dy);
-    }
-  }
-  // 主标签
-  const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
-  const tw = Jimp.measureText(font, label);
-  image.print(font, x + Math.floor((w - tw) / 2), Math.floor(h * 0.35), label);
+function drawSection(ctx, x, w, h, bgColor, label, subLabel) {
+  // 背景
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(x, 0, w, h);
+
+  // 主标签（泰文 + 英文优先使用支持泰文的字体）
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 64px "NotoSansThai", sans-serif';
+  ctx.fillText(label, x + w / 2, h * 0.42);
 
   // 副标签（英文）
   if (subLabel) {
-    const fontSub = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-    const sw = Jimp.measureText(fontSub, subLabel);
-    image.print(fontSub, x + Math.floor((w - sw) / 2), Math.floor(h * 0.55), subLabel);
+    ctx.font = '32px "NotoSansThai", sans-serif';
+    ctx.fillText(subLabel, x + w / 2, h * 0.58);
   }
+}
+
+// 生成分区竖线
+function drawDividers(ctx) {
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(833, 0);
+  ctx.lineTo(833, MENU_HEIGHT);
+  ctx.moveTo(1666, 0);
+  ctx.lineTo(1666, MENU_HEIGHT);
+  ctx.stroke();
 }
 
 // 生成卖家版 Rich Menu 图片
 async function generateSupplyImage() {
-  const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.supply[0], '申样记录', 'Sample Records');
-  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.supply[1], '合作政策', 'Policy');
-  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.supply[2], '联系BD', 'Contact');
-  // 分区竖线
-  for (let y = 0; y < MENU_HEIGHT; y++) { image.setPixelColor(0xFFFFFFFF, 833, y); image.setPixelColor(0xFFFFFFFF, 1666, y); }
-  return image.getBufferAsync(Jimp.MIME_JPEG);
+  const canvas = createCanvas(MENU_WIDTH, MENU_HEIGHT);
+  const ctx = canvas.getContext('2d');
+
+  drawSection(ctx, 0,    833, MENU_HEIGHT, COLORS.supply[0], 'ขอตัวอย่าง', 'Sample Records');
+  drawSection(ctx, 833,  834, MENU_HEIGHT, COLORS.supply[1], 'นโยบาย', 'Policy');
+  drawSection(ctx, 1667, 833, MENU_HEIGHT, COLORS.supply[2], 'ติดต่อ BD', 'Contact');
+  drawDividers(ctx);
+
+  return canvas.toBuffer('image/jpeg', { quality: 0.92 });
 }
 
 // 生成达人版 Rich Menu 图片
 async function generateInfluencerImage() {
-  const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.influencer[0], 'Events', '');
-  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.influencer[1], 'Products', '');
-  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.influencer[2], 'Contact', '');
-  for (let y = 0; y < MENU_HEIGHT; y++) { image.setPixelColor(0xFFFFFFFF, 833, y); image.setPixelColor(0xFFFFFFFF, 1666, y); }
-  return image.getBufferAsync(Jimp.MIME_JPEG);
+  const canvas = createCanvas(MENU_WIDTH, MENU_HEIGHT);
+  const ctx = canvas.getContext('2d');
+
+  drawSection(ctx, 0,    833, MENU_HEIGHT, COLORS.influencer[0], 'กิจกรรม', 'Events');
+  drawSection(ctx, 833,  834, MENU_HEIGHT, COLORS.influencer[1], 'สินค้า', 'Products');
+  drawSection(ctx, 1667, 833, MENU_HEIGHT, COLORS.influencer[2], 'ติดต่อ', 'Contact');
+  drawDividers(ctx);
+
+  return canvas.toBuffer('image/jpeg', { quality: 0.92 });
 }
 
 // 创建并上传一套 Rich Menu
