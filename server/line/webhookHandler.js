@@ -126,33 +126,33 @@ async function handleText(event) {
       return;
     }
 
-    // 客服关键词 → 根据用户角色返回对应的 BD / 采购部联系方式
+    // 联系方式关键词 → 统一回复 LINE 二维码 + 联系人信息
     if (matchKeyword(text, CONTACT_KEYWORDS)) {
       if (templates.autoReplyEnabled !== false) {
         try {
-          // 查找用户角色，获取对应的联系人信息
-          const role = lineUserId ? await bindingService.getRoleByLineUser(lineUserId) : null;
-          let contactText = '';
-          if (role === 'shopContact') {
-            contactText = `ติดต่อฝ่ายจัดซื้อ / Contact Procurement:\nLine: @380xfno`;
-            if (templates.procurementContact) {
-              const pc = templates.procurementContact;
-              const parts = [];
-              if (pc.name) parts.push(`👤 ${pc.name}`);
-              if (pc.phone) parts.push(`📞 ${pc.phone}`);
-              if (pc.line) parts.push(`💬 ${pc.line}`);
-              if (pc.email) parts.push(`📧 ${pc.email}`);
-              if (parts.length) contactText += '\n' + parts.join('\n');
-            }
-          } else if (role === 'influencer') {
-            contactText = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
-          } else {
-            // 未绑定，发通用回复
-            contactText = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
-          }
-          await client.replyMessage(replyToken, { type: 'text', text: contactText });
+          const qrUrl = `${flex.baseUrl()}/images/contact-line-qr.jpg`;
+          const phone = templates.procurementContact?.phone || '';
+          const contactText = [
+            '📞 联系方式 / ติดต่อเรา / Contact Us',
+            '',
+            '👤 联系人 / Contact: Mrs. Ding',
+            phone ? `📱 电话 / Tel: ${phone}` : null,
+            '💬 LINE: @380xfno',
+            '🌐 官网 / Website: https://tap.lazyfirst.com',
+            '',
+            '扫码添加 LINE 好友 / สแกน QR Code เพื่อเพิ่มเพื่อน'
+          ].filter(Boolean).join('\n');
+
+          await client.replyMessage(replyToken, [
+            {
+              type: 'image',
+              originalContentUrl: qrUrl,
+              previewImageUrl: qrUrl
+            },
+            { type: 'text', text: contactText }
+          ]);
         } catch (contactErr) {
-          console.warn('[LINE] 查找联系人失败:', contactErr.message);
+          console.warn('[LINE] 联系方式回复失败:', contactErr.message);
           const msg = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
           await client.replyMessage(replyToken, { type: 'text', text: msg });
         }

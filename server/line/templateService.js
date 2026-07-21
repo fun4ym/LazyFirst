@@ -11,8 +11,8 @@ const DEFAULT_TEMPLATES = {
     en: 'Welcome to LazyFirst! Send your binding code to receive matched product updates.'
   },
   policy: {
-    th: '📜 นโยบายความร่วมมือ LazyFirst\n\n• ค่าคอมมิชชั่นสูงถึง 20% ตามยอดขาย\n• รับสินค้าตัวอย่างฟรีสำหรับ Creator ที่ผ่านการคัดเลือก\n• แจ้งเตือนแบบเรียลไทม์เมื่อมีคำขอตัวอย่าง\n• จัดส่งตัวอย่างรวดเร็ว ติดตามสถานะได้\n• ทีม BD ดูแลให้คำปรึกษาแบบ 1:1',
-    en: '📜 LazyFirst Partnership Policy\n\n• Up to 20% commission based on sales\n• Free product samples for qualified Creators\n• Real-time notifications on sample requests\n• Fast sample delivery with tracking\n• Dedicated 1:1 BD support'
+    th: '🏢 เกี่ยวกับ LazyFirst\n\nLazyFirst Co., Ltd. เป็นบริษัท TAP (TikTok Affiliate Partner) ของไทยแท้ ตั้งอยู่ที่เชียงใหม่ เราเชื่อมโยงสินค้าคุณภาพจากจีนกับ Creator ไทย ช่วยร้านค้าจีนเข้าสู่ตลาดไทยแบบไม่มีความเสี่ยง\n\n• ทีมงานไทย 8 คน + ทีมจีน 3 คน สื่อสารกลางภาษาจีน-ไทย\n• Creator ในระบบ 1,858 คน\n• ร้านค้าที่ร่วมงาน 59 ร้าน\n• สินค้าจำหน่าย 303 รายการ\n• ระบบข้อมูลของเราเอง ติดตามยอดขายและคอมมิชชั่นแบบเรียลไทม์\n\nเว็บไซต์: https://tap.lazyfirst.com',
+    en: '🏢 About LazyFirst\n\nLazyFirst Co., Ltd. is a Thailand-based TikTok Affiliate Partner (TAP) located in Chiang Mai. We connect quality Chinese supply chains with Thai creators, helping Chinese sellers enter Thailand with zero risk.\n\n• 8 Thai staff + 3 Chinese staff for bilingual support\n• 1,858 creators in network\n• 59 partner shops\n• 303 active products\n• Self-developed data platform with real-time sales & commission tracking\n\nWebsite: https://tap.lazyfirst.com'
   },
   contactReply: {
     th: '📞 ทีมงาน LazyFirst พร้อมให้บริการ\n\nส่งข้อความทิ้งไว้ เราจะติดต่อกลับภายใน 24 ชั่วโมง\nขอบคุณที่ใช้บริการ LazyFirst ค่ะ 🙏',

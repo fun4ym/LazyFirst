@@ -135,8 +135,8 @@ function policyFlexCard(tpl) {
         layout: 'vertical',
         backgroundColor: '#775999',
         contents: [
-          { type: 'text', text: 'นโยบายการสนับสนุน', color: '#FFFFFF', weight: 'bold', size: 'lg' },
-          { type: 'text', text: 'Partnership Policy', color: '#E6DCF0', size: 'sm' }
+          { type: 'text', text: '公司介绍 / เกี่ยวกับเรา', color: '#FFFFFF', weight: 'bold', size: 'lg' },
+          { type: 'text', text: 'About LazyFirst', color: '#E6DCF0', size: 'sm' }
         ]
       },
       body: {

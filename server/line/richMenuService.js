@@ -56,9 +56,9 @@ async function generateSupplyImage() {
   const canvas = createCanvas(MENU_WIDTH, MENU_HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  drawSection(ctx, 0,    833, MENU_HEIGHT, COLORS.supply[0], 'ขอตัวอย่าง', 'Sample Records');
-  drawSection(ctx, 833,  834, MENU_HEIGHT, COLORS.supply[1], 'นโยบาย', 'Policy');
-  drawSection(ctx, 1667, 833, MENU_HEIGHT, COLORS.supply[2], 'ติดต่อ BD', 'Contact');
+  drawSection(ctx, 0,    833, MENU_HEIGHT, COLORS.supply[0], '申样记录', 'บันทึกขอตัวอย่าง');
+  drawSection(ctx, 833,  834, MENU_HEIGHT, COLORS.supply[1], '公司介绍', 'เกี่ยวกับเรา');
+  drawSection(ctx, 1667, 833, MENU_HEIGHT, COLORS.supply[2], '联系方式', 'ติดต่อเรา');
   drawDividers(ctx);
 
   return canvas.toBuffer('image/jpeg', { quality: 0.92 });
