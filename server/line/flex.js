@@ -680,6 +680,7 @@ async function multicastInBatches(pushMessageFn, userIds, messages, batchSize = 
 }
 
 module.exports = {
+  baseUrl,
   welcomeMessage,
   genericHelpMessage,
   policyFlexCard,
