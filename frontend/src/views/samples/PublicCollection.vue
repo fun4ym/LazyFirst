@@ -527,20 +527,61 @@
         <el-tab-pane label="LINE同步" name="lineSync">
           <div class="line-sync">
             <div class="line-sync-header">
-              <span class="line-sync-title">{{ $t('samplePublic.lineSyncTitle') }}</span>
-              <span class="line-sync-sub">{{ $t('samplePublic.lineSyncSub') }}</span>
-            </div>
-            <div v-if="lineContactsLoading" class="line-sync-loading">{{ $t('samplePublic.loading') }}</div>
-            <div v-else-if="lineContacts.length === 0" class="line-sync-empty">{{ $t('samplePublic.lineSyncEmpty') }}</div>
-            <div v-else class="contact-list">
-              <div v-for="c in lineContacts" :key="c._id" class="contact-item">
-                <div class="contact-info">
-                  <span class="contact-name">{{ c.name }}</span>
-                  <span v-if="c.role" class="contact-role">{{ c.role }}</span>
+              <div class="line-sync-title-row">
+                <div class="line-sync-title-group">
+                  <span class="line-sync-title">{{ $t('samplePublic.lineSyncTitle') }}</span>
+                  <span class="line-sync-sub">{{ $t('samplePublic.lineSyncSub') }}</span>
                 </div>
-                <span class="contact-status" :class="c.bound ? 'bound' : 'unbound'">
-                  {{ c.bound ? $t('samplePublic.bound') : $t('samplePublic.unbound') }}
+                <el-button type="primary" plain size="default" @click="lineGuideVisible = true">
+                  <el-icon><QuestionFilled /></el-icon>
+                  <span>{{ $t('samplePublic.lineSyncHowTo') }}</span>
+                </el-button>
+              </div>
+            </div>
+
+            <div v-if="lineLoading" class="line-sync-loading">
+              {{ $t('samplePublic.loading') }}
+            </div>
+            <div v-else-if="lineContacts.length" class="line-contacts-list">
+              <div
+                v-for="contact in lineContacts"
+                :key="contact._id"
+                class="line-contact-item"
+              >
+                <span class="contact-name">{{ contact.name }}</span>
+                <span
+                  class="contact-status"
+                  :class="contact.bound ? 'bound' : 'unbound'"
+                >
+                  {{ contact.bound ? $t('samplePublic.bound') : $t('samplePublic.unbound') }}
                 </span>
+                <span v-if="contact.bound && contact.lineBoundAt" class="contact-time">
+                  {{ formatDateTime(contact.lineBoundAt) }}
+                </span>
+              </div>
+            </div>
+            <div v-else class="line-contacts-empty">
+              {{ $t('samplePublic.lineSyncEmpty') }}
+            </div>
+
+            <div class="line-qr-section">
+              <div class="line-qr-card procurement">
+                <div class="qr-card-header">
+                  <div class="qr-card-title">{{ $t('samplePublic.procurementQrTitle') }}</div>
+                  <div class="qr-card-desc">{{ $t('samplePublic.procurementQrDesc') }}</div>
+                </div>
+                <div class="line-sync-qr">
+                  <img src="/images/procurement-line-qr.jpg" :alt="$t('samplePublic.procurementQrTitle')" />
+                </div>
+              </div>
+              <div class="line-qr-card official">
+                <div class="qr-card-header">
+                  <div class="qr-card-title">{{ $t('samplePublic.officialQrTitle') }}</div>
+                  <div class="qr-card-desc">{{ $t('samplePublic.officialQrDesc') }}</div>
+                </div>
+                <div class="line-sync-qr">
+                  <img src="https://qr-official.line.me/gs/M_380xfxno_GW.png" :alt="$t('samplePublic.lineSyncQrAlt')" />
+                </div>
               </div>
             </div>
           </div>
@@ -745,6 +786,43 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- LINE 绑定操作方式弹层 -->
+    <el-dialog
+      v-model="lineGuideVisible"
+      :title="$t('samplePublic.lineSyncGuideTitle')"
+      width="560px"
+      align-center
+      destroy-on-close
+      class="line-guide-dialog"
+    >
+      <div class="line-guide-content">
+        <div class="guide-step">
+          <div class="step-number">1</div>
+          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep1') }}</div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">2</div>
+          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep2') }}</div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">3</div>
+          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep3') }}</div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">4</div>
+          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep4') }}</div>
+        </div>
+        <div class="guide-qr-block">
+          <img src="/images/procurement-line-qr.jpg" :alt="$t('samplePublic.procurementQrTitle')" />
+          <div class="guide-qr-label">{{ $t('samplePublic.procurementQrTitle') }}</div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="lineGuideVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
+        <el-button type="primary" @click="lineGuideVisible = false">{{ $t('samplePublic.confirm') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -754,7 +832,7 @@ import { getSampleStatusType } from '@/utils/sampleStatus'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument, Document, Star } from '@element-plus/icons-vue'
+import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument, Document, Star, QuestionFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 import ProductCell from '@/components/ProductCell.vue'
 import InfluencerCell from '@/components/InfluencerCell.vue'
@@ -773,24 +851,11 @@ const logoLoadError = ref(false)
 const samples = ref([])
 const selectedSamples = ref([])
 const activeTab = ref('sampleList') // 页签：sampleList, businessView, videoList, lineSync
-
-// LINE同步页签状态
 const lineContacts = ref([])
-const lineContactsLoading = ref(false)
-async function loadLineContacts() {
-  const shopCode = route.query.s
-  if (!shopCode) return
-  lineContactsLoading.value = true
-  try {
-    const res = await axios.get(API_BASE + '/public/samples/contacts', { params: { s: shopCode } })
-    if (res.data && res.data.success) lineContacts.value = (res.data.data && res.data.data.contacts) || []
-  } catch (e) {
-    lineContacts.value = []
-  } finally {
-    lineContactsLoading.value = false
-  }
-}
-watch(() => activeTab.value, (tab) => { if (tab === 'lineSync') loadLineContacts() })
+const lineLoading = ref(false)
+const lineGuideVisible = ref(false)
+
+
 
 // 商家视角状态
 const businessViewLoading = ref(false)
@@ -998,6 +1063,27 @@ const loadSamples = async () => {
     error.value = err.response?.data?.message || t('samplePublic.networkError')
   } finally {
     loading.value = false
+  }
+}
+
+// 加载 LINE 联系人绑定情况
+const loadLineContacts = async () => {
+  const identificationCode = getIdentificationCode()
+  if (!identificationCode) return
+
+  lineLoading.value = true
+  try {
+    const res = await axios.get(`${API_BASE}/public/samples/contacts`, { params: { s: identificationCode } })
+    if (res.data.success) {
+      lineContacts.value = res.data.data.contacts || []
+    } else {
+      lineContacts.value = []
+    }
+  } catch (err) {
+    console.error('Load LINE contacts error:', err)
+    lineContacts.value = []
+  } finally {
+    lineLoading.value = false
   }
 }
 
@@ -1418,6 +1504,8 @@ watch(activeTab, (newTab) => {
     loadBusinessViewData()
   } else if (newTab === 'videoList') {
     loadVideos()
+  } else if (newTab === 'lineSync') {
+    loadLineContacts()
   }
 })
 
@@ -2063,19 +2151,150 @@ onMounted(() => {
 
 /* LINE同步页签 */
 .line-sync { padding: 8px 0; }
-.line-sync-header { display: flex; flex-direction: column; margin-bottom: 12px; }
-.line-sync-title { font-size: 16px; font-weight: 700; color: #1F1F1F; }
-.line-sync-sub { font-size: 12px; color: #888; margin-top: 2px; }
-.line-sync-loading, .line-sync-empty { padding: 24px 0; text-align: center; color: #999; font-size: 13px; }
-.contact-list { display: flex; flex-direction: column; gap: 8px; }
-.contact-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; border-radius: 10px; background: #F7F7F9; border: 1px solid #EEE;
+.line-sync-header { margin-bottom: 16px; }
+.line-sync-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.contact-info { display: flex; flex-direction: column; }
-.contact-name { font-size: 14px; font-weight: 600; color: #1F1F1F; }
-.contact-role { font-size: 11px; color: #999; margin-top: 2px; }
-.contact-status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+.line-sync-title-group { display: flex; flex-direction: column; }
+.line-sync-title { font-size: 16px; font-weight: 700; color: #1F1F1F; }
+.line-sync-sub { font-size: 12px; color: #888; margin-top: 4px; }
+.line-sync-notice {
+  padding: 14px 16px;
+  background: #FFF9F0;
+  border: 1px solid #F5D7A0;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #8C6E2E;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.line-qr-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+.line-qr-card {
+  background: #fff;
+  border: 1px solid #EEE;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+.line-qr-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.line-qr-card.procurement { border-top: 4px solid #06C755; }
+.line-qr-card.official { border-top: 4px solid #667eea; }
+.qr-card-header { margin-bottom: 16px; }
+.qr-card-title { font-size: 15px; font-weight: 700; color: #1F1F1F; margin-bottom: 6px; }
+.qr-card-desc { font-size: 12px; color: #888; line-height: 1.5; }
+.line-sync-qr {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+.line-sync-qr img {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid #EEE;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  object-fit: cover;
+}
+.line-sync-loading,
+.line-contacts-empty {
+  padding: 20px 0;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+.line-contacts-list {
+  margin-bottom: 20px;
+  border: 1px solid #EEE;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.line-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #F0F0F0;
+  background: #FAFAFA;
+}
+.line-contact-item:last-child { border-bottom: none; }
+.contact-name {
+  flex: 1;
+  font-size: 14px;
+  color: #1F1F1F;
+  font-weight: 500;
+}
+.contact-status {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
 .contact-status.bound { color: #2E7D32; background: #E6F4EA; }
 .contact-status.unbound { color: #9E9E9E; background: #F0F0F0; }
+.contact-time {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* LINE 操作方式弹层 */
+.line-guide-dialog :deep(.el-dialog__body) { padding: 10px 24px 24px; }
+.line-guide-content { display: flex; flex-direction: column; gap: 16px; }
+.guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-text {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+  padding-top: 4px;
+}
+.guide-qr-block {
+  margin-top: 8px;
+  padding: 20px;
+  background: #F8F9FA;
+  border-radius: 12px;
+  text-align: center;
+}
+.guide-qr-block img {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  border: 1px solid #EEE;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  object-fit: cover;
+}
+.guide-qr-label {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1F1F1F;
+}
 </style>

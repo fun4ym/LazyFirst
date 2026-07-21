@@ -1678,7 +1678,25 @@ export default {
     noStreamCodeToCopy: 'ไม่มีรหัสสตรีมให้คัดลอก',
     copyStreamCodeSuccess: 'คัดลอกรหัสสตรีมสำเร็จ',
     copyStreamCodeFailed: 'คัดลอกรหัสสตรีมล้มเหลว',
-    sampleResult: 'ผลการสมัครตัวอย่าง'
+    sampleResult: 'ผลการสมัครตัวอย่าง',
+    // LINE 同步
+    lineSyncTitle: 'ซิงค์ LINE',
+    lineSyncSub: 'สถานะการผูก LINE ของผู้ติดต่อร้านค้า',
+    lineSyncNotice: 'หากต้องการเปลี่ยนแปลง กรุณาสแกน QR Code ติดต่อฝ่ายจัดซื้อ',
+    lineSyncQrAlt: 'LINE QR Code',
+    lineSyncEmpty: 'ไม่มีรายชื่อผู้ติดต่อ LINE',
+    lineSyncHowTo: 'วิธีผูกบัญชี',
+    lineSyncGuideTitle: 'วิธีผูกบัญชี LINE',
+    lineSyncGuideStep1: 'สแกน QR Code LINE ฝ่ายจัดซื้อเพื่อเพิ่มเพื่อน',
+    lineSyncGuideStep2: 'ส่งรหัสประจำตัวของหน้านี้ให้เจ้าหน้าที่ฝ่ายจัดซื้อ',
+    lineSyncGuideStep3: 'เจ้าหน้าที่ฝ่ายจัดซื้อจะดำเนินการผูกบัญชีในระบบ',
+    lineSyncGuideStep4: 'กลับมาตรวจสอบสถานะที่หน้านี้',
+    procurementQrTitle: 'LINE ฝ่ายจัดซื้อ',
+    procurementQrDesc: 'สแกนเพื่อเพิ่มเพื่อนเจ้าหน้าที่ฝ่ายจัดซื้อ',
+    officialQrTitle: 'บัญชี LINE ทางการ',
+    officialQrDesc: 'ติดตามบัญชีทางการเพื่อรับข่าวสารล่าสุด',
+    bound: 'ผูกแล้ว',
+    unbound: 'ยังไม่ผูก'
   },
   // พื้นที่ทำงานตลาด - ตั้งค่าการรับสมัคร
   recruitment: {
