@@ -348,7 +348,7 @@ function onboardingGuide(role) {
 // 邀请卡片文本（给 BD 复制发送用）
 function inviteCardText({ code, role, name, bdName }) {
   const roleLabel = role === 'influencer' ? 'Creator' : 'Seller';
-  const addFriendLink = `https://line.me/R/ti/p/${config.oaId || '@380xfxno'}`;
+  const addFriendLink = `https://line.me/R/ti/p/${config.oaId || '@380xfno'}`;
   return [
     `📲 Join LazyFirst on LINE!`,
     ``,

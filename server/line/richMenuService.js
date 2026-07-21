@@ -46,9 +46,9 @@ async function drawSection(image, x, w, h, color, label, subLabel) {
 // 生成卖家版 Rich Menu 图片
 async function generateSupplyImage() {
   const image = new Jimp(MENU_WIDTH, MENU_HEIGHT);
-  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.supply[0], 'Policy', '');
-  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.supply[1], 'Register', '');
-  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.supply[2], 'Contact', '');
+  await drawSection(image, 0,    833, MENU_HEIGHT, COLORS.supply[0], '申样记录', 'Sample Records');
+  await drawSection(image, 833,  834, MENU_HEIGHT, COLORS.supply[1], '合作政策', 'Policy');
+  await drawSection(image, 1667, 833, MENU_HEIGHT, COLORS.supply[2], '联系BD', 'Contact');
   // 分区竖线
   for (let y = 0; y < MENU_HEIGHT; y++) { image.setPixelColor(0xFFFFFFFF, 833, y); image.setPixelColor(0xFFFFFFFF, 1666, y); }
   return image.getBufferAsync(Jimp.MIME_JPEG);

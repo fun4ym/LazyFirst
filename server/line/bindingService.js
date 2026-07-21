@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const Influencer = require('../models/Influencer');
 const ShopContact = require('../models/ShopContact');
+const Shop = require('../models/Shop');
 
 // 绑定码前缀区分角色：达人 LZI / 卖家 LZS
 const PREFIX = { influencer: 'LZI', shopContact: 'LZS' };
@@ -63,8 +64,15 @@ async function confirm({ token, lineUserId }) {
     { $set: { lineUserId: '' } }
   );
 
-  const doc = await Model.findOne({ lineBindingToken: parsed.token })
-    .populate(parsed.role === 'influencer' ? 'assignedTo' : 'tracker', 'realName phone');
+  const query = Model.findOne({ lineBindingToken: parsed.token });
+  // 达人需要 populate assignedTo 获取BD信息；卖家需要 populate shopId 获取店铺名
+  if (parsed.role === 'influencer') {
+    query.populate('assignedTo', 'realName phone');
+  }
+  if (parsed.role === 'shopContact') {
+    query.populate('shopId', 'shopName shopCode');
+  }
+  const doc = await query;
 
   if (!doc) return { ok: false, reason: 'token_not_found' };
 
@@ -85,10 +93,21 @@ async function confirm({ token, lineUserId }) {
     bdName = doc.trackerName || '';
   }
 
+  // 提取店铺信息（卖家角色）
+  let shopName = '';
+  let shopCode = '';
+  if (parsed.role === 'shopContact' && doc.shopId) {
+    shopName = doc.shopId.shopName || '';
+    shopCode = doc.shopId.shopCode || '';
+  }
+
   return {
     ok: true,
     role: parsed.role,
     name: doc.nickname || doc.name || doc.contactName || '',
+    contactName: doc.name || doc.contactName || '',
+    shopName,
+    shopCode,
     bdName,
     bdContact
   };

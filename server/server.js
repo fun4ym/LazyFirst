@@ -103,6 +103,9 @@ app.get('/health', (req, res) => {
 app.post('/health', (req, res) => {
   res.status(200).send('OK');
 });
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 app.post('/api/health', (req, res) => {
   res.status(200).send('OK');
 });
