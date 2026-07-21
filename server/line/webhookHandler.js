@@ -10,7 +10,8 @@ const richMenuService = require('./richMenuService');
 
 // 关键词映射（泰文/英文/中文均可触发）
 const POLICY_KEYWORDS = ['นโยบาย', 'policy', '政策', '带货政策'];
-const CONTACT_KEYWORDS = ['ติดต่อ', 'contact', '客服', '联系客服'];
+const CONTACT_KEYWORDS = ['ติดต่อ', 'contact', '客服', '联系客服', '联系bd', 'BD'];
+const SAMPLES_KEYWORDS = ['ขอตัวอย่าง', 'samples', '申样', '样品', '记录', 'record'];
 
 function matchKeyword(text, keywords) {
   const lower = text.toLowerCase();
@@ -125,11 +126,79 @@ async function handleText(event) {
       return;
     }
 
-    // 客服关键词 → 客服自动回复（Reply 免费）
+    // 客服关键词 → 根据用户角色返回对应的 BD / 采购部联系方式
     if (matchKeyword(text, CONTACT_KEYWORDS)) {
       if (templates.autoReplyEnabled !== false) {
-        const msg = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
-        await client.replyMessage(replyToken, { type: 'text', text: msg });
+        try {
+          // 查找用户角色，获取对应的联系人信息
+          const role = lineUserId ? await bindingService.getRoleByLineUser(lineUserId) : null;
+          let contactText = '';
+          if (role === 'shopContact') {
+            contactText = `ติดต่อฝ่ายจัดซื้อ / Contact Procurement:\nLine: @380xfno`;
+            if (templates.procurementContact) {
+              const pc = templates.procurementContact;
+              const parts = [];
+              if (pc.name) parts.push(`👤 ${pc.name}`);
+              if (pc.phone) parts.push(`📞 ${pc.phone}`);
+              if (pc.line) parts.push(`💬 ${pc.line}`);
+              if (pc.email) parts.push(`📧 ${pc.email}`);
+              if (parts.length) contactText += '\n' + parts.join('\n');
+            }
+          } else if (role === 'influencer') {
+            contactText = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
+          } else {
+            // 未绑定，发通用回复
+            contactText = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
+          }
+          await client.replyMessage(replyToken, { type: 'text', text: contactText });
+        } catch (contactErr) {
+          console.warn('[LINE] 查找联系人失败:', contactErr.message);
+          const msg = `${templates.contactReply.th}\n${templates.contactReply.en}`.trim();
+          await client.replyMessage(replyToken, { type: 'text', text: msg });
+        }
+      }
+      return;
+    }
+
+    // 样品关键词 → 根据用户角色返回对应的样品/产品链接
+    if (matchKeyword(text, SAMPLES_KEYWORDS)) {
+      try {
+        const role = lineUserId ? await bindingService.getRoleByLineUser(lineUserId) : null;
+        if (role === 'shopContact') {
+          // 卖家：查找所属店铺，返回申样记录链接
+          const ShopContact = require('../models/ShopContact');
+          const shopContact = await ShopContact.findOne({ lineUserId }).populate('shopId', 'shopName shopCode identificationCode');
+          if (shopContact && shopContact.shopId) {
+            const code = shopContact.shopId.identificationCode;
+            const shopName = shopContact.shopId.shopName || '';
+            const link = code ? `${flex.baseUrl()}/samples/public?s=${code}` : `${flex.baseUrl()}/samples/public`;
+            await client.replyMessage(replyToken, {
+              type: 'text',
+              text: `📋 รายการขอตัวอย่าง / Sample Records\n${shopName}\n\n👉 ${link}\n\n💡 เก็บลิงก์นี้ไว้เปิดดูรายการขอตัวอย่างได้ทุกเมื่อ / Bookmark this link to view sample records anytime.`
+            });
+          } else {
+            await client.replyMessage(replyToken, {
+              type: 'text',
+              text: '🔒 กรุณาผูกบัญชีก่อนใช้งาน / Please bind your account first.\n\nติดต่อฝ่ายจัดซื้อเพื่อขอรหัสผูกบัญชี / Contact Procurement for your binding code.'
+            });
+          }
+        } else if (role === 'influencer') {
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: `📦 ดูสินค้า / Browse Products\n👉 ${flex.baseUrl()}/products/public\n\n📋 กิจกรรม / Events\n👉 ${flex.baseUrl()}/recruitments/public`
+          });
+        } else {
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '🔒 กรุณาผูกบัญชีก่อนใช้งาน / Please bind your account first.\n\nส่งรหัสผูกบัญชีของคุณที่นี่ / Send your binding code here to get started.'
+          });
+        }
+      } catch (samplesErr) {
+        console.warn('[LINE] 样品链接查找失败:', samplesErr.message);
+        await client.replyMessage(replyToken, {
+          type: 'text',
+          text: '🔒 กรุณาผูกบัญชีก่อนใช้งาน / Please bind your account first.\n\nส่งรหัสผูกบัญชีของคุณที่นี่ / Send your binding code here.'
+        });
       }
       return;
     }

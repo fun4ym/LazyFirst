@@ -219,7 +219,7 @@ function productFlexCard(product) {
   };
 }
 
-// 卖家专属 Rich Menu（F1-1）：政策 / 报名活动 / 联系客服
+// 卖家专属 Rich Menu（F1-1）：申样记录 / 合作政策 / 联系采购
 function buildSupplyRichMenu() {
   const u = baseUrl();
   return {
@@ -230,7 +230,7 @@ function buildSupplyRichMenu() {
     areas: [
       {
         bounds: { x: 0, y: 0, width: 833, height: 843 },
-        action: { type: 'uri', label: 'Sample Records', uri: `${u}/samples/public` }
+        action: { type: 'message', label: 'Sample Records', text: 'samples' }
       },
       {
         bounds: { x: 833, y: 0, width: 834, height: 843 },
@@ -238,7 +238,7 @@ function buildSupplyRichMenu() {
       },
       {
         bounds: { x: 1667, y: 0, width: 833, height: 843 },
-        action: { type: 'message', label: 'Contact', text: 'Contact' }
+        action: { type: 'message', label: 'Contact', text: 'contact' }
       }
     ]
   };

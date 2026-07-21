@@ -11,12 +11,12 @@ const DEFAULT_TEMPLATES = {
     en: 'Welcome to LazyFirst! Send your binding code to receive matched product updates.'
   },
   policy: {
-    th: '• ค่าคอมมิชชั่นสูงถึง 20%\n• รับสินค้าตัวอย่างฟรี',
-    en: '• Up to 20% commission\n• Free samples'
+    th: '📜 นโยบายความร่วมมือ LazyFirst\n\n• ค่าคอมมิชชั่นสูงถึง 20% ตามยอดขาย\n• รับสินค้าตัวอย่างฟรีสำหรับ Creator ที่ผ่านการคัดเลือก\n• แจ้งเตือนแบบเรียลไทม์เมื่อมีคำขอตัวอย่าง\n• จัดส่งตัวอย่างรวดเร็ว ติดตามสถานะได้\n• ทีม BD ดูแลให้คำปรึกษาแบบ 1:1',
+    en: '📜 LazyFirst Partnership Policy\n\n• Up to 20% commission based on sales\n• Free product samples for qualified Creators\n• Real-time notifications on sample requests\n• Fast sample delivery with tracking\n• Dedicated 1:1 BD support'
   },
   contactReply: {
-    th: 'ทีมงาน LazyFirst จะติดต่อกลับโดยเร็วที่สุด ขอบคุณค่ะ',
-    en: 'Our LazyFirst team will contact you shortly. Thank you!'
+    th: '📞 ทีมงาน LazyFirst พร้อมให้บริการ\n\nส่งข้อความทิ้งไว้ เราจะติดต่อกลับภายใน 24 ชั่วโมง\nขอบคุณที่ใช้บริการ LazyFirst ค่ะ 🙏',
+    en: '📞 LazyFirst Support Team\n\nLeave us a message and we\'ll get back to you within 24 hours.\nThank you for choosing LazyFirst! 🙏'
   }
 };
 
