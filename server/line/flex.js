@@ -127,7 +127,7 @@ function policyFlexCard(tpl) {
   enLines.forEach(line => bodyContents.push({ type: 'text', text: line, size: 'sm', color: '#666666', wrap: true }));
   return {
     type: 'flex',
-    altText: 'นโยบายการสนับสนุน / Partnership Policy',
+    altText: '公司介绍 / เกี่ยวกับเรา / About LazyFirst',
     contents: {
       type: 'bubble',
       header: {
