@@ -131,7 +131,8 @@ async function handleText(event) {
       if (templates.autoReplyEnabled !== false) {
         try {
           const qrUrl = `${flex.baseUrl()}/images/contact-line-qr.jpg`;
-          const phone = templates.procurementContact?.phone || '';
+          const procurementContact = await templateService.getProcurementContact(companyId);
+          const phone = procurementContact.phone || '';
           const contactText = [
             '📞 联系方式 / ติดต่อเรา / Contact Us',
             '',
