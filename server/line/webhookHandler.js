@@ -46,7 +46,12 @@ async function handleFollow(event) {
   try {
     const companyId = await templateService.resolveCompanyId();
     const templates = await templateService.getTemplates(companyId);
-    await client.replyMessage(replyToken, flex.welcomeMessage(templates.welcome));
+    const procurementContact = await templateService.getProcurementContact(companyId);
+    await client.replyMessage(replyToken, flex.welcomeMessage({
+      welcome: templates.welcome,
+      procurementContact,
+      baseUrl: flex.baseUrl()
+    }));
 
     // 检查是否已绑定角色，自动挂对应 Rich Menu
     if (lineUserId) {
@@ -80,12 +85,15 @@ async function handleText(event) {
         if (result.ok) {
           const nameStr = result.name || '-';
           const roleStr = result.role || parsed.role;
+          const shopName = result.shopName || '';
+          const contactName = result.contactName || '';
+          const shopCode = result.shopCode || '';
           const bdName = result.bdName || '';
           const bdContact = result.bdContact || '';
 
           // 发绑定成功 Flex 卡片
           await client.replyMessage(replyToken, [
-            flex.boundSuccessCard({ name: nameStr, role: roleStr, bdName, bdContact }),
+            flex.boundSuccessCard({ name: nameStr, role: roleStr, shopName, contactName, shopCode, bdName, bdContact }),
             flex.onboardingGuide(roleStr)
           ]);
 

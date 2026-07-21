@@ -12,7 +12,12 @@
 
 ### 1. 用户加 OA 好友（follow 事件）
 - **触发位置**：`server/line/webhookHandler.js:43-65`
-- **流程**：LINE 平台回调 webhook → `handleFollow` → 回复 `welcomeMessage`（欢迎语 Flex 卡）→ 若该用户已绑定角色，自动挂载对应 Rich Menu。
+- **流程**：LINE 平台回调 webhook → `handleFollow` → 取 `Company.settings.procurementContact`（采购部联系方式）→ 回复 `welcomeMessage`（**中性双路径欢迎卡**）→ 若该用户已绑定角色，自动挂载对应 Rich Menu。
+- **欢迎语内容（中性，不具象卖家/达人）**：
+  1. 公司简介（来自 `templateService` 的 `welcome` 模板，泰+英双语，可配置）。
+  2. 🎬 **若你是 TikTok 达人**：联系对接你的 BD 领取绑定码；绑定后可浏览商品、免费申样、接收活动与佣金更新。
+  3. 🛍 **若你是商家/Seller**：联系公司采购部领取绑定码（展示 `procurementContact` 的姓名/电话/LINE/邮箱，缺省兜底 `Company.contact/phone`）；绑定后可获达人申样实时通知 + PC 申样列表链接。
+  4. 底部提示：拿到绑定码后发到聊天即可完成绑定。
 - **触发条件**：用户首次关注 LINE OA（无需任何操作，平台自动触发）。
 
 ### 2. 用户发送绑定码（message 事件）
@@ -34,8 +39,11 @@
 ### 触发位置
 - **接口**：`POST /api/samples`
 - **代码**：`server/routes/samples.js:558-586`
-- **卡片**：
-  - 卖家端 `sampleApprovalCard`（橙色，新申样待审批）→ push 给该产品所属店铺的 `ShopContact`（需其有 `lineUserId`）
+- **卡片**（均在 `pushService` 中调用）：
+  - `sampleRecordCard`（橙色，新申样记录）→ push 给该产品所属店铺的 `ShopContact`（需其有 `lineUserId`），含 PC 端申样详情链接 `/samples/record/:id?s=shopCode`。
+  - `sampleLinkCard`（申样页链接刷新/生成时推送）→ 同一卖家 `ShopContact`。
+
+> ⚠️ **卡片去重说明（2026-07-21）**：原 `sampleApprovalCard`（橙色审批卡）已确认**无任何代码调用**（仅旧文档与导出残留），已从 `flex.js` 移除定义与导出，实际卖家端通知统一走 `sampleRecordCard`。后续请勿再引用 `sampleApprovalCard`。
 
 ### 触发条件
 - `lineConfig.isConfigured && product?.shopId`（即 LINE 凭证已配置且商品归属店铺）
@@ -44,6 +52,23 @@
 ### 注意
 - **仅通知卖家**。申样由达人主动发起，已移除对达人的确认推送（`sampleConfirmedCard` 不再调用）。
 - **仅「创建申样」触发**。更新申样路由 `PUT /api/samples/:id` 目前**没有** LINE 推送逻辑。
+
+---
+
+## 二-1、卖家（shopContact）绑定后功能地图
+
+绑定成功后（`handleText` → `bindingService.confirm`），卖家在 LINE 上拥有的完整能力：
+
+| 能力 | 形式 | 触发点 | 说明 |
+|---|---|---|---|
+| 绑定成功卡 | `boundSuccessCard`（卖家分支） | 发绑定码 | 展示店铺/联系人，**提示"达人申样实时通知"**，含「申样记录」按钮（`/samples/public?s=shopCode`）与「合作政策」按钮 |
+| 新人引导 | `onboardingGuide('shopContact')` | 发绑定码 | 4 条指引：①达人申样实时通知 ②PC 申样列表链接 ③回复 Policy 看政策 ④回复 Contact 联系 BD/采购部 |
+| 富菜单 | `buildSupplyRichMenu` | 绑定成功 / follow 已绑定 | 申样记录 / 合作政策 / 联系 BD |
+| 新申样通知 | `sampleRecordCard` | POST /api/samples | 达人提交申样 → 实时推送，含详情链接 |
+| 申样链接通知 | `sampleLinkCard` | 申样页链接刷新 | 推送最新申样页链接 |
+| 关键词回复 | `policy` / `contact` | 聊天消息 | 政策卡 / 客服文案 |
+
+> PC 端申样列表链接统一指向店铺公开申样页 `/samples/public?s=店铺识别码`（商家免登录可见本店申样记录）。
 
 ---
 
@@ -104,10 +129,10 @@
 
 | 功能 | 触发动作 | 接口/事件 | 文件:行 | 卡片 | 收件人 |
 |---|---|---|---|---|---|
-| 绑定引导-欢迎 | 加好友 | LINE follow 事件 | webhookHandler.js:43 | welcomeMessage | 加友用户 |
+| 绑定引导-欢迎 | 加好友 | LINE follow 事件 | webhookHandler.js:43 | welcomeMessage（中性双路径卡） | 加友用户 |
 | 绑定引导-成功 | 发绑定码 | LINE message 事件 | webhookHandler.js:79 | boundSuccessCard + onboardingGuide | 绑定用户 |
 | 绑定引导-生成码 | BD 点按钮 | POST /api/line/binding-code | routes/line.js:108 | inviteCardText | （生成码供复制） |
-| 申样通知 | 创建申样 | POST /api/samples | samples.js:558 | sampleApprovalCard | 卖家（仅） |
+| 申样通知 | 创建申样 | POST /api/samples | samples.js:558 | sampleRecordCard | 卖家（仅） |
 | 活动推送 | BD 点按钮 | POST /api/line/activity/:id/push | routes/line.js | productFlexCard | 按标签筛选的绑定达人 |
 | 新品推送 | BD 点按钮 | POST /api/line/product/:id/push | routes/line.js | newProductCard | 按标签筛选的绑定达人 |
 | 发送记录 | 活动页顶部按钮 | GET /api/line/push-records | routes/line.js | — | — |

@@ -58,6 +58,13 @@ const companySchema = new mongoose.Schema({
         th: { type: String, default: '' },
         en: { type: String, default: '' }
       }
+    },
+    // 采购部联系方式（欢迎语卖家分支展示），缺省用顶层 contact / phone 兜底
+    procurementContact: {
+      name: { type: String, default: '' },
+      phone: { type: String, default: '' },
+      line: { type: String, default: '' }, // LINE ID / 加好友链接
+      email: { type: String, default: '' }
     }
   }
 }, {

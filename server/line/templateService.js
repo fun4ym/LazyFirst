@@ -79,11 +79,32 @@ async function resolveCompanyId() {
   }
 }
 
+// 读取采购部联系方式（欢迎语卖家分支展示）。优先用 settings.procurementContact，
+// 字段缺失时回退顶层 contact / phone，保证无配置也不空白。
+async function getProcurementContact(companyId) {
+  if (!companyId) return { name: '', phone: '', line: '', email: '' };
+  try {
+    const company = await Company.findById(companyId)
+      .select('contact phone settings.procurementContact').lean();
+    const pc = (company && company.settings && company.settings.procurementContact) || {};
+    return {
+      name: pc.name || '',
+      phone: pc.phone || (company && company.phone) || '',
+      line: pc.line || '',
+      email: pc.email || (company && company.contact) || ''
+    };
+  } catch (e) {
+    console.error('[LINE] 读取采购部联系方式失败:', e.message);
+    return { name: '', phone: '', line: '', email: '' };
+  }
+}
+
 module.exports = {
   DEFAULT_TEMPLATES,
   withDefaults,
   render,
   getTemplates,
   saveTemplates,
-  resolveCompanyId
+  resolveCompanyId,
+  getProcurementContact
 };
