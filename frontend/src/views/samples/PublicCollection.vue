@@ -526,63 +526,86 @@
         </el-tab-pane>
         <el-tab-pane label="LINE同步" name="lineSync">
           <div class="line-sync">
-            <div class="line-sync-header">
-              <div class="line-sync-title-row">
-                <div class="line-sync-title-group">
-                  <span class="line-sync-title">{{ $t('samplePublic.lineSyncTitle') }}</span>
-                  <span class="line-sync-sub">{{ $t('samplePublic.lineSyncSub') }}</span>
+            <div class="line-sync-grid">
+              <!-- 左侧卡片：LINE 同步列表 + 采购部二维码 -->
+              <el-card class="line-sync-card left-card" shadow="never">
+                <template #header>
+                  <div class="line-card-header">
+                    <div class="line-card-title">{{ $t('samplePublic.lineSyncTitle') }}</div>
+                    <div class="line-card-sub">{{ $t('samplePublic.lineSyncSub') }}</div>
+                  </div>
+                </template>
+
+                <div class="line-sync-list">
+                  <div v-if="lineLoading" class="line-sync-loading">
+                    {{ $t('samplePublic.loading') }}
+                  </div>
+                  <div v-else-if="lineContacts.length" class="line-contacts-list">
+                    <div
+                      v-for="contact in lineContacts"
+                      :key="contact._id"
+                      class="line-contact-item"
+                    >
+                      <span class="contact-name">{{ contact.name }}</span>
+                      <span
+                        class="contact-status"
+                        :class="contact.bound ? 'bound' : 'unbound'"
+                      >
+                        {{ contact.bound ? $t('samplePublic.bound') : $t('samplePublic.unbound') }}
+                      </span>
+                      <span v-if="contact.bound && contact.lineBoundAt" class="contact-time">
+                        {{ formatDateTime(contact.lineBoundAt) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div v-else class="line-contacts-empty">
+                    {{ $t('samplePublic.lineSyncEmpty') }}
+                  </div>
                 </div>
-                <el-button type="primary" plain size="default" @click="lineGuideVisible = true">
-                  <el-icon><QuestionFilled /></el-icon>
-                  <span>{{ $t('samplePublic.lineSyncHowTo') }}</span>
-                </el-button>
-              </div>
-            </div>
 
-            <div v-if="lineLoading" class="line-sync-loading">
-              {{ $t('samplePublic.loading') }}
-            </div>
-            <div v-else-if="lineContacts.length" class="line-contacts-list">
-              <div
-                v-for="contact in lineContacts"
-                :key="contact._id"
-                class="line-contact-item"
-              >
-                <span class="contact-name">{{ contact.name }}</span>
-                <span
-                  class="contact-status"
-                  :class="contact.bound ? 'bound' : 'unbound'"
-                >
-                  {{ contact.bound ? $t('samplePublic.bound') : $t('samplePublic.unbound') }}
-                </span>
-                <span v-if="contact.bound && contact.lineBoundAt" class="contact-time">
-                  {{ formatDateTime(contact.lineBoundAt) }}
-                </span>
-              </div>
-            </div>
-            <div v-else class="line-contacts-empty">
-              {{ $t('samplePublic.lineSyncEmpty') }}
-            </div>
-
-            <div class="line-qr-section">
-              <div class="line-qr-card procurement">
-                <div class="qr-card-header">
+                <div class="line-card-qr procurement">
                   <div class="qr-card-title">{{ $t('samplePublic.procurementQrTitle') }}</div>
                   <div class="qr-card-desc">{{ $t('samplePublic.procurementQrDesc') }}</div>
+                  <div class="line-sync-qr">
+                    <img src="/images/procurement-line-qr.jpg" :alt="$t('samplePublic.procurementQrTitle')" />
+                  </div>
                 </div>
-                <div class="line-sync-qr">
-                  <img src="/images/procurement-line-qr.jpg" :alt="$t('samplePublic.procurementQrTitle')" />
+              </el-card>
+
+              <!-- 右侧卡片：绑定方式 + 官方二维码 -->
+              <el-card class="line-sync-card right-card" shadow="never">
+                <template #header>
+                  <div class="line-card-header">
+                    <div class="line-card-title">{{ $t('samplePublic.bindMethodTitle') }}</div>
+                    <div class="line-card-sub">{{ $t('samplePublic.bindMethodSub') }}</div>
+                  </div>
+                </template>
+
+                <div class="bind-steps">
+                  <div class="bind-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                      <div class="step-title">{{ $t('samplePublic.bindStep1Title') }}</div>
+                      <div class="step-desc">{{ $t('samplePublic.bindStep1Desc') }}</div>
+                    </div>
+                  </div>
+                  <div class="bind-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                      <div class="step-title">{{ $t('samplePublic.bindStep2Title') }}</div>
+                      <div class="step-desc">{{ $t('samplePublic.bindStep2Desc') }}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="line-qr-card official">
-                <div class="qr-card-header">
+
+                <div class="line-card-qr official">
                   <div class="qr-card-title">{{ $t('samplePublic.officialQrTitle') }}</div>
                   <div class="qr-card-desc">{{ $t('samplePublic.officialQrDesc') }}</div>
+                  <div class="line-sync-qr">
+                    <img src="https://qr-official.line.me/gs/M_380xfxno_GW.png" :alt="$t('samplePublic.lineSyncQrAlt')" />
+                  </div>
                 </div>
-                <div class="line-sync-qr">
-                  <img src="https://qr-official.line.me/gs/M_380xfxno_GW.png" :alt="$t('samplePublic.lineSyncQrAlt')" />
-                </div>
-              </div>
+              </el-card>
             </div>
           </div>
         </el-tab-pane>
@@ -787,42 +810,6 @@
       </template>
     </el-dialog>
 
-    <!-- LINE 绑定操作方式弹层 -->
-    <el-dialog
-      v-model="lineGuideVisible"
-      :title="$t('samplePublic.lineSyncGuideTitle')"
-      width="560px"
-      align-center
-      destroy-on-close
-      class="line-guide-dialog"
-    >
-      <div class="line-guide-content">
-        <div class="guide-step">
-          <div class="step-number">1</div>
-          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep1') }}</div>
-        </div>
-        <div class="guide-step">
-          <div class="step-number">2</div>
-          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep2') }}</div>
-        </div>
-        <div class="guide-step">
-          <div class="step-number">3</div>
-          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep3') }}</div>
-        </div>
-        <div class="guide-step">
-          <div class="step-number">4</div>
-          <div class="step-text">{{ $t('samplePublic.lineSyncGuideStep4') }}</div>
-        </div>
-        <div class="guide-qr-block">
-          <img src="/images/procurement-line-qr.jpg" :alt="$t('samplePublic.procurementQrTitle')" />
-          <div class="guide-qr-label">{{ $t('samplePublic.procurementQrTitle') }}</div>
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="lineGuideVisible = false">{{ $t('samplePublic.cancel') }}</el-button>
-        <el-button type="primary" @click="lineGuideVisible = false">{{ $t('samplePublic.confirm') }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -832,7 +819,7 @@ import { getSampleStatusType } from '@/utils/sampleStatus'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument, Document, Star, QuestionFilled } from '@element-plus/icons-vue'
+import { Check, Edit, ArrowDown, User, VideoCamera, Picture, Money, Location, CopyDocument, Document, Star } from '@element-plus/icons-vue'
 import axios from 'axios'
 import ProductCell from '@/components/ProductCell.vue'
 import InfluencerCell from '@/components/InfluencerCell.vue'
@@ -853,7 +840,6 @@ const selectedSamples = ref([])
 const activeTab = ref('sampleList') // 页签：sampleList, businessView, videoList, lineSync
 const lineContacts = ref([])
 const lineLoading = ref(false)
-const lineGuideVisible = ref(false)
 
 
 
@@ -2151,61 +2137,34 @@ onMounted(() => {
 
 /* LINE同步页签 */
 .line-sync { padding: 8px 0; }
-.line-sync-header { margin-bottom: 16px; }
-.line-sync-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.line-sync-title-group { display: flex; flex-direction: column; }
-.line-sync-title { font-size: 16px; font-weight: 700; color: #1F1F1F; }
-.line-sync-sub { font-size: 12px; color: #888; margin-top: 4px; }
-.line-sync-notice {
-  padding: 14px 16px;
-  background: #FFF9F0;
-  border: 1px solid #F5D7A0;
-  border-radius: 10px;
-  font-size: 13px;
-  color: #8C6E2E;
-  line-height: 1.7;
-  margin-bottom: 20px;
-  text-align: center;
-}
-.line-qr-section {
+.line-sync-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  margin-top: 20px;
+  align-items: stretch;
 }
-.line-qr-card {
-  background: #fff;
-  border: 1px solid #EEE;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  transition: box-shadow 0.2s;
+@media (max-width: 900px) {
+  .line-sync-grid { grid-template-columns: 1fr; }
 }
-.line-qr-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-.line-qr-card.procurement { border-top: 4px solid #06C755; }
-.line-qr-card.official { border-top: 4px solid #667eea; }
-.qr-card-header { margin-bottom: 16px; }
-.qr-card-title { font-size: 15px; font-weight: 700; color: #1F1F1F; margin-bottom: 6px; }
-.qr-card-desc { font-size: 12px; color: #888; line-height: 1.5; }
-.line-sync-qr {
+.line-sync-card {
   display: flex;
-  justify-content: center;
-  padding: 4px 0;
-}
-.line-sync-qr img {
-  width: 180px;
-  height: 180px;
+  flex-direction: column;
   border-radius: 12px;
-  border: 1px solid #EEE;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  object-fit: cover;
 }
+.line-sync-card :deep(.el-card__header) {
+  padding: 18px 20px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.line-sync-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+.line-card-header { display: flex; flex-direction: column; gap: 6px; }
+.line-card-title { font-size: 16px; font-weight: 700; color: #1F1F1F; }
+.line-card-sub { font-size: 12px; color: #888; line-height: 1.5; }
+.line-sync-list { margin-bottom: 20px; }
 .line-sync-loading,
 .line-contacts-empty {
   padding: 20px 0;
@@ -2214,7 +2173,6 @@ onMounted(() => {
   font-size: 13px;
 }
 .line-contacts-list {
-  margin-bottom: 20px;
   border: 1px solid #EEE;
   border-radius: 10px;
   overflow: hidden;
@@ -2247,6 +2205,61 @@ onMounted(() => {
   color: #888;
   white-space: nowrap;
 }
+.line-card-qr {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #F0F0F0;
+  text-align: center;
+}
+.line-card-qr.procurement { border-top: 4px solid #06C755; padding-top: 17px; }
+.line-card-qr.official { border-top: 4px solid #667eea; padding-top: 17px; }
+.qr-card-title { font-size: 15px; font-weight: 700; color: #1F1F1F; margin-bottom: 6px; }
+.qr-card-desc { font-size: 12px; color: #888; line-height: 1.5; margin-bottom: 16px; }
+.line-sync-qr {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+.line-sync-qr img {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid #EEE;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  object-fit: cover;
+}
+
+/* 绑定方式步骤 */
+.bind-steps {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.bind-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #F8F9FA;
+  border-radius: 10px;
+}
+.bind-step .step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-content { flex: 1; }
+.step-title { font-size: 14px; font-weight: 700; color: #1F1F1F; margin-bottom: 6px; line-height: 1.4; }
+.step-desc { font-size: 12px; color: #666; line-height: 1.6; }
 
 /* LINE 操作方式弹层 */
 .line-guide-dialog :deep(.el-dialog__body) { padding: 10px 24px 24px; }
@@ -2290,11 +2303,5 @@ onMounted(() => {
   border: 1px solid #EEE;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   object-fit: cover;
-}
-.guide-qr-label {
-  margin-top: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1F1F1F;
 }
 </style>
