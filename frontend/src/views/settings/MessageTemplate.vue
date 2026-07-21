@@ -102,6 +102,30 @@
               <el-input v-model="lineTemplates.contactReply.en" type="textarea" :rows="2" maxlength="300" show-word-limit />
             </el-form-item>
 
+            <el-divider content-position="left">采购部联系方式（欢迎语-商家分支展示）</el-divider>
+            <el-alert
+              type="warning"
+              :closable="false"
+              show-icon
+              style="margin-bottom: 12px"
+            >
+              <template #default>
+                商家加 LINE 好友后，欢迎语会引导其联系采购部。填写以下信息将展示在欢迎语商家路径中，留空则不展示该行。
+              </template>
+            </el-alert>
+            <el-form-item label="姓名">
+              <el-input v-model="lineTemplates.procurementContact.name" maxlength="50" placeholder="如：张三" />
+            </el-form-item>
+            <el-form-item label="电话">
+              <el-input v-model="lineTemplates.procurementContact.phone" maxlength="30" placeholder="如：081-234-5678" />
+            </el-form-item>
+            <el-form-item label="LINE ID">
+              <el-input v-model="lineTemplates.procurementContact.line" maxlength="50" placeholder="如：@lazyfirst_purchase" />
+            </el-form-item>
+            <el-form-item label="Email">
+              <el-input v-model="lineTemplates.procurementContact.email" maxlength="100" placeholder="如：purchase@example.com" />
+            </el-form-item>
+
             <el-form-item>
               <el-button type="primary" :loading="lineSaving" @click="handleSaveLine">保存 LINE 模板</el-button>
               <el-button @click="fetchLineTemplates">重新加载</el-button>
@@ -196,7 +220,8 @@ const lineTemplates = reactive({
   autoReplyEnabled: true,
   welcome: { th: '', en: '' },
   policy: { th: '', en: '' },
-  contactReply: { th: '', en: '' }
+  contactReply: { th: '', en: '' },
+  procurementContact: { name: '', phone: '', line: '', email: '' }
 })
 
 const applyLineTemplates = (data) => {
@@ -205,6 +230,12 @@ const applyLineTemplates = (data) => {
   lineTemplates.welcome = { th: data.welcome?.th || '', en: data.welcome?.en || '' }
   lineTemplates.policy = { th: data.policy?.th || '', en: data.policy?.en || '' }
   lineTemplates.contactReply = { th: data.contactReply?.th || '', en: data.contactReply?.en || '' }
+  lineTemplates.procurementContact = {
+    name: data.procurementContact?.name || '',
+    phone: data.procurementContact?.phone || '',
+    line: data.procurementContact?.line || '',
+    email: data.procurementContact?.email || ''
+  }
 }
 
 const fetchLineTemplates = async () => {

@@ -46,25 +46,42 @@ function render(text, vars = {}) {
   return String(text).replace(/\{昵称\}/g, vars.nickname || '');
 }
 
-// 读取指定公司的 LINE 模板（含默认值）
+// 读取指定公司的 LINE 模板（含默认值 + 采购部联系方式）
 async function getTemplates(companyId) {
-  if (!companyId) return withDefaults(null);
+  if (!companyId) return { ...withDefaults(null), procurementContact: { name: '', phone: '', line: '', email: '' } };
   try {
-    const company = await Company.findById(companyId).select('settings.lineTemplates').lean();
-    return withDefaults(company && company.settings && company.settings.lineTemplates);
+    const company = await Company.findById(companyId).select('contact phone settings.lineTemplates settings.procurementContact').lean();
+    const templates = withDefaults(company && company.settings && company.settings.lineTemplates);
+    const pc = company && company.settings && company.settings.procurementContact;
+    templates.procurementContact = {
+      name: (pc && pc.name) || '',
+      phone: (pc && pc.phone) || (company && company.phone) || '',
+      line: (pc && pc.line) || '',
+      email: (pc && pc.email) || (company && company.contact) || ''
+    };
+    return templates;
   } catch (e) {
     console.error('[LINE] 读取模板失败:', e.message);
-    return withDefaults(null);
+    return { ...withDefaults(null), procurementContact: { name: '', phone: '', line: '', email: '' } };
   }
 }
 
-// 保存指定公司的 LINE 模板
+// 保存指定公司的 LINE 模板（含采购部联系方式）
 async function saveTemplates(companyId, templates) {
   const merged = withDefaults(templates);
-  await Company.findByIdAndUpdate(companyId, {
-    'settings.lineTemplates': merged
-  });
-  return merged;
+  const update = { 'settings.lineTemplates': merged };
+  // 同步保存采购部联系方式
+  if (templates.procurementContact && typeof templates.procurementContact === 'object') {
+    update['settings.procurementContact'] = {
+      name: templates.procurementContact.name || '',
+      phone: templates.procurementContact.phone || '',
+      line: templates.procurementContact.line || '',
+      email: templates.procurementContact.email || ''
+    };
+  }
+  await Company.findByIdAndUpdate(companyId, { $set: update });
+  // 读回最新（含兜底值）
+  return await getTemplates(companyId);
 }
 
 // Webhook 无鉴权上下文：解析归属公司（优先 env 指定，回退首个公司）
