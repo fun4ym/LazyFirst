@@ -9,8 +9,10 @@ const flex = require('./flex');
 const MENU_WIDTH = 2500;
 const MENU_HEIGHT = 843;
 
-// 注册泰文字体
+// 注册中文字体 + 泰文字体
+const scFontPath = path.join(__dirname, '..', 'fonts', 'NotoSansSC-Regular.ttf');
 const thaiFontPath = path.join(__dirname, '..', 'fonts', 'NotoSansThai-Regular.ttf');
+GlobalFonts.registerFromPath(scFontPath, 'NotoSansSC');
 GlobalFonts.registerFromPath(thaiFontPath, 'NotoSansThai');
 
 // 颜色方案
@@ -25,14 +27,14 @@ function drawSection(ctx, x, w, h, bgColor, label, subLabel) {
   ctx.fillStyle = bgColor;
   ctx.fillRect(x, 0, w, h);
 
-  // 主标签（泰文 + 英文优先使用支持泰文的字体）
+  // 主标签（中文使用 NotoSansSC，泰文/英文使用 NotoSansThai）
   ctx.fillStyle = '#FFFFFF';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 64px "NotoSansThai", sans-serif';
+  ctx.font = 'bold 64px "NotoSansSC", "NotoSansThai", sans-serif';
   ctx.fillText(label, x + w / 2, h * 0.42);
 
-  // 副标签（英文）
+  // 副标签（泰文）
   if (subLabel) {
     ctx.font = '32px "NotoSansThai", sans-serif';
     ctx.fillText(subLabel, x + w / 2, h * 0.58);
