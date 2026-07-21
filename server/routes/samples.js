@@ -12,6 +12,7 @@ const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const User = require('../models/User');
 const lineClient = require('../line/client');
 const lineFlex = require('../line/flex');
+const linePush = require('../line/pushService');
 const lineConfig = require('../config/line');
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -555,28 +556,24 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
     influencer.latestRemark = `申请样品：${product.name}`;
     await influencer.save();
 
-    // LINE通知：仅通知卖家（达人主动发起申样，无需回执确认）
-    if (lineConfig.isConfigured && product?.shopId) {
-      const productName = product?.name || '';
-      const influencerName = influencer?.name || influencer?.nickname || influencer?.tiktokName || '';
-      const sampleId = sample._id?.toString() || '';
-
-      // 通知卖家：有新申样待审批
-      if (product?.shopId) {
-        setTimeout(async () => {
-          try {
-            const seller = await ShopContact.findOne({ shopId: product.shopId, lineUserId: { $exists: true, $ne: '' } });
-            if (seller?.lineUserId) {
-              await lineClient.pushMessage(seller.lineUserId, [
-                lineFlex.sampleApprovalCard({ productName, influencerName, sampleId })
-              ]);
-              console.log(`[LINE] 申样审批通知推送成功 → 卖家 (${seller.lineUserId})`);
-            } else {
-              console.log(`[LINE] 商品 ${productName} 所属店铺无绑定 LINE 的卖家联系人，跳过审批通知`);
-            }
-          } catch (e) { console.warn('[LINE] 通知卖家申样失败:', e.message); }
-        }, 200);
-      }
+    // LINE通知：推送给该 shop 所有已绑定 LINE 的店铺联系人（含 WAP 详情页链接，不阻塞响应）
+    if (product?.shopId) {
+      (async () => {
+        try {
+          const shop = await Shop.findById(product.shopId).lean();
+          await linePush.sendSampleRecord({
+            sampleId: sample._id,
+            shopId: product.shopId,
+            shopCode: shop?.identificationCode,
+            companyId: req.user.companyId,
+            productName: product?.name || product?.productName || '',
+            influencerName: influencer?.name || influencer?.nickname || influencer?.tiktokName || '',
+            statusText: STATUS_TEXT[sample.sampleStatus] || sample.sampleStatus
+          });
+        } catch (e) {
+          console.warn('[LINE] 通知卖家申样失败:', e.message);
+        }
+      })();
     }
 
     res.status(201).json({

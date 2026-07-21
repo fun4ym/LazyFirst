@@ -524,6 +524,27 @@
             </el-card>
           </div>
         </el-tab-pane>
+        <el-tab-pane label="LINE同步" name="lineSync">
+          <div class="line-sync">
+            <div class="line-sync-header">
+              <span class="line-sync-title">{{ $t('samplePublic.lineSyncTitle') }}</span>
+              <span class="line-sync-sub">{{ $t('samplePublic.lineSyncSub') }}</span>
+            </div>
+            <div v-if="lineContactsLoading" class="line-sync-loading">{{ $t('samplePublic.loading') }}</div>
+            <div v-else-if="lineContacts.length === 0" class="line-sync-empty">{{ $t('samplePublic.lineSyncEmpty') }}</div>
+            <div v-else class="contact-list">
+              <div v-for="c in lineContacts" :key="c._id" class="contact-item">
+                <div class="contact-info">
+                  <span class="contact-name">{{ c.name }}</span>
+                  <span v-if="c.role" class="contact-role">{{ c.role }}</span>
+                </div>
+                <span class="contact-status" :class="c.bound ? 'bound' : 'unbound'">
+                  {{ c.bound ? $t('samplePublic.bound') : $t('samplePublic.unbound') }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </div>
 
@@ -751,7 +772,25 @@ const shopInfo = ref(null)
 const logoLoadError = ref(false)
 const samples = ref([])
 const selectedSamples = ref([])
-const activeTab = ref('sampleList') // 页签：sampleList, businessView, videoList
+const activeTab = ref('sampleList') // 页签：sampleList, businessView, videoList, lineSync
+
+// LINE同步页签状态
+const lineContacts = ref([])
+const lineContactsLoading = ref(false)
+async function loadLineContacts() {
+  const shopCode = route.query.s
+  if (!shopCode) return
+  lineContactsLoading.value = true
+  try {
+    const res = await axios.get(API_BASE + '/public/samples/contacts', { params: { s: shopCode } })
+    if (res.data && res.data.success) lineContacts.value = (res.data.data && res.data.data.contacts) || []
+  } catch (e) {
+    lineContacts.value = []
+  } finally {
+    lineContactsLoading.value = false
+  }
+}
+watch(() => activeTab.value, (tab) => { if (tab === 'lineSync') loadLineContacts() })
 
 // 商家视角状态
 const businessViewLoading = ref(false)
@@ -2021,4 +2060,22 @@ onMounted(() => {
 .created-value {
   font-weight: 500;
 }
+
+/* LINE同步页签 */
+.line-sync { padding: 8px 0; }
+.line-sync-header { display: flex; flex-direction: column; margin-bottom: 12px; }
+.line-sync-title { font-size: 16px; font-weight: 700; color: #1F1F1F; }
+.line-sync-sub { font-size: 12px; color: #888; margin-top: 2px; }
+.line-sync-loading, .line-sync-empty { padding: 24px 0; text-align: center; color: #999; font-size: 13px; }
+.contact-list { display: flex; flex-direction: column; gap: 8px; }
+.contact-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: 10px; background: #F7F7F9; border: 1px solid #EEE;
+}
+.contact-info { display: flex; flex-direction: column; }
+.contact-name { font-size: 14px; font-weight: 600; color: #1F1F1F; }
+.contact-role { font-size: 11px; color: #999; margin-top: 2px; }
+.contact-status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+.contact-status.bound { color: #2E7D32; background: #E6F4EA; }
+.contact-status.unbound { color: #9E9E9E; background: #F0F0F0; }
 </style>

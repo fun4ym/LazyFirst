@@ -4,6 +4,7 @@
 const Activity = require('../models/Activity');
 const ActivityHistory = require('../models/ActivityHistory');
 const Product = require('../models/Product');
+const ShopContact = require('../models/ShopContact');
 const Recruitment = require('../models/Recruitment');
 const LinePushRecord = require('../models/LinePushRecord');
 const audienceService = require('./audienceService');
@@ -358,11 +359,61 @@ async function sendRecruitment({ recruitmentId, companyId, operatorId, operatorN
   }
 }
 
+// ========== 卖家端：申样记录推送 ==========
+// 新增申样（含该 shop 商品）时，推送给该 shop 所有已绑定 LINE 的店铺联系人
+// { sampleId, shopId, shopCode, companyId, productName, influencerName, statusText }
+async function sendSampleRecord({ sampleId, shopId, shopCode, companyId, productName, influencerName, statusText }) {
+  try {
+    const lineConfig = config.get(companyId);
+    if (!lineConfig || !lineConfig.isConfigured) return { skipped: true, reason: 'line-not-configured' };
+    const contacts = await ShopContact.find({ shopId, lineUserId: { $exists: true, $ne: '' } }).lean();
+    const to = (contacts || []).map(c => c.lineUserId).filter(Boolean);
+    if (!to.length) return { skipped: true, reason: 'no-bound-seller' };
+    const base = process.env.FRONTEND_URL || config.webhookBaseUrl;
+    const recordUrl = `${base}/samples/record/${sampleId}${shopCode ? '?s=' + encodeURIComponent(shopCode) : ''}`;
+    const message = flex.sampleRecordCard({ productName, influencerName, sampleId, recordUrl, statusText });
+    const res = await flex.multicastInBatches(
+      (ids, msgs) => lineClient.multicast(ids, msgs),
+      to,
+      [message]
+    );
+    return { sent: res.sent, failed: res.failed };
+  } catch (e) {
+    console.error('[LINE sendSampleRecord] failed:', e.message);
+    return { error: e.message };
+  }
+}
+
+// ========== 卖家端：申样链接推送 ==========
+// 生成/刷新申样页识别码时，推送完整链接给该 shop 所有已绑定 LINE 的店铺联系人
+// { shopId, companyId, shopName, link }
+async function sendSampleLink({ shopId, companyId, shopName, link }) {
+  try {
+    const lineConfig = config.get(companyId);
+    if (!lineConfig || !lineConfig.isConfigured) return { skipped: true, reason: 'line-not-configured' };
+    const contacts = await ShopContact.find({ shopId, lineUserId: { $exists: true, $ne: '' } }).lean();
+    const to = (contacts || []).map(c => c.lineUserId).filter(Boolean);
+    if (!to.length) return { skipped: true, reason: 'no-bound-seller' };
+    const message = flex.sampleLinkCard({ shopName, link });
+    const res = await flex.multicastInBatches(
+      (ids, msgs) => lineClient.multicast(ids, msgs),
+      to,
+      [message]
+    );
+    return { sent: res.sent, failed: res.failed };
+  } catch (e) {
+    console.error('[LINE sendSampleLink] failed:', e.message);
+    return { error: e.message };
+  }
+}
+
 module.exports = {
   MULTICAST_BATCH,
   NARROWCAST_THRESHOLD,
   sendCampaign,
   sendProduct,
   sendRecruitment,
+  sendSampleRecord,
+  sendSampleLink,
   getPushStatus
 };

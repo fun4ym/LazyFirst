@@ -375,6 +375,113 @@ function sampleConfirmedCard({ productName, influencerName, productUrl }) {
   };
 }
 
+// 卖家端：申样记录通知（push 给已绑定 LINE 的店铺联系人）
+// { productName, influencerName, sampleId, recordUrl, statusText }
+// recordUrl: WAP 申样记录详情页链接（含修改寄养状态完整功能）
+function sampleRecordCard({ productName, influencerName, sampleId, recordUrl, statusText }) {
+  const body = [
+    infoRow('👤 达人', influencerName, '#1F1F1F'),
+    infoRow('🛍 商品', productName, '#1F1F1F')
+  ];
+  if (statusText) body.push(infoRow('📦 当前状态', statusText, '#EF6C00'));
+  return {
+    type: 'flex',
+    altText: `新的申样记录：${influencerName || 'Creator'} → ${productName || 'Product'}`,
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#EF6C00',
+        paddingAll: 'md',
+        contents: [
+          { type: 'text', text: '📦 新的申样记录', color: '#FFFFFF', weight: 'bold', size: 'lg' },
+          { type: 'text', text: '有达人申请了你的商品样品，点击查看并处理', color: '#FFE0CC', size: 'xs', margin: 'xs' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        paddingAll: 'lg',
+        contents: body
+      },
+      footer: recordUrl ? {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'button',
+            style: 'primary',
+            color: '#EF6C00',
+            height: 'sm',
+            action: { type: 'uri', label: '📋 查看并记录详情', uri: recordUrl }
+          }
+        ]
+      } : undefined
+    }
+  };
+}
+
+// 卖家端：申样链接推送（生成/刷新申样页识别码时 push 给已绑定 LINE 的店铺联系人）
+// { shopName, link }
+function sampleLinkCard({ shopName, link }) {
+  return {
+    type: 'flex',
+    altText: `申样链接已更新${shopName ? '：' + shopName : ''}`,
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#775999',
+        paddingAll: 'md',
+        contents: [
+          { type: 'text', text: '🔗 申样链接已更新', color: '#FFFFFF', weight: 'bold', size: 'lg' },
+          { type: 'text', text: '以下是你的专属申样页面链接', color: '#E6DCF0', size: 'xs', margin: 'xs' }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        paddingAll: 'lg',
+        contents: [
+          ...(shopName ? [infoRow('🏪 店铺', shopName, '#1F1F1F')] : []),
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'sm',
+            paddingAll: '12px',
+            cornerRadius: '8px',
+            backgroundColor: '#F3EDFA',
+            contents: [
+              { type: 'text', text: link || '', size: 'sm', color: '#6A1B9A', wrap: true, weight: 'bold' }
+            ]
+          }
+        ]
+      },
+      footer: link ? {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'button',
+            style: 'primary',
+            color: '#775999',
+            height: 'sm',
+            action: { type: 'uri', label: '🔗 打开申样页面', uri: link }
+          }
+        ]
+      } : undefined
+    }
+  };
+}
+
 // 卖家端：申样审批通知（push 通知）
 // { productName, influencerName, sampleId }
 function sampleApprovalCard({ productName, influencerName, sampleId }) {
@@ -602,6 +709,8 @@ module.exports = {
   inviteCardText,
   sampleConfirmedCard,
   sampleApprovalCard,
+  sampleRecordCard,
+  sampleLinkCard,
   campaignCard,
   newProductCard,
   multicastInBatches

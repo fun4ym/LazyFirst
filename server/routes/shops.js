@@ -4,6 +4,7 @@ const ShopContact = require('../models/ShopContact');
 const ShopTracking = require('../models/ShopTracking');
 const ShopRating = require('../models/ShopRating');
 const { authenticate, authorize } = require('../middleware/auth');
+const linePush = require('../line/pushService');
 
 // 获取店铺列表
 router.get('/', authenticate, authorize('shops:read'), async (req, res) => {
@@ -347,6 +348,15 @@ router.put('/:id/identification-code', authenticate, async (req, res) => {
     shop.identificationCode = identificationCode;
     shop.identificationCodeGeneratedAt = new Date();
     await shop.save();
+
+    // LINE通知：生成/刷新申样页识别码后，推送完整链接给该 shop 所有已绑定 LINE 的店铺联系人
+    const sampleLink = `${process.env.FRONTEND_URL || require('../config/line').webhookBaseUrl}/samples/public?s=${identificationCode}`;
+    linePush.sendSampleLink({
+      shopId: shop._id,
+      companyId: req.user.companyId,
+      shopName: shop.shopName,
+      link: sampleLink
+    }).catch(e => console.warn('[LINE] 推送申样链接失败:', e.message));
 
     res.json({
       success: true,

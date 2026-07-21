@@ -3,6 +3,7 @@ const SampleManagement = require('../models/SampleManagement');
 const Video = require('../models/Video');
 const Shop = require('../models/Shop');
 const Product = require('../models/Product');
+const ShopContact = require('../models/ShopContact');
 const Company = require('../models/Company');
 const Influencer = require('../models/Influencer');
 const User = require('../models/User');
@@ -282,6 +283,129 @@ router.put('/batch', async (req, res) => {
   } catch (error) {
     console.error('Public samples batch update error:', error);
     res.status(500).json({ success: false, message: '批量更新失败' });
+  }
+});
+
+/**
+ * @route   GET /api/public/samples/contacts
+ * @desc    获取店铺 LINE 绑定情况（公开页「LINE同步」页签用）
+ * @access  Public（凭 identificationCode）
+ */
+router.get('/contacts', async (req, res) => {
+  try {
+    const { s: identificationCode } = req.query;
+    if (!identificationCode) return res.status(400).json({ success: false, message: '缺少识别码参数' });
+
+    const shop = await Shop.findOne({ identificationCode });
+    if (!shop) return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
+
+    const contacts = await ShopContact.find({ shopId: shop._id })
+      .select('name role lineUserId lineBoundAt lineLinkedAt')
+      .lean();
+
+    const list = contacts.map(c => ({
+      _id: c._id,
+      name: c.name,
+      role: c.role,
+      bound: !!(c.lineUserId && String(c.lineUserId).trim()),
+      lineBoundAt: c.lineBoundAt || c.lineLinkedAt || null
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        shop: { shopName: shop.shopName, identificationCode: shop.identificationCode },
+        contacts: list
+      }
+    });
+  } catch (error) {
+    console.error('Public samples contacts error:', error);
+    res.status(500).json({ success: false, message: '获取 LINE 绑定情况失败' });
+  }
+});
+
+/**
+ * @route   GET /api/public/samples/record/:id
+ * @desc    单条申样记录详情（WAP 详情页用，含修改寄养状态）
+ * @access  Public（凭 identificationCode 校验归属）
+ */
+router.get('/record/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { s: identificationCode } = req.query;
+    if (!identificationCode) return res.status(400).json({ success: false, message: '缺少识别码参数' });
+
+    const shop = await Shop.findOne({ identificationCode });
+    if (!shop) return res.status(404).json({ success: false, message: '店铺不存在或识别码无效' });
+
+    const sample = await SampleManagement.findById(id)
+      .populate('influencerId', 'tiktokId tiktokName latestFollowers latestGmv monthlySalesCount avgVideoViews')
+      .populate('salesmanId', 'realName username');
+    if (!sample) return res.status(404).json({ success: false, message: '记录不存在' });
+
+    // 校验归属（与列表查询口径一致）
+    const products = await Product.find({ shopId: shop._id }).select('_id tiktokProductId');
+    const validIds = new Set([
+      ...products.map(p => p._id.toString()).filter(Boolean),
+      ...products.map(p => String(p.tiktokProductId)).filter(Boolean)
+    ]);
+    const matches =
+      (sample.shopId && sample.shopId.toString() === shop._id.toString()) ||
+      validIds.has(String(sample.productId));
+    if (!matches) return res.status(403).json({ success: false, message: '无权访问该记录' });
+
+    const videos = await Video.find({ companyId: shop.companyId, sampleId: sample._id }).lean();
+    const productMap = {};
+    products.forEach(p => {
+      productMap[p._id.toString()] = p;
+      if (p.tiktokProductId) productMap[String(p.tiktokProductId)] = p;
+    });
+    const productInfo = productMap[String(sample.productId)] || {};
+    const latestVideo = videos[0] || null;
+
+    const data = {
+      _id: sample._id,
+      date: sample.date,
+      productName: productInfo.name || '',
+      productImage: productInfo.images?.[0] || productInfo.productImages?.[0] || '',
+      productId: productInfo.tiktokProductId || sample.productId || '',
+      shopName: shop.shopName,
+      influencerAccount: sample.influencerId?.tiktokId || sample.influencerAccount || '',
+      followerCount: sample.influencerId?.latestFollowers || 0,
+      gmv: sample.influencerId?.latestGmv || 0,
+      salesman: sample.salesmanId?.realName || sample.salesmanId?.username || sample.salesman || '',
+      shippingInfo: sample.shippingInfo,
+      isSampleSent: sample.sampleStatus === 'sent',
+      sampleStatus: sample.sampleStatus,
+      trackingNumber: sample.trackingNumber,
+      shippingDate: sample.shippingDate,
+      receivedDate: sample.receivedDate,
+      isOrderGenerated: sample.isOrderGenerated,
+      orderCount: sample.orderCount,
+      videoLink: latestVideo?.videoLink || sample.videoLink || '',
+      videoStreamCode: latestVideo?.videoStreamCode || sample.videoStreamCode || '',
+      isAdPromotion: videos.some(v => v.isAdPromotion) || sample.isAdPromotion || false,
+      adPromotionTime: latestVideo?.adPromotionTime || sample.adPromotionTime,
+      duplicateCount: sample.duplicateCount || 0,
+      previousSubmissions: (sample.previousSubmissions || []).map(ps => ({
+        ...(ps.toObject ? ps.toObject() : ps),
+        influencerAccount: ps.influencerAccount || '',
+        salesman: ps.salesman || ''
+      })),
+      createdAt: sample.createdAt,
+      updatedAt: sample.updatedAt
+    };
+
+    res.json({
+      success: true,
+      data: {
+        shop: { _id: shop._id, shopName: shop.shopName, identificationCode: shop.identificationCode },
+        sample: data
+      }
+    });
+  } catch (error) {
+    console.error('Public samples record error:', error);
+    res.status(500).json({ success: false, message: '获取申样记录详情失败' });
   }
 });
 

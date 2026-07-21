@@ -54,6 +54,13 @@ const routes = [
     component: () => import('@/views/samples/PublicCollection.vue'),
     meta: { requiresAuth: false }
   },
+  // 申样记录详情 WAP 页（LINE 推送进入，凭识别码校验归属）
+  {
+    path: '/samples/record/:id',
+    name: 'SampleRecord',
+    component: () => import('@/views/samples/SampleRecord.vue'),
+    meta: { requiresAuth: false }
+  },
   // 公开招募页面（通过识别码访问）
   {
     path: '/recruitments/public',
