@@ -807,4 +807,138 @@ router.post('/recalculate-commission', authenticate, authorize('bdDaily:update')
   }
 });
 
+/**
+ * @route   POST /api/bd-daily/influencer-stats
+ * @desc    生成Influencer月度统计数据
+ * @access  Private
+ */
+router.post('/influencer-stats', authenticate, authorize('bdDaily:create'), async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    if (!month) {
+      return res.status(400).json({
+        success: false,
+        message: '请选择统计月份'
+      });
+    }
+
+    // month 格式: "YYYY-MM"
+    const monthRegex = new RegExp(`^${month}-\\d{2}$`);
+
+    // 查询该月份所有有 influencerId 的订单
+    const ReportOrder = require('../models/ReportOrder');
+    const InfluencerMonthlyStat = require('../models/InfluencerMonthlyStat');
+
+    const orders = await ReportOrder.find({
+      companyId: req.companyId,
+      summaryDate: { $regex: monthRegex }
+    });
+
+    if (orders.length === 0) {
+      return res.json({
+        success: true,
+        message: `未找到 ${month} 月份的订单数据`,
+        data: { results: [], summary: { totalInfluencers: 0, createdCount: 0, updatedCount: 0 } }
+      });
+    }
+
+    // 按 influencerId 分组统计
+    const influencerStats = {};
+    orders.forEach(order => {
+      const influencerId = order.influencerId ? order.influencerId.toString() : null;
+      if (!influencerId) return;
+
+      if (!influencerStats[influencerId]) {
+        influencerStats[influencerId] = {
+          totalOrders: 0,
+          unpaidOrders: 0,
+          totalAmount: 0,
+          unpaidAmount: 0
+        };
+      }
+
+      const amount = (order.productPrice || 0) * (order.orderQuantity || 0);
+
+      influencerStats[influencerId].totalOrders++;
+      influencerStats[influencerId].totalAmount += amount;
+
+      // 未打款订单：无打款单号 或 无打款时间
+      const hasPaymentNo = order.paymentNo && order.paymentNo.trim() !== '';
+      const hasSettlementTime = order.commissionSettlementTime && order.commissionSettlementTime instanceof Date;
+      if (!hasPaymentNo || !hasSettlementTime) {
+        influencerStats[influencerId].unpaidOrders++;
+        influencerStats[influencerId].unpaidAmount += amount;
+      }
+    });
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    const results = [];
+
+    for (const [influencerId, stats] of Object.entries(influencerStats)) {
+      // 只记录有成交订单的 influencer
+      if (stats.totalOrders === 0) continue;
+
+      const record = await InfluencerMonthlyStat.findOneAndUpdate(
+        {
+          companyId: req.companyId,
+          influencerId: new (require('mongoose')).Types.ObjectId(influencerId),
+          month: month
+        },
+        {
+          companyId: req.companyId,
+          influencerId: new (require('mongoose')).Types.ObjectId(influencerId),
+          month: month,
+          totalOrders: stats.totalOrders,
+          unpaidOrders: stats.unpaidOrders,
+          totalAmount: Math.round(stats.totalAmount * 100) / 100,
+          unpaidAmount: Math.round(stats.unpaidAmount * 100) / 100
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      // 判断是新建还是更新（通过比较时间戳）
+      const createdAt = new Date(record.createdAt).getTime();
+      const updatedAt = new Date(record.updatedAt).getTime();
+      const isNew = createdAt === updatedAt;
+
+      if (isNew) {
+        createdCount++;
+      } else {
+        updatedCount++;
+      }
+
+      results.push({
+        action: isNew ? 'created' : 'updated',
+        influencerId,
+        totalOrders: stats.totalOrders,
+        unpaidOrders: stats.unpaidOrders,
+        totalAmount: Math.round(stats.totalAmount * 100) / 100,
+        unpaidAmount: Math.round(stats.unpaidAmount * 100) / 100
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${month} 月份 Influencer 统计完成，共 ${results.length} 个 Influencer（新建 ${createdCount}，更新 ${updatedCount}）`,
+      data: {
+        results,
+        summary: {
+          totalInfluencers: results.length,
+          createdCount,
+          updatedCount
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Generate influencer stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: '生成Influencer统计失败: ' + error.message
+    });
+  }
+});
+
 module.exports = router;

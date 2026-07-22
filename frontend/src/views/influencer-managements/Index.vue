@@ -104,6 +104,22 @@
         </el-table-column>
         <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
 
+        <el-table-column label="订单" width="140">
+          <template #default="{ row }">
+            <div v-if="influencerOrderStats[row._id]">
+              <div style="font-size: 11px; color: #909399; line-height: 1.4;">
+                未打款: {{ influencerOrderStats[row._id].unpaidOrders || 0 }}单
+                {{ currentDefaultCurrencySymbol }}{{ formatMoney(influencerOrderStats[row._id].unpaidAmount || 0) }}
+              </div>
+              <div style="line-height: 1.4;">
+                成交: {{ influencerOrderStats[row._id].totalOrders || 0 }}单
+                {{ currentDefaultCurrencySymbol }}{{ formatMoney(influencerOrderStats[row._id].totalAmount || 0) }}
+              </div>
+            </div>
+            <span v-else class="text-gray" style="font-size: 12px;">-</span>
+          </template>
+        </el-table-column>
+
         <el-table-column :label="$t('influencer.suitableCategories')" width="150">
           <template #default="{ row }">
             <el-tag v-for="cat in row.suitableCategories" :key="cat._id" size="small" type="success">{{ cat.name }}</el-tag>
@@ -804,6 +820,8 @@
       role="influencer"
       :target-id="lineBindingTarget.id"
       :target-name="lineBindingTarget.name"
+      :pool-type="lineBindingTarget.poolType"
+      :assigned-to-id="lineBindingTarget.assignedToId"
       @bound-changed="onLineBoundChanged"
     />
   </div>
@@ -825,10 +843,23 @@ const { t } = useI18n()
 
 // LINE 绑定对话框
 const showLineBinding = ref(false)
-const lineBindingTarget = reactive({ id: '', name: '' })
+const lineBindingTarget = reactive({ id: '', name: '', poolType: '', assignedToId: '' })
 const openLineBinding = (row) => {
+  // 检查BD归属：若非当前用户且非公海，且非admin则拒绝
+  const isAdmin = userStore.role === 'admin'
+  const assignedToId = row.assignedTo?._id || row.assignedTo || ''
+  const isOwner = assignedToId && String(assignedToId) === String(userStore.user?._id)
+  const isPublic = row.poolType === 'public'
+
+  if (!isAdmin && !isOwner && !isPublic) {
+    ElMessage.warning('这位influencer不属于你，请勿操作，或联系管理员修改。')
+    return
+  }
+
   lineBindingTarget.id = row._id
   lineBindingTarget.name = row.tiktokName || row.tiktokId || row.nickname || ''
+  lineBindingTarget.poolType = row.poolType || ''
+  lineBindingTarget.assignedToId = assignedToId || ''
   showLineBinding.value = true
 }
 const onLineBoundChanged = () => {
@@ -1090,33 +1121,20 @@ const goToOrders = (row) => {
   })
 }
 
-// 加载达人订单统计
+// 加载达人订单统计（从InfluencerMonthlyStat获取当月数据）
 const loadInfluencerOrderStats = async () => {
   try {
     const influencerIds = influencers.value.map(i => i._id).join(',')
     if (!influencerIds) return
 
-    const res = await request.get('/product-stats/influencer-order-stats', {
-      params: {
-        companyId: userStore.companyId,
-        influencerIds
-      }
+    const res = await request.get('/influencer-managements/order-monthly-stats', {
+      params: { influencerIds }
     })
 
-    console.log('达人订单统计返回:', res)
-    console.log('达人订单统计详情:', JSON.stringify(res))
-    // 可能是直接返回数组或 { success, data } 结构
     const data = res.data || res
-    if (Array.isArray(data)) {
-      const statsMap = {}
-      data.forEach(item => {
-        statsMap[item.influencerId] = item.stats
-      })
-      influencerOrderStats.value = statsMap
-      console.log('达人订单统计Map:', statsMap)
-    }
+    influencerOrderStats.value = data || {}
   } catch (error) {
-    console.error('加载达人订单统计失败:', error)
+    console.error('加载达人月度订单统计失败:', error)
   }
 }
 
@@ -1130,6 +1148,15 @@ const formatDate = (date) => {
 }
 
 // 粉丝数格式化：展示时除1000，加K后缀
+// 格式化金额
+const formatMoney = (value) => {
+  if (!value && value !== 0) return '0.00'
+  return Number(value).toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
 const formatFollowers = (value) => {
   if (!value && value !== 0) return '-'
   const k = value / 1000

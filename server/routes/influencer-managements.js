@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const ReportOrder = require('../models/ReportOrder');
@@ -617,6 +618,54 @@ router.get('/blacklist/check/:tiktokId', authenticate, async (req, res) => {
   } catch (error) {
     console.error('检查黑名单失败:', error);
     res.status(500).json({ success: false, message: '检查黑名单失败' });
+  }
+});
+
+/**
+ * @route   GET /api/influencer-managements/order-monthly-stats
+ * @desc    批量获取Influencer月度订单统计（当月）
+ * @access  Private
+ */
+router.get('/order-monthly-stats', authenticate, authorize('influencers:read'), async (req, res) => {
+  try {
+    let { influencerIds, month } = req.query;
+
+    if (!influencerIds) {
+      return res.json({ success: true, data: {} });
+    }
+
+    const influencerIdList = influencerIds.split(',');
+
+    // 默认当月
+    if (!month) {
+      const now = new Date();
+      month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    const InfluencerMonthlyStat = require('../models/InfluencerMonthlyStat');
+
+    const stats = await InfluencerMonthlyStat.find({
+      companyId: req.companyId,
+      influencerId: { $in: influencerIdList.map(id => new mongoose.Types.ObjectId(id)) },
+      month: month
+    }).lean();
+
+    // 转换为 { influencerId: { totalOrders, unpaidOrders, totalAmount, unpaidAmount } } 的map
+    const statsMap = {};
+    stats.forEach(s => {
+      statsMap[s.influencerId.toString()] = {
+        totalOrders: s.totalOrders,
+        unpaidOrders: s.unpaidOrders,
+        totalAmount: s.totalAmount,
+        unpaidAmount: s.unpaidAmount,
+        month: s.month
+      };
+    });
+
+    res.json({ success: true, data: statsMap, month });
+  } catch (error) {
+    console.error('获取达人月度订单统计失败:', error);
+    res.status(500).json({ success: false, message: '获取达人月度订单统计失败' });
   }
 });
 

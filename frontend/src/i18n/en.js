@@ -1014,7 +1014,7 @@ export default {
   },
   bdDaily: {
     title: 'BD Daily Statistics',
-    generateStats: 'Generate Stats',
+    generateStats: 'BD Data Stats',
     addRecord: 'Add Record',
     dateRange: 'Date Range',
     startDate: 'Start Date',

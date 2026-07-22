@@ -1224,7 +1224,7 @@ export default {
   },
   bdDaily: {
     title: 'BD每日统计',
-    generateStats: '生成统计',
+    generateStats: 'BD数据统计',
     addRecord: '新增记录',
     dateRange: '日期范围',
     startDate: '开始日期',

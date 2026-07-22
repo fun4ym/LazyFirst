@@ -67,16 +67,20 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { CopyDocument, Promotion } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { useUserStore } from '@/stores/user'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   role: { type: String, default: 'influencer' }, // influencer | shopContact
   targetId: { type: String, default: '' },
-  targetName: { type: String, default: '' }
+  targetName: { type: String, default: '' },
+  poolType: { type: String, default: '' },
+  assignedToId: { type: String, default: '' }
 })
 const emit = defineEmits(['update:modelValue', 'bound-changed'])
 
 const { t } = useI18n()
+const userStore = useUserStore()
 
 const loading = ref(false)
 const generating = ref(false)
@@ -129,6 +133,27 @@ const fetchStatus = async () => {
 }
 
 const handleGenerate = async () => {
+  // 检查BD归属：若非当前用户且非公海，且非admin则拒绝
+  const isAdmin = userStore.role === 'admin'
+  const currentUserId = userStore.user?._id
+  const isOwner = props.assignedToId && String(props.assignedToId) === String(currentUserId)
+  const isPublic = props.poolType === 'public'
+
+  if (!isAdmin && !isOwner && !isPublic) {
+    ElMessage.warning('这位influencer不属于你，请勿操作，或联系管理员修改。')
+    return
+  }
+
+  // 若为公海达人，先领取到当前用户
+  if (isPublic && !isAdmin) {
+    try {
+      await request.post(`/influencer-managements/${props.targetId}/claim`)
+    } catch (e) {
+      ElMessage.error('领取达人失败: ' + (e.response?.data?.message || e.message))
+      return
+    }
+  }
+
   generating.value = true
   try {
     const res = await request.post('/line/binding-code', {

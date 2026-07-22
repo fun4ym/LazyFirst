@@ -7,7 +7,11 @@
           <div class="header-actions">
             <el-button type="success" @click="showGenerateDialog" v-if="hasPermission('bdDaily:create')">
               <el-icon><MagicStick /></el-icon>
-              {{ $t('bdDaily.generateStats') }}
+              BD数据统计
+            </el-button>
+            <el-button type="warning" @click="showInfluencerStatsDialog" v-if="hasPermission('bdDaily:create')">
+              <el-icon><DataAnalysis /></el-icon>
+              influencer统计
             </el-button>
             <el-button type="primary" @click="showCreateDialog" v-if="hasPermission('bdDaily:create')">
               <el-icon><Plus /></el-icon>
@@ -472,6 +476,85 @@
         </template>
       </el-dialog>
 
+    <!-- Influencer统计对话框 -->
+    <el-dialog
+      v-model="influencerStatsDialogVisible"
+      title="Influencer 月度统计"
+      width="500px"
+    >
+      <el-form :model="influencerStatsForm" label-width="100px">
+        <el-form-item label="选择月份">
+          <el-date-picker
+            v-model="influencerStatsForm.month"
+            type="month"
+            placeholder="选择月份"
+            value-format="YYYY-MM"
+            :disabled-date="disableFutureDate"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-alert
+          title="提示"
+          type="info"
+          :closable="false"
+          style="margin-top: 10px"
+        >
+          统计该月份所有Influencer的成交订单和未打款订单数量。每个Influencer每月一条记录，重复统计会更新原记录。
+        </el-alert>
+      </el-form>
+      <template #footer>
+        <el-button @click="influencerStatsDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleInfluencerStatsGenerate" :loading="influencerStatsGenerating">
+          开始统计
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Influencer统计结果对话框 -->
+    <el-dialog
+      v-model="influencerStatsResultDialogVisible"
+      title="Influencer 统计结果"
+      width="800px"
+    >
+      <div v-if="influencerStatsResult">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="统计月份">{{ influencerStatsForm.month }}</el-descriptions-item>
+          <el-descriptions-item label="Influencer总数">{{ influencerStatsResult.totalInfluencers }} 个</el-descriptions-item>
+          <el-descriptions-item label="新建记录">{{ influencerStatsResult.createdCount }} 条</el-descriptions-item>
+          <el-descriptions-item label="更新记录">{{ influencerStatsResult.updatedCount }} 条</el-descriptions-item>
+        </el-descriptions>
+
+        <div v-if="influencerStatsResult.results && influencerStatsResult.results.length > 0" style="margin-top: 20px">
+          <h4>Top 20 Influencer 详情：</h4>
+          <el-table :data="influencerStatsResult.results.slice(0, 20)" max-height="400" border>
+            <el-table-column label="Influencer ID" prop="influencerId" width="200" />
+            <el-table-column label="成交订单" prop="totalOrders" width="90" sortable />
+            <el-table-column label="成交总金额" width="120" sortable>
+              <template #default="{ row }">
+                {{ currentDefaultCurrencySymbol }}{{ formatMoney(row.totalAmount) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="未打款订单" prop="unpaidOrders" width="110" sortable />
+            <el-table-column label="未打款总金额" width="120" sortable>
+              <template #default="{ row }">
+                {{ currentDefaultCurrencySymbol }}{{ formatMoney(row.unpaidAmount) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" prop="action" width="80">
+              <template #default="{ row }">
+                <el-tag :type="row.action === 'created' ? 'success' : 'warning'" size="small">
+                  {{ row.action === 'created' ? '新建' : '更新' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="influencerStatsResultDialogVisible = false">{{ $t('common.confirm') }}</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -582,7 +665,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Plus, MagicStick, Download } from '@element-plus/icons-vue'
+import { Plus, MagicStick, Download, DataAnalysis } from '@element-plus/icons-vue'
 import AuthManager from '@/utils/auth'
 
 // 权限检查
@@ -764,6 +847,15 @@ const currentDefaultCurrencySymbol = computed(() => {
   return defaultCurrency?.symbol || ''
 })
 
+// Influencer统计
+const influencerStatsDialogVisible = ref(false)
+const influencerStatsForm = reactive({
+  month: ''
+})
+const influencerStatsGenerating = ref(false)
+const influencerStatsResult = ref(null)
+const influencerStatsResultDialogVisible = ref(false)
+
 const generateForm = reactive({
   dateRange: []
 })
@@ -852,6 +944,40 @@ const showCreateDialog = () => {
 const showGenerateDialog = () => {
   Object.assign(generateForm, { dateRange: [] })
   generateDialogVisible.value = true
+}
+
+// Influencer统计
+const showInfluencerStatsDialog = () => {
+  influencerStatsForm.month = ''
+  influencerStatsResult.value = null
+  influencerStatsDialogVisible.value = true
+}
+
+const handleInfluencerStatsGenerate = async () => {
+  if (!influencerStatsForm.month) {
+    ElMessage.warning('请选择月份')
+    return
+  }
+
+  influencerStatsGenerating.value = true
+  try {
+    const res = await request.post('/bd-daily/influencer-stats', {
+      month: influencerStatsForm.month
+    })
+
+    influencerStatsDialogVisible.value = false
+    // 拦截器已返回 res.data，所以 res 就是 { results, summary }
+    influencerStatsResult.value = res.summary
+    influencerStatsResult.value.results = res.results
+    influencerStatsResultDialogVisible.value = true
+
+    ElMessage.success('Influencer统计完成')
+  } catch (error) {
+    console.error('Influencer stats error:', error)
+    ElMessage.error(error.response?.data?.message || 'Influencer统计失败')
+  } finally {
+    influencerStatsGenerating.value = false
+  }
 }
 
 const editRecord = (row) => {
