@@ -175,7 +175,7 @@ router.get('/order-monthly-stats', authenticate, authorize('influencers:read'), 
 });
 
 // 达人排名（按成单数排名，成单数相同按金额排序）
-router.get('/ranking', authenticate, async (req, res) => {
+router.get('/ranking', authenticate, authorize('influencers:read'), async (req, res) => {
   try {
     const { page = 1, limit = 50, keyword } = req.query;
     const companyId = req.company?._id;
