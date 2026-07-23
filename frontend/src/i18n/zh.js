@@ -147,6 +147,7 @@ export default {
     dashboard: '仪表盘',
     influencer: '达人管理',
     influencerList: '建联达人',
+    ranking: '排名',
     blacklist: '小黑屋',
     samples: '样品申请',
     videoRegister: '视频登记',
@@ -381,6 +382,9 @@ export default {
     blacklistedInfluencer: '黑名单达人',
     noBlacklist: '未拉黑',
     viewOrders: '查订单',
+    rank: '排名',
+    orderCount: '成单数',
+    orderAmount: '成单金额',
     // 新增
     categoryTag: '归类标签',
     poolType: '达人池类型',

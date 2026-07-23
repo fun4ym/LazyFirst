@@ -188,6 +188,108 @@
       </div>
         </el-tab-pane>
 
+        <!-- 排名页签 -->
+        <el-tab-pane :label="$t('menu.ranking')" name="ranking">
+          <!-- 搜索筛选 -->
+          <div class="filter-section">
+            <el-row :gutter="16">
+              <el-col :span="6">
+                <el-input v-model="rankingFilters.keyword" :placeholder="$t('influencer.searchInfluencerPlaceholder')" clearable @change="loadRankingData">
+                  <template #prefix>
+                    <el-icon><Search /></el-icon>
+                  </template>
+                </el-input>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- 排名列表 -->
+          <el-table :data="rankingInfluencers" stripe v-loading="rankingLoading" :row-class-name="getRowClassName">
+            <el-table-column type="index" :label="$t('influencer.rank')" width="60">
+              <template #default="{ $index }">
+                {{ (rankingPagination.page - 1) * rankingPagination.limit + $index + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="tiktokId" label="Influencer" min-width="260" fixed="left">
+              <template #default="{ row }">
+                <InfluencerCell :influencer="row" />
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.bd')" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.poolType === 'public'" type="info">{{ $t('influencer.publicSea') }}</el-tag>
+                <el-tag v-else type="success">{{ row.assignedTo?.realName || row.assignedTo?.username || '-' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="tiktokName" :label="$t('influencer.tiktokName')" min-width="150" />
+            <el-table-column :label="$t('influencer.orderCount')" width="90" sortable prop="totalOrders">
+              <template #default="{ row }">
+                <span style="font-weight: bold; color: #409eff;">{{ row.totalOrders || 0 }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.orderAmount')" width="110" sortable prop="totalAmount">
+              <template #default="{ row }">
+                {{ currentDefaultCurrencySymbol }}{{ formatMoney(row.totalAmount || 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.suitableCategories')" width="150">
+              <template #default="{ row }">
+                <el-tag v-for="cat in row.suitableCategories" :key="cat._id" size="small" type="success">{{ cat.name }}</el-tag>
+                <span v-if="!row.suitableCategories || row.suitableCategories.length === 0" class="text-gray">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.categoryTag')" width="120">
+              <template #default="{ row }">
+                <el-tag v-for="tag in row.categoryTags" :key="tag._id" size="small">{{ tag.name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.maintenanceStatus')" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getMaintenanceStatusType(row.maintenanceStatus)" size="small">
+                  {{ getMaintenanceStatusText(row.maintenanceStatus) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('influencer.blacklist')" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.isBlacklisted" type="danger" size="small">{{ $t('influencer.blacklisted') }}</el-tag>
+                <span v-else class="text-gray">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="LINE" width="90">
+              <template #default="{ row }">
+                <el-tag v-if="row.lineUserId" type="success" size="small">{{ $t('line.bound') }}</el-tag>
+                <el-tag v-else type="info" size="small">{{ $t('line.unbound') }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('common.operation')" width="240" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="info" @click="viewDetail(row)">{{ $t('influencer.detail') }}</el-button>
+                <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="primary" @click="editInfluencer(row)">{{ $t('influencer.edit') }}</el-button>
+                <el-button v-if="row.isBlacklisted" link type="info" disabled>{{ $t('influencer.frozen') }}</el-button>
+                <el-button v-if="hasPermission('orders:read')" link type="success" @click="goToOrders(row)">{{ $t('influencer.viewOrders') }}</el-button>
+                <el-button v-if="row.poolType === 'public' && !row.isBlacklisted && hasPermission('influencers:update')" link type="warning" @click="claimInfluencer(row)">{{ $t('influencer.claim') }}</el-button>
+                <el-button v-if="row.poolType === 'private' && !row.isBlacklisted && hasPermission('influencers:update')" link type="danger" @click="releaseInfluencer(row)">{{ $t('influencer.release') }}</el-button>
+                <el-button v-if="!row.isBlacklisted && hasPermission('influencers:update')" link type="danger" @click="addToBlacklist(row)">{{ $t('influencer.blacklist') }}</el-button>
+                <el-button v-if="hasPermission('influencers:update')" link type="primary" @click="openLineBinding(row)">{{ $t('line.bindingCode') }}</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="rankingPagination.page"
+              v-model:page-size="rankingPagination.limit"
+              :total="rankingPagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="loadRankingData"
+              @current-change="loadRankingData"
+            />
+          </div>
+        </el-tab-pane>
+
         <!-- 小黑屋页签 -->
         <el-tab-pane :label="$t('menu.blacklist')" name="blacklist">
           <!-- 搜索筛选 -->
@@ -911,6 +1013,12 @@ const blacklistLoading = ref(false)
 const blacklistFilters = reactive({ keyword: '' })
 const blacklistPagination = reactive({ page: 1, limit: 20, total: 0 })
 
+// 排名相关
+const rankingInfluencers = ref([])
+const rankingLoading = ref(false)
+const rankingFilters = reactive({ keyword: '' })
+const rankingPagination = reactive({ page: 1, limit: 20, total: 0 })
+
 const filters = reactive({
   poolType: '',
   status: '',
@@ -1088,6 +1196,32 @@ const handleFollowersFilterChange = () => {
 const handleTabChange = (tabName) => {
   if (tabName === 'blacklist') {
     loadBlacklist()
+  } else if (tabName === 'ranking') {
+    loadRankingData()
+  }
+}
+
+// 加载排名数据
+const loadRankingData = async () => {
+  rankingLoading.value = true
+  try {
+    const params = {
+      companyId: userStore.companyId,
+      page: rankingPagination.page,
+      limit: rankingPagination.limit
+    }
+    if (rankingFilters.keyword) {
+      params.keyword = rankingFilters.keyword
+    }
+    const res = await request.get('/influencer-managements/ranking', { params })
+    rankingInfluencers.value = res.influencers || []
+    rankingPagination.total = res.total || 0
+    rankingPagination.page = res.page || 1
+  } catch (error) {
+    console.error('加载达人排名失败:', error)
+    ElMessage.error(t('influencer.loadFailed'))
+  } finally {
+    rankingLoading.value = false
   }
 }
 

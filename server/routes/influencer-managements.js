@@ -174,6 +174,97 @@ router.get('/order-monthly-stats', authenticate, authorize('influencers:read'), 
   }
 });
 
+// 达人排名（按成单数排名，成单数相同按金额排序）
+router.get('/ranking', authenticate, async (req, res) => {
+  try {
+    const { page = 1, limit = 50, keyword } = req.query;
+    const companyId = req.company?._id;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // 构建匹配条件
+    const matchConditions = [
+      { influencerId: { $exists: true, $ne: null } }
+    ];
+    if (companyId) {
+      matchConditions.push({ companyId: new mongoose.Types.ObjectId(companyId) });
+    }
+    if (keyword) {
+      const matchingInfluencers = await Influencer.find({
+        $or: [
+          { tiktokName: { $regex: keyword, $options: 'i' } },
+          { tiktokId: { $regex: keyword, $options: 'i' } }
+        ]
+      }, '_id').lean();
+      matchConditions.push({ influencerId: { $in: matchingInfluencers.map(i => i._id) } });
+    }
+    const matchStage = { $and: matchConditions };
+
+    // 聚合：按influencerId分组，计算成单数和金额
+    const pipeline = [
+      { $match: matchStage },
+      {
+        $group: {
+          _id: '$influencerId',
+          totalOrders: { $sum: 1 },
+          totalAmount: {
+            $sum: { $multiply: [{ $ifNull: ['$productPrice', 0] }, { $ifNull: ['$orderQuantity', 0] }] }
+          }
+        }
+      },
+      { $sort: { totalOrders: -1, totalAmount: -1 } }
+    ];
+
+    // 计数
+    const countResult = await ReportOrder.aggregate([...pipeline, { $count: 'total' }]);
+    const total = countResult[0]?.total || 0;
+
+    // 分页
+    const results = await ReportOrder.aggregate([
+      ...pipeline,
+      { $skip: skip },
+      { $limit: parseInt(limit) }
+    ]);
+
+    // 收集influencerId并获取完整达人数据
+    const rankingMap = {};
+    results.forEach(r => {
+      rankingMap[r._id.toString()] = {
+        totalOrders: r.totalOrders,
+        totalAmount: Math.round(r.totalAmount * 100) / 100
+      };
+    });
+    const influencerIds = results.map(r => r._id);
+
+    const influencerDocs = await Influencer.find({ _id: { $in: influencerIds } })
+      .populate('assignedTo', 'username realName')
+      .populate('categoryTags', 'name')
+      .populate('suitableCategories', 'name')
+      .populate('latestMaintainerId', 'username realName')
+      .lean();
+
+    // 按照排名顺序合并数据
+    const influencers = influencerIds
+      .map(id => {
+        const inf = influencerDocs.find(d => d._id.toString() === id.toString());
+        if (!inf) return null;
+        const stats = rankingMap[id.toString()] || { totalOrders: 0, totalAmount: 0 };
+        return { ...inf, totalOrders: stats.totalOrders, totalAmount: stats.totalAmount };
+      })
+      .filter(Boolean);
+
+    res.json({
+      success: true,
+      influencers,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (error) {
+    console.error('获取达人排名失败:', error);
+    res.status(500).json({ success: false, message: '获取达人排名失败' });
+  }
+});
+
 // 获取达人详情
 router.get('/:id', authenticate, async (req, res) => {
   try {

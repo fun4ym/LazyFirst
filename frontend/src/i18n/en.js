@@ -147,6 +147,7 @@ export default {
     dashboard: 'Dashboard',
     influencer: 'Influencer',
     influencerList: 'Influencer List',
+    ranking: 'Ranking',
     blacklist: 'Blacklist',
     samples: 'Sample Request',
     videoRegister: 'Video Register',
@@ -380,6 +381,9 @@ export default {
     blacklistedInfluencer: 'Blacklisted Influencer',
     noBlacklist: 'Not Blacklisted',
     viewOrders: 'View Orders',
+    rank: 'Rank',
+    orderCount: 'Orders',
+    orderAmount: 'Order Amount',
     // New
     categoryTag: 'Category Tag',
     poolType: 'Pool Type',
