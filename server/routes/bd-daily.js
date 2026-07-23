@@ -863,10 +863,9 @@ router.post('/influencer-stats', authenticate, authorize('bdDaily:create'), asyn
       influencerStats[influencerId].totalOrders++;
       influencerStats[influencerId].totalAmount += amount;
 
-      // 未打款订单：无打款单号 或 无打款时间
+      // 未打款订单：无打款单号
       const hasPaymentNo = order.paymentNo && order.paymentNo.trim() !== '';
-      const hasSettlementTime = order.commissionSettlementTime && order.commissionSettlementTime instanceof Date;
-      if (!hasPaymentNo || !hasSettlementTime) {
+      if (!hasPaymentNo) {
         influencerStats[influencerId].unpaidOrders++;
         influencerStats[influencerId].unpaidAmount += amount;
       }
