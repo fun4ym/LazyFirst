@@ -204,6 +204,7 @@ export default {
     suppliers: 'Suppliers',
     bdDashboard: 'BD Dashboard',
     initImport: 'Initial Import',
+    feedback: 'Feedback',
     marketWorkspace: 'Market Workspace',
     recruitmentConfig: 'Recruitment Config',
     influencerWorkspace: 'Influencer Workspace',

@@ -76,6 +76,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/feedback',
+    name: 'Feedback',
+    component: () => import('@/views/feedback/Feedback.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
     component: () => import('@/layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
@@ -280,6 +286,12 @@ const routes = [
         name: 'MessageTemplate',
         component: () => import('@/views/settings/MessageTemplate.vue'),
         meta: { title: '私信模板', requiresAuth: true }
+      },
+      {
+        path: 'settings/feedback',
+        name: 'FeedbackAdmin',
+        component: () => import('@/views/settings/FeedbackAdmin.vue'),
+        meta: { title: '意见反馈' }
       }
     ]
   }

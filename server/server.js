@@ -5,6 +5,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+const path = require('path');
 const connectDB = require('./config/database');
 
 // 路由导入
@@ -41,6 +42,7 @@ const aiMakerRoutes = require('./routes/ai-maker');
 const tiktokExtensionDataRoutes = require('./routes/tiktok-extension-data');
 const systemModelsRoutes = require('./routes/system-models');
 const lineRoutes = require('./routes/line');
+const feedbackRoutes = require('./routes/feedback');
 
 // 中间件导入
 const errorHandler = require('./middleware/errorHandler');
@@ -110,9 +112,13 @@ app.post('/api/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// 托管上传的静态资源（含 BD 二维码截图）
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // API路由
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/feedback', feedbackRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/influencer-managements', influencerManagementRoutes);

@@ -148,6 +148,9 @@
           <el-menu-item v-if="menuPermissions.initImport()" index="/settings/init-import">
             <span>{{ $t('menu.initImport') }}</span>
           </el-menu-item>
+          <el-menu-item v-if="menuPermissions.feedback()" index="/settings/feedback">
+            <span>{{ $t('menu.feedback') }}</span>
+          </el-menu-item>
 
         </el-sub-menu>
       </el-menu>
@@ -307,7 +310,8 @@ const menuPermissions = {
     // 初始化导入仅超级管理员可见
     const user = AuthManager.getUser()
     return user?.role?.name === '超级管理员'
-  }
+  },
+  feedback: () => hasAnyPermission(['users:read', 'commissions:read', 'baseData:read']) || isSuperAdmin()
 }
 
 const showPasswordDialog = ref(false)

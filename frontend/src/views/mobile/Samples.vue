@@ -491,8 +491,7 @@ const submitApplication = async () => {
       date: form.value.date,
       productId: selectedProduct.value._id,           // ObjectId
       influencerId: selectedInfluencer.value._id,       // ObjectId
-      shippingInfo: `Mobile申请 - ${form.value.remark || ''}`,
-      isOrderGenerated: false
+      shippingInfo: `Mobile申请 - ${form.value.remark || ''}`
     })
     ElMessage.success('申请提交成功')
     // 重置表单

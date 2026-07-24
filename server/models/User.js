@@ -74,6 +74,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 15
   },
+  // LINE 联系人信息（用于官方 LINE 的「联系专属 BD」展示）
+  lineQr: { type: String, default: '' },                    // LINE 二维码截图路径（/uploads/users/...）
+  lineLink: { type: String, default: '' },                  // LINE 加好友链接
+  isDefaultLineContact: { type: Boolean, default: false },  // 是否为 LINE 兜底联系人（如 dingyan）
   // 最后登录时间
   lastLoginAt: {
     type: Date

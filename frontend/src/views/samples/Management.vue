@@ -649,9 +649,6 @@
 
         <el-divider>{{ $t('samples.fulfillment') }}</el-divider>
 
-        <el-form-item :label="$t('samples.isOrderGenerated')">
-          <el-switch v-model="createForm.isOrderGenerated" />
-        </el-form-item>
       </el-form>
 
       <template #footer>
@@ -1238,8 +1235,7 @@ const handleSubmit = async () => {
           isSampleSent: createForm.isSampleSent,
           trackingNumber: createForm.trackingNumber,
           shippingDate: createForm.shippingDate,
-          logisticsCompany: createForm.logisticsCompany,
-          isOrderGenerated: createForm.isOrderGenerated
+          logisticsCompany: createForm.logisticsCompany
         }
         // 移除undefined的字段，避免发送无效值
         Object.keys(updatePayload).forEach(key => updatePayload[key] === undefined && delete updatePayload[key])
@@ -1292,8 +1288,7 @@ const handleSubmit = async () => {
         isSampleSent: createForm.isSampleSent,
         trackingNumber: createForm.trackingNumber,
         shippingDate: createForm.shippingDate,
-        logisticsCompany: createForm.logisticsCompany,
-        isOrderGenerated: createForm.isOrderGenerated
+        logisticsCompany: createForm.logisticsCompany
       }
 
       await request.post('/samples', submitPayload)

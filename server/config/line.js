@@ -7,6 +7,8 @@ const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
 const channelId = process.env.LINE_CHANNEL_ID || '';
 const liffId = process.env.LINE_LIFF_ID || '';
 const webhookBaseUrl = process.env.LINE_WEBHOOK_BASE_URL || '';
+// 后端公网域名（用于托管 LINE 图片/二维码，如 https://api.lazyfirst.com）
+const backendBaseUrl = process.env.BACKEND_BASE_URL || '';
 const oaId = process.env.LINE_OA_ID || '';
 // 单一 LINE OA 归属公司：Webhook 无 JWT 上下文，用此定位公司（缺省时回退首个公司）
 const defaultCompanyId = process.env.LINE_DEFAULT_COMPANY_ID || '';
@@ -20,6 +22,7 @@ module.exports = {
   channelId,
   liffId,
   webhookBaseUrl,
+  backendBaseUrl,
   oaId,
   defaultCompanyId,
   isConfigured

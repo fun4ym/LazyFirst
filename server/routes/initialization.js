@@ -14,6 +14,7 @@ const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const SampleManagement = require('../models/SampleManagement');
 const User = require('../models/User');
 const Video = require('../models/Video');
+const ReportOrder = require('../models/ReportOrder');
 
 const router = express.Router();
 
@@ -353,6 +354,22 @@ async function importSamples(data, companyId, creatorId) {
   let videoUpdatedCount = 0;
   const errors = [];
 
+  // 构建真实订单关联键集合：以"达人 + 商品(含创建时间)"为准，避免盲目信任Excel的"是否出单"列
+  let orderKeys = new Set();
+  try {
+    const oCursor = ReportOrder.find(
+      { createTime: { $exists: true, $ne: null }, influencerId: { $exists: true, $ne: null }, productId: { $exists: true, $ne: null } },
+      { influencerId: 1, productId: 1 }
+    );
+    while (await oCursor.hasNext()) {
+      const o = await oCursor.next();
+      orderKeys.add(String(o.influencerId) + '_' + String(o.productId));
+    }
+  } catch (e) {
+    console.warn('[Init Import] 加载订单数据失败，已出单将回退为Excel值:', e.message);
+    orderKeys = null;
+  }
+
   for (let i = 0; i < data.length; i++) {
     try {
       const row = data[i];
@@ -508,7 +525,10 @@ async function importSamples(data, companyId, creatorId) {
         fulfillmentTime: row['履约时间'] || '',
         isAdPromotion: row['是否投流'] === '是' || row['是否投流'] === true,
         adPromotionTime: adPromotionTime,
-        isOrderGenerated: row['是否出单'] === '是' || row['是否出单'] === true
+        // "已出单"只由真实订单决定：存在达人+商品的真实订单(创建时间)即为 true；与是否驳回、Excel手填值无关
+        isOrderGenerated: orderKeys
+          ? orderKeys.has(String(influencerObj._id) + '_' + String(productIdForSample))
+          : false
       };
 
       // 更新时不覆盖的字段

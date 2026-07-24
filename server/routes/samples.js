@@ -10,6 +10,7 @@ const ShopContact = require('../models/ShopContact');
 const Influencer = require('../models/Influencer');
 const InfluencerMaintenance = require('../models/InfluencerMaintenance');
 const User = require('../models/User');
+const ReportOrder = require('../models/ReportOrder');
 const lineClient = require('../line/client');
 const lineFlex = require('../line/flex');
 const linePush = require('../line/pushService');
@@ -17,6 +18,23 @@ const lineConfig = require('../config/line');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const fs = require('fs');
+
+/**
+ * "已出单"只由 TikTok 真实订单决定：存在带 createTime 的真实订单(达人+商品)即为 true，
+ * 与样品是否被驳回、前端/导入手填值均无关。导入时优先用预构建的 orderKeys 集合，否则实时查询 ReportOrder。
+ */
+async function computeIsOrderGenerated(influencerId, tiktokProductId, orderKeys) {
+  if (!influencerId || !tiktokProductId) return false;
+  if (orderKeys) {
+    return orderKeys.has(String(influencerId) + '_' + String(tiktokProductId));
+  }
+  const count = await ReportOrder.countDocuments({
+    influencerId: influencerId,
+    productId: String(tiktokProductId),
+    createTime: { $exists: true, $ne: null }
+  });
+  return count > 0;
+}
 const path = require('path');
 
 const router = express.Router();
@@ -393,7 +411,6 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       logisticsCompany,
       receivedDate,
       fulfillmentTime,
-      isOrderGenerated,
       // 可选：同时创建Video记录
       videoLink,
       videoStreamCode,
@@ -500,7 +517,7 @@ router.post('/', authenticate, authorize('samples:create', 'samplesBd:create'), 
       fulfillmentTime: fulfillmentTime || '',
       isAdPromotion: isAdPromotion || false,
       adPromotionTime: adPromotionTime ? new Date(adPromotionTime) : undefined,
-      isOrderGenerated: isOrderGenerated || false,
+      isOrderGenerated: await computeIsOrderGenerated(influencerId, product.tiktokProductId),
       duplicateCount: duplicateCount,
       previousSubmissions: previousSubmissions
     };
@@ -602,6 +619,9 @@ router.put('/:id', authenticate, authorize('samples:update', 'samplesBd:update')
     
     const { sampleStatus, refusalReason, ...restBody } = req.body;
     const updateData = { ...restBody };
+
+    // "已出单"只由真实订单决定，更新端点忽略前端/导入手填值，避免人为覆盖
+    delete updateData.isOrderGenerated;
 
     // 寄样状态更新
     if (sampleStatus !== undefined) {
@@ -1028,6 +1048,22 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
 
     const result = { added: 0, updated: 0, failed: 0, errors: [] };
 
+    // 构建真实订单关联键集合：以"达人 + 商品(含创建时间)"为准，避免盲目信任Excel的"是否出单"列
+    let orderKeys = new Set();
+    try {
+      const oCursor = ReportOrder.find(
+        { createTime: { $exists: true, $ne: null }, influencerId: { $exists: true, $ne: null }, productId: { $exists: true, $ne: null } },
+        { influencerId: 1, productId: 1 }
+      );
+      while (await oCursor.hasNext()) {
+        const o = await oCursor.next();
+        orderKeys.add(String(o.influencerId) + '_' + String(o.productId));
+      }
+    } catch (e) {
+      console.warn('[Sample Import] 加载订单数据失败，已出单将回退为Excel值:', e.message);
+      orderKeys = null;
+    }
+
     for (let i = 0; i < jsonData.length; i++) {
       try {
         const row = jsonData[i];
@@ -1139,7 +1175,10 @@ router.post('/import', authenticate, authorize('samples:create', 'samplesBd:crea
           fulfillmentTime: row['履约时间'] || '',
           isAdPromotion: row['是否投流'] === '是' || row['是否投流'] === true,
           adPromotionTime: adPromotionTime,
-          isOrderGenerated: row['是否出单'] === '是' || row['是否出单'] === true
+          // "已出单"只由真实订单决定：存在达人+商品的真实订单(创建时间)即为 true；与是否驳回、Excel手填值无关
+          isOrderGenerated: orderKeys
+            ? orderKeys.has(String(influencerObj._id) + '_' + String(productObj.tiktokProductId))
+            : false
         };
 
         if (existing) {

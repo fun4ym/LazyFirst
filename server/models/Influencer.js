@@ -169,7 +169,8 @@ const influencerSchema = new mongoose.Schema({
   lineBoundAt: {
     type: Date,
     default: null
-  }
+  },
+  feedbackToken: { type: String, default: '' } // 意见反馈页身份令牌（懒生成）
 }, {
   timestamps: true
 });

@@ -906,8 +906,7 @@ const openEditDialog = async (sample) => {
     isSampleSent: sample.isSampleSent || false,
     trackingNumber: sample.trackingNumber || '',
     shippingDate: sample.shippingDate || '',
-    logisticsCompany: sample.logisticsCompany || '',
-    isOrderGenerated: sample.isOrderGenerated || false
+    logisticsCompany: sample.logisticsCompany || ''
   })
   
   // ★ 修复：将当前选中的 influencer 添加到 influencerOptions 中，以便选择器正确显示 TikTok ID
@@ -961,8 +960,7 @@ const handleCreate = async () => {
           isSampleSent: createForm.isSampleSent,
           trackingNumber: createForm.trackingNumber,
           shippingDate: createForm.shippingDate,
-          logisticsCompany: createForm.logisticsCompany,
-          isOrderGenerated: createForm.isOrderGenerated
+          logisticsCompany: createForm.logisticsCompany
         }
         // 移除undefined的字段，避免发送无效值
         Object.keys(updatePayload).forEach(key => updatePayload[key] === undefined && delete updatePayload[key])
@@ -1014,8 +1012,7 @@ const handleCreate = async () => {
         isSampleSent: createForm.isSampleSent,
         trackingNumber: createForm.trackingNumber,
         shippingDate: createForm.shippingDate,
-        logisticsCompany: createForm.logisticsCompany,
-        isOrderGenerated: createForm.isOrderGenerated
+        logisticsCompany: createForm.logisticsCompany
       }
 
       await request.post('/samples', submitPayload)

@@ -219,6 +219,26 @@
             <el-radio value="inactive">{{ $t('role.disabled') }}</el-radio>
           </el-radio-group>
         </el-form-item>
+
+        <el-divider content-position="left">LINE 联系人信息</el-divider>
+
+        <el-form-item label="LINE 二维码" v-if="isEdit">
+          <div>
+            <img v-if="lineQrUrl" :src="lineQrUrl" style="max-width: 200px; border: 1px solid #eee; margin-bottom: 8px; display: block" />
+            <input type="file" accept="image/*" @change="handleQrChange" :disabled="uploadingQr" />
+            <div v-if="uploadingQr" style="color: #999; font-size: 12px">上传中...</div>
+            <div style="color: #999; font-size: 12px">用于官方 LINE「联系专属 BD」展示（仅编辑已有用户时上传）</div>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="LINE 链接">
+          <el-input v-model="form.lineLink" placeholder="https://line.me/R/ti/p/@xxxx" />
+        </el-form-item>
+
+        <el-form-item label="LINE 兜底联系人">
+          <el-switch v-model="form.isDefaultLineContact" />
+          <span style="margin-left: 8px; color: #999; font-size: 12px">（勾选后作为「无专属 BD」时的默认联系人，如 dingyan）</span>
+        </el-form-item>
       </el-form>
 
       <template #footer>
@@ -440,8 +460,45 @@ const form = reactive({
   bankAccount: '',
   employmentStatus: 'fulltime',
   settlementType: 'monthly',
-  settlementDay: 15
+  settlementDay: 15,
+  lineLink: '',
+  isDefaultLineContact: false
 })
+
+// LINE 二维码（独立上传，不随表单提交）
+const apiBase = import.meta.env.VITE_API_BASE_URL || ''
+const lineQrUrl = ref('')
+const uploadingQr = ref(false)
+
+const handleQrChange = async (e) => {
+  const file = e.target?.files?.[0]
+  if (!file) return
+  if (!form._id) {
+    ElMessage.warning('请先保存用户后再上传二维码')
+    return
+  }
+  uploadingQr.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch(`/api/users/${form._id}/line-qr`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: fd
+    })
+    const result = await res.json()
+    if (result.success) {
+      lineQrUrl.value = apiBase + result.url
+      ElMessage.success('二维码上传成功')
+    } else {
+      ElMessage.error(result.message || '上传失败')
+    }
+  } catch (err) {
+    ElMessage.error('上传失败')
+  } finally {
+    uploadingQr.value = false
+  }
+}
 
 // 任职状态改变时重置结算方式
 const onEmploymentStatusChange = () => {
@@ -646,8 +703,11 @@ const showEditDialog = (row) => {
     bankAccount: row.bankAccount || '',
     employmentStatus: row.employmentStatus || 'fulltime',
     settlementType: row.settlementType || 'monthly',
-    settlementDay: row.settlementDay || 15
+    settlementDay: row.settlementDay || 15,
+    lineLink: row.lineLink || '',
+    isDefaultLineContact: row.isDefaultLineContact || false
   })
+  lineQrUrl.value = row.lineQr ? apiBase + row.lineQr : ''
 }
 
 const showPasswordResetDialog = (row) => {
@@ -708,8 +768,11 @@ const resetForm = () => {
     bankAccount: '',
     employmentStatus: 'fulltime',
     settlementType: 'monthly',
-    settlementDay: 15
+    settlementDay: 15,
+    lineLink: '',
+    isDefaultLineContact: false
   })
+  lineQrUrl.value = ''
   if (formRef.value) {
     formRef.value.clearValidate()
   }

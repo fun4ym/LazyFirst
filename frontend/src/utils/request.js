@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import AuthManager from '@/utils/auth'
 
 // 公开页面列表（无需登录）
-const publicPages = ['/login', '/terms', '/privacy', '/samples/public', '/recruitments/public', '/products/public']
+const publicPages = ['/login', '/terms', '/privacy', '/samples/public', '/recruitments/public', '/products/public', '/feedback']
 
 // 检查当前路由是否为公开页面
 const isPublicPage = () => {

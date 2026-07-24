@@ -1,9 +1,26 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { authenticate, authorize } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const User = require('../models/User');
 
 const router = express.Router();
+
+// BD LINE 二维码上传
+const lineQrStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '..', 'uploads', 'users');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `line-qr-${req.params.id || Date.now()}${ext}`);
+  }
+});
+const uploadLineQr = multer({ storage: lineQrStorage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 /**
  * @route   GET /api/users
@@ -184,9 +201,10 @@ router.put('/:id', authenticate, authorize('users:update'), [
       });
     }
 
-    const { realName, phone, email, roleId, deptId, status, password, bankAccount, employmentStatus, settlementType, settlementDay } = req.body;
+    const { realName, phone, email, roleId, deptId, status, password, bankAccount, employmentStatus, settlementType, settlementDay, lineLink, isDefaultLineContact } = req.body;
 
-    const updateData = { realName, phone, email, roleId, deptId, status, bankAccount };
+    const updateData = { realName, phone, email, roleId, deptId, status, bankAccount, lineLink };
+    if (isDefaultLineContact !== undefined) updateData.isDefaultLineContact = isDefaultLineContact;
     if (employmentStatus !== undefined) updateData.employmentStatus = employmentStatus;
     if (settlementType !== undefined) updateData.settlementType = settlementType;
     if (settlementDay !== undefined) updateData.settlementDay = settlementDay;
@@ -360,6 +378,32 @@ router.put('/:id/password', authenticate, authorize('users:update'), [
       success: false,
       message: '重置密码失败'
     });
+  }
+});
+
+/**
+ * @route   POST /api/users/:id/line-qr
+ * @desc    上传 BD 的 LINE 二维码截图
+ * @access  Private
+ */
+router.post('/:id/line-qr', authenticate, authorize('users:update'), uploadLineQr.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '未上传文件' });
+    }
+    const rel = `/uploads/users/${req.file.filename}`;
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, companyId: req.companyId },
+      { lineQr: rel },
+      { new: true }
+    ).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: '用户不存在' });
+    }
+    res.json({ success: true, url: rel, data: { user } });
+  } catch (error) {
+    console.error('Upload line-qr error:', error);
+    res.status(500).json({ success: false, message: '上传失败' });
   }
 });
 

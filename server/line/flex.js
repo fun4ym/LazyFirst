@@ -25,8 +25,8 @@ function infoRow(label, value, valueColor) {
 // opts: { welcome?: {th,en}, procurementContact?: {name,phone,line,email}, baseUrl?: string }
 function welcomeMessage(opts = {}) {
   const welcome = opts.welcome || {};
-  const thText = welcome.th || 'ยินดีต้อนรับสู่ LazyFirst! เราคือแพลตฟอร์มที่เชื่อมต่อ TikTok Creator กับร้านค้า';
-  const enText = welcome.en || 'Welcome to LazyFirst! We are a platform connecting TikTok Creators with Sellers.';
+  const thText = welcome.th || 'ยินดีต้อนรับสู่ LazyFirst บริษัท TAP ชาวไทยที่ได้รับการรับรองจาก TikTok อย่างเป็นทางการ';
+  const enText = welcome.en || '欢迎来到 LazyFirst，我们是一家 TikTok 官方认证的泰国本土 TAP 公司';
 
   const pc = opts.procurementContact || {};
   // 采购部联系方式行（有则展示）
@@ -46,8 +46,9 @@ function welcomeMessage(opts = {}) {
     paddingAll: 'md',
     contents: [
       { type: 'text', text: '🎬 หากคุณเป็น Creator / TikTok 达人', weight: 'bold', size: 'sm', color: '#775999', wrap: true },
-      { type: 'text', text: '• ติดต่อ BD ที่ดูแลคุณเพื่อขอ "รหัสผูกบัญชี"\n• Contact your account BD to get your binding code', size: 'xs', color: '#1F1F1F', wrap: true },
-      { type: 'text', text: '• ผูกบัญชีแล้วรับ: ดูสินค้า / ของตัวอย่างฟรี / อัปเดตแคมเปญและค่าคอมมิชชั่น\n• After binding: browse products, free samples, campaign & commission updates', size: 'xs', color: '#555555', wrap: true }
+      { type: 'text', text: '• 联系你的专属 BD 拿绑定码\n• Contact your dedicated BD to get the binding code', size: 'xs', color: '#1F1F1F', wrap: true },
+      { type: 'text', text: '• 绑定后可在本官方 LINE 获得最新高佣金商品信息，并可以免费申样\n• After binding: get latest high-commission products & free samples via this LINE', size: 'xs', color: '#555555', wrap: true },
+      { type: 'button', style: 'primary', color: '#775999', margin: 'sm', action: { type: 'postback', label: '联系专属 BD', data: 'action=contact_bd' } }
     ]
   };
 
@@ -61,8 +62,9 @@ function welcomeMessage(opts = {}) {
     paddingAll: 'md',
     contents: [
       { type: 'text', text: '🛍 หากคุณเป็น Seller / 商家', weight: 'bold', size: 'sm', color: '#EF6C00', wrap: true },
-      { type: 'text', text: '• ติดต่อฝ่ายจัดซื้อของเราเพื่อรับ "รหัสผูกบัญชี"\n• Contact our Procurement team to get your binding code', size: 'xs', color: '#1F1F1F', wrap: true },
-      { type: 'text', text: '• ผูกบัญชีแล้วรับ: แจ้งเตือนเมื่อ Creator ขอของตัวอย่าง + ลิงก์รายการ申样บน PC\n• After binding: real-time alerts when Creators request your samples + PC sample list link', size: 'xs', color: '#555555', wrap: true }
+      { type: 'text', text: '• 联系采购部拿绑定码\n• Contact our Procurement team to get the binding code', size: 'xs', color: '#1F1F1F', wrap: true },
+      { type: 'text', text: '• 绑定后实时收到申样通知\n• After binding: get real-time sample-request alerts', size: 'xs', color: '#555555', wrap: true },
+      { type: 'button', style: 'primary', color: '#EF6C00', margin: 'sm', action: { type: 'postback', label: '联系采购部', data: 'action=contact_procurement' } }
     ].concat(procurementRows.length ? [
       { type: 'separator', margin: 'sm' },
       ...procurementRows
@@ -80,7 +82,7 @@ function welcomeMessage(opts = {}) {
         layout: 'vertical',
         backgroundColor: '#775999',
         contents: [
-          { type: 'text', text: 'LazyFirst', color: '#FFFFFF', weight: 'bold', size: 'xl' }
+          { type: 'text', text: 'LazyFirst Co., ltd.', color: '#FFFFFF', weight: 'bold', size: 'lg' }
         ]
       },
       body: {
@@ -94,7 +96,7 @@ function welcomeMessage(opts = {}) {
           sellerPath,
           {
             type: 'text',
-            text: '📩 เมื่อได้รับรหัสแล้ว ให้ส่งรหัสมาที่แชทนี้เพื่อผูกบัญชี\n📩 Once you have your code, send it here to bind your account.',
+            text: '拿到绑定码后直接发到聊天里即可绑定。\nส่งรหัสผูกบัญชีมาที่แชทนี้เพื่อผูกบัญชี',
             margin: 'md',
             size: 'xs',
             color: '#775999',
@@ -244,7 +246,7 @@ function buildSupplyRichMenu() {
   };
 }
 
-// 达人专属 Rich Menu（F2）：热门产品 / 最新活动 / 联系客服
+// 达人专属 Rich Menu：商品 / 意见反馈
 function buildInfluencerRichMenu() {
   const u = baseUrl();
   return {
@@ -254,16 +256,12 @@ function buildInfluencerRichMenu() {
     chatBarText: 'Creator Menu',
     areas: [
       {
-        bounds: { x: 0, y: 0, width: 833, height: 843 },
-        action: { type: 'uri', label: 'กิจกรรมล่าสุด', uri: `${u}/recruitments/public` }
+        bounds: { x: 0, y: 0, width: 1250, height: 843 },
+        action: { type: 'uri', label: 'สินค้า / Products', uri: `${u}/products/public` }
       },
       {
-        bounds: { x: 833, y: 0, width: 834, height: 843 },
-        action: { type: 'postback', label: 'สินค้าแนะนำ', data: 'action=hot_products' }
-      },
-      {
-        bounds: { x: 1667, y: 0, width: 833, height: 843 },
-        action: { type: 'message', label: 'ติดต่อ', text: 'ติดต่อ' }
+        bounds: { x: 1250, y: 0, width: 1250, height: 843 },
+        action: { type: 'postback', label: '意见反馈 / Feedback', data: 'action=feedback' }
       }
     ]
   };
@@ -279,6 +277,7 @@ function boundSuccessCard({ name, role, shopName, contactName, shopCode, bdName,
   const bodyContents = [];
   if (role === 'influencer') {
     bodyContents.push({ type: 'text', text: `Creator: ${name || '-'}`, size: 'sm', wrap: true });
+    bodyContents.push({ type: 'text', text: '⚠️ 本 LINE 无法直接跳转 TikTok，请在浏览器打开商品页后复制商品链接到 TikTok App 下单。', size: 'xs', wrap: true, color: '#E65100', margin: 'sm' });
   } else {
     bodyContents.push({ type: 'text', text: `Store: ${shopName || name || '-'}`, size: 'sm', wrap: true, weight: 'bold' });
     bodyContents.push({ type: 'text', text: `Contact: ${contactName || '-'}`, size: 'sm', wrap: true, color: '#666666' });
@@ -293,8 +292,7 @@ function boundSuccessCard({ name, role, shopName, contactName, shopCode, bdName,
   }
   const footerButtons = role === 'influencer'
     ? [
-        { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📦 View Products', uri: `${baseUrl()}/products/public` } },
-        { type: 'button', style: 'secondary', action: { type: 'uri', label: '📋 View Events', uri: `${baseUrl()}/recruitments/public` } }
+        { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📦 View Products', uri: `${baseUrl()}/products/public` } }
       ]
     : [
         { type: 'button', style: 'primary', color: '#775999', action: { type: 'uri', label: '📋 申样记录 / Sample Records', uri: `${baseUrl()}/samples/public?s=${shopCode || ''}` } },
@@ -679,8 +677,42 @@ async function multicastInBatches(pushMessageFn, userIds, messages, batchSize = 
   return { sent, failed };
 }
 
+// ========== BD 联系列表 / 联系卡片（LINE「联系专属 BD」用） ==========
+
+// BD 账号轮播列表，用户点「选择」触发 postback action=select_bd&bdId=
+function bdListFlex(users = []) {
+  const bubbles = (users || []).map(u => ({
+    type: 'bubble',
+    size: 'kiji',
+    body: {
+      type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: 'md', contents: [
+        { type: 'text', text: u.realName || u.username, weight: 'bold', size: 'lg' },
+        ...(u.deptId && u.deptId.name ? [{ type: 'text', text: String(u.deptId.name), size: 'sm', color: '#888888' }] : [])
+      ]
+    },
+    footer: {
+      type: 'box', layout: 'vertical', spacing: 'sm', contents: [
+        { type: 'button', style: 'primary', color: '#775999', action: { type: 'postback', label: '选择 / Select', data: `action=select_bd&bdId=${u._id}` } }
+      ]
+    }
+  }));
+  return { type: 'flex', altText: '请选择您的专属 BD', contents: { type: 'carousel', contents: bubbles } };
+}
+
+// 返回某个 BD 的二维码图片 URL 与展示文本
+function bdContactCard(bd) {
+  const imageUrl = bd && bd.lineQr ? `${config.backendBaseUrl}${bd.lineQr}` : '';
+  const text = [
+    `👤 ${bd ? (bd.realName || bd.username) : ''}`,
+    bd && bd.lineLink ? `🔗 LINE 加好友：${bd.lineLink}` : '',
+    '添加后向 BD 索取绑定码 🔑'
+  ].filter(Boolean).join('\n');
+  return { imageUrl, text };
+}
+
 module.exports = {
   baseUrl,
+  backendBaseUrl: config.backendBaseUrl,
   welcomeMessage,
   genericHelpMessage,
   policyFlexCard,
@@ -688,6 +720,8 @@ module.exports = {
   buildSupplyRichMenu,
   buildInfluencerRichMenu,
   boundSuccessCard,
+  bdListFlex,
+  bdContactCard,
   onboardingGuide,
   inviteCardText,
   sampleConfirmedCard,

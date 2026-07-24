@@ -205,6 +205,7 @@ export default {
     suppliers: '供应商管理',
     bdDashboard: 'BD仪表盘',
     initImport: '初始化导入',
+    feedback: '意见反馈',
     marketWorkspace: '市场工作台',
     recruitmentConfig: '招募配置',
     influencerWorkspace: '达人工作台',

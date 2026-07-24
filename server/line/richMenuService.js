@@ -66,15 +66,21 @@ async function generateSupplyImage() {
   return canvas.toBuffer('image/jpeg', { quality: 0.92 });
 }
 
-// 生成达人版 Rich Menu 图片
+// 生成达人版 Rich Menu 图片（商品 / 意见反馈）
 async function generateInfluencerImage() {
   const canvas = createCanvas(MENU_WIDTH, MENU_HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  drawSection(ctx, 0,    833, MENU_HEIGHT, COLORS.influencer[0], 'กิจกรรม', 'Events');
-  drawSection(ctx, 833,  834, MENU_HEIGHT, COLORS.influencer[1], 'สินค้า', 'Products');
-  drawSection(ctx, 1667, 833, MENU_HEIGHT, COLORS.influencer[2], 'ติดต่อ', 'Contact');
-  drawDividers(ctx);
+  drawSection(ctx, 0,     1250, MENU_HEIGHT, COLORS.influencer[0], 'สินค้า', 'Products');
+  drawSection(ctx, 1250,  1250, MENU_HEIGHT, COLORS.influencer[1], '意见反馈', 'Feedback');
+
+  // 分割线
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(1250, 0);
+  ctx.lineTo(1250, MENU_HEIGHT);
+  ctx.stroke();
 
   return canvas.toBuffer('image/jpeg', { quality: 0.92 });
 }
