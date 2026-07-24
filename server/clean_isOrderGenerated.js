@@ -11,8 +11,10 @@
  *   node server/clean_isOrderGenerated.js --apply                      # 真正写入
  *   node server/clean_isOrderGenerated.js --db tap_system --apply      # 指定库名
  *   node server/clean_isOrderGenerated.js --uri "mongodb://user:pwd@host:27017/db?authSource=db" --db tap_system --apply
+ *
+ * 说明：使用 mongoose（后端生产依赖，容器内可用），避免额外依赖 mongodb 驱动。
  */
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 
 const LOCAL_URI = 'mongodb://localhost:27017';
 const URI = process.argv.includes('--uri')
@@ -26,8 +28,8 @@ const APPLY = process.argv.includes('--apply');
 const ORDER_KEY_FILTER = { createTime: { $exists: true, $ne: null }, influencerId: { $exists: true, $ne: null }, productId: { $exists: true, $ne: null } };
 
 async function main() {
-  const client = await MongoClient.connect(URI, { serverSelectionTimeoutMS: 5000 });
-  const db = client.db(DB_NAME);
+  await mongoose.connect(URI, { serverSelectionTimeoutMS: 5000 });
+  const db = mongoose.connection.useDb(DB_NAME);
   const samples = db.collection('samplemanagements');
   const orders = db.collection('reportorders');
 
@@ -105,7 +107,7 @@ async function main() {
     console.log('\n(干跑模式，未写入。加 --apply 执行)');
   }
 
-  await client.close();
+  await mongoose.disconnect();
 }
 
 main().catch(e => { console.error('ERROR', e); process.exit(1); });
